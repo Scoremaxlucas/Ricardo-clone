@@ -1727,21 +1727,29 @@ model RentalListing {
 }
 
 model RentalApplication {
-  id                 String                   @id @default(cuid())
-  createdAt          DateTime                 @default(now())
-  rentalListingId    String
-  applicantUserId    String
-  message            String                   @db.Text
-  status             RentalApplicationStatus
-  encryptedFileRef   String? // Blob-URL o. Pfad zu verschlüsseltem PDF
-  creditCheckResult  Json?
+  id                  String                   @id @default(cuid())
+  createdAt           DateTime                 @default(now())
+  rentalListingId     String
+  applicantUserId     String
+  message             String?                  @db.Text
+  status              RentalApplicationStatus
+  encryptedFileRef    String? // Blob-URL o. Pfad zu verschlüsseltem PDF
+  creditCheckResult   Json?
+  viewingRequestedAt  DateTime?
+  viewingDate         DateTime?
+  rejectedAt          DateTime?
+  rejectionNote       String?                  @db.Text
+  tenantProfileId     String?
+  tenantProfile       TenantProfile?           @relation(fields: [tenantProfileId], references: [id], onDelete: SetNull)
 
   listing   RentalListing @relation(fields: [rentalListingId], references: [id], onDelete: Cascade)
   applicant User          @relation("RentalApplicationApplicant", fields: [applicantUserId], references: [id], onDelete: Cascade)
 
+  @@unique([rentalListingId, applicantUserId])
   @@index([rentalListingId])
   @@index([applicantUserId])
   @@index([status])
+  @@index([tenantProfileId])
   @@map("rental_applications")
 }
 
@@ -1806,8 +1814,12 @@ model TenantProfile {
   encryptedFileRef      String?
   creditCheckUploadedAt DateTime?
   creditCheckExpiresAt  DateTime?
+  /** Letzte E-Mail „Betreibungsregister läuft ab“ (Cron, max. 1× / 24h Fenster) */
+  expiryReminderSentAt  DateTime?
 
   isComplete            Boolean            @default(false)
+
+  applications RentalApplication[]
 
   @@index([userId])
   @@map("tenant_profiles")

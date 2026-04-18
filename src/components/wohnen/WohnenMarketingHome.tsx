@@ -1,6 +1,5 @@
 import { CreditCheckBadge } from '@/components/rental/CreditCheckBadge'
 import { RentalListingCard } from '@/components/rental/RentalListingCard'
-import { WohnenPublicNav } from '@/components/wohnen/WohnenPublicNav'
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 import { loadWohnenHomeListings } from '@/lib/rental/wohnen-home-listings'
 import type { CreditCheckResult } from '@/lib/rental/types'
@@ -57,9 +56,7 @@ export async function WohnenMarketingHome() {
   const listings = await loadWohnenHomeListings(6)
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <WohnenPublicNav />
-
+    <div className="bg-white text-slate-900">
       {/* Hero */}
       <section className="bg-gradient-to-b from-teal-50/50 via-white to-white px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-14 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">

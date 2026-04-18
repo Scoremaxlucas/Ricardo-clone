@@ -1,0 +1,492 @@
+'use client'
+
+import { Logo } from '@/components/ui/Logo'
+import { Home, LogOut, Menu, User, X } from 'lucide-react'
+import Link from 'next/link'
+import { signOut, useSession } from 'next-auth/react'
+import { useCallback, useEffect, useState } from 'react'
+
+type TenantProfileBrief = {
+  isComplete: boolean
+  creditCheckStatus: string
+  creditCheckExpiresAt: string | null
+} | null
+
+function creditValid(p: TenantProfileBrief): boolean {
+  if (!p?.isComplete) return false
+  if (p.creditCheckStatus !== 'APPROVED') return false
+  if (!p.creditCheckExpiresAt) return false
+  return new Date(p.creditCheckExpiresAt).getTime() > Date.now()
+}
+
+function NavDivider() {
+  return <span className="hidden h-5 w-px shrink-0 bg-slate-200 sm:inline-block" aria-hidden />
+}
+
+export function WohnenNavbar() {
+  const { data: session, status } = useSession()
+  const user = session?.user as { id?: string; name?: string | null; email?: string | null; image?: string | null } | undefined
+  const signedIn = status === 'authenticated' && Boolean(user?.id)
+
+  const [navReady, setNavReady] = useState(false)
+  const [profile, setProfile] = useState<TenantProfileBrief | undefined>(undefined)
+  const [hasListings, setHasListings] = useState(false)
+
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const closeAll = useCallback(() => {
+    setMenuOpen(false)
+    setMobileOpen(false)
+  }, [])
+
+  useEffect(() => {
+    if (status === 'loading') {
+      setNavReady(false)
+      return
+    }
+    if (status === 'unauthenticated') {
+      setNavReady(true)
+      setProfile(null)
+      setHasListings(false)
+      return
+    }
+    if (!user?.id) {
+      setNavReady(true)
+      return
+    }
+
+    let cancelled = false
+    setNavReady(false)
+    ;(async () => {
+      try {
+        const [tpRes, ownRes] = await Promise.all([
+          fetch('/api/tenant-profile', { credentials: 'same-origin' }),
+          fetch('/api/rental-listings?own=true', { credentials: 'same-origin' }),
+        ])
+        if (cancelled) return
+
+        if (tpRes.status === 401) {
+          setProfile(null)
+        } else {
+          const tpJson = (await tpRes.json().catch(() => ({}))) as { profile?: TenantProfileBrief }
+          setProfile(tpJson.profile ?? null)
+        }
+
+        const ownJson = (await ownRes.json().catch(() => ({}))) as { hasListings?: boolean }
+        setHasListings(Boolean(ownJson.hasListings))
+      } catch {
+        if (!cancelled) {
+          setProfile(null)
+          setHasListings(false)
+        }
+      } finally {
+        if (!cancelled) setNavReady(true)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [status, user?.id])
+
+  useEffect(() => {
+    if (mobileOpen) {
+      const prev = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = prev
+      }
+    }
+    return
+  }, [mobileOpen])
+
+  const okGreen = creditValid(profile ?? null)
+  const creditPending =
+    profile?.creditCheckStatus === 'PENDING' || profile?.creditCheckStatus === 'PENDING_MANUAL_REVIEW'
+  const showCreditRenew =
+    Boolean(signedIn && navReady && profile?.isComplete) && !okGreen && !creditPending
+
+  const showLandlordNav = Boolean(signedIn && navReady && hasListings)
+  const showTenantCompleteNav = Boolean(
+    signedIn && navReady && !hasListings && profile?.isComplete && (okGreen || creditPending)
+  )
+
+  const showIncompleteNav = Boolean(signedIn && navReady && !hasListings && (!profile || !profile.isComplete))
+
+  const renderDesktopCenterLinks = () => {
+    if (!signedIn || !navReady) return null
+    if (showLandlordNav) {
+      return (
+        <>
+          <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+            Wohnungen suchen
+          </Link>
+          <Link href="/matching/properties" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+            Meine Inserate
+          </Link>
+          <Link
+            href="/matching/properties/new"
+            className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+          >
+            Neues Inserat
+          </Link>
+        </>
+      )
+    }
+    if (showIncompleteNav) {
+      return (
+        <>
+          <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+            Wohnungen suchen
+          </Link>
+          <Link
+            href="/profil/erstellen"
+            className="inline-flex animate-pulse items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900 ring-1 ring-amber-300 hover:bg-amber-200"
+          >
+            ⚠️ Profil erstellen
+          </Link>
+        </>
+      )
+    }
+    if (showCreditRenew) {
+      return (
+        <>
+          <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+            Wohnungen suchen
+          </Link>
+          <Link
+            href="/profil/betreibungsregister"
+            className="inline-flex items-center rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-950 ring-1 ring-orange-300 hover:bg-orange-200"
+          >
+            ⚠️ Auszug erneuern
+          </Link>
+        </>
+      )
+    }
+    if (showTenantCompleteNav) {
+      return (
+        <>
+          <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+            Wohnungen suchen
+          </Link>
+          <Link href="/meine-bewerbungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+            Meine Bewerbungen
+          </Link>
+          <Link
+            href="/matching/properties/new"
+            className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+          >
+            Wohnung inserieren
+          </Link>
+        </>
+      )
+    }
+    return (
+      <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+        Wohnungen suchen
+      </Link>
+    )
+  }
+
+  const renderAuthButtons = () => {
+    if (!signedIn) {
+      return (
+        <>
+          <NavDivider />
+          <Link
+            href="/login"
+            className="hidden rounded-lg border-2 border-teal-700 px-3 py-1.5 text-sm font-semibold text-teal-900 hover:bg-teal-50 sm:inline-flex"
+          >
+            Anmelden
+          </Link>
+          <Link
+            href="/register"
+            className="hidden rounded-lg bg-[#18a87c] px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 sm:inline-flex"
+          >
+            Registrieren
+          </Link>
+        </>
+      )
+    }
+    return (
+      <div className="relative hidden items-center gap-2 sm:flex">
+        {showTenantCompleteNav && okGreen ?
+          <span
+            className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm ring-2 ring-emerald-200"
+            title="Profil und Betreibungsregister gültig"
+          />
+        : null}
+        <button
+          type="button"
+          onClick={() => setMenuOpen(m => !m)}
+          className="flex items-center gap-2 rounded-full border border-slate-200 p-0.5 pl-0.5 hover:bg-slate-50"
+          aria-expanded={menuOpen ? 'true' : 'false'}
+          aria-haspopup="menu"
+        >
+          {user?.image ?
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.image} alt="" className="h-8 w-8 rounded-full object-cover" />
+          : <span className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-100 text-teal-800">
+              <User className="h-4 w-4" />
+            </span>
+          }
+        </button>
+        {menuOpen ?
+          <>
+            <button type="button" className="fixed inset-0 z-40 cursor-default" aria-label="Menü schliessen" onClick={() => setMenuOpen(false)} />
+            <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
+              <div className="border-b border-slate-100 px-3 py-2">
+                <p className="truncate text-sm font-semibold text-slate-900">{user?.name || 'Benutzer/in'}</p>
+                <p className="truncate text-xs text-slate-500">{user?.email || ''}</p>
+              </div>
+              <Link
+                href="/profil"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
+                onClick={() => setMenuOpen(false)}
+              >
+                Mein Profil
+              </Link>
+              <Link
+                href="/meine-bewerbungen"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
+                onClick={() => setMenuOpen(false)}
+              >
+                Meine Bewerbungen
+              </Link>
+              {hasListings ?
+                <Link
+                  href="/matching/properties"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Meine Inserate
+                </Link>
+              : null}
+              <div className="my-1 border-t border-slate-100" />
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50"
+                onClick={() => void signOut({ callbackUrl: '/' })}
+              >
+                <LogOut className="h-4 w-4" />
+                Abmelden
+              </button>
+            </div>
+          </>
+        : null}
+      </div>
+    )
+  }
+
+  const mobileNavLinks = () => {
+    if (!signedIn) {
+      return (
+        <>
+          <Link href="/wohnungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            Wohnungen suchen
+          </Link>
+          <Link href="/matching/properties/new" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            Wohnung inserieren
+          </Link>
+          <Link href="/login" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            Anmelden
+          </Link>
+          <Link
+            href="/register"
+            className="mt-2 block rounded-lg bg-[#18a87c] px-3 py-2.5 text-center font-semibold text-white"
+            onClick={closeAll}
+          >
+            Registrieren
+          </Link>
+        </>
+      )
+    }
+    if (!navReady) {
+      return <div className="space-y-2 px-2 py-4 text-sm text-slate-500">Laden…</div>
+    }
+    return (
+      <>
+        {showLandlordNav ?
+          <>
+            <Link href="/wohnungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+              Wohnungen suchen
+            </Link>
+            <Link href="/matching/properties" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+              Meine Inserate
+            </Link>
+            <Link href="/matching/properties/new" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+              Neues Inserat
+            </Link>
+          </>
+        : null}
+        {showIncompleteNav ?
+          <>
+            <Link href="/wohnungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+              Wohnungen suchen
+            </Link>
+            <Link
+              href="/profil/erstellen"
+              className="block rounded-lg bg-amber-100 px-3 py-2.5 font-semibold text-amber-950 hover:bg-amber-200"
+              onClick={closeAll}
+            >
+              ⚠️ Profil erstellen
+            </Link>
+          </>
+        : null}
+        {showCreditRenew && !showLandlordNav ?
+          <>
+            <Link href="/wohnungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+              Wohnungen suchen
+            </Link>
+            <Link
+              href="/profil/betreibungsregister"
+              className="block rounded-lg bg-orange-100 px-3 py-2.5 font-semibold text-orange-950 hover:bg-orange-200"
+              onClick={closeAll}
+            >
+              ⚠️ Auszug erneuern
+            </Link>
+          </>
+        : null}
+        {showTenantCompleteNav ?
+          <>
+            <Link href="/wohnungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+              Wohnungen suchen
+            </Link>
+            <Link href="/meine-bewerbungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+              Meine Bewerbungen
+            </Link>
+            <Link href="/matching/properties/new" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+              Wohnung inserieren
+            </Link>
+          </>
+        : null}
+        {!showLandlordNav && !showIncompleteNav && !showCreditRenew && !showTenantCompleteNav ?
+          <Link href="/wohnungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            Wohnungen suchen
+          </Link>
+        : null}
+
+        <div className="my-2 border-t border-slate-200" />
+
+        <div className="px-3 py-2">
+          <p className="text-xs font-semibold text-slate-500">Konto</p>
+          <p className="truncate text-sm font-semibold text-slate-900">{user?.name || 'Benutzer/in'}</p>
+          <p className="truncate text-xs text-slate-500">{user?.email || ''}</p>
+        </div>
+        <Link href="/profil" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+          Mein Profil
+        </Link>
+        <Link href="/meine-bewerbungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+          Meine Bewerbungen
+        </Link>
+        {hasListings ?
+          <Link href="/matching/properties" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            Meine Inserate
+          </Link>
+        : null}
+        <button
+          type="button"
+          className="mt-2 w-full rounded-lg px-3 py-2.5 text-left font-medium text-red-600 hover:bg-red-50"
+          onClick={() => void signOut({ callbackUrl: '/' })}
+        >
+          Abmelden
+        </button>
+      </>
+    )
+  }
+
+  const showSkeleton = status === 'loading' || (signedIn && !navReady)
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-slate-200/90 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2" onClick={closeAll}>
+          <Logo size="sm" />
+          <Home className="h-4 w-4 shrink-0 text-[#0f766e]" aria-hidden />
+          <span className="truncate text-sm font-bold tracking-tight text-[#0f766e] sm:text-base">Helvenda Wohnungen</span>
+        </Link>
+
+        {showSkeleton ?
+          <div className="hidden flex-1 items-center justify-end gap-3 sm:flex">
+            <div className="h-4 w-28 animate-pulse rounded bg-slate-200" />
+            <div className="h-8 w-24 animate-pulse rounded-lg bg-slate-200" />
+          </div>
+        : (
+          <nav className="hidden flex-1 items-center justify-end gap-2 md:flex md:gap-3">
+            {!signedIn ?
+              <>
+                <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+                  Wohnungen suchen
+                </Link>
+                <Link
+                  href="/matching/properties/new"
+                  className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Wohnung inserieren
+                </Link>
+                {renderAuthButtons()}
+              </>
+            : (
+              <>
+                {renderDesktopCenterLinks()}
+                {renderAuthButtons()}
+              </>
+            )}
+          </nav>
+        )}
+
+        <div className="flex items-center gap-2 md:hidden">
+          {!showSkeleton && !signedIn ?
+            <>
+              <Link href="/login" className="rounded-md px-2 py-1 text-sm font-semibold text-teal-900">
+                Anmelden
+              </Link>
+            </>
+          : null}
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-md border border-slate-200 p-2 text-slate-800"
+            aria-label={mobileOpen ? 'Menü schliessen' : 'Menü öffnen'}
+            onClick={() => setMobileOpen(o => !o)}
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile slide-in */}
+      <div
+        className={`fixed inset-0 z-[60] md:hidden ${mobileOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        aria-hidden={!mobileOpen}
+      >
+        <button
+          type="button"
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ease-out ${
+            mobileOpen ? 'opacity-100' : 'opacity-0'
+          }`}
+          aria-label="Menü schliessen"
+          onClick={() => setMobileOpen(false)}
+        />
+        <div
+          className={`absolute inset-y-0 right-0 flex w-[min(100%,20rem)] max-w-full flex-col border-l border-slate-200 bg-white shadow-xl transition-transform duration-300 ease-out ${
+            mobileOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+            <span className="text-sm font-bold text-slate-900">Menü</span>
+            <button
+              type="button"
+              className="rounded-md p-2 text-slate-600 hover:bg-slate-100"
+              aria-label="Schliessen"
+              onClick={() => setMobileOpen(false)}
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-2 py-4 text-sm font-medium">{mobileNavLinks()}</div>
+        </div>
+      </div>
+    </header>
+  )
+}

@@ -2,6 +2,7 @@ import { authOptions } from '@/lib/auth'
 import { uploadImageToBlob } from '@/lib/blob-storage'
 import { prisma } from '@/lib/prisma'
 import { Prisma, type CreditCheckStatus } from '@prisma/client'
+import { sendTenantProfileCreditCheckEmails } from '@/lib/rental/emails'
 import { encryptPdfForStorageBestEffort } from '@/lib/rental/pdf-crypto'
 import { parseCreditCheckFromPdfBase64, tenantCreditCheckStatusFromParse } from '@/lib/rental/parseCreditCheck'
 import type { CreditCheckResult } from '@/lib/rental/types'
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
         creditCheckUploadedAt: new Date(),
         creditCheckResult: Prisma.JsonNull,
         creditCheckExpiresAt: null,
+        expiryReminderSentAt: null,
       },
     })
 
@@ -98,6 +100,29 @@ export async function POST(request: NextRequest) {
         creditCheckUploadedAt: now,
       },
     })
+
+    const userRow = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, firstName: true, name: true, nickname: true },
+    })
+    if (
+      userRow?.email &&
+      (finalStatus === 'APPROVED' || finalStatus === 'REJECTED' || finalStatus === 'PENDING_MANUAL_REVIEW')
+    ) {
+      const display =
+        userRow.nickname?.trim() || userRow.name?.trim() || userRow.firstName?.trim() || userRow.email
+      void sendTenantProfileCreditCheckEmails({
+        tenantEmail: userRow.email,
+        tenantUserId: userId,
+        tenantFirst: userRow,
+        finalStatus,
+        creditResult: creditJson,
+        validUntil: expires,
+        userDisplayName: display,
+        uploadedAt: now,
+        encryptedFileRef,
+      }).catch(err => console.error('[tenant-profile/credit-check] email', err))
+    }
 
     let message = 'Auswertung abgeschlossen.'
     if (finalStatus === 'APPROVED') {

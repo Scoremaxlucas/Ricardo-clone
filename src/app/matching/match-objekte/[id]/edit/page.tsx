@@ -15,12 +15,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export default async function EditMatchingPropertyPage({ params }: PageProps) {
+export default async function EditMatchingMatchObjektPage({ params }: PageProps) {
   const { id: propertyId } = await params
   const session = await getServerSession(authOptions)
   const userId = (session?.user as { id?: string } | undefined)?.id
   if (!userId) {
-    redirect('/login?callbackUrl=' + encodeURIComponent(`/matching/properties/${propertyId}/edit`))
+    redirect('/login?callbackUrl=' + encodeURIComponent(`/matching/match-objekte/${propertyId}/edit`))
   }
 
   const initialSnapshot = await loadMatchingPropertyWizardSnapshotForOwner(userId, propertyId)

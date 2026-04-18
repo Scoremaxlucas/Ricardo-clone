@@ -14,10 +14,21 @@ function safeParsePhotos(raw: string): string[] {
   }
 }
 
-/** GET: nur aktive Inserate, öffentlich */
+/** GET: nur aktive Inserate, öffentlich — oder `?own=true` für eingeloggten Vermieter (Navbar). */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
+    if (searchParams.get('own') === 'true') {
+      const session = await getServerSession(authOptions)
+      if (!session?.user?.id) {
+        return NextResponse.json({ hasListings: false })
+      }
+      const count = await prisma.rentalListing.count({
+        where: { userId: session.user.id },
+      })
+      return NextResponse.json({ hasListings: count > 0 })
+    }
+
     const canton = searchParams.get('canton')?.trim() || ''
     const minRooms = searchParams.get('minRooms')
     const maxRent = searchParams.get('maxRent')

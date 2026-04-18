@@ -1,7 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { uploadImageToBlob } from '@/lib/blob-storage'
 import { prisma } from '@/lib/prisma'
-import { creditCheckBadgeSummaryForEmail } from '@/lib/rental/badge-copy'
 import {
   sendRentalAdminManualReviewEmail,
   sendRentalApplicantRejectedCreditEmail,
@@ -28,7 +27,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const listing = await prisma.rentalListing.findFirst({
       where: { id: listingId, status: 'active' },
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        title: true,
+        address: true,
+        zip: true,
+        city: true,
+        rooms: true,
+        rentPerMonth: true,
+        requiresCreditCheck: true,
+        status: true,
         user: {
           select: {
             id: true,
@@ -86,6 +95,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const applicantDisplay = applicant.nickname?.trim() || applicant.name?.trim() || 'Helvenda-Nutzer'
 
+    const tenantProfile = await prisma.tenantProfile.findUnique({ where: { userId: session.user.id } })
+    const applicantFullName =
+      tenantProfile ? `${tenantProfile.firstName} ${tenantProfile.lastName}`.trim() : applicantDisplay
+    const employmentStatus = tenantProfile?.employmentStatus ?? 'OTHER'
+    const employer = tenantProfile?.employer ?? null
+    const monthlyIncomeCategory = tenantProfile?.monthlyIncomeCategory ?? 'UNDER_2000'
+    const referenceName = tenantProfile?.referenceName ?? null
+    const referencePhone = tenantProfile?.referencePhone ?? null
+    const addressLine = `${listing.address}, ${listing.zip} ${listing.city}`
+
     if (!listing.requiresCreditCheck) {
       const app = await prisma.rentalApplication.create({
         data: {
@@ -96,23 +115,31 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         },
       })
 
-      const summary = 'Kein Betreibungsregister erforderlich'
-      await sendRentalLandlordNewApplicationEmail({
+      void sendRentalLandlordNewApplicationEmail({
         landlordEmail: listing.user.email,
         landlordUserId: listing.userId,
         landlordFirst: listing.user,
+        listingId: listing.id,
         listingTitle: listing.title,
-        applicantName: applicantDisplay,
+        applicantFullName,
         applicantMessage: message,
-        creditSummary: summary,
-        applicationId: app.id,
-      })
-      await sendRentalApplicantSuccessEmail({
+        requiresCreditCheck: false,
+        creditCheckResult: null,
+        employmentStatus,
+        employer,
+        monthlyIncomeCategory,
+        referenceName,
+        referencePhone,
+      }).catch(err => console.error('[rental contact] landlord email', err))
+      void sendRentalApplicantSuccessEmail({
         applicantEmail: applicant.email,
         applicantUserId: session.user.id,
         applicantFirst: applicant,
         listingTitle: listing.title,
-      })
+        addressLine,
+        rooms: listing.rooms,
+        rentPerMonth: listing.rentPerMonth,
+      }).catch(err => console.error('[rental contact] applicant email', err))
 
       return NextResponse.json({
         success: true,
@@ -176,13 +203,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
 
     if (statusAfterParse === 'rejected') {
-      await sendRentalApplicantRejectedCreditEmail({
+      void sendRentalApplicantRejectedCreditEmail({
         applicantEmail: applicant.email,
         applicantUserId: session.user.id,
         applicantFirst: applicant,
-        listingTitle: listing.title,
-        listingId,
-      })
+      }).catch(err => console.error('[rental contact] rejected credit email', err))
       return NextResponse.json({
         success: true,
         applicationId: app.id,
@@ -192,39 +217,48 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     if (statusAfterParse === 'pending_manual_review') {
-      await sendRentalAdminManualReviewEmail({
+      void sendRentalAdminManualReviewEmail({
         applicationId: app.id,
         listingTitle: listing.title,
-      })
+      }).catch(err => console.error('[rental contact] admin manual email', err))
     }
 
     if (statusAfterParse === 'approved') {
-      const summary = creditJson
-        ? creditCheckBadgeSummaryForEmail(creditJson, 'approved')
-        : 'Betreibungsregister geprüft'
-      await sendRentalLandlordNewApplicationEmail({
+      void sendRentalLandlordNewApplicationEmail({
         landlordEmail: listing.user.email,
         landlordUserId: listing.userId,
         landlordFirst: listing.user,
+        listingId: listing.id,
         listingTitle: listing.title,
-        applicantName: applicantDisplay,
+        applicantFullName,
         applicantMessage: message,
-        creditSummary: summary,
-        applicationId: app.id,
-      })
-      await sendRentalApplicantSuccessEmail({
+        requiresCreditCheck: true,
+        creditCheckResult: creditJson,
+        employmentStatus,
+        employer,
+        monthlyIncomeCategory,
+        referenceName,
+        referencePhone,
+      }).catch(err => console.error('[rental contact] landlord email', err))
+      void sendRentalApplicantSuccessEmail({
         applicantEmail: applicant.email,
         applicantUserId: session.user.id,
         applicantFirst: applicant,
         listingTitle: listing.title,
-      })
+        addressLine,
+        rooms: listing.rooms,
+        rentPerMonth: listing.rentPerMonth,
+      }).catch(err => console.error('[rental contact] applicant email', err))
     } else if (statusAfterParse === 'pending_manual_review') {
-      await sendRentalApplicantSuccessEmail({
+      void sendRentalApplicantSuccessEmail({
         applicantEmail: applicant.email,
         applicantUserId: session.user.id,
         applicantFirst: applicant,
         listingTitle: listing.title,
-      })
+        addressLine,
+        rooms: listing.rooms,
+        rentPerMonth: listing.rentPerMonth,
+      }).catch(err => console.error('[rental contact] applicant email', err))
     }
 
     return NextResponse.json({

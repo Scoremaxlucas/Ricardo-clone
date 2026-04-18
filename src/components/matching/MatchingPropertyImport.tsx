@@ -119,7 +119,7 @@ export function MatchingPropertyImport({ embedded = false }: MatchingPropertyImp
       ) : null}
 
       <p className="mt-10 text-sm text-slate-500">
-        <Link href="/matching/properties/new" className="font-medium text-teal-800 underline-offset-2 hover:underline">
+        <Link href="/matching/match-objekte/new" className="font-medium text-teal-800 underline-offset-2 hover:underline">
           Manuell erfassen
         </Link>
         {' · '}

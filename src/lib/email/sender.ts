@@ -17,6 +17,8 @@ export interface SendEmailOptions {
   userId?: string
   /** Override the default From address (e.g. 'Helvenda <noreply@helvenda.ch>') */
   from?: string
+  /** Optional BCC (Resend/SMTP) */
+  bcc?: string | string[]
 }
 
 export interface SendEmailResult {
@@ -27,6 +29,13 @@ export interface SendEmailResult {
   statusCode?: number
 }
 
+function normalizeBcc(bcc: string | string[] | undefined): string[] | undefined {
+  if (bcc === undefined) return undefined
+  const list = Array.isArray(bcc) ? bcc : [bcc]
+  const cleaned = list.map(s => s.trim()).filter(Boolean)
+  return cleaned.length ? cleaned : undefined
+}
+
 export async function sendEmail({
   to,
   subject,
@@ -34,6 +43,7 @@ export async function sendEmail({
   text,
   userId,
   from,
+  bcc,
 }: SendEmailOptions): Promise<SendEmailResult> {
   // Auto-inject unsubscribe link if userId is provided
   if (userId) {
@@ -64,9 +74,11 @@ export async function sendEmail({
       console.log(`  From: ${fromEmail}`)
       console.log(`  To: ${to}`)
 
+      const bccList = normalizeBcc(bcc)
       const result = await resend.emails.send({
         from: fromEmail,
         to: [to],
+        ...(bccList?.length ? { bcc: bccList } : {}),
         subject,
         html,
         text: text || html.replace(/<[^>]*>/g, ''),
@@ -99,9 +111,11 @@ export async function sendEmail({
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
       console.log('[sendEmail] Versuche SMTP Fallback...')
+      const bccList = normalizeBcc(bcc)
       const info = await transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to,
+        ...(bccList?.length ? { bcc: bccList } : {}),
         subject,
         html,
         text: text || html.replace(/<[^>]*>/g, ''),

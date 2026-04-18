@@ -78,6 +78,17 @@ export default async function WohnungDetailPage({ params }: PageProps) {
   const tenantApplyReady =
     profileComplete && (!listing.requiresCreditCheck || creditCheckOk)
 
+  const existingApplication = userId
+    ? await prisma.rentalApplication.findFirst({
+        where: {
+          rentalListingId: listing.id,
+          applicantUserId: userId,
+          status: { in: ['pending_credit_check', 'pending_manual_review', 'approved'] },
+        },
+      })
+    : null
+  const alreadyApplied = Boolean(existingApplication)
+
   const isOwner = Boolean(userId && userId === listing.userId)
   const photos = parseRentalListingPhotosJson(listing.photos)
   const similar = await fetchSimilarRentalListings(listing.canton, listing.id, 3)
@@ -155,6 +166,7 @@ export default async function WohnungDetailPage({ params }: PageProps) {
               profileComplete={profileComplete}
               creditCheckOk={creditCheckOk}
               tenantApplyReady={tenantApplyReady}
+              alreadyApplied={alreadyApplied}
               isOwner={isOwner}
             />
           </aside>

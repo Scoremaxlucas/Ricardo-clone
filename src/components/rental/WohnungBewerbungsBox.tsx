@@ -9,12 +9,12 @@ type Props = {
   rentPerMonth: number
   requiresCreditCheck: boolean
   userId: string | null
-  /** Profil vollständig gespeichert (isComplete) */
   profileComplete: boolean
-  /** Betreibungsregister gültig (APPROVED + nicht abgelaufen), falls erforderlich */
   creditCheckOk: boolean
-  /** Mieter kann sich technisch bewerben (Phase 4 folgt) */
+  /** Profil + ggf. Betreibungsregister erfüllt */
   tenantApplyReady: boolean
+  /** Bereits eine laufende / genehmigte Bewerbung auf dieses Inserat */
+  alreadyApplied: boolean
   isOwner: boolean
 }
 
@@ -26,12 +26,13 @@ export function WohnungBewerbungsBox({
   profileComplete,
   creditCheckOk,
   tenantApplyReady,
+  alreadyApplied,
   isOwner,
 }: Props) {
   const router = useRouter()
   const [modal, setModal] = useState(false)
 
-  const detailPath = `/wohnungen/${listingId}`
+  const bewerbenPath = `/wohnungen/${listingId}/bewerben`
 
   const onPrimaryClick = () => {
     if (isOwner) return
@@ -40,14 +41,17 @@ export function WohnungBewerbungsBox({
       return
     }
     if (!profileComplete) {
-      router.push(`/profil/erstellen?next=${encodeURIComponent(detailPath)}`)
+      router.push(`/profil/erstellen?next=${encodeURIComponent(bewerbenPath)}`)
       return
     }
     if (requiresCreditCheck && !creditCheckOk) {
-      router.push('/profil/betreibungsregister')
+      router.push(
+        `/profil/betreibungsregister?next=${encodeURIComponent(bewerbenPath)}&reason=required`
+      )
       return
     }
-    // Phase 4: /wohnungen/[id]/bewerben
+    if (alreadyApplied) return
+    router.push(bewerbenPath)
   }
 
   if (isOwner) {
@@ -58,7 +62,16 @@ export function WohnungBewerbungsBox({
     )
   }
 
-  const showComingSoon = Boolean(userId && tenantApplyReady)
+  const label = (() => {
+    if (!userId) return 'Jetzt bewerben'
+    if (!profileComplete) return 'Profil erstellen & bewerben'
+    if (requiresCreditCheck && !creditCheckOk) return 'Betreibungsregister hochladen'
+    if (alreadyApplied) return 'Bereits beworben ✓'
+    return 'Jetzt bewerben'
+  })()
+
+  const disabled = Boolean(userId && alreadyApplied)
+  const isTealPrimary = userId && tenantApplyReady && !alreadyApplied
 
   return (
     <>
@@ -75,23 +88,20 @@ export function WohnungBewerbungsBox({
           </div>
         ) : null}
 
-        {showComingSoon ? (
-          <button
-            type="button"
+        <button
+          type="button"
+          onClick={onPrimaryClick}
+          disabled={disabled}
+          className={
             disabled
-            className="mt-5 w-full cursor-not-allowed rounded-xl bg-slate-300 px-4 py-3.5 text-center text-sm font-bold text-slate-600"
-          >
-            Bewerben (bald verfügbar)
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onPrimaryClick}
-            className="mt-5 w-full rounded-xl bg-[#18a87c] px-4 py-3.5 text-center text-sm font-bold text-white shadow-md transition hover:opacity-95"
-          >
-            Jetzt bewerben
-          </button>
-        )}
+              ? 'mt-5 w-full cursor-not-allowed rounded-xl bg-slate-300 px-4 py-3.5 text-center text-sm font-bold text-slate-600'
+              : isTealPrimary
+                ? 'mt-5 w-full rounded-xl bg-[#18a87c] px-4 py-3.5 text-center text-sm font-bold text-white shadow-md transition hover:opacity-95'
+                : 'mt-5 w-full rounded-xl border-2 border-teal-700 bg-white px-4 py-3.5 text-center text-sm font-bold text-teal-800 shadow-sm transition hover:bg-teal-50'
+          }
+        >
+          {label}
+        </button>
 
         <p className="mt-4 text-center text-[11px] text-slate-500">🔒 Deine Daten werden verschlüsselt übertragen</p>
       </div>
@@ -109,14 +119,14 @@ export function WohnungBewerbungsBox({
             </h2>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
-                href={`/login?callbackUrl=${encodeURIComponent(detailPath)}`}
+                href={`/login?callbackUrl=${encodeURIComponent(bewerbenPath)}`}
                 className="inline-flex flex-1 justify-center rounded-xl bg-[#18a87c] px-4 py-3 text-sm font-semibold text-white"
                 onClick={() => setModal(false)}
               >
                 Anmelden
               </Link>
               <Link
-                href={`/register?callbackUrl=${encodeURIComponent(detailPath)}`}
+                href={`/register?callbackUrl=${encodeURIComponent(bewerbenPath)}`}
                 className="inline-flex flex-1 justify-center rounded-xl border-2 border-teal-700 px-4 py-3 text-sm font-semibold text-teal-800"
                 onClick={() => setModal(false)}
               >

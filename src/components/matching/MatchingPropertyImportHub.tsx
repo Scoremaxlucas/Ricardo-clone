@@ -14,7 +14,7 @@ type Tab = 'url' | 'file'
 function ManualLink() {
   return (
     <p className="mt-4 text-center text-sm text-slate-600">
-      <Link href="/matching/properties/new" className="font-medium text-teal-800 underline-offset-2 hover:underline">
+      <Link href="/matching/match-objekte/new" className="font-medium text-teal-800 underline-offset-2 hover:underline">
         Stattdessen manuell inserieren →
       </Link>
     </p>
@@ -58,7 +58,7 @@ export function MatchingPropertyImportHub() {
           j.message ||
             'Diese Plattform erlaubt keinen automatischen Zugriff. Bitte fülle das Formular manuell aus.'
         )
-        router.push('/matching/properties/new')
+        router.push('/matching/match-objekte/new')
         return
       }
 
@@ -115,7 +115,7 @@ export function MatchingPropertyImportHub() {
           mode="create"
           initialSnapshot={review.snapshot}
           urlImportReview={review.meta}
-          cancelHref="/matching/properties/import"
+          cancelHref="/matching/match-objekte/import"
         />
       </div>
     )
@@ -191,7 +191,7 @@ export function MatchingPropertyImportHub() {
 
       {tab === 'file' ? (
         <p className="mt-8 text-center text-sm text-slate-500">
-          <Link href="/matching/properties" className="font-medium text-teal-800 underline-offset-2 hover:underline">
+          <Link href="/matching/match-objekte" className="font-medium text-teal-800 underline-offset-2 hover:underline">
             Zu «Meine Objekte»
           </Link>
         </p>

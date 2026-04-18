@@ -1,6 +1,19 @@
-import { getHelvendaEmailTemplate } from '@/lib/email/base-template'
-import { getEmailBaseUrl } from '@/lib/email/config'
 import { sendEmail } from '@/lib/email/sender'
+import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
+import {
+  templateAdminCreditManualReview,
+  templateAdminRentalApplicationManualReview,
+  templateLandlordNewApplication,
+  templateTenantApplicationSubmitted,
+  templateTenantCreditExpiryReminder,
+  templateTenantCreditManualReview,
+  templateTenantCreditRejected,
+  templateTenantCreditVerified,
+  templateTenantViewingRequested,
+} from '@/lib/rental/emailTemplates'
+import type { CreditCheckResult } from '@/lib/rental/types'
+
+const WOHNEN_FROM = 'Helvenda Wohnungen <noreply@helvenda.ch>'
 
 function firstName(user: { firstName?: string | null; name?: string | null }): string {
   if (user.firstName?.trim()) return user.firstName.trim()
@@ -9,37 +22,58 @@ function firstName(user: { firstName?: string | null; name?: string | null }): s
   return 'du'
 }
 
+async function sendWohnenEmail(opts: {
+  to: string
+  subject: string
+  html: string
+  text: string
+  userId?: string
+}): Promise<void> {
+  await sendEmail({
+    to: opts.to,
+    subject: opts.subject,
+    html: opts.html,
+    text: opts.text,
+    userId: opts.userId,
+    from: WOHNEN_FROM,
+  })
+}
+
 export async function sendRentalLandlordNewApplicationEmail(opts: {
   landlordEmail: string
   landlordUserId: string
   landlordFirst: { firstName?: string | null; name?: string | null }
+  listingId: string
   listingTitle: string
-  applicantName: string
-  applicantMessage: string
-  creditSummary: string
-  applicationId: string
+  applicantFullName: string
+  applicantMessage?: string | null
+  requiresCreditCheck: boolean
+  creditCheckResult: unknown
+  employmentStatus: EmploymentStatus
+  employer: string | null
+  monthlyIncomeCategory: IncomeCategory
+  referenceName: string | null
+  referencePhone: string | null
 }): Promise<void> {
-  const base = getEmailBaseUrl().replace(/\/$/, '')
-  const link = `${base}/wohnungen/anfragen/${opts.applicationId}`
-  const fn = firstName(opts.landlordFirst)
-  const html = getHelvendaEmailTemplate({
-    title: `Neue Anfrage für „${opts.listingTitle}“`,
-    greeting: `Hallo ${fn},`,
-    content: `
-      <p>du hast eine neue Anfrage für deine Wohnung <strong>${escapeHtml(opts.listingTitle)}</strong> erhalten.</p>
-      <p><strong>Interessent:</strong> ${escapeHtml(opts.applicantName)}</p>
-      <p><strong>Betreibungsregister:</strong> ${escapeHtml(opts.creditSummary)}</p>
-      <p><strong>Nachricht:</strong></p>
-      <blockquote style="border-left:3px solid #0d9488;padding-left:12px;margin:12px 0;color:#374151;">${escapeHtml(opts.applicantMessage)}</blockquote>
-    `,
-    buttonText: 'Zur Anfrage',
-    buttonUrl: link,
-    userId: opts.landlordUserId,
+  const payload = templateLandlordNewApplication({
+    landlordFirstName: firstName(opts.landlordFirst),
+    listingTitle: opts.listingTitle,
+    listingId: opts.listingId,
+    applicantFullName: opts.applicantFullName,
+    employmentStatus: opts.employmentStatus,
+    employer: opts.employer,
+    incomeCategory: opts.monthlyIncomeCategory,
+    requiresCreditCheck: opts.requiresCreditCheck,
+    creditCheckResult: opts.creditCheckResult,
+    referenceName: opts.referenceName,
+    referencePhone: opts.referencePhone,
+    applicantMessage: opts.applicantMessage ?? null,
   })
-  await sendEmail({
+  await sendWohnenEmail({
     to: opts.landlordEmail,
-    subject: `Neue Anfrage für „${opts.listingTitle}“`,
-    html,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
     userId: opts.landlordUserId,
   })
 }
@@ -48,28 +82,15 @@ export async function sendRentalApplicantRejectedCreditEmail(opts: {
   applicantEmail: string
   applicantUserId: string
   applicantFirst: { firstName?: string | null; name?: string | null }
-  listingTitle: string
-  listingId: string
 }): Promise<void> {
-  const base = getEmailBaseUrl().replace(/\/$/, '')
-  const link = `${base}/wohnungen/${opts.listingId}`
-  const fn = firstName(opts.applicantFirst)
-  const html = getHelvendaEmailTemplate({
-    title: `Deine Anfrage für „${opts.listingTitle}“`,
-    greeting: `Hallo ${fn},`,
-    content: `
-      <p>leider konnten wir deinen Betreibungsregisterauszug nicht verarbeiten.</p>
-      <p>Mögliche Gründe: Das Dokument ist älter als 3 Monate, oder es handelt sich nicht um einen offiziellen Schweizer Auszug.</p>
-      <p>Bitte lade ein aktuelles Dokument hoch und versuche es erneut.</p>
-    `,
-    buttonText: 'Zum Inserat',
-    buttonUrl: link,
-    userId: opts.applicantUserId,
+  const payload = templateTenantCreditRejected({
+    tenantFirstName: firstName(opts.applicantFirst),
   })
-  await sendEmail({
+  await sendWohnenEmail({
     to: opts.applicantEmail,
-    subject: `Deine Anfrage für „${opts.listingTitle}“`,
-    html,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
     userId: opts.applicantUserId,
   })
 }
@@ -79,21 +100,49 @@ export async function sendRentalApplicantSuccessEmail(opts: {
   applicantUserId: string
   applicantFirst: { firstName?: string | null; name?: string | null }
   listingTitle: string
+  addressLine: string
+  rooms: number
+  rentPerMonth: number
 }): Promise<void> {
-  const fn = firstName(opts.applicantFirst)
-  const html = getHelvendaEmailTemplate({
-    title: 'Deine Anfrage wurde übermittelt',
-    greeting: `Hallo ${fn},`,
-    content: `
-      <p>deine Anfrage für <strong>${escapeHtml(opts.listingTitle)}</strong> wurde erfolgreich an den Vermieter weitergeleitet.</p>
-      <p>Du erhältst eine Benachrichtigung sobald der Vermieter antwortet.</p>
-    `,
+  const payload = templateTenantApplicationSubmitted({
+    tenantFirstName: firstName(opts.applicantFirst),
+    listingTitle: opts.listingTitle,
+    addressLine: opts.addressLine,
+    rooms: opts.rooms,
+    rentPerMonth: opts.rentPerMonth,
+  })
+  await sendWohnenEmail({
+    to: opts.applicantEmail,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
     userId: opts.applicantUserId,
   })
-  await sendEmail({
+}
+
+export async function sendRentalApplicantViewingInvitationEmail(opts: {
+  applicantEmail: string
+  applicantUserId: string
+  applicantFirst: { firstName?: string | null; name?: string | null }
+  listingTitle: string
+  listingAddress: string
+  viewingAtIso: string
+  note?: string | null
+}): Promise<void> {
+  const d = new Date(opts.viewingAtIso)
+  const viewingAt = Number.isNaN(d.getTime()) ? new Date() : d
+  const payload = templateTenantViewingRequested({
+    tenantFirstName: firstName(opts.applicantFirst),
+    listingTitle: opts.listingTitle,
+    listingAddress: opts.listingAddress,
+    viewingAt,
+    landlordNote: opts.note ?? null,
+  })
+  await sendWohnenEmail({
     to: opts.applicantEmail,
-    subject: 'Deine Anfrage wurde übermittelt',
-    html,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
     userId: opts.applicantUserId,
   })
 }
@@ -102,30 +151,104 @@ export async function sendRentalAdminManualReviewEmail(opts: {
   applicationId: string
   listingTitle: string
 }): Promise<void> {
-  const base = getEmailBaseUrl().replace(/\/$/, '')
-  const link = `${base}/wohnungen/anfragen/${opts.applicationId}`
-  const html = getHelvendaEmailTemplate({
-    title: 'Mietanfrage: manuelle Prüfung',
-    greeting: 'Hallo Team,',
-    content: `
-      <p>Eine Betreibungsregister-Analyse konnte nicht automatisch abgeschlossen werden.</p>
-      <p><strong>Inserat:</strong> ${escapeHtml(opts.listingTitle)}</p>
-      <p><strong>Anwendungs-ID:</strong> ${escapeHtml(opts.applicationId)}</p>
-    `,
-    buttonText: 'Anfrage öffnen',
-    buttonUrl: link,
+  const payload = templateAdminRentalApplicationManualReview({
+    listingTitle: opts.listingTitle,
+    applicationId: opts.applicationId,
   })
-  await sendEmail({
+  await sendWohnenEmail({
     to: 'admin@helvenda.ch',
-    subject: `[Helvenda] Manuelle Prüfung — ${opts.listingTitle}`,
-    html,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
   })
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+export async function sendTenantProfileCreditCheckEmails(opts: {
+  tenantEmail: string
+  tenantUserId: string
+  tenantFirst: { firstName?: string | null; name?: string | null }
+  finalStatus: 'APPROVED' | 'REJECTED' | 'PENDING_MANUAL_REVIEW'
+  creditResult: CreditCheckResult | null
+  validUntil: Date | null
+  /** Für Admin-Mail (PENDING_MANUAL_REVIEW) */
+  userDisplayName: string
+  uploadedAt: Date
+  encryptedFileRef: string
+}): Promise<void> {
+  const fn = firstName(opts.tenantFirst)
+
+  if (opts.finalStatus === 'REJECTED') {
+    const p = templateTenantCreditRejected({ tenantFirstName: fn })
+    await sendWohnenEmail({
+      to: opts.tenantEmail,
+      subject: p.subject,
+      html: p.html,
+      text: p.text,
+      userId: opts.tenantUserId,
+    })
+    return
+  }
+
+  if (opts.finalStatus === 'APPROVED') {
+    if (!opts.creditResult || !opts.validUntil) {
+      console.error('[wohnen-email] APPROVED ohne creditResult oder Ablaufdatum — kein Versand')
+      return
+    }
+    const p = templateTenantCreditVerified({
+      tenantFirstName: fn,
+      result: opts.creditResult,
+      validUntil: opts.validUntil,
+    })
+    await sendWohnenEmail({
+      to: opts.tenantEmail,
+      subject: p.subject,
+      html: p.html,
+      text: p.text,
+      userId: opts.tenantUserId,
+    })
+    return
+  }
+
+  if (opts.finalStatus === 'PENDING_MANUAL_REVIEW') {
+    const p5 = templateTenantCreditManualReview({ tenantFirstName: fn })
+    await sendWohnenEmail({
+      to: opts.tenantEmail,
+      subject: p5.subject,
+      html: p5.html,
+      text: p5.text,
+      userId: opts.tenantUserId,
+    })
+    const p6 = templateAdminCreditManualReview({
+      userDisplayName: opts.userDisplayName,
+      userEmail: opts.tenantEmail,
+      userId: opts.tenantUserId,
+      uploadedAt: opts.uploadedAt,
+      encryptedFileRef: opts.encryptedFileRef,
+    })
+    await sendWohnenEmail({
+      to: 'admin@helvenda.ch',
+      subject: p6.subject,
+      html: p6.html,
+      text: p6.text,
+    })
+  }
+}
+
+export async function sendTenantCreditExpiryReminderEmail(opts: {
+  tenantEmail: string
+  tenantUserId: string
+  tenantFirst: { firstName?: string | null; name?: string | null }
+  expiresOn: Date
+}): Promise<void> {
+  const p = templateTenantCreditExpiryReminder({
+    tenantFirstName: firstName(opts.tenantFirst),
+    expiresOn: opts.expiresOn,
+  })
+  await sendWohnenEmail({
+    to: opts.tenantEmail,
+    subject: p.subject,
+    html: p.html,
+    text: p.text,
+    userId: opts.tenantUserId,
+  })
 }

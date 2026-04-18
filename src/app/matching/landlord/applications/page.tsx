@@ -58,7 +58,7 @@ export default async function MatchingLandlordApplicationsPage() {
         )}
       </div>
       <p className="mt-10 text-sm text-slate-500">
-        <Link href="/matching/properties/new" className="text-teal-800 hover:underline">
+        <Link href="/matching/match-objekte/new" className="text-teal-800 hover:underline">
           Objekt erfassen
         </Link>
       </p>

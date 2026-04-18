@@ -1,20 +1,20 @@
-import { MatchingPropertyWizard } from '@/components/matching/MatchingPropertyWizard'
+import { RentalListingLandlordForm } from '@/components/rental/RentalListingLandlordForm'
 import { authOptions } from '@/lib/auth'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
 import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
-  title: 'Objekt erfassen',
-  description: 'Matching-Objekt manuell erfassen — Adresse, Miete, Regeln.',
+  title: 'Neues Inserat',
+  description: 'Mietwohnung auf Helvenda Wohnungen inserieren.',
 }
 
-export default async function NewMatchingPropertyPage() {
+export default async function NewLandlordRentalPropertyPage() {
   const session = await getServerSession(authOptions)
   const userId = (session?.user as { id?: string } | undefined)?.id
   if (!userId) {
     redirect('/login?callbackUrl=' + encodeURIComponent('/matching/properties/new'))
   }
 
-  return <MatchingPropertyWizard />
+  return <RentalListingLandlordForm mode="create" />
 }

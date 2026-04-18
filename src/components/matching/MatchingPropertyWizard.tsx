@@ -312,12 +312,12 @@ export function MatchingPropertyWizard({
       toast.success(
         isEdit ? 'Änderungen gespeichert. Matching wurde aktualisiert.' : 'Objekt gespeichert. Matching wird neu berechnet.'
       )
-      router.push(isEdit ? '/matching/properties' : '/matching?saved=1')
+      router.push(isEdit ? '/matching/match-objekte' : '/matching?saved=1')
       router.refresh()
     })
   }
 
-  const cancelTarget = cancelHref ?? (isEdit ? '/matching/properties' : '/matching')
+  const cancelTarget = cancelHref ?? (isEdit ? '/matching/match-objekte' : '/matching')
   const finalSubmitDisabled =
     isPending ||
     (urlImportReview ? !rightsConfirmed || importPhotoUrls.length < 3 || !importRequiredOk : false)

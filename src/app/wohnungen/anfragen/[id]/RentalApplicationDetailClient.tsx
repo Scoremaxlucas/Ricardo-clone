@@ -133,10 +133,12 @@ export function RentalApplicationDetailClient() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="font-semibold text-gray-900">Nachricht</h2>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{app.message}</p>
-        </div>
+        {app.message ? (
+          <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="font-semibold text-gray-900">Nachricht</h2>
+            <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{app.message}</p>
+          </div>
+        ) : null}
       </main>
       <Footer />
     </div>
