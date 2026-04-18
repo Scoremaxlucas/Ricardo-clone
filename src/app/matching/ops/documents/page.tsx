@@ -1,7 +1,7 @@
 import { OpsDocumentQueue } from '@/components/matching/OpsDocumentQueue'
 import { authOptions } from '@/lib/auth'
+import { requireMatchingAdmin } from '@/lib/matching/matching-ops-auth'
 import { loadOpsPendingMatchingDocuments } from '@/lib/matching/ops-pending-documents'
-import { prisma } from '@/lib/prisma'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
@@ -19,14 +19,8 @@ export default async function MatchingOpsDocumentsPage() {
     redirect('/login?callbackUrl=' + encodeURIComponent('/matching/ops/documents'))
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isAdmin: true },
-  })
-  const isAdmin = user?.isAdmin === true || session.user?.isAdmin === true
-  if (!isAdmin) {
-    redirect('/matching')
-  }
+  const gate = await requireMatchingAdmin()
+  if (!gate.ok) redirect('/matching')
 
   const rows = await loadOpsPendingMatchingDocuments()
 
@@ -42,8 +36,12 @@ export default async function MatchingOpsDocumentsPage() {
         <OpsDocumentQueue rows={rows} />
       </div>
       <p className="mt-10 text-sm text-slate-500">
+        <Link href="/matching/ops" className="font-medium text-teal-800 underline-offset-2 hover:underline">
+          Ops-Übersicht
+        </Link>
+        {' · '}
         <Link href="/matching" className="font-medium text-teal-800 underline-offset-2 hover:underline">
-          Zurück zur Übersicht
+          Matching
         </Link>
       </p>
     </main>

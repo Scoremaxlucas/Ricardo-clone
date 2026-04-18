@@ -7,6 +7,7 @@ import {
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { appendMatchingAuditLog } from './matching-audit-log'
 import { z } from 'zod'
 
 const reviewSchema = z.object({
@@ -64,6 +65,13 @@ export async function opsReviewMatchingDocumentAction(raw: unknown): Promise<Ops
         data: { status: docStatus },
       }),
     ])
+    await appendMatchingAuditLog({
+      actorUserId: userId,
+      action: `document_verification.${decision}`,
+      entityType: 'document_verification',
+      entityId: documentId,
+      metadata: { verificationId: ver.id, notes: notes?.trim() || null },
+    })
     return { ok: true }
   } catch (e) {
     console.error('opsReviewMatchingDocumentAction', e)

@@ -9,6 +9,7 @@ import {
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { appendMatchingAuditLog } from './matching-audit-log'
 import { ensureSeekerProfileForUser } from './seeker-account'
 import { z } from 'zod'
 
@@ -53,6 +54,14 @@ export async function registerSeekerMatchingDocumentAction(raw: unknown): Promis
         documentId: doc.id,
         status: DocumentVerificationStatus.pending,
       },
+    })
+
+    await appendMatchingAuditLog({
+      actorUserId: userId,
+      action: 'matching_document.register',
+      entityType: 'matching_document',
+      entityId: doc.id,
+      metadata: { kind, seekerProfileId },
     })
 
     return { ok: true, documentId: doc.id }

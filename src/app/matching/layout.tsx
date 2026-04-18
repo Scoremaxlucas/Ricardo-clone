@@ -78,7 +78,7 @@ export default async function MatchingLayout({ children }: { children: React.Rea
             ) : null}
             {isAdmin ? (
               <Link
-                href="/matching/ops/documents"
+                href="/matching/ops"
                 className="rounded-md px-2 py-1.5 font-medium text-amber-900 transition hover:bg-amber-50"
               >
                 Ops

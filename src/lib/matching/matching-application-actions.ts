@@ -10,6 +10,7 @@ import { getServerSession } from 'next-auth/next'
 import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { appendMatchingAuditLog } from './matching-audit-log'
 import { ensureLandlordAccountForUser } from './landlord-account'
 import { ensureSeekerProfileForUser } from './seeker-account'
 import { MATCHING_CONSENT_SCOPES, isMatchingConsentScope } from './consent-scopes'
@@ -117,6 +118,17 @@ export async function createMatchingApplicationFromMatchAction(raw: unknown): Pr
       await seedConsentRows(tx, created.id)
       return created
     })
+    await appendMatchingAuditLog({
+      actorUserId: userId,
+      action: 'matching_application.create',
+      entityType: 'matching_application',
+      entityId: app.id,
+      metadata: {
+        propertyId: match.propertyId,
+        housingMatchId,
+        seekerProfileId,
+      },
+    })
     return { ok: true, applicationId: app.id }
   } catch (e) {
     console.error('createMatchingApplicationFromMatchAction', e)
@@ -150,6 +162,13 @@ export async function updateMatchingApplicationMessageAction(raw: unknown): Prom
       where: { id: applicationId },
       data: { message },
     })
+    await appendMatchingAuditLog({
+      actorUserId: userId,
+      action: 'matching_application.message_update',
+      entityType: 'matching_application',
+      entityId: applicationId,
+      metadata: {},
+    })
     return { ok: true }
   } catch (e) {
     console.error('updateMatchingApplicationMessageAction', e)
@@ -173,6 +192,13 @@ export async function submitMatchingApplicationAction(applicationId: string): Pr
     await prisma.matchingApplication.update({
       where: { id: applicationId },
       data: { status: MatchingApplicationStatus.submitted },
+    })
+    await appendMatchingAuditLog({
+      actorUserId: userId,
+      action: 'matching_application.submit',
+      entityType: 'matching_application',
+      entityId: applicationId,
+      metadata: {},
     })
     return { ok: true }
   } catch (e) {
@@ -201,6 +227,13 @@ export async function withdrawMatchingApplicationAction(applicationId: string): 
     await prisma.matchingApplication.update({
       where: { id: applicationId },
       data: { status: MatchingApplicationStatus.withdrawn },
+    })
+    await appendMatchingAuditLog({
+      actorUserId: userId,
+      action: 'matching_application.withdraw',
+      entityType: 'matching_application',
+      entityId: applicationId,
+      metadata: {},
     })
     return { ok: true }
   } catch (e) {
@@ -246,6 +279,13 @@ export async function setMatchingConsentShareAction(raw: unknown): Promise<Actio
         ? { grantedAt: now, revokedAt: null }
         : { revokedAt: now },
     })
+    await appendMatchingAuditLog({
+      actorUserId: userId,
+      action: granted ? 'consent_share.grant' : 'consent_share.revoke',
+      entityType: 'matching_application',
+      entityId: applicationId,
+      metadata: { scope, granted },
+    })
     return { ok: true }
   } catch (e) {
     console.error('setMatchingConsentShareAction', e)
@@ -290,6 +330,13 @@ export async function landlordDecideMatchingApplicationAction(raw: unknown): Pro
     await prisma.matchingApplication.update({
       where: { id: applicationId },
       data: { status: nextStatus },
+    })
+    await appendMatchingAuditLog({
+      actorUserId: userId,
+      action: `matching_application.landlord_${decision}`,
+      entityType: 'matching_application',
+      entityId: applicationId,
+      metadata: { nextStatus },
     })
     return { ok: true }
   } catch (e) {

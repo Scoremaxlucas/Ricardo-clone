@@ -333,6 +333,12 @@ export default function AdminDashboard() {
             href="/admin/marketing"
             color="green"
           />
+          <ActionCard
+            title="Matching Ops (wohnen)"
+            icon={Shield}
+            href="/admin/matching"
+            color="teal"
+          />
         </div>
       </div>
       <Footer />
