@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Helvenda: DNS-Anleitung wohnen.helvenda.ch öffnen",
+      "type": "shell",
+      "command": "sh -c 'DOC=\"${workspaceFolder}/docs/dns-wohnen-helvenda-ch.md\"; if command -v cursor >/dev/null 2>&1; then cursor \"$DOC\"; elif command -v code >/dev/null 2>&1; then code \"$DOC\"; elif [ \"$(uname)\" = Darwin ]; then open -a Cursor \"$DOC\" 2>/dev/null || open \"$DOC\"; else echo \"Bitte docs/dns-wohnen-helvenda-ch.md manuell öffnen\"; fi'",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "never",
+        "echo": false,
+        "showReuseMessage": false,
+        "close": true,
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    }
+  ]
+}
