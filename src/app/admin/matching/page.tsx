@@ -38,6 +38,11 @@ export default async function AdminMatchingOpsEntryPage() {
       </p>
       <ul className="mt-8 space-y-3 text-teal-800">
         <li>
+          <a href={`${WOHNEN_SITE_ORIGIN}/matching/properties`} className="font-medium underline-offset-2 hover:underline">
+            Meine Objekte (Vermieter) →
+          </a>
+        </li>
+        <li>
           <a href={`${opsBase}`} className="font-medium underline-offset-2 hover:underline">
             Ops-Übersicht öffnen →
           </a>

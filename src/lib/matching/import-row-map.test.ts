@@ -35,6 +35,22 @@ describe('parseWizardRowFromFlat', () => {
     const raw = flatRowToWizardRaw({ haustiere: 'nein' })
     expect(raw.allowPets).toBe(false)
   })
+
+  it('maps paused status from CSV', () => {
+    const row: Record<string, string> = {
+      titel: 'Test',
+      plz: '3000',
+      ort: 'Bern',
+      kanton: 'be',
+      zimmer: '2',
+      miete: '1200',
+      ab: '01.01.2026',
+      status: 'pausiert',
+    }
+    const r = parseWizardRowFromFlat(row)
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.data.status).toBe('paused')
+  })
 })
 
 describe('parseMatchingImportCsvText', () => {

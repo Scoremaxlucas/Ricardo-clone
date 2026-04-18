@@ -61,3 +61,11 @@ export async function checkMatchingPropertyCreateRateLimit(userId: string) {
     window: MATCHING_RATE_WINDOWS.hour,
   })
 }
+
+export async function checkMatchingPropertyUpdateRateLimit(userId: string) {
+  return checkRateLimit({
+    identifier: `matching:action:property:update:${userId}`,
+    limit: 80,
+    window: MATCHING_RATE_WINDOWS.hour,
+  })
+}

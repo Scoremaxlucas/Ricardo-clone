@@ -9,7 +9,15 @@ export type {
 export { evaluateMatch, parsePostalCodesList } from './evaluate-match'
 export { parseLandlordRules, petsAllowed } from './landlord-rules'
 export { recomputeMatchesForProperty, recomputeMatchesForSeeker } from './persist-matches'
-export { ensureLandlordAccountForUser } from './landlord-account'
+export { createMatchingPropertyFromWizard } from './create-property-action'
+export { updateMatchingPropertyFromWizard } from './update-matching-property-action'
+export { ensureLandlordAccountForUser, getLandlordAccountIdForUser } from './landlord-account'
+export type { MatchingPropertyListRow, MatchingPropertyWizardSnapshot } from './landlord-matching-properties'
+export {
+  loadMatchingPropertiesForLandlordUser,
+  loadMatchingPropertyWizardSnapshotForOwner,
+} from './landlord-matching-properties'
+export { matchingWizardToPrismaPropertyFields, matchWizardStatusToPrisma } from './matching-property-wizard-db'
 export type { MatchingPropertyWizardInput } from './property-wizard-schema'
 export { matchingPropertyWizardSchema } from './property-wizard-schema'
 export { computeSeekerProfileCompleteness } from './seeker-profile-completeness'

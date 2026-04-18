@@ -31,7 +31,7 @@ export type PropertyMatchingInput = {
   rooms: number
   rentPerMonth: number
   availableFrom: Date | null
-  /** Nur `active` liefert in der Regel Treffer; andere Status können hart ausfallen */
+  /** Nur `active` liefert Treffer; andere Status schlagen im Matcher hart fehl. */
   status: 'draft' | 'active' | 'paused' | 'archived'
 }
 

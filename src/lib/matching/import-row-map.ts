@@ -80,10 +80,12 @@ function parseLooseBool(raw: string): boolean | undefined {
   return undefined
 }
 
-function normalizeStatus(raw: string): 'draft' | 'active' | undefined {
+function normalizeStatus(raw: string): 'draft' | 'active' | 'paused' | 'archived' | undefined {
   const x = raw.trim().toLowerCase()
   if (['draft', 'entwurf', 'd'].includes(x)) return 'draft'
   if (['active', 'aktiv', 'published', 'live', 'a'].includes(x)) return 'active'
+  if (['paused', 'pause', 'pausiert', 'p', 'inaktiv'].includes(x)) return 'paused'
+  if (['archived', 'archive', 'archiv', 'archiviert', 'geschlossen'].includes(x)) return 'archived'
   return undefined
 }
 

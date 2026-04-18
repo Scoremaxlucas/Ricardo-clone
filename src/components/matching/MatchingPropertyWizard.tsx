@@ -1,6 +1,8 @@
 'use client'
 
 import { createMatchingPropertyFromWizard } from '@/lib/matching/create-property-action'
+import type { MatchingPropertyWizardSnapshot } from '@/lib/matching/landlord-matching-properties'
+import { updateMatchingPropertyFromWizard } from '@/lib/matching/update-matching-property-action'
 import { useRouter } from 'next/navigation'
 import { useCallback, useMemo, useState, useTransition } from 'react'
 import toast from 'react-hot-toast'
@@ -51,7 +53,7 @@ type FormState = {
   availableTo: string
   petPolicyNote: string
   allowPets: boolean
-  status: 'draft' | 'active'
+  status: 'draft' | 'active' | 'paused' | 'archived'
 }
 
 const emptyForm = (): FormState => ({
@@ -72,10 +74,43 @@ const emptyForm = (): FormState => ({
   status: 'draft',
 })
 
-export function MatchingPropertyWizard() {
+function formFromSnapshot(s: MatchingPropertyWizardSnapshot): FormState {
+  return {
+    title: s.title,
+    description: s.description,
+    addressLine: s.addressLine,
+    zip: s.zip,
+    city: s.city,
+    canton: s.canton,
+    rooms: s.rooms,
+    areaSqm: s.areaSqm,
+    floor: s.floor,
+    rentPerMonth: s.rentPerMonth,
+    availableFrom: s.availableFrom,
+    availableTo: s.availableTo,
+    petPolicyNote: s.petPolicyNote,
+    allowPets: s.allowPets,
+    status: s.status,
+  }
+}
+
+type MatchingPropertyWizardProps = {
+  mode?: 'create' | 'edit'
+  propertyId?: string
+  initialSnapshot?: MatchingPropertyWizardSnapshot | null
+}
+
+export function MatchingPropertyWizard({
+  mode = 'create',
+  propertyId,
+  initialSnapshot = null,
+}: MatchingPropertyWizardProps) {
   const router = useRouter()
+  const isEdit = mode === 'edit'
   const [step, setStep] = useState(0)
-  const [form, setForm] = useState<FormState>(emptyForm)
+  const [form, setForm] = useState<FormState>(() =>
+    isEdit && initialSnapshot ? formFromSnapshot(initialSnapshot) : emptyForm()
+  )
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [isPending, startTransition] = useTransition()
 
@@ -151,14 +186,19 @@ export function MatchingPropertyWizard() {
       return
     }
     startTransition(async () => {
-      const res = await createMatchingPropertyFromWizard(payload)
+      const res =
+        isEdit && propertyId
+          ? await updateMatchingPropertyFromWizard(propertyId, payload)
+          : await createMatchingPropertyFromWizard(payload)
       if (!res.ok) {
         if (res.fieldErrors) setFieldErrors(res.fieldErrors)
         toast.error(res.error)
         return
       }
-      toast.success('Objekt gespeichert. Matching wird neu berechnet.')
-      router.push('/matching?saved=1')
+      toast.success(
+        isEdit ? 'Änderungen gespeichert. Matching wurde aktualisiert.' : 'Objekt gespeichert. Matching wird neu berechnet.'
+      )
+      router.push(isEdit ? '/matching/properties' : '/matching?saved=1')
       router.refresh()
     })
   }
@@ -167,9 +207,11 @@ export function MatchingPropertyWizard() {
     <main className="mx-auto max-w-2xl px-4 py-8 sm:py-10">
       <div className="mb-8">
         <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">Matching · Vermieter</p>
-        <h1 className="mt-1 text-2xl font-bold text-slate-900">Objekt erfassen</h1>
+        <h1 className="mt-1 text-2xl font-bold text-slate-900">{isEdit ? 'Objekt bearbeiten' : 'Objekt erfassen'}</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Manuelles Erfassen eines Matching-Objekts (getrennt von klassischen Miet-Inseraten).
+          {isEdit
+            ? 'Stammdaten, Miete und Veröffentlichungsstatus anpassen — getrennt vom klassischen Marktplatz.'
+            : 'Manuelles Erfassen eines Matching-Objekts (getrennt von klassischen Miet-Inseraten).'}
         </p>
       </div>
 
@@ -379,6 +421,24 @@ export function MatchingPropertyWizard() {
                   />
                   <span className="text-sm text-slate-700">Aktiv (für Matching sichtbar)</span>
                 </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="pub"
+                    checked={form.status === 'paused'}
+                    onChange={() => set('status', 'paused')}
+                  />
+                  <span className="text-sm text-slate-700">Pausiert (vorübergehend aus dem Matching)</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="pub"
+                    checked={form.status === 'archived'}
+                    onChange={() => set('status', 'archived')}
+                  />
+                  <span className="text-sm text-slate-700">Archiviert (dauerhaft ohne aktives Matching)</span>
+                </label>
               </div>
             </fieldset>
           </div>
@@ -416,7 +476,11 @@ export function MatchingPropertyWizard() {
       </div>
 
       <p className="mt-6 text-center text-xs text-slate-500">
-        <button type="button" onClick={() => router.push('/matching')} className="text-teal-800 underline">
+        <button
+          type="button"
+          onClick={() => router.push(isEdit ? '/matching/properties' : '/matching')}
+          className="text-teal-800 underline"
+        >
           Abbrechen
         </button>
       </p>

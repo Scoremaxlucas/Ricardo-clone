@@ -37,10 +37,16 @@ export default async function MatchingLayout({ children }: { children: React.Rea
               Marktplatz
             </a>
             <Link
+              href="/matching/properties"
+              className="rounded-md px-2 py-1.5 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              Meine Objekte
+            </Link>
+            <Link
               href="/matching/properties/new"
               className="rounded-md px-2 py-1.5 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
             >
-              Objekt
+              Neu
             </Link>
             <Link
               href="/matching/properties/import"

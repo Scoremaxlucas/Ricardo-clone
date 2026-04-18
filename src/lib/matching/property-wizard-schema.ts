@@ -76,7 +76,7 @@ export const matchingPropertyWizardSchema = z.object({
     .nullable()
     .transform(v => (v == null || v.trim() === '' ? null : v.trim())),
   allowPets: z.boolean().default(true),
-  status: z.enum(['draft', 'active']),
+  status: z.enum(['draft', 'active', 'paused', 'archived']),
 })
 
 export type MatchingPropertyWizardInput = z.infer<typeof matchingPropertyWizardSchema>
