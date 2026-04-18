@@ -15,14 +15,31 @@ npx prisma generate
 echo "📦 Applying Prisma migrations (prisma migrate deploy)..."
 MATCH_PHASE2="20260405120000_matching_mvp_phase2"
 
+# P1002 auf Vercel/Neon: Standard-Advisory-Lock-Timeout (10s) reicht oft nicht (Pooler, parallele Deploys).
+# Überschreibbar in Vercel: PRISMA_MIGRATE_ADVISORY_LOCK_TIMEOUT (Millisekunden).
+export PRISMA_MIGRATE_ADVISORY_LOCK_TIMEOUT="${PRISMA_MIGRATE_ADVISORY_LOCK_TIMEOUT:-180000}"
+
 # Nach P3018 (fehlgeschlagene Migration): Eintrag zurücksetzen, damit korrigierte SQL erneut laufen darf
 npx prisma migrate resolve --rolled-back "$MATCH_PHASE2" 2>/dev/null || true
 
-set +e
-DEPLOY_OUT=$(npx prisma migrate deploy 2>&1)
-DEPLOY_CODE=$?
-set -e
-echo "$DEPLOY_OUT"
+DEPLOY_CODE=1
+DEPLOY_OUT=""
+for attempt in 1 2 3 4; do
+  set +e
+  DEPLOY_OUT=$(npx prisma migrate deploy 2>&1)
+  DEPLOY_CODE=$?
+  set -e
+  echo "$DEPLOY_OUT"
+  if [ "$DEPLOY_CODE" -eq 0 ]; then
+    break
+  fi
+  if echo "$DEPLOY_OUT" | grep -q "P1002"; then
+    echo "⚠️ P1002 (Advisory-Lock / DB-Timeout), Wiederholung $attempt/4 in 25s …"
+    sleep 25
+    continue
+  fi
+  break
+done
 
 if [ "$DEPLOY_CODE" -ne 0 ]; then
   if echo "$DEPLOY_OUT" | grep -q "P3005"; then
