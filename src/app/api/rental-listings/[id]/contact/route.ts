@@ -9,7 +9,7 @@ import {
   sendRentalLandlordNewApplicationEmail,
 } from '@/lib/rental/emails'
 import { encryptPdfForStorageBestEffort } from '@/lib/rental/pdf-crypto'
-import { applicationStatusFromCreditParse, parseCreditCheckFromPdfBase64 } from '@/lib/rental/parse-credit-check'
+import { applicationStatusFromCreditParse, parseCreditCheckFromPdfBase64 } from '@/lib/rental/parseCreditCheck'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { isCreditCheckResult } from '@/lib/rental/types'
 import { getServerSession } from 'next-auth/next'

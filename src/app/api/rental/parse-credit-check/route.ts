@@ -1,5 +1,5 @@
 import { authOptions } from '@/lib/auth'
-import { parseCreditCheckFromPdfBase64 } from '@/lib/rental/parse-credit-check'
+import { parseCreditCheckFromPdfBase64 } from '@/lib/rental/parseCreditCheck'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 

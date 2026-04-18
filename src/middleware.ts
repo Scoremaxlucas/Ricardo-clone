@@ -34,7 +34,9 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/api/user/')) return true
   if (pathname.startsWith('/api/rental-listings')) return true
   if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
-  if (pathname === '/profil/erstellen') return true
+  if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
+  if (pathname.startsWith('/api/tenant-profile')) return true
+  if (pathname === '/meine-bewerbungen') return true
   if (pathname === '/') return true
   if (pathname === '/matching' || pathname.startsWith('/matching/')) return true
   if (

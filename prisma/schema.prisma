@@ -166,6 +166,7 @@ model User {
   marketingContacts             MarketingContact[]
   rentalListings                RentalListing[]
   rentalApplicationsAsApplicant RentalApplication[]   @relation("RentalApplicationApplicant")
+  tenantProfile                 TenantProfile?
 
   // === HELVENDA MATCHING (eigenes Datenmodell, nicht RentalListing) ===
   landlordMemberships              LandlordMembership[]
@@ -1742,6 +1743,74 @@ model RentalApplication {
   @@index([applicantUserId])
   @@index([status])
   @@map("rental_applications")
+}
+
+// ============================================
+// HELVENDA WOHNEN — Mieterprofil (Phase 3)
+// ============================================
+
+enum EmploymentStatus {
+  EMPLOYED
+  SELF_EMPLOYED
+  STUDENT
+  RETIRED
+  UNEMPLOYED
+  OTHER
+}
+
+enum IncomeCategory {
+  UNDER_2000
+  FROM_2000_TO_3000
+  FROM_3000_TO_4000
+  FROM_4000_TO_5000
+  FROM_5000_TO_7000
+  ABOVE_7000
+}
+
+enum CreditCheckStatus {
+  NONE
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+  PENDING_MANUAL_REVIEW
+}
+
+model TenantProfile {
+  id                    String             @id @default(cuid())
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  userId                String             @unique
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  firstName             String
+  lastName              String
+  dateOfBirth           DateTime
+  currentAddress        String
+  currentZip            String
+  currentCity           String
+
+  employmentStatus      EmploymentStatus
+  employer              String?
+  jobTitle              String?
+  employedSince         DateTime?
+
+  monthlyIncomeCategory IncomeCategory
+
+  referenceName         String?
+  referencePhone        String?
+  referenceRelation     String?
+
+  creditCheckStatus     CreditCheckStatus @default(NONE)
+  creditCheckResult     Json?
+  encryptedFileRef      String?
+  creditCheckUploadedAt DateTime?
+  creditCheckExpiresAt  DateTime?
+
+  isComplete            Boolean            @default(false)
+
+  @@index([userId])
+  @@map("tenant_profiles")
 }
 
 // ============================================

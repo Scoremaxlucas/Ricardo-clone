@@ -9,7 +9,12 @@ type Props = {
   rentPerMonth: number
   requiresCreditCheck: boolean
   userId: string | null
-  hasSeekerProfile: boolean
+  /** Profil vollständig gespeichert (isComplete) */
+  profileComplete: boolean
+  /** Betreibungsregister gültig (APPROVED + nicht abgelaufen), falls erforderlich */
+  creditCheckOk: boolean
+  /** Mieter kann sich technisch bewerben (Phase 4 folgt) */
+  tenantApplyReady: boolean
   isOwner: boolean
 }
 
@@ -18,7 +23,9 @@ export function WohnungBewerbungsBox({
   rentPerMonth,
   requiresCreditCheck,
   userId,
-  hasSeekerProfile,
+  profileComplete,
+  creditCheckOk,
+  tenantApplyReady,
   isOwner,
 }: Props) {
   const router = useRouter()
@@ -32,11 +39,15 @@ export function WohnungBewerbungsBox({
       setModal(true)
       return
     }
-    if (!hasSeekerProfile) {
+    if (!profileComplete) {
       router.push(`/profil/erstellen?next=${encodeURIComponent(detailPath)}`)
       return
     }
-    // Phase 4: /wohnungen/[id]/bewerben — noch nicht vorhanden
+    if (requiresCreditCheck && !creditCheckOk) {
+      router.push('/profil/betreibungsregister')
+      return
+    }
+    // Phase 4: /wohnungen/[id]/bewerben
   }
 
   if (isOwner) {
@@ -47,7 +58,7 @@ export function WohnungBewerbungsBox({
     )
   }
 
-  const showComingSoon = Boolean(userId && hasSeekerProfile)
+  const showComingSoon = Boolean(userId && tenantApplyReady)
 
   return (
     <>

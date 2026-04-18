@@ -66,11 +66,17 @@ export default async function WohnungDetailPage({ params }: PageProps) {
   const session = await getServerSession(authOptions)
   const userId = (session?.user as { id?: string } | undefined)?.id ?? null
 
-  let hasSeekerProfile = false
-  if (userId) {
-    const sp = await prisma.seekerProfile.findUnique({ where: { userId }, select: { id: true } })
-    hasSeekerProfile = Boolean(sp)
-  }
+  const tenantProfile = userId
+    ? await prisma.tenantProfile.findUnique({ where: { userId } })
+    : null
+  const profileComplete = Boolean(tenantProfile?.isComplete)
+  const creditCheckOk = Boolean(
+    tenantProfile?.creditCheckStatus === 'APPROVED' &&
+      tenantProfile.creditCheckExpiresAt &&
+      tenantProfile.creditCheckExpiresAt.getTime() > Date.now()
+  )
+  const tenantApplyReady =
+    profileComplete && (!listing.requiresCreditCheck || creditCheckOk)
 
   const isOwner = Boolean(userId && userId === listing.userId)
   const photos = parseRentalListingPhotosJson(listing.photos)
@@ -146,7 +152,9 @@ export default async function WohnungDetailPage({ params }: PageProps) {
               rentPerMonth={listing.rentPerMonth}
               requiresCreditCheck={listing.requiresCreditCheck}
               userId={userId}
-              hasSeekerProfile={hasSeekerProfile}
+              profileComplete={profileComplete}
+              creditCheckOk={creditCheckOk}
+              tenantApplyReady={tenantApplyReady}
               isOwner={isOwner}
             />
           </aside>

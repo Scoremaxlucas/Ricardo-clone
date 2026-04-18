@@ -1,4 +1,4 @@
-import type { RentalApplicationStatus } from '@prisma/client'
+import type { CreditCheckStatus, RentalApplicationStatus } from '@prisma/client'
 import Anthropic from '@anthropic-ai/sdk'
 import type { CreditCheckResult } from './types'
 import { isCreditCheckResult } from './types'
@@ -89,14 +89,12 @@ export async function parseCreditCheckFromPdfBase64(pdfBase64: string): Promise<
 
     return { ok: true, result: parsed }
   } catch (e) {
-    console.error('[parse-credit-check]', e)
+    console.error('[parseCreditCheck]', e)
     return { ok: false, error: 'api' }
   }
 }
 
-export function applicationStatusFromCreditParse(
-  outcome: ParseOutcome
-): RentalApplicationStatus {
+export function applicationStatusFromCreditParse(outcome: ParseOutcome): RentalApplicationStatus {
   if (!outcome.ok) {
     return 'pending_manual_review'
   }
@@ -105,4 +103,15 @@ export function applicationStatusFromCreditParse(
     return 'rejected'
   }
   return 'approved'
+}
+
+/** Status für TenantProfile nach Anthropic-Auswertung (Miet-Bewerbungen nutzen weiter `applicationStatusFromCreditParse`). */
+export function tenantCreditCheckStatusFromParse(outcome: ParseOutcome): CreditCheckStatus {
+  if (!outcome.ok) {
+    return outcome.error === 'api' ? 'PENDING_MANUAL_REVIEW' : 'REJECTED'
+  }
+  if (!outcome.result.isValid || !outcome.result.isRecent) {
+    return 'REJECTED'
+  }
+  return 'APPROVED'
 }
