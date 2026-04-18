@@ -31,9 +31,14 @@ type DeferLevel = 'immediate' | 'afterPaint' | 'afterTTI' | 'idle'
 
 interface DeferredComponentsProps {
   children?: React.ReactNode
+  /** Auf `wohnen.helvenda.ch` (Matching): kein Marktplatz-Prefetch, Emma, PWA-Prompt, SW. */
+  suppressMarketplaceWidgets?: boolean
 }
 
-export function DeferredComponents({ children }: DeferredComponentsProps) {
+export function DeferredComponents({
+  children,
+  suppressMarketplaceWidgets = false,
+}: DeferredComponentsProps) {
   const [paintComplete, setPaintComplete] = useState(false)
   const [ttiComplete, setTtiComplete] = useState(false)
   const [idleComplete, setIdleComplete] = useState(false)
@@ -83,21 +88,21 @@ export function DeferredComponents({ children }: DeferredComponentsProps) {
       {children}
 
       {/* Phase 1: Nach First Paint - Prefetch vorbereiten */}
-      {paintComplete && (
+      {paintComplete && !suppressMarketplaceWidgets && (
         <Suspense fallback={null}>
           <LazyPrefetchOnHover />
         </Suspense>
       )}
 
       {/* Phase 2: Nach TTI - Service Worker registrieren */}
-      {ttiComplete && (
+      {ttiComplete && !suppressMarketplaceWidgets && (
         <Suspense fallback={null}>
           <LazyServiceWorker />
         </Suspense>
       )}
 
       {/* Phase 3: Idle - AI Chat laden + PWA Install Prompt */}
-      {idleComplete && (
+      {idleComplete && !suppressMarketplaceWidgets && (
         <>
           <Suspense fallback={null}>
             <LazyEmmaChat />

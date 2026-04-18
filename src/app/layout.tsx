@@ -3,7 +3,9 @@ import { CookieConsent } from '@/components/CookieConsent'
 import { DeferredComponents } from '@/components/DeferredComponents'
 import { SkipLinks } from '@/components/accessibility/SkipLinks'
 import { Providers } from '@/components/providers'
+import { isWohnenMatchingHostFromHeaders } from '@/lib/tenant-host'
 import { BASE_URL } from '@/lib/seo'
+import { headers } from 'next/headers'
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
@@ -61,6 +63,8 @@ export const viewport: Viewport = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const isWohnenMatching = isWohnenMatchingHostFromHeaders(headers())
+
   return (
     <html lang="de" className="h-full">
       <head>
@@ -105,11 +109,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }}
           />
 
-          {/* Analytics Tracker - lightweight, non-blocking */}
-          <AnalyticsTracker />
+          {/* Analytics: nur Marktplatz-Tenant (Matching-Subdomain bleibt eigenständig) */}
+          {!isWohnenMatching && <AnalyticsTracker />}
 
           {/* Nicht-kritische Komponenten - verzögert geladen */}
-          <DeferredComponents />
+          <DeferredComponents suppressMarketplaceWidgets={isWohnenMatching} />
 
           {/* Cookie-Consent-Banner - DSGVO/DSG konform */}
           <CookieConsent />

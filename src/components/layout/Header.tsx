@@ -47,7 +47,8 @@ import {
   X,
 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
-import { sellEntryHref, sellRentEntryHref } from '@/lib/sell-navigation'
+import { sellEntryHref } from '@/lib/sell-navigation'
+import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { memo, useCallback, useEffect, useRef, useState, useTransition } from 'react'
@@ -70,7 +71,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   const router = useRouter()
   const pathname = usePathname() ?? ''
   const sellFromHere = sellEntryHref(pathname)
-  const sellRentFromHere = sellRentEntryHref(pathname)
   const isSellWizardRoute = pathname.startsWith('/sell')
   const { language, setLanguage, t } = useLanguage()
   const [isPending, startTransition] = useTransition()
@@ -375,14 +375,13 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 </button>
 
                 {/* Top Categories - Horizontal Scroll with smooth animations */}
-                <Link
-                  href="/wohnungen"
-                  prefetch={true}
+                <a
+                  href={`${WOHNEN_SITE_ORIGIN}/`}
                   className="flex flex-shrink-0 items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-xs font-semibold text-teal-900 transition-all duration-200 hover:bg-teal-100 active:scale-95"
                 >
                   <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span className="whitespace-nowrap">Mietwohnungen</span>
-                </Link>
+                  <span className="whitespace-nowrap">Matching</span>
+                </a>
                 {[
                   { slug: 'kleidung-accessoires', name: 'Kleidung', icon: Shirt },
                   { slug: 'auto-motorrad', name: 'Fahrzeuge', icon: Car },
@@ -426,7 +425,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   setIsProfileMenuOpen(false)
                   handleMenuEnter(setIsSellMenuOpen)
                   handlePrefetch('/sell')
-                  handlePrefetch('/sell/rent')
                 }}
                 onMouseLeave={() => handleMenuLeave(setIsSellMenuOpen)}
               >
@@ -460,16 +458,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                       >
                         <div className="font-medium">📦 Artikel verkaufen</div>
                         <div className="text-xs text-gray-500">{t.header.singleItemDesc}</div>
-                      </Link>
-                      <div className="mx-2 border-t border-teal-100" />
-                      <Link
-                        href={sellRentFromHere}
-                        prefetch={true}
-                        onClick={() => setIsSellMenuOpen(false)}
-                        className="block px-4 py-2.5 text-sm text-gray-800 transition-colors hover:bg-teal-50 hover:text-primary-700"
-                      >
-                        <div className="font-medium">🏠 Wohnung inserieren</div>
-                        <div className="text-xs text-gray-500">Mietwohnung schalten</div>
                       </Link>
                     </div>
                   </>
@@ -782,15 +770,13 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
             {/* Divider */}
             <div className="mx-1 h-5 w-px bg-gray-300" />
 
-            <Link
-              href="/wohnungen"
-              prefetch={true}
-              onMouseEnter={() => handlePrefetch('/wohnungen')}
+            <a
+              href={`${WOHNEN_SITE_ORIGIN}/`}
               className="group flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50/90 px-3 py-1.5 text-[13px] font-semibold text-teal-900 transition-all duration-200 hover:bg-teal-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 active:translate-y-0"
             >
               <Building2 className="h-4 w-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
-              <span className="whitespace-nowrap">Mietwohnungen</span>
-            </Link>
+              <span className="whitespace-nowrap">Matching</span>
+            </a>
 
             {/* Top 8 Categories with smooth hover animations */}
             {[
@@ -900,7 +886,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                     </Link>
                   )}
 
-                  {/* CTA: Artikel vs. Mietwohnung */}
+                  {/* CTA: Artikel verkaufen */}
                   <div className="space-y-2 px-4 py-4">
                     <Link
                       href={sellFromHere}
@@ -909,13 +895,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                     >
                       <Plus className="h-4 w-4 stroke-[2.5]" />
                       <span>📦 Artikel verkaufen</span>
-                    </Link>
-                    <Link
-                      href={sellRentFromHere}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-teal-500 bg-white px-5 py-3.5 text-sm font-semibold text-primary-800 transition-all duration-200 hover:bg-teal-50 active:scale-[0.98]"
-                    >
-                      <span>🏠 Wohnung inserieren</span>
                     </Link>
                   </div>
 

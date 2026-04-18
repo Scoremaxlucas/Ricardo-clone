@@ -68,13 +68,4 @@ export function sellLinkWithReturn(path: string): string {
   return buildSellUrl({ returnTo: v || undefined })
 }
 
-/** Eintrag Mietwohnung — gleiche returnTo-Logik wie /sell */
-export function sellRentEntryHref(pathname: string | null | undefined): string {
-  const p = pathname ?? '/'
-  const from = p.startsWith('/sell') ? '/wohnungen' : p
-  const v = parseSellReturnTo(from)
-  const sp = new URLSearchParams()
-  if (v) sp.set(SELL_RETURN_QUERY, v)
-  const q = sp.toString()
-  return q ? `/sell/rent?${q}` : '/sell/rent'
-}
+

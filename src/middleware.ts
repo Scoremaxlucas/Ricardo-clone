@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
+import { MAIN_SHOP_ORIGIN, WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 
 const WOHNEN_PREVIEW_COOKIE = 'helvenda-wohnen-preview'
 
@@ -22,19 +22,15 @@ function isWohnenTenant(request: NextRequest): boolean {
   return false
 }
 
+/**
+ * Nur Matching-MVP + Auth + minimale APIs. Kein Marktplatz-/Miet-Inserat-UI auf dieser Subdomain.
+ */
 function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/api/auth')) return true
+  if (pathname.startsWith('/api/matching')) return true
   if (pathname.startsWith('/api/upload')) return true
-  if (pathname.startsWith('/api/rental-listings')) return true
-  if (pathname.startsWith('/api/rental-applications')) return true
-  if (pathname.startsWith('/api/rental/')) return true
   if (pathname.startsWith('/api/user/')) return true
-  if (pathname === '/api/favorites' || pathname.startsWith('/api/favorites/')) return true
-  if (pathname.startsWith('/api/notifications/')) return true
-  if (pathname.startsWith('/api/search/suggestions')) return true
-  if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
-  if (pathname === '/sell/rent' || pathname.startsWith('/sell/rent/')) return true
-  if (pathname === '/wohnen-home' || pathname.startsWith('/wohnen-home/')) return true
+  if (pathname === '/matching' || pathname.startsWith('/matching/')) return true
   if (
     pathname === '/login' ||
     pathname === '/register' ||
@@ -67,6 +63,20 @@ export function middleware(request: NextRequest) {
 
   const host = rawHost(request)
 
+  // Marktplatz (www): Matching-Einstieg nur auf wohnen.helvenda.ch
+  if (pathname === '/matching' || pathname.startsWith('/matching/')) {
+    let mainHost = ''
+    try {
+      mainHost = new URL(MAIN_SHOP_ORIGIN).hostname.toLowerCase()
+    } catch {
+      mainHost = ''
+    }
+    if (mainHost && host === mainHost && !isWohnenTenant(request)) {
+      const target = new URL(pathname + search, WOHNEN_SITE_ORIGIN)
+      return NextResponse.redirect(target)
+    }
+  }
+
   // localhost: ?subdomain=wohnen → Cookie setzen und Query entfernen (damit Folge-Klicks funktionieren)
   if ((host === 'localhost' || host === '127.0.0.1') && request.nextUrl.searchParams.get('subdomain') === 'wohnen') {
     const clean = request.nextUrl.clone()
@@ -83,7 +93,7 @@ export function middleware(request: NextRequest) {
   if (isWohnenTenant(request)) {
     if (pathname === '/') {
       const internal = request.nextUrl.clone()
-      internal.pathname = '/wohnen-home'
+      internal.pathname = '/matching'
       return NextResponse.rewrite(internal)
     }
     if (!isAllowedOnWohnen(pathname)) {
@@ -92,7 +102,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Unbekannter Host (z.B. Preview): nicht eingreifen
   return NextResponse.next()
 }
 
