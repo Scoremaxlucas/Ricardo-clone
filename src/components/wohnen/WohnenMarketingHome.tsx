@@ -1,9 +1,10 @@
 import { CreditCheckBadge } from '@/components/rental/CreditCheckBadge'
+import { RentalListingCard } from '@/components/rental/RentalListingCard'
 import { WohnenPublicNav } from '@/components/wohnen/WohnenPublicNav'
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 import { loadWohnenHomeListings } from '@/lib/rental/wohnen-home-listings'
 import type { CreditCheckResult } from '@/lib/rental/types'
-import { Building2, FileText, Home, MapPin, Rocket, ShieldCheck, User } from 'lucide-react'
+import { FileText, Home, MapPin, Rocket, ShieldCheck, User } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
@@ -54,8 +55,6 @@ function StepCard({
 
 export async function WohnenMarketingHome() {
   const listings = await loadWohnenHomeListings(6)
-  const now = Date.now()
-  const isNew = (d: Date) => now - d.getTime() < 48 * 3600000
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -251,54 +250,24 @@ export async function WohnenMarketingHome() {
           ) : (
             <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {listings.map(l => (
-                <Link
+                <RentalListingCard
                   key={l.id}
-                  href={`/wohnungen/${l.id}`}
-                  className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-teal-300 hover:shadow-md"
-                >
-                  <div className="relative aspect-[4/3] bg-slate-100">
-                    {l.firstPhotoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={l.firstPhotoUrl} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-slate-400">
-                        <Building2 className="h-14 w-14" aria-hidden />
-                      </div>
-                    )}
-                    <div className="absolute left-2 top-2 flex flex-wrap gap-1">
-                      {isNew(l.createdAt) ? (
-                        <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-white">
-                          Neu
-                        </span>
-                      ) : null}
-                    </div>
-                    {l.requiresCreditCheck ? (
-                      <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-teal-800/95 px-2 py-0.5 text-[11px] font-medium text-white">
-                        📄 Betreibungsregister erforderlich
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-slate-900 line-clamp-2 group-hover:text-teal-800">{l.title}</h3>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {l.rooms} Zi. · {l.areaSqm} m²
-                      {l.floor != null ? ` · Etage ${l.floor}` : ''}
-                    </p>
-                    <p className="mt-2 text-lg font-bold text-teal-800">
-                      CHF {l.rentPerMonth.toLocaleString('de-CH')} / Monat
-                      {l.utilitiesPerMonth != null ? (
-                        <span className="text-sm font-normal text-slate-500">
-                          {' '}
-                          + NK CHF {l.utilitiesPerMonth.toLocaleString('de-CH')}
-                        </span>
-                      ) : null}
-                    </p>
-                    <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" />
-                      {l.zip} {l.city} · {l.canton}
-                    </p>
-                  </div>
-                </Link>
+                  listing={{
+                    id: l.id,
+                    title: l.title,
+                    city: l.city,
+                    canton: l.canton,
+                    rooms: l.rooms,
+                    areaSqm: l.areaSqm,
+                    floor: l.floor,
+                    rentPerMonth: l.rentPerMonth,
+                    utilitiesPerMonth: l.utilitiesPerMonth,
+                    availableFrom: l.availableFrom,
+                    photos: l.photos,
+                    requiresCreditCheck: l.requiresCreditCheck,
+                    createdAt: l.createdAt,
+                  }}
+                />
               ))}
             </div>
           )}

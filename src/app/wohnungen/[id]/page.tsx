@@ -1,270 +1,170 @@
-'use client'
-
-import { Footer } from '@/components/layout/Footer'
-import { Header } from '@/components/layout/Header'
-import { Loader2, MapPin } from 'lucide-react'
+import { RentalListingCard } from '@/components/rental/RentalListingCard'
+import { ListingExpandableDescription } from '@/components/rental/ListingExpandableDescription'
+import { RentalListingDetailGallery } from '@/components/rental/RentalListingDetailGallery'
+import { WohnungBewerbungsBox } from '@/components/rental/WohnungBewerbungsBox'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import {
+  fetchActiveRentalListingById,
+  fetchSimilarRentalListings,
+  parseRentalListingPhotosJson,
+  rentalListingRowToCardData,
+} from '@/lib/rental/rental-listings-public'
+import { SWISS_CANTONS } from '@/lib/swiss-cantons'
+import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
+import { Calendar, MapPin } from 'lucide-react'
+import type { Metadata } from 'next'
+import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
-import toast from 'react-hot-toast'
+import { notFound } from 'next/navigation'
 
-type ListingDetail = {
-  id: string
-  title: string
-  description: string
-  address: string
-  zip: string
-  city: string
-  canton: string
-  rooms: number
-  areaSqm: number
-  floor: number | null
-  rentPerMonth: number
-  utilitiesPerMonth: number | null
-  depositAmount: number | null
-  availableFrom: string
-  requiresCreditCheck: boolean
-  images: string[]
-  userId: string
-  landlord: {
-    id: string
-    name: string | null
-    firstName: string | null
-    nickname: string | null
-    image: string | null
-    verified: boolean
-  } | null
+type PageProps = { params: Promise<{ id: string }> }
+
+function absOgImage(url: string) {
+  const u = url.trim()
+  if (u.startsWith('https://') || u.startsWith('http://')) return u
+  if (u.startsWith('//')) return `https:${u}`
+  if (u.startsWith('/')) return `${WOHNEN_SITE_ORIGIN}${u}`
+  return `${WOHNEN_SITE_ORIGIN}/${u}`
 }
 
-export default function WohnungDetailPage() {
-  const params = useParams()
-  const id = params?.id as string
-  const router = useRouter()
-  const { data: session } = useSession()
-  const [loading, setLoading] = useState(true)
-  const [listing, setListing] = useState<ListingDetail | null>(null)
-  const [message, setMessage] = useState('')
-  const [pdfFile, setPdfFile] = useState<File | null>(null)
-  const [confirmPersonal, setConfirmPersonal] = useState(false)
-  const [sending, setSending] = useState(false)
-  const [sent, setSent] = useState(false)
+function cantonLabel(code: string) {
+  const c = SWISS_CANTONS.find(x => x.code === code.toUpperCase())
+  return c ? `${c.code} (${c.name})` : code
+}
 
-  useEffect(() => {
-    if (!id) return
-    let cancelled = false
-    ;(async () => {
-      setLoading(true)
-      try {
-        const res = await fetch(`/api/rental-listings/${id}`)
-        const data = await res.json()
-        if (!res.ok) {
-          if (!cancelled) setListing(null)
-          return
-        }
-        if (!cancelled) setListing(data.listing)
-      } catch {
-        if (!cancelled) setListing(null)
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [id])
-
-  const submitContact = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!(session?.user as { id?: string })?.id) {
-      router.push(`/login?callbackUrl=${encodeURIComponent(`/wohnungen/${id}`)}`)
-      return
-    }
-    if (!listing) return
-    if (listing.requiresCreditCheck) {
-      if (!pdfFile) {
-        toast.error('Bitte Betreibungsregisterauszug (PDF) hochladen.')
-        return
-      }
-      if (!confirmPersonal) {
-        toast.error('Bitte die Bestätigung zum Dokument ankreuzen.')
-        return
-      }
-    }
-    setSending(true)
-    try {
-      const fd = new FormData()
-      fd.append('message', message)
-      if (pdfFile) fd.append('file', pdfFile)
-      if (listing.requiresCreditCheck) {
-        fd.append('confirmPersonal', confirmPersonal ? 'true' : 'false')
-      }
-      const res = await fetch(`/api/rental-listings/${id}/contact`, {
-        method: 'POST',
-        body: fd,
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        toast.error(data.message || 'Senden fehlgeschlagen')
-        return
-      }
-      toast.success(data.message || 'Anfrage gesendet')
-      setSent(true)
-      setMessage('')
-      setPdfFile(null)
-      setConfirmPersonal(false)
-    } finally {
-      setSending(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <Loader2 className="h-10 w-10 animate-spin text-primary-600" />
-      </div>
-    )
-  }
-
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params
+  const listing = await fetchActiveRentalListingById(id)
   if (!listing) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <main className="mx-auto max-w-lg px-4 py-16 text-center">
-          <p className="text-gray-600">Inserat nicht gefunden.</p>
-          <Link href="/wohnungen" className="mt-4 inline-block text-primary-600 hover:underline">
-            Zur Übersicht
-          </Link>
-        </main>
-        <Footer />
-      </div>
-    )
+    return { title: 'Inserat | Helvenda Wohnungen' }
+  }
+  const rooms = Number(listing.rooms)
+  const zi = Number.isFinite(rooms) ? String(rooms).replace('.', ',') : String(listing.rooms)
+  const title = `${listing.title} — ${zi} Zi, ${listing.city} | Helvenda Wohnungen`
+  const desc = `${zi}-Zimmer-Wohnung in ${listing.city} für CHF ${listing.rentPerMonth.toLocaleString('de-CH')}/Monat. Jetzt auf Helvenda Wohnungen bewerben — kostenlos und ohne Abo.`
+  const photos = parseRentalListingPhotosJson(listing.photos)
+  const og = photos[0] ? absOgImage(photos[0]) : undefined
+  return {
+    title,
+    description: desc,
+    openGraph: {
+      title,
+      description: desc,
+      ...(og ? { images: [{ url: og }] } : {}),
+    },
+  }
+}
+
+export default async function WohnungDetailPage({ params }: PageProps) {
+  const { id } = await params
+  const listing = await fetchActiveRentalListingById(id)
+  if (!listing) {
+    notFound()
   }
 
-  const isOwner = (session?.user as { id?: string })?.id === listing.userId
+  const session = await getServerSession(authOptions)
+  const userId = (session?.user as { id?: string } | undefined)?.id ?? null
+
+  let hasSeekerProfile = false
+  if (userId) {
+    const sp = await prisma.seekerProfile.findUnique({ where: { userId }, select: { id: true } })
+    hasSeekerProfile = Boolean(sp)
+  }
+
+  const isOwner = Boolean(userId && userId === listing.userId)
+  const photos = parseRentalListingPhotosJson(listing.photos)
+  const similar = await fetchSimilarRentalListings(listing.canton, listing.id, 3)
+
+  const pills: string[] = [`${Number(listing.rooms)} Zimmer`, `${listing.areaSqm} m²`]
+  if (listing.floor != null) pills.push(`Etage ${listing.floor}`)
+  pills.push(`Verfügbar ab ${listing.availableFrom.toLocaleDateString('de-CH')}`)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <main className="mx-auto max-w-4xl px-4 py-8">
-        <Link href="/wohnungen" className="text-sm text-primary-600 hover:underline">
-          ← Alle Mietwohnungen
+    <main className="pb-16">
+      <RentalListingDetailGallery imageUrls={photos} />
+
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <Link href="/wohnungen" className="text-sm font-medium text-teal-800 underline-offset-2 hover:underline">
+          ← Alle Wohnungen
         </Link>
 
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">{listing.title}</h1>
-        <p className="mt-1 flex flex-wrap items-center gap-2 text-gray-600">
-          <span className="inline-flex items-center gap-1">
-            <MapPin className="h-4 w-4" />
-            {listing.address}, {listing.zip} {listing.city} ({listing.canton})
-          </span>
-          {listing.requiresCreditCheck && (
-            <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">
-              Betreibungsregister erforderlich
-            </span>
-          )}
-        </p>
-        <p className="mt-2 text-xl font-semibold text-primary-700">
-          CHF {listing.rentPerMonth.toLocaleString('de-CH')} / Monat
-          {listing.utilitiesPerMonth != null && (
-            <span className="ml-2 text-base font-normal text-gray-600">
-              + NK CHF {listing.utilitiesPerMonth.toLocaleString('de-CH')}
-            </span>
-          )}
-        </p>
-        {listing.depositAmount != null && (
-          <p className="text-sm text-gray-600">
-            Kaution: CHF {listing.depositAmount.toLocaleString('de-CH')}
-          </p>
-        )}
-        <p className="mt-1 text-sm text-gray-600">
-          {listing.rooms} Zimmer · {listing.areaSqm} m²
-          {listing.floor != null ? ` · Etage ${listing.floor}` : ''} · verfügbar ab{' '}
-          {new Date(listing.availableFrom).toLocaleDateString('de-CH')}
-        </p>
+        <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,36%)] lg:items-start lg:gap-12">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold leading-tight text-slate-900 sm:text-3xl lg:text-4xl">{listing.title}</h1>
+            <p className="mt-3 flex flex-wrap items-start gap-2 text-sm text-slate-700">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+              <span>
+                {listing.address}, {listing.zip} {listing.city}
+              </span>
+            </p>
 
-        <div className="mt-6 grid gap-2 sm:grid-cols-3">
-          {listing.images.map((src, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} src={src} alt="" className="h-48 w-full rounded-lg object-cover" />
-          ))}
-        </div>
-
-        <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="font-semibold text-gray-900">Beschreibung</h2>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{listing.description}</p>
-        </div>
-
-        {listing.landlord && (
-          <div className="mt-6 text-sm text-gray-600">
-            Inserent: {listing.landlord.nickname || listing.landlord.name || 'Privat'}
-            {listing.landlord.verified ? ' · verifiziert' : ''}
-          </div>
-        )}
-
-        {!isOwner && (
-          <div className="mt-10 rounded-xl border border-teal-100 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900">Anfrage senden</h2>
-            {sent ? (
-              <p className="mt-2 text-sm text-green-700">Deine Anfrage wurde übermittelt.</p>
-            ) : (
-              <form onSubmit={submitContact} className="mt-4 space-y-4">
-                {listing.requiresCreditCheck && (
-                  <>
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Betreibungsregisterauszug (PDF) *
-                      </label>
-                      <input
-                        type="file"
-                        accept="application/pdf,.pdf"
-                        required={listing.requiresCreditCheck}
-                        onChange={e => setPdfFile(e.target.files?.[0] || null)}
-                        className="w-full text-sm"
-                      />
-                      <p className="mt-2 text-xs text-gray-600">
-                        Lade deinen Betreibungsregisterauszug hoch (max. 3 Monate alt). Dein Dokument wird
-                        verschlüsselt gespeichert — dem Vermieter werden nur relevante Informationen angezeigt.
-                      </p>
-                    </div>
-                    <label className="flex cursor-pointer items-start gap-2 text-sm text-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={confirmPersonal}
-                        onChange={e => setConfirmPersonal(e.target.checked)}
-                        className="mt-1"
-                        required={listing.requiresCreditCheck}
-                      />
-                      <span>
-                        Ich bestätige, dass dieses Dokument auf mich ausgestellt ist und aktuell ist. *
-                      </span>
-                    </label>
-                  </>
-                )}
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Nachricht *</label>
-                  <textarea
-                    required
-                    minLength={20}
-                    rows={4}
-                    value={message}
-                    onChange={e => setMessage(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                    placeholder="Stelle dich kurz vor und beschreibe dein Interesse."
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={sending}
-                  className="rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+            <div className="mt-4 flex flex-wrap gap-2">
+              {pills.map(p => (
+                <span
+                  key={p}
+                  className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-800"
                 >
-                  {sending ? 'Senden…' : 'Anfrage senden'}
-                </button>
-              </form>
-            )}
+                  {p.includes('Verfügbar') ? (
+                    <>
+                      <Calendar className="mr-1 h-3.5 w-3.5 text-slate-500" aria-hidden />
+                      {p}
+                    </>
+                  ) : (
+                    p
+                  )}
+                </span>
+              ))}
+            </div>
+
+            <hr className="my-8 border-slate-200" />
+
+            <p className="text-3xl font-bold text-[#18a87c] sm:text-4xl">
+              CHF {listing.rentPerMonth.toLocaleString('de-CH')}.—{' '}
+              <span className="text-lg font-semibold text-slate-600 sm:text-xl">/ Monat</span>
+            </p>
+            {listing.utilitiesPerMonth != null ? (
+              <p className="mt-2 text-slate-600">
+                NK: + CHF {listing.utilitiesPerMonth.toLocaleString('de-CH')}.— / Monat
+              </p>
+            ) : null}
+            {listing.depositAmount != null ? (
+              <p className="mt-1 text-slate-600">Kaution: CHF {listing.depositAmount.toLocaleString('de-CH')}.—</p>
+            ) : null}
+
+            <hr className="my-8 border-slate-200" />
+
+            <h2 className="text-lg font-bold text-slate-900">Beschreibung</h2>
+            <div className="mt-3">
+              <ListingExpandableDescription text={listing.description} />
+            </div>
           </div>
-        )}
-      </main>
-      <Footer />
-    </div>
+
+          <aside className="lg:sticky lg:top-24">
+            <WohnungBewerbungsBox
+              listingId={listing.id}
+              rentPerMonth={listing.rentPerMonth}
+              requiresCreditCheck={listing.requiresCreditCheck}
+              userId={userId}
+              hasSeekerProfile={hasSeekerProfile}
+              isOwner={isOwner}
+            />
+          </aside>
+        </div>
+
+        {similar.length > 0 ? (
+          <section className="mt-16 border-t border-slate-200 pt-12">
+            <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
+              Weitere Wohnungen in {cantonLabel(listing.canton)}
+            </h2>
+            <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {similar.map(row => (
+                <RentalListingCard key={row.id} listing={rentalListingRowToCardData(row)} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </div>
+    </main>
   )
 }

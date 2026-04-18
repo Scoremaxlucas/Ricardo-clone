@@ -1,10 +1,10 @@
 import { RentalListingStatus } from '@prisma/client'
+import { parseRentalListingPhotosJson } from '@/lib/rental/rental-listings-public'
 import { prisma } from '@/lib/prisma'
 
 export type WohnenHomeListingCard = {
   id: string
   title: string
-  zip: string
   city: string
   canton: string
   rooms: number
@@ -14,18 +14,8 @@ export type WohnenHomeListingCard = {
   utilitiesPerMonth: number | null
   requiresCreditCheck: boolean
   createdAt: Date
-  firstPhotoUrl: string | null
-}
-
-function firstPhotoFromJson(raw: string): string | null {
-  try {
-    const j = JSON.parse(raw) as unknown
-    if (!Array.isArray(j) || j.length === 0) return null
-    const u = j[0]
-    return typeof u === 'string' && u.startsWith('http') ? u : null
-  } catch {
-    return null
-  }
+  availableFrom: Date
+  photos: string[]
 }
 
 export async function loadWohnenHomeListings(limit = 6): Promise<WohnenHomeListingCard[]> {
@@ -36,7 +26,6 @@ export async function loadWohnenHomeListings(limit = 6): Promise<WohnenHomeListi
     select: {
       id: true,
       title: true,
-      zip: true,
       city: true,
       canton: true,
       rooms: true,
@@ -46,6 +35,7 @@ export async function loadWohnenHomeListings(limit = 6): Promise<WohnenHomeListi
       utilitiesPerMonth: true,
       requiresCreditCheck: true,
       createdAt: true,
+      availableFrom: true,
       photos: true,
     },
   })
@@ -53,7 +43,6 @@ export async function loadWohnenHomeListings(limit = 6): Promise<WohnenHomeListi
   return rows.map(r => ({
     id: r.id,
     title: r.title,
-    zip: r.zip,
     city: r.city,
     canton: r.canton,
     rooms: Number(r.rooms),
@@ -63,6 +52,7 @@ export async function loadWohnenHomeListings(limit = 6): Promise<WohnenHomeListi
     utilitiesPerMonth: r.utilitiesPerMonth,
     requiresCreditCheck: r.requiresCreditCheck,
     createdAt: r.createdAt,
-    firstPhotoUrl: firstPhotoFromJson(r.photos),
+    availableFrom: r.availableFrom,
+    photos: parseRentalListingPhotosJson(r.photos),
   }))
 }
