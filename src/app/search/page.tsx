@@ -11,7 +11,6 @@ import { SearchResultsSkeleton } from '@/components/ui/Skeleton'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getBrandsForCategory, searchBrands } from '@/data/brands'
 import { sellLinkWithReturn } from '@/lib/sell-navigation'
-import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { ChevronDown, ChevronLeft, ChevronRight, Filter, Package, Search, X } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
@@ -192,15 +191,7 @@ function SearchPageContent() {
       p.delete('brands')
       p.delete('brand')
       const qs = p.toString()
-      const path = qs ? `/wohnungen?${qs}` : '/wohnungen'
-      const isLocal =
-        typeof window !== 'undefined' &&
-        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      if (isLocal) {
-        router.replace(path)
-      } else {
-        window.location.replace(`${WOHNEN_SITE_ORIGIN}${path}`)
-      }
+      router.replace(qs ? `/wohnungen?${qs}` : '/wohnungen')
     }
   }, [searchParams, router])
 

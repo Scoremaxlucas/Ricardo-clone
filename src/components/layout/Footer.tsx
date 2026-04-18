@@ -13,7 +13,6 @@
 import { CookieSettingsButton } from '@/components/CookieConsent'
 import { Logo } from '@/components/ui/Logo'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { MAIN_SHOP_ORIGIN, WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import Link from 'next/link'
 
 export function Footer() {
@@ -72,20 +71,6 @@ export function Footer() {
             {/* Spacer for scroll padding on mobile */}
             <span className="w-1 flex-shrink-0 md:hidden" aria-hidden="true" />
           </nav>
-
-          <div className="mt-4 border-t border-white/15 pt-4 md:mt-0 md:border-t-0 md:border-l md:pl-6 md:pt-0">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/70">
-              Weitere Services
-            </p>
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-5">
-              <a href={WOHNEN_SITE_ORIGIN} className={linkClass}>
-                Mietwohnungen & Vermieten
-              </a>
-              <a href={MAIN_SHOP_ORIGIN} className={linkClass}>
-                Helvenda Marktplatz
-              </a>
-            </div>
-          </div>
         </div>
 
         {/* Legal Strip */}

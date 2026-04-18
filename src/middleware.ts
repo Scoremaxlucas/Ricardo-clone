@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { MAIN_SHOP_ORIGIN, WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
+import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 
 const WOHNEN_PREVIEW_COOKIE = 'helvenda-wohnen-preview'
 
@@ -20,10 +20,6 @@ function isWohnenTenant(request: NextRequest): boolean {
     if (request.cookies.get(WOHNEN_PREVIEW_COOKIE)?.value === '1') return true
   }
   return false
-}
-
-function isProductionMainShopHost(host: string): boolean {
-  return host === 'helvenda.ch' || host === 'www.helvenda.ch'
 }
 
 function isAllowedOnWohnen(pathname: string): boolean {
@@ -52,20 +48,8 @@ function isAllowedOnWohnen(pathname: string): boolean {
   return false
 }
 
-function isBlockedOnMainShop(pathname: string): boolean {
-  if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
-  if (pathname === '/sell/rent' || pathname.startsWith('/sell/rent/')) return true
-  if (pathname === '/wohnen-home' || pathname.startsWith('/wohnen-home/')) return true
-  return false
-}
-
 function redirectToMain(pathname: string, search: string) {
   const url = new URL(pathname + search, MAIN_SHOP_ORIGIN)
-  return NextResponse.redirect(url)
-}
-
-function redirectToWohnen(pathname: string, search: string) {
-  const url = new URL(pathname + search, WOHNEN_SITE_ORIGIN)
   return NextResponse.redirect(url)
 }
 
@@ -106,10 +90,6 @@ export function middleware(request: NextRequest) {
       return redirectToMain(pathname, search)
     }
     return NextResponse.next()
-  }
-
-  if (isProductionMainShopHost(host) && isBlockedOnMainShop(pathname)) {
-    return redirectToWohnen(pathname, search)
   }
 
   // Unbekannter Host (z.B. Preview): nicht eingreifen

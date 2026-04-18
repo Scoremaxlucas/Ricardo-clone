@@ -1,6 +1,6 @@
 import { getHelvendaEmailTemplate } from '@/lib/email/base-template'
+import { getEmailBaseUrl } from '@/lib/email/config'
 import { sendEmail } from '@/lib/email/sender'
-import { getRentalPublicBaseUrl } from '@/lib/site-urls'
 
 function firstName(user: { firstName?: string | null; name?: string | null }): string {
   if (user.firstName?.trim()) return user.firstName.trim()
@@ -19,7 +19,7 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
   creditSummary: string
   applicationId: string
 }): Promise<void> {
-  const base = getRentalPublicBaseUrl().replace(/\/$/, '')
+  const base = getEmailBaseUrl().replace(/\/$/, '')
   const link = `${base}/wohnungen/anfragen/${opts.applicationId}`
   const fn = firstName(opts.landlordFirst)
   const html = getHelvendaEmailTemplate({
@@ -51,7 +51,7 @@ export async function sendRentalApplicantRejectedCreditEmail(opts: {
   listingTitle: string
   listingId: string
 }): Promise<void> {
-  const base = getRentalPublicBaseUrl().replace(/\/$/, '')
+  const base = getEmailBaseUrl().replace(/\/$/, '')
   const link = `${base}/wohnungen/${opts.listingId}`
   const fn = firstName(opts.applicantFirst)
   const html = getHelvendaEmailTemplate({
@@ -102,7 +102,7 @@ export async function sendRentalAdminManualReviewEmail(opts: {
   applicationId: string
   listingTitle: string
 }): Promise<void> {
-  const base = getRentalPublicBaseUrl().replace(/\/$/, '')
+  const base = getEmailBaseUrl().replace(/\/$/, '')
   const link = `${base}/wohnungen/anfragen/${opts.applicationId}`
   const html = getHelvendaEmailTemplate({
     title: 'Mietanfrage: manuelle Prüfung',
