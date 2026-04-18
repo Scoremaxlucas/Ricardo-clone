@@ -1,6 +1,8 @@
+import { authOptions } from '@/lib/auth'
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { getServerSession } from 'next-auth/next'
 
 export const metadata: Metadata = {
   title: 'Start',
@@ -8,7 +10,10 @@ export const metadata: Metadata = {
     'Helvenda Matching: Profil, Kriterien und Freigaben — ein eigenes Produkt mit gemeinsamem Helvenda-Login, ohne Marktplatz-Oberfläche.',
 }
 
-export default function MatchingLandingPage() {
+export default async function MatchingLandingPage() {
+  const session = await getServerSession(authOptions)
+  const userId = (session?.user as { id?: string } | undefined)?.id
+
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
       <p className="text-sm font-medium uppercase tracking-wide text-teal-700">Helvenda Matching</p>
@@ -46,18 +51,29 @@ export default function MatchingLandingPage() {
       </ul>
 
       <div className="mt-10 flex flex-wrap gap-3">
-        <Link
-          href="/login"
-          className="inline-flex rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
-        >
-          Anmelden
-        </Link>
-        <Link
-          href="/register"
-          className="inline-flex rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
-        >
-          Registrieren
-        </Link>
+        {userId ? (
+          <Link
+            href="/matching/properties/new"
+            className="inline-flex rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
+          >
+            Objekt erfassen
+          </Link>
+        ) : (
+          <>
+            <Link
+              href="/login"
+              className="inline-flex rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
+            >
+              Anmelden
+            </Link>
+            <Link
+              href="/register"
+              className="inline-flex rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+            >
+              Registrieren
+            </Link>
+          </>
+        )}
       </div>
 
       <p className="mt-10 text-sm text-slate-500">

@@ -31,6 +31,12 @@ export default function MatchingLayout({ children }: { children: React.ReactNode
               Marktplatz
             </a>
             <Link
+              href="/matching/properties/new"
+              className="rounded-md px-2 py-1.5 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              Objekt
+            </Link>
+            <Link
               href="/login"
               className="rounded-md bg-teal-700 px-3 py-1.5 font-medium text-white transition hover:bg-teal-800"
             >
