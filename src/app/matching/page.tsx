@@ -52,12 +52,20 @@ export default async function MatchingLandingPage() {
 
       <div className="mt-10 flex flex-wrap gap-3">
         {userId ? (
-          <Link
-            href="/matching/properties/new"
-            className="inline-flex rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
-          >
-            Objekt erfassen
-          </Link>
+          <>
+            <Link
+              href="/matching/properties/new"
+              className="inline-flex rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
+            >
+              Objekt erfassen
+            </Link>
+            <Link
+              href="/matching/properties/import"
+              className="inline-flex rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+            >
+              CSV / Excel import
+            </Link>
+          </>
         ) : (
           <>
             <Link

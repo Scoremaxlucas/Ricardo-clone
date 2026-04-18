@@ -37,6 +37,12 @@ export default function MatchingLayout({ children }: { children: React.ReactNode
               Objekt
             </Link>
             <Link
+              href="/matching/properties/import"
+              className="rounded-md px-2 py-1.5 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              Import
+            </Link>
+            <Link
               href="/login"
               className="rounded-md bg-teal-700 px-3 py-1.5 font-medium text-white transition hover:bg-teal-800"
             >

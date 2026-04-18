@@ -1,12 +1,11 @@
 'use server'
 
-import { MatchPropertyStatus, Prisma } from '@prisma/client'
+import { MatchPropertySource } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { ensureLandlordAccountForUser } from './landlord-account'
+import { insertMatchingPropertyForLandlord } from './insert-matching-property'
 import { matchingPropertyWizardSchema } from './property-wizard-schema'
-import { recomputeMatchesForProperty } from './persist-matches'
 
 export type CreateMatchingPropertyResult =
   | { ok: true; propertyId: string }
@@ -36,33 +35,12 @@ export async function createMatchingPropertyFromWizard(
   const v = parsed.data
   const landlordAccountId = await ensureLandlordAccountForUser(userId)
 
-  const rulesJson: Prisma.InputJsonValue = { allowPets: v.allowPets }
-
   try {
-    const property = await prisma.matchingProperty.create({
-      data: {
-        landlordAccountId,
-        title: v.title,
-        description: v.description,
-        addressLine: v.addressLine,
-        zip: v.zip,
-        city: v.city,
-        canton: v.canton,
-        rooms: new Prisma.Decimal(v.rooms.toFixed(1)),
-        areaSqm: v.areaSqm ?? undefined,
-        floor: v.floor ?? undefined,
-        rentPerMonth: v.rentPerMonth,
-        availableFrom: v.availableFrom,
-        availableTo: v.availableTo ?? undefined,
-        petPolicyNote: v.petPolicyNote,
-        rulesJson,
-        status: v.status === 'active' ? MatchPropertyStatus.active : MatchPropertyStatus.draft,
-      },
+    const property = await insertMatchingPropertyForLandlord({
+      landlordAccountId,
+      v,
+      source: MatchPropertySource.manual,
     })
-
-    if (property.status === MatchPropertyStatus.active) {
-      await recomputeMatchesForProperty(property.id)
-    }
 
     return { ok: true, propertyId: property.id }
   } catch (e) {
