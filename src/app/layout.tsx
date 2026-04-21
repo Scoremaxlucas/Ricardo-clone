@@ -29,11 +29,21 @@ const sharedIcons: Metadata['icons'] = {
   apple: [{ url: '/icons/apple-touch-icon.svg', sizes: '180x180', type: 'image/svg+xml' }],
 }
 
+/** Canonical origin for the current request (avoids wrong metadataBase from env on wohnen.helvenda.ch). */
+function requestOriginUrl(h: { get(name: string): string | null }): URL {
+  const host = (h.get('host') || '').trim()
+  if (!host) return new URL(WOHNEN_SITE_ORIGIN)
+  const forwardedProto = h.get('x-forwarded-proto')?.split(',')[0]?.trim()
+  const isLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1')
+  const proto = forwardedProto || (isLocal ? 'http' : 'https')
+  return new URL(`${proto}://${host}`)
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers()
   if (isWohnenMatchingHostFromHeaders(h)) {
     return {
-      metadataBase: new URL(WOHNEN_SITE_ORIGIN),
+      metadataBase: requestOriginUrl(h),
       title: {
         default: 'Helvenda Wohnungen — Fair mieten und vermieten in der Schweiz',
         template: '%s | Helvenda Wohnungen',
@@ -77,13 +87,13 @@ export const viewport: Viewport = {
   themeColor: '#0f766e',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const isWohnenMatching = isWohnenMatchingHostFromHeaders(headers())
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const h = await headers()
+  const isWohnenMatching = isWohnenMatchingHostFromHeaders(h)
 
   return (
     <html lang="de" className="h-full">
       <head>
-        <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
         <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
         <meta name="theme-color" content="#0f766e" />
