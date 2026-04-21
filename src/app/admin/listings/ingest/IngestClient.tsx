@@ -42,6 +42,14 @@ type IngestApiFailureBody = {
   error?: string
   message?: string
   fallback?: boolean
+  rawResponse?: string
+}
+
+/** Antwort für Option B (reiner Text) — `listing` fehlt, Felder liegen unter `data`. */
+type IngestTextSuccessBody = {
+  success: true
+  data: Record<string, unknown>
+  images?: string[]
 }
 
 const MAX_IMAGES = 10
@@ -342,11 +350,14 @@ export function IngestClient() {
     setProgressTick(0)
     setPostAnalyzeWarnings([])
 
+    const requestBody =
+      card === 'text' ? { type: 'text' as const, text: textInput.trim() } : { mode, url, text, imageUrls }
+
     try {
       const res = await fetch('/api/admin/ingest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode, url, text, imageUrls }),
+        body: JSON.stringify(requestBody),
       })
       const raw = await res.json().catch(() => null)
       const warnings: string[] = []
@@ -355,9 +366,76 @@ export function IngestClient() {
       }
       if (raw && typeof raw === 'object' && (raw as IngestApiFailureBody).success === false) {
         const fail = raw as IngestApiFailureBody
+        if (fail.error === 'PARSE_FAILED' && fail.rawResponse) {
+          console.error('Ingest PARSE_FAILED raw (truncated):', fail.rawResponse.slice(0, 2000))
+        }
         toast.error(fail.message || 'Analyse fehlgeschlagen')
         if (fail.fallback) applyEmptyFallback()
         setPostAnalyzeWarnings([fail.message || manualFallbackDescription()])
+        setStep(3)
+        return
+      }
+      if (
+        card === 'text' &&
+        raw &&
+        typeof raw === 'object' &&
+        (raw as IngestTextSuccessBody).success === true &&
+        (raw as IngestTextSuccessBody).data &&
+        typeof (raw as IngestTextSuccessBody).data === 'object'
+      ) {
+        const d = (raw as IngestTextSuccessBody).data
+        const features = Array.isArray(d.features)
+          ? d.features.filter((x): x is string => typeof x === 'string')
+          : []
+        let desc = typeof d.description === 'string' ? d.description.trim() : ''
+        if (features.length) {
+          desc = [desc, `Ausstattung: ${features.join(', ')}`].filter(Boolean).join('\n\n')
+        }
+        if (desc.length < 50) {
+          desc = `${desc}\n\n(Daten per Import übernommen — bitte prüfen und ergänzen.)`.trim()
+        }
+        setTitle(typeof d.title === 'string' ? d.title : '')
+        setDescription(desc)
+        setAddress(typeof d.address === 'string' ? d.address : '')
+        setZip(typeof d.zip === 'string' ? d.zip.replace(/\D/g, '').slice(0, 4) : '')
+        setCity(typeof d.city === 'string' ? d.city : '')
+        setCanton(typeof d.canton === 'string' ? d.canton.trim().toUpperCase().slice(0, 2) : '')
+        const roomsNum =
+          typeof d.rooms === 'number'
+            ? d.rooms
+            : parseFloat(String(d.rooms ?? '').replace(',', '.'))
+        setRooms(roomsToSelect(Number.isFinite(roomsNum) ? roomsNum : 3))
+        const area = d.areaSqm
+        setAreaSqm(
+          area != null && Number.isFinite(Number(area)) ? String(Math.round(Number(area))) : ''
+        )
+        const fl = d.floor
+        setFloor(fl != null && Number.isFinite(Number(fl)) ? String(fl) : '')
+        const rent = d.rentPerMonth
+        setRentPerMonth(rent != null && Number.isFinite(Number(rent)) ? String(Math.round(Number(rent))) : '')
+        const util = d.utilitiesPerMonth
+        setUtilitiesPerMonth(
+          util != null && Number.isFinite(Number(util)) ? String(Math.round(Number(util))) : ''
+        )
+        const dep = d.depositAmount
+        setDepositAmount(dep != null && Number.isFinite(Number(dep)) ? String(Math.round(Number(dep))) : '')
+        const avail = typeof d.availableFrom === 'string' ? d.availableFrom.trim() : ''
+        setAvailableFrom(/^\d{4}-\d{2}-\d{2}$/.test(avail) ? avail : new Date().toISOString().slice(0, 10))
+        setRequiresCreditCheck(true)
+        const imgs = (raw as IngestTextSuccessBody).images
+        setImageUrls(Array.isArray(imgs) ? imgs.filter((u): u is string => typeof u === 'string') : [])
+        const conf = d.confidence
+        setAiConfidence(
+          conf === 'high' || conf === 'medium' || conf === 'low' ? conf : 'high'
+        )
+        setSourceUrlMeta(null)
+        setRecognizedSource('')
+        setIngestBasis('landlord_direct')
+        setLandlordName(typeof d.landlordName === 'string' ? d.landlordName : '')
+        setLandlordContact(typeof d.landlordContact === 'string' ? d.landlordContact : '')
+        setLandlordConsentAck(false)
+        setInternalNote('')
+        setPostAnalyzeWarnings([])
         setStep(3)
         return
       }
