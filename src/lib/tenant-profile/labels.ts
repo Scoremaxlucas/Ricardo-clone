@@ -63,7 +63,9 @@ export function employmentSummaryDe(
   }
   if (employedSince) {
     const d = new Date(employedSince)
-    tail += ` seit ${d.toLocaleDateString('de-CH', { month: 'long', year: 'numeric' })}`
+    if (!Number.isNaN(d.getTime())) {
+      tail += ` seit ${d.toLocaleDateString('de-CH', { month: 'long', year: 'numeric' })}`
+    }
   }
   return `${base}${tail}`
 }

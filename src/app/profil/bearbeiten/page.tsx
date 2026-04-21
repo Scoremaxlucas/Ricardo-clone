@@ -25,17 +25,19 @@ export default async function ProfilBearbeitenPage() {
     redirect('/profil/erstellen')
   }
 
+  const safeIso = (d: Date) => (Number.isNaN(d.getTime()) ? '' : d.toISOString())
+
   const initial = buildInitialFromApi({
     firstName: row.firstName,
     lastName: row.lastName,
-    dateOfBirth: row.dateOfBirth.toISOString(),
+    dateOfBirth: safeIso(row.dateOfBirth),
     currentAddress: row.currentAddress,
     currentZip: row.currentZip,
     currentCity: row.currentCity,
     employmentStatus: row.employmentStatus,
     employer: row.employer,
     jobTitle: row.jobTitle,
-    employedSince: row.employedSince?.toISOString() ?? null,
+    employedSince: row.employedSince && !Number.isNaN(row.employedSince.getTime()) ? row.employedSince.toISOString() : null,
     monthlyIncomeCategory: row.monthlyIncomeCategory,
     referenceName: row.referenceName,
     referencePhone: row.referencePhone,

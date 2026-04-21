@@ -73,10 +73,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const t = translations[language]
+  const t = translations[language] ?? translations.de
 
   const translateSubcategory = (subcategory: string): string => {
-    return subcategoryTranslations[language][subcategory] || subcategory
+    const map = subcategoryTranslations[language] ?? subcategoryTranslations.de
+    return map[subcategory] || subcategory
   }
 
   return (

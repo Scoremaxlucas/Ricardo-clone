@@ -13,10 +13,12 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
+type ProfilErstellenSearchParams = { next?: string | string[] }
+
 export default async function ProfilErstellenPage({
   searchParams,
 }: {
-  searchParams: { next?: string | string[] }
+  searchParams: ProfilErstellenSearchParams | Promise<ProfilErstellenSearchParams>
 }) {
   const session = await getServerSession(authOptions)
   const userId = session?.user?.id
@@ -29,7 +31,8 @@ export default async function ProfilErstellenPage({
     redirect('/profil')
   }
 
-  const nextRaw = searchParams.next
+  const sp = await Promise.resolve(searchParams)
+  const nextRaw = sp.next
   const next = Array.isArray(nextRaw) ? nextRaw[0] : nextRaw
   const redirectAfterSave = next && next.startsWith('/') ? next : '/profil'
 

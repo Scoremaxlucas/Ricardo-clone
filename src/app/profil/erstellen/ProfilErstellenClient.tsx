@@ -233,7 +233,7 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
   const summaryIncome = INCOME_OPTIONS.find(o => o.value === form.monthlyIncomeCategory)?.label ?? ''
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 sm:py-10">
+    <div className="mx-auto max-w-2xl px-4 py-8 sm:py-10">
       <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
         {mode === 'edit' ? 'Profil bearbeiten' : 'Mieterprofil erstellen'}
       </h1>
@@ -553,6 +553,6 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
           </div>
         )}
       </div>
-    </main>
+    </div>
   )
 }
