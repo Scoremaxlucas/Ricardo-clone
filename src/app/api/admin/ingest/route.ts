@@ -122,20 +122,110 @@ function normalizeExtractedPayload(raw: Record<string, unknown>): Record<string,
   }
 }
 
-function parseAnthropicJson(rawText: string): Record<string, unknown> {
-  let cleanJson = rawText
+const LISTING_EXTRACT_TOOL = {
+  name: 'submit_swiss_rental_listing' as const,
+  description:
+    'Pflicht-Ausgabe: alle erkannten Felder eines Schweizer Mietwohnungsinserats als strukturiertes Objekt.',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      title: { type: 'string' },
+      description: { type: 'string' },
+      address: { type: 'string' },
+      zip: { type: 'string' },
+      city: { type: 'string' },
+      canton: { type: 'string' },
+      rooms: { type: 'number' },
+      areaSqm: { type: 'number' },
+      floor: { type: 'number' },
+      rentPerMonth: { type: 'number' },
+      utilitiesPerMonth: { type: 'number' },
+      depositAmount: { type: 'number' },
+      availableFrom: { type: 'string' },
+      features: { type: 'array', items: { type: 'string' } },
+      landlordName: { type: 'string' },
+      landlordContact: { type: 'string' },
+      confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+    },
+    required: ['title', 'description', 'confidence'],
+  },
+}
+
+type AnthropicNonStreamMessage = { content: Array<{ type: string; text?: string; name?: string; input?: unknown }> }
+
+function joinTextBlocks(message: AnthropicNonStreamMessage): string {
+  return message.content
+    .filter((b): b is { type: 'text'; text: string } => b.type === 'text' && typeof b.text === 'string')
+    .map(b => b.text)
+    .join('\n')
+    .trim()
+}
+
+/** Freitext-JSON der KI parsen (Fallback wenn kein tool_use). */
+function parseAnthropicJsonRobust(rawText: string): Record<string, unknown> {
+  let s = rawText
+    .replace(/^\uFEFF/, '')
     .replace(/^```json\s*/i, '')
     .replace(/^```\s*/i, '')
     .replace(/\s*```$/i, '')
     .trim()
-  const firstBrace = cleanJson.indexOf('{')
-  const lastBrace = cleanJson.lastIndexOf('}')
-  if (firstBrace >= 0 && lastBrace >= firstBrace) {
-    cleanJson = cleanJson.substring(firstBrace, lastBrace + 1)
+
+  const tryParse = (chunk: string): Record<string, unknown> => {
+    const trimmed = chunk.replace(/,(\s*[}\]])/g, '$1').trim()
+    const parsed = JSON.parse(trimmed) as unknown
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('Not a JSON object')
+    }
+    return parsed as Record<string, unknown>
   }
-  const parsed = JSON.parse(cleanJson) as unknown
-  if (!parsed || typeof parsed !== 'object') throw new Error('Parsed value is not an object')
-  return parsed as Record<string, unknown>
+
+  try {
+    return tryParse(s)
+  } catch {
+    /* continue */
+  }
+
+  const first = s.indexOf('{')
+  const last = s.lastIndexOf('}')
+  if (first >= 0 && last > first) {
+    try {
+      return tryParse(s.slice(first, last + 1))
+    } catch {
+      /* continue */
+    }
+  }
+
+  throw new Error(`JSON.parse failed; snippet: ${s.slice(0, 280)}`)
+}
+
+async function extractListingFromAnthropic(
+  anthropic: Anthropic,
+  userContent: string
+): Promise<Record<string, unknown>> {
+  const msg = (await anthropic.messages.create({
+    model: ingestModel(),
+    max_tokens: 8192,
+    stream: false,
+    system: EXTRACTION_SYSTEM_PROMPT,
+    tools: [LISTING_EXTRACT_TOOL as unknown as Anthropic.Messages.Tool],
+    tool_choice: { type: 'tool', name: LISTING_EXTRACT_TOOL.name },
+    messages: [{ role: 'user', content: userContent }],
+  })) as AnthropicNonStreamMessage
+
+  for (const block of msg.content) {
+    if (block.type === 'tool_use' && block.name === LISTING_EXTRACT_TOOL.name) {
+      const inp = block.input
+      if (inp && typeof inp === 'object' && !Array.isArray(inp)) {
+        return inp as Record<string, unknown>
+      }
+    }
+  }
+
+  const joined = joinTextBlocks(msg)
+  if (!joined) {
+    throw new Error('Anthropic: kein tool_use und kein Text-Block in der Antwort')
+  }
+  return parseAnthropicJsonRobust(joined)
 }
 
 export async function POST(request: NextRequest) {
@@ -191,28 +281,13 @@ export async function POST(request: NextRequest) {
     const t = text.trim()
     console.log('[INGEST] Text flow started, length:', t.length)
     try {
-      console.log('Sending to Anthropic...')
-      const message = await anthropic.messages.create({
-        model: ingestModel(),
-        max_tokens: 4096,
-        system: EXTRACTION_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: `Extrahiere alle Wohnungsdaten aus folgendem Text:\n\n${t.slice(0, 12000)}`,
-          },
-        ],
-      })
-      console.log('[INGEST] Anthropic response received')
-      const rawContent = message.content[0]
-      if (!rawContent || rawContent.type !== 'text') {
-        throw new Error('Unexpected response type from Anthropic')
-      }
-      const rawText = rawContent.text.trim()
-      console.log('[INGEST] Raw Anthropic text:', rawText.substring(0, 200))
-      const parsed = parseAnthropicJson(rawText)
+      console.log('Sending to Anthropic (tool + JSON fallback)…')
+      const parsed = await extractListingFromAnthropic(
+        anthropic,
+        `Extrahiere alle Wohnungsdaten aus folgendem Text:\n\n${t.slice(0, 12000)}`
+      )
       const data = normalizeExtractedPayload(parsed)
-      console.log('Parsed result:', JSON.stringify(data))
+      console.log('[INGEST] Parsed result keys:', Object.keys(data).join(', '))
       return NextResponse.json({
         success: true,
         data,
@@ -341,20 +416,10 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const message = await anthropic.messages.create({
-        model: ingestModel(),
-        max_tokens: 4096,
-        system: EXTRACTION_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: `Extrahiere alle Wohnungsdaten aus folgendem Seiteninhalt:\n\nURL: ${url}\n\n${pageText}`,
-          },
-        ],
-      })
-      const rawText =
-        message.content[0]?.type === 'text' ? message.content[0].text.trim() : ''
-      const parsed = parseAnthropicJson(rawText)
+      const parsed = await extractListingFromAnthropic(
+        anthropic,
+        `Extrahiere alle Wohnungsdaten aus folgendem Seiteninhalt:\n\nURL: ${url}\n\n${pageText}`
+      )
       const data = normalizeExtractedPayload(parsed)
       return NextResponse.json({
         success: true,
@@ -369,6 +434,7 @@ export async function POST(request: NextRequest) {
           success: false,
           error: 'AI_PARSE_FAILED',
           message: 'Analyse fehlgeschlagen.',
+          details: String(error),
           blocked: false,
           images: imageUrls,
           fallback: true,

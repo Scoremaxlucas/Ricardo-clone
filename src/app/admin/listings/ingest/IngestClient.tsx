@@ -43,6 +43,9 @@ type IngestApiFailureBody = {
   message?: string
   fallback?: boolean
   rawResponse?: string
+  details?: string
+  blocked?: boolean
+  urlDetected?: string
 }
 
 /** Antwort für `type: text` / `type: url` — Felder unter `data`. */
@@ -376,18 +379,26 @@ export function IngestClient() {
       }
 
       if (result.success === false) {
+        const fail = result as IngestApiFailureBody
         const msg =
-          (typeof result.message === 'string' && result.message) ||
+          (typeof fail.message === 'string' && fail.message) ||
           'Analyse fehlgeschlagen. Bitte Formular manuell ausfüllen.'
         toast.error(msg)
         applyEmptyFallback()
-        if (result.blocked === true && typeof result.urlDetected === 'string') {
-          setRecognizedSource(result.urlDetected)
+        if (fail.blocked === true && typeof fail.urlDetected === 'string') {
+          setRecognizedSource(fail.urlDetected)
           setIngestBasis(
-            result.urlDetected.toLowerCase().includes('tutti') ? 'tutti_public' : 'public_authority_url'
+            fail.urlDetected.toLowerCase().includes('tutti') ? 'tutti_public' : 'public_authority_url'
           )
         }
-        setPostAnalyzeWarnings([msg])
+        const detailLine =
+          typeof fail.details === 'string' && fail.details.trim()
+            ? `Technisch: ${fail.details.trim().slice(0, 500)}${fail.details.length > 500 ? '…' : ''}`
+            : null
+        setPostAnalyzeWarnings([msg, ...(detailLine ? [detailLine] : [])])
+        if (fail.error === 'AI_PARSE_FAILED' && fail.details) {
+          console.error('[INGEST CLIENT] AI_PARSE_FAILED details:', fail.details)
+        }
         setStep(3)
         return
       }
