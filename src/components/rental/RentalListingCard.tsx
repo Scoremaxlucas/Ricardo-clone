@@ -35,16 +35,19 @@ function firstPhoto(urls: string[]): string | null {
   return null
 }
 
+/** Avoids RangeError from `toISOString()` / Intl when DB or JSON has invalid dates. */
+function validDate(d: string | Date | null | undefined): Date | null {
+  if (d == null || d === '') return null
+  const dt = d instanceof Date ? d : new Date(d)
+  return Number.isNaN(dt.getTime()) ? null : dt
+}
+
 export function RentalListingCard({ listing: l, imagePriority = false }: Props) {
   const main = firstPhoto(l.photos)
   const now = Date.now()
-  const isNew = now - new Date(l.createdAt).getTime() < 48 * 3600000
-  const avail =
-    l.availableFrom != null && l.availableFrom !== ''
-      ? typeof l.availableFrom === 'string'
-        ? l.availableFrom
-        : l.availableFrom.toISOString()
-      : null
+  const created = validDate(l.createdAt)
+  const isNew = created != null && now - created.getTime() < 48 * 3600000
+  const available = validDate(l.availableFrom ?? null)
 
   return (
     <Link
@@ -93,10 +96,10 @@ export function RentalListingCard({ listing: l, imagePriority = false }: Props) 
           <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
           {l.city} · {l.canton}
         </p>
-        {avail ?
+        {available ?
           <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
             <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            Verfügbar ab {formatDate(avail)}
+            Verfügbar ab {formatDate(available)}
           </p>
         : null}
       </div>
