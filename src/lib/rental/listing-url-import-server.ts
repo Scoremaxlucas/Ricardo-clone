@@ -1,13 +1,14 @@
 import dns from 'node:dns/promises'
 import net from 'node:net'
 import Anthropic from '@anthropic-ai/sdk'
+import { coerceAnthropicListingModel } from '@/lib/rental/anthropic-model'
 import { htmlToListingPlainText } from './listing-url-import-html'
 import type { ImportListingAiResult } from './listing-url-import-types'
 
 const USER_AGENT =
   'Mozilla/5.0 (compatible; HelvendarBot/1.0; +https://wohnen.helvenda.ch)'
 const FETCH_TIMEOUT_MS = 10_000
-const MODEL = 'claude-sonnet-4-20250514'
+const MODEL = coerceAnthropicListingModel(process.env.ANTHROPIC_LISTING_IMPORT_MODEL)
 
 export const LISTING_IMPORT_SYSTEM_PROMPT = `Du analysierst den Textinhalt einer Schweizer Mietwohnungs-Inserat-Seite.
 Extrahiere alle verfügbaren Informationen und antworte NUR mit einem JSON-Objekt, ohne jeglichen weiteren Text, Erklärungen oder Markdown-Backticks.

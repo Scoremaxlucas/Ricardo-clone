@@ -1,5 +1,6 @@
 import type { CreditCheckStatus, RentalApplicationStatus } from '@prisma/client'
 import Anthropic from '@anthropic-ai/sdk'
+import { coerceAnthropicListingModel } from '@/lib/rental/anthropic-model'
 import type { CreditCheckResult } from './types'
 import { isCreditCheckResult } from './types'
 
@@ -19,7 +20,7 @@ totalAmountCategory: none = keine Schulden, low = unter CHF 1000, medium = CHF 1
 isRecent: true wenn Ausstellungsdatum max. 3 Monate zurückliegt.
 Gib niemals den vollständigen Dokumenttext zurück. Nur dieses JSON.`
 
-const MODEL = process.env.RENTAL_CREDIT_CHECK_MODEL || 'claude-sonnet-4-20250514'
+const MODEL = coerceAnthropicListingModel(process.env.RENTAL_CREDIT_CHECK_MODEL)
 
 function extractJsonObject(text: string): unknown {
   const trimmed = text.trim()

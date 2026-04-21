@@ -38,9 +38,11 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json(result)
-  } catch (e: unknown) {
-    console.error('[admin/ingest POST]', e)
-    const msg = e instanceof Error ? e.message : 'Fehler'
-    return NextResponse.json({ message: msg }, { status: 500 })
+  } catch (error) {
+    console.error('[admin/ingest POST]', error)
+    return NextResponse.json(
+      { error: 'Interner Fehler', details: String(error) },
+      { status: 500 }
+    )
   }
 }

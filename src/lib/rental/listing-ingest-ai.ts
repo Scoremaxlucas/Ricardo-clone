@@ -1,7 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { ANTHROPIC_CLAUDE_SONNET_4, coerceAnthropicListingModel } from '@/lib/rental/anthropic-model'
 import type { ImportListingAiResult } from '@/lib/rental/listing-url-import-types'
 
-export const ADMIN_INGEST_MODEL = 'claude-sonnet-4-20250514'
+/** Kanonischer Ingest-Modellname (ohne fehlerhafte Env-Overrides). */
+export const ADMIN_INGEST_MODEL = ANTHROPIC_CLAUDE_SONNET_4
+
+function ingestAnthropicModel(): string {
+  return coerceAnthropicListingModel(process.env.ANTHROPIC_INGEST_MODEL)
+}
 
 export type AdminIngestAiRow = ImportListingAiResult & {
   landlordName?: string
@@ -104,7 +110,7 @@ export async function extractAdminIngestFromPlainText(plainText: string): Promis
 
   const client = new Anthropic({ apiKey })
   const msg = await client.messages.create({
-    model: ADMIN_INGEST_MODEL,
+    model: ingestAnthropicModel(),
     max_tokens: 2800,
     system: EXTENDED_TEXT_SYSTEM,
     messages: [
@@ -139,7 +145,7 @@ export async function extractFromVisionImages(
     text: 'Analysiere die Bilder gemäss Systemanweisung.',
   })
   const msg = await client.messages.create({
-    model: ADMIN_INGEST_MODEL,
+    model: ingestAnthropicModel(),
     max_tokens: 1200,
     system: VISION_SYSTEM,
     messages: [{ role: 'user', content }],

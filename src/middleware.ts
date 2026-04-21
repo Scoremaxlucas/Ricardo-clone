@@ -37,6 +37,7 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/api/rental-listings')) return true
   if (pathname.startsWith('/api/admin/rental-listings')) return true
   if (pathname.startsWith('/api/admin/ingest')) return true
+  if (pathname.startsWith('/api/admin/stats')) return true
   if (pathname.startsWith('/api/rental-applications')) return true
   if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
   if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
@@ -45,6 +46,7 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname === '/') return true
   if (pathname === '/matching' || pathname.startsWith('/matching/')) return true
   if (pathname === '/admin/listings' || pathname.startsWith('/admin/listings/')) return true
+  if (pathname.startsWith('/admin/dashboard')) return true
   if (
     pathname === '/login' ||
     pathname === '/register' ||
@@ -106,8 +108,10 @@ export async function middleware(request: NextRequest) {
 
   if (
     pathname.startsWith('/admin/listings') ||
+    pathname.startsWith('/admin/dashboard') ||
     pathname.startsWith('/api/admin/rental-listings') ||
-    pathname.startsWith('/api/admin/ingest')
+    pathname.startsWith('/api/admin/ingest') ||
+    pathname.startsWith('/api/admin/stats')
   ) {
     const secret = process.env.NEXTAUTH_SECRET
     if (!secret) {
