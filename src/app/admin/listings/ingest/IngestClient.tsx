@@ -45,11 +45,12 @@ type IngestApiFailureBody = {
   rawResponse?: string
 }
 
-/** Antwort für Option B (reiner Text) — `listing` fehlt, Felder liegen unter `data`. */
-type IngestTextSuccessBody = {
+/** Antwort für `type: text` / `type: url` — Felder unter `data`. */
+type IngestUnifiedSuccessBody = {
   success: true
   data: Record<string, unknown>
   images?: string[]
+  source?: string
 }
 
 const MAX_IMAGES = 10
@@ -350,40 +351,55 @@ export function IngestClient() {
     setProgressTick(0)
     setPostAnalyzeWarnings([])
 
-    const requestBody =
-      card === 'text' ? { type: 'text' as const, text: textInput.trim() } : { mode, url, text, imageUrls }
+    const requestBody: Record<string, unknown> =
+      card === 'text'
+        ? { type: 'text', text: textInput.trim() }
+        : card === 'url'
+          ? { type: 'url', url: urlInput.trim() }
+          : { mode, url, text, imageUrls }
 
     try {
-      const res = await fetch('/api/admin/ingest', {
+      const response = await fetch('/api/admin/ingest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       })
-      const raw = await res.json().catch(() => null)
-      const warnings: string[] = []
-      if (raw && typeof raw === 'object' && Array.isArray((raw as IngestApiResult).warnings)) {
-        warnings.push(...(raw as IngestApiResult).warnings)
-      }
-      if (raw && typeof raw === 'object' && (raw as IngestApiFailureBody).success === false) {
-        const fail = raw as IngestApiFailureBody
-        if (fail.error === 'PARSE_FAILED' && fail.rawResponse) {
-          console.error('Ingest PARSE_FAILED raw (truncated):', fail.rawResponse.slice(0, 2000))
-        }
-        toast.error(fail.message || 'Analyse fehlgeschlagen')
-        if (fail.fallback) applyEmptyFallback()
-        setPostAnalyzeWarnings([fail.message || manualFallbackDescription()])
+      const result = (await response.json().catch(() => null)) as Record<string, unknown> | null
+      console.log('[INGEST CLIENT] API result:', result)
+
+      if (!result || typeof result !== 'object') {
+        toast.error('Ungültige Server-Antwort')
+        applyEmptyFallback()
+        setPostAnalyzeWarnings([manualFallbackDescription()])
         setStep(3)
         return
       }
+
+      if (result.success === false) {
+        const msg =
+          (typeof result.message === 'string' && result.message) ||
+          'Analyse fehlgeschlagen. Bitte Formular manuell ausfüllen.'
+        toast.error(msg)
+        applyEmptyFallback()
+        if (result.blocked === true && typeof result.urlDetected === 'string') {
+          setRecognizedSource(result.urlDetected)
+          setIngestBasis(
+            result.urlDetected.toLowerCase().includes('tutti') ? 'tutti_public' : 'public_authority_url'
+          )
+        }
+        setPostAnalyzeWarnings([msg])
+        setStep(3)
+        return
+      }
+
       if (
-        card === 'text' &&
-        raw &&
-        typeof raw === 'object' &&
-        (raw as IngestTextSuccessBody).success === true &&
-        (raw as IngestTextSuccessBody).data &&
-        typeof (raw as IngestTextSuccessBody).data === 'object'
+        result.success === true &&
+        result.data &&
+        typeof result.data === 'object' &&
+        !Array.isArray(result.data)
       ) {
-        const d = (raw as IngestTextSuccessBody).data
+        const rawPayload = result as IngestUnifiedSuccessBody
+        const d = rawPayload.data
         const features = Array.isArray(d.features)
           ? d.features.filter((x): x is string => typeof x === 'string')
           : []
@@ -401,7 +417,7 @@ export function IngestClient() {
         setCity(typeof d.city === 'string' ? d.city : '')
         setCanton(typeof d.canton === 'string' ? d.canton.trim().toUpperCase().slice(0, 2) : '')
         const roomsNum =
-          typeof d.rooms === 'number'
+          typeof d.rooms === 'number' && Number.isFinite(d.rooms)
             ? d.rooms
             : parseFloat(String(d.rooms ?? '').replace(',', '.'))
         setRooms(roomsToSelect(Number.isFinite(roomsNum) ? roomsNum : 3))
@@ -422,42 +438,65 @@ export function IngestClient() {
         const avail = typeof d.availableFrom === 'string' ? d.availableFrom.trim() : ''
         setAvailableFrom(/^\d{4}-\d{2}-\d{2}$/.test(avail) ? avail : new Date().toISOString().slice(0, 10))
         setRequiresCreditCheck(true)
-        const imgs = (raw as IngestTextSuccessBody).images
+        const imgs = rawPayload.images
         setImageUrls(Array.isArray(imgs) ? imgs.filter((u): u is string => typeof u === 'string') : [])
         const conf = d.confidence
-        setAiConfidence(
-          conf === 'high' || conf === 'medium' || conf === 'low' ? conf : 'high'
-        )
-        setSourceUrlMeta(null)
-        setRecognizedSource('')
-        setIngestBasis('landlord_direct')
+        setAiConfidence(conf === 'high' || conf === 'medium' || conf === 'low' ? conf : 'high')
+        if (rawPayload.source === 'url' && card === 'url') {
+          const u = urlInput.trim()
+          setSourceUrlMeta(u)
+          setRecognizedSource(u)
+          setIngestBasis(u.toLowerCase().includes('tutti') ? 'tutti_public' : 'public_authority_url')
+        } else {
+          setSourceUrlMeta(null)
+          setRecognizedSource('')
+          setIngestBasis('landlord_direct')
+        }
         setLandlordName(typeof d.landlordName === 'string' ? d.landlordName : '')
         setLandlordContact(typeof d.landlordContact === 'string' ? d.landlordContact : '')
         setLandlordConsentAck(false)
         setInternalNote('')
         setPostAnalyzeWarnings([])
+        const filledCount = Object.entries(d).filter(([key, v]) => {
+          if (key === 'features') return Array.isArray(v) && v.length > 0
+          if (v === null || v === undefined) return false
+          if (typeof v === 'string') return v.trim().length > 0
+          if (typeof v === 'number') return Number.isFinite(v)
+          return false
+        }).length
+        toast.success(`Analyse erfolgreich — ${filledCount} Felder erkannt`)
         setStep(3)
         return
       }
-      if (!res.ok || !raw || typeof raw !== 'object' || !('listing' in raw)) {
-        toast.error((raw as { message?: string })?.message || 'Analyse fehlgeschlagen')
+
+      if (result.success === true && 'listing' in result) {
+        const data = result as unknown as IngestApiResult
+        applyAnalyzeToForm(data)
+        const errMsgs = (data.errors || []).map(e => ERROR_MESSAGES[e] || e).filter(Boolean)
+        const extra: string[] = [...(data.warnings || [])]
+        if (typeof data.imageDownloadFailures === 'number' && data.imageDownloadFailures > 0) {
+          extra.push(`${data.imageDownloadFailures} Bild(er) konnten nicht geladen werden`)
+        }
+        setPostAnalyzeWarnings([...extra, ...errMsgs.map(e => String(e))])
+        for (const code of data.errors || []) {
+          const m = ERROR_MESSAGES[code]
+          if (m) toast.error(m)
+        }
+        setStep(3)
+        return
+      }
+
+      if (!response.ok) {
+        toast.error((result.message as string) || 'Analyse fehlgeschlagen')
         applyEmptyFallback()
         setPostAnalyzeWarnings([manualFallbackDescription()])
         setStep(3)
         return
       }
-      const data = raw as IngestApiResult
-      applyAnalyzeToForm(data)
-      const errMsgs = (data.errors || []).map(e => ERROR_MESSAGES[e] || e).filter(Boolean)
-      const extra: string[] = [...(data.warnings || [])]
-      if (typeof data.imageDownloadFailures === 'number' && data.imageDownloadFailures > 0) {
-        extra.push(`${data.imageDownloadFailures} Bild(er) konnten nicht geladen werden`)
-      }
-      setPostAnalyzeWarnings([...extra, ...errMsgs.map(e => String(e))])
-      for (const code of data.errors || []) {
-        const m = ERROR_MESSAGES[code]
-        if (m) toast.error(m)
-      }
+
+      toast.error('Analyse fehlgeschlagen')
+      applyEmptyFallback()
+      setPostAnalyzeWarnings([manualFallbackDescription()])
       setStep(3)
     } catch {
       toast.error('Analyse fehlgeschlagen')

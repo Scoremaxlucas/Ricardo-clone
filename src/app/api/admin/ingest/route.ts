@@ -1,46 +1,69 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { coerceAnthropicListingModel } from '@/lib/rental/anthropic-model'
 import { runAdminListingIngest, type AdminIngestMode } from '@/lib/rental/listing-ingest-orchestrator'
+import { assertUrlSafeForServerFetch } from '@/lib/rental/listing-url-import-server'
 import { getServerSession } from 'next-auth/next'
-import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-const MODES = new Set<AdminIngestMode>(['url', 'text', 'images_text', 'combined'])
+const EXTRACTION_SYSTEM_PROMPT = `Du bist ein Experte für Schweizer Immobilieninserate.
+Deine Aufgabe: Extrahiere strukturierte Daten aus beliebigem Text über Mietwohnungen.
+Der Text kann aus E-Mails, WhatsApp-Nachrichten, Inseraten, oder anderen Quellen stammen.
+Antworte AUSSCHLIESSLICH mit einem validen JSON-Objekt.
+KEINE Backticks, KEIN Markdown, KEIN erklärender Text, NUR das JSON-Objekt selbst.
 
-const TEXT_INGEST_SYSTEM = `Du analysierst Informationen zu einer Schweizer Mietwohnung.
-Extrahiere alle verfügbaren Informationen. Antworte NUR mit einem JSON-Objekt, absolut kein anderer Text, keine Backticks, kein Markdown:
+Pflichtformat der Antwort:
 {
-  "title": "",
-  "description": "",
-  "address": "",
-  "zip": "",
-  "city": "",
-  "canton": "",
-  "rooms": null,
-  "areaSqm": null,
+  "title": "Aussagekräftiger Titel der Wohnung",
+  "description": "Vollständige Beschreibung auf Deutsch",
+  "address": "Strassenname und Hausnummer",
+  "zip": "4-stellige Schweizer PLZ",
+  "city": "Ortsname",
+  "canton": "2-Buchstaben Kürzel z.B. ZH BE GE BS",
+  "rooms": 3.5,
+  "areaSqm": 90,
   "floor": null,
-  "rentPerMonth": null,
-  "utilitiesPerMonth": null,
+  "rentPerMonth": 3200,
+  "utilitiesPerMonth": 300,
   "depositAmount": null,
-  "availableFrom": "",
-  "features": [],
+  "availableFrom": "2026-04-22",
+  "features": ["Balkon", "Lift", "Parkettboden"],
   "landlordName": "",
-  "landlordContact": "",
+  "landlordContact": "email@beispiel.ch",
   "confidence": "high"
 }
-Regeln:
-- Alle CHF-Beträge als Ganzzahl ohne Formatierung (3200 nicht 3'200)
-- rooms als Dezimalzahl (3.5)
-- availableFrom als YYYY-MM-DD, falls "per sofort" dann heutiges Datum
-- canton als 2-Buchstaben Kürzel
-- features als Array von deutschen Strings
-- Felder die nicht erkennbar sind: null oder leer`
+
+Strikte Regeln:
+- title: Falls nicht explizit angegeben, erstelle einen aus Zimmeranzahl + Ort (z.B. "3.5-Zimmer-Wohnung in Zürich-Wollishofen")
+- description: Schreibe eine saubere deutsche Beschreibung basierend auf allen verfügbaren Infos. Mindestens 80 Zeichen.
+- address: Nur Strasse + Nummer, OHNE PLZ und Stadt
+- zip: Nur die 4-stellige Zahl als String
+- city: Nur der Ortsname ohne Kanton
+- canton: Leite aus PLZ oder Ortsname ab (8xxx = ZH, 3xxx = BE, 12xx = GE, etc.)
+- rooms: Dezimalzahl (3.5 nicht "3.5 Zimmer")
+- areaSqm: Nur die Zahl ohne Einheit
+- rentPerMonth: Nur der Nettomietzins ohne NK, als Ganzzahl ohne Apostrophe
+- utilitiesPerMonth: Nebenkosten/Akonto als Ganzzahl, null falls nicht angegeben
+- depositAmount: Kaution als Ganzzahl, null falls nicht angegeben
+- availableFrom: ISO-Datum YYYY-MM-DD. Falls "per sofort" oder "sofort": heutiges Datum. Falls "nach Vereinbarung": null
+- features: Array mit deutschen Strings. Erkenne: Balkon, Terrasse, Garten, Lift, Parkettboden, Einbauküche, Kellerabteil, Parkplatz, Waschmaschine, Tumbler, Geschirrspüler, Badewanne, Dusche, Glasfaser, Minergie
+- landlordContact: E-Mail oder Telefonnummer des Vermieters falls vorhanden
+- confidence: "high" wenn mind. 5 Felder gefüllt, "medium" wenn 3-4, "low" wenn weniger`
 
 function ingestModel(): string {
   return coerceAnthropicListingModel(process.env.ANTHROPIC_INGEST_MODEL)
+}
+
+function abortAfter(ms: number): AbortSignal {
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(ms)
+  }
+  const ac = new AbortController()
+  setTimeout(() => ac.abort(), ms)
+  return ac.signal
 }
 
 function coerceFiniteNumber(v: unknown): number | null {
@@ -52,6 +75,7 @@ function coerceFiniteNumber(v: unknown): number | null {
       .replace(/\s/g, '')
       .replace(/CHF/gi, '')
       .replace(/fr\.?/gi, '')
+      .replace(/m²|m2|qm/gi, '')
       .replace(',', '.')
     const m = cleaned.match(/-?\d+(\.\d+)?/)
     if (!m) return null
@@ -66,7 +90,8 @@ function coerceChfInt(v: unknown): number | null {
   return n == null ? null : Math.round(n)
 }
 
-function normalizeTextIngestData(raw: Record<string, unknown>): Record<string, unknown> {
+/** Nach JSON.parse: Zahlen/Strings vereinheitlichen (KI liefert oft Strings). */
+function normalizeExtractedPayload(raw: Record<string, unknown>): Record<string, unknown> {
   const features = Array.isArray(raw.features) ? raw.features.filter((x): x is string => typeof x === 'string') : []
   const conf = raw.confidence
   const confidence =
@@ -84,7 +109,12 @@ function normalizeTextIngestData(raw: Record<string, unknown>): Record<string, u
     rentPerMonth: coerceChfInt(raw.rentPerMonth),
     utilitiesPerMonth: coerceChfInt(raw.utilitiesPerMonth),
     depositAmount: coerceChfInt(raw.depositAmount),
-    availableFrom: typeof raw.availableFrom === 'string' ? raw.availableFrom.trim() : '',
+    availableFrom:
+      raw.availableFrom === null || raw.availableFrom === undefined
+        ? ''
+        : typeof raw.availableFrom === 'string'
+          ? raw.availableFrom.trim()
+          : '',
     features,
     landlordName: typeof raw.landlordName === 'string' ? raw.landlordName : '',
     landlordContact: typeof raw.landlordContact === 'string' ? raw.landlordContact : '',
@@ -92,8 +122,31 @@ function normalizeTextIngestData(raw: Record<string, unknown>): Record<string, u
   }
 }
 
-async function handlePlainTextIngest(inputText: string): Promise<NextResponse> {
-  console.log('TEXT INPUT received, length:', inputText?.length)
+function parseAnthropicJson(rawText: string): Record<string, unknown> {
+  let cleanJson = rawText
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim()
+  const firstBrace = cleanJson.indexOf('{')
+  const lastBrace = cleanJson.lastIndexOf('}')
+  if (firstBrace >= 0 && lastBrace >= firstBrace) {
+    cleanJson = cleanJson.substring(firstBrace, lastBrace + 1)
+  }
+  const parsed = JSON.parse(cleanJson) as unknown
+  if (!parsed || typeof parsed !== 'object') throw new Error('Parsed value is not an object')
+  return parsed as Record<string, unknown>
+}
+
+export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!(await isAdmin(session))) {
+    return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
+  }
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim()
   if (!apiKey) {
     return NextResponse.json(
@@ -107,67 +160,75 @@ async function handlePlainTextIngest(inputText: string): Promise<NextResponse> {
     )
   }
 
-  const client = new Anthropic({ apiKey })
-  console.log('Sending to Anthropic...')
-  const message = await client.messages.create({
-    model: ingestModel(),
-    max_tokens: 4096,
-    system: TEXT_INGEST_SYSTEM,
-    messages: [
-      {
-        role: 'user',
-        content: `Analysiere diesen Text eines Schweizer Mietwohnungsinserats und extrahiere alle Informationen. Antworte NUR mit einem JSON-Objekt ohne Backticks oder andere Zeichen davor oder danach:\n\n${inputText.slice(0, 12000)}`,
-      },
-    ],
-  })
+  const anthropic = new Anthropic({ apiKey })
 
-  const responseText =
-    message.content[0]?.type === 'text' ? message.content[0].text : ''
-  console.log(
-    'Anthropic response:',
-    JSON.stringify({
-      id: message.id,
-      model: message.model,
-      stopReason: message.stop_reason,
-      textLength: responseText.length,
-      textPreview: responseText.slice(0, 500),
-    })
-  )
-
-  const cleanJson = responseText
-    .replace(/```json/gi, '')
-    .replace(/```/g, '')
-    .trim()
-
-  let parsed: unknown
+  let body: Record<string, unknown>
   try {
-    parsed = JSON.parse(cleanJson)
+    body = (await request.json()) as Record<string, unknown>
   } catch {
-    const start = cleanJson.indexOf('{')
-    const end = cleanJson.lastIndexOf('}')
-    if (start === -1 || end === -1 || end <= start) {
-      console.error('JSON parse failed. Raw response:', responseText)
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'PARSE_FAILED',
-          message: 'Die KI-Antwort enthielt kein gültiges JSON.',
-          rawResponse: responseText.slice(0, 8000),
-          fallback: true,
-        },
-        { status: 200 }
-      )
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
+
+  const type = typeof body.type === 'string' ? body.type : undefined
+  const modeField = typeof body.mode === 'string' ? body.mode : undefined
+  const text = typeof body.text === 'string' ? body.text : ''
+  const url = typeof body.url === 'string' ? body.url.trim() : ''
+
+  const resolvedType: 'text' | 'url' | undefined =
+    type === 'text' || type === 'url'
+      ? type
+      : modeField === 'text'
+        ? 'text'
+        : modeField === 'url'
+          ? 'url'
+          : undefined
+
+  // ——— TEXT ———
+  if (resolvedType === 'text') {
+    if (!text || text.trim().length < 10) {
+      return NextResponse.json({ success: false, error: 'Text zu kurz oder leer' }, { status: 400 })
     }
+    const t = text.trim()
+    console.log('[INGEST] Text flow started, length:', t.length)
     try {
-      parsed = JSON.parse(cleanJson.slice(start, end + 1))
-    } catch {
-      console.error('JSON parse failed. Raw response:', responseText)
+      console.log('Sending to Anthropic...')
+      const message = await anthropic.messages.create({
+        model: ingestModel(),
+        max_tokens: 4096,
+        system: EXTRACTION_SYSTEM_PROMPT,
+        messages: [
+          {
+            role: 'user',
+            content: `Extrahiere alle Wohnungsdaten aus folgendem Text:\n\n${t.slice(0, 12000)}`,
+          },
+        ],
+      })
+      console.log('[INGEST] Anthropic response received')
+      const rawContent = message.content[0]
+      if (!rawContent || rawContent.type !== 'text') {
+        throw new Error('Unexpected response type from Anthropic')
+      }
+      const rawText = rawContent.text.trim()
+      console.log('[INGEST] Raw Anthropic text:', rawText.substring(0, 200))
+      const parsed = parseAnthropicJson(rawText)
+      const data = normalizeExtractedPayload(parsed)
+      console.log('Parsed result:', JSON.stringify(data))
+      return NextResponse.json({
+        success: true,
+        data,
+        images: [] as string[],
+        source: 'text',
+      })
+    } catch (error) {
+      console.error('[INGEST] Text flow error:', error)
+      console.error('Ingest detailed error:', error)
+      console.error('Error stack:', error instanceof Error ? error.stack : 'no stack')
       return NextResponse.json(
         {
           success: false,
-          error: 'PARSE_FAILED',
-          message: 'Die KI-Antwort enthielt kein gültiges JSON.',
-          rawResponse: responseText.slice(0, 8000),
+          error: 'AI_PARSE_FAILED',
+          message: 'Analyse fehlgeschlagen. Bitte versuche es erneut oder fülle das Formular manuell aus.',
+          details: String(error),
           fallback: true,
         },
         { status: 200 }
@@ -175,78 +236,163 @@ async function handlePlainTextIngest(inputText: string): Promise<NextResponse> {
     }
   }
 
-  if (!parsed || typeof parsed !== 'object') {
-    console.error('JSON parse failed. Raw response:', responseText)
-    return NextResponse.json(
-      {
+  // ——— URL ———
+  if (resolvedType === 'url') {
+    if (!url) {
+      return NextResponse.json({ error: 'URL fehlt' }, { status: 400 })
+    }
+    console.log('[INGEST] URL flow started:', url)
+
+    let pageText = ''
+    let imageUrls: string[] = []
+    let blocked = false
+
+    try {
+      const safe = await assertUrlSafeForServerFetch(url)
+      const fetchUrl = safe.toString()
+      const response = await fetch(fetchUrl, {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'de-CH,de;q=0.9,en;q=0.8',
+        },
+        signal: abortAfter(10_000),
+      })
+
+      if (response.status === 403 || response.status === 429 || response.status === 401) {
+        blocked = true
+      } else if (response.status === 404 || response.status === 410) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'URL_NOT_FOUND',
+            message: 'Diese Seite existiert nicht mehr (404). Die Wohnung ist möglicherweise vergeben.',
+            fallback: true,
+          },
+          { status: 200 }
+        )
+      } else {
+        const html = await response.text()
+        pageText = html
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+          .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .substring(0, 8000)
+
+        const imgMatches = Array.from(
+          html.matchAll(/<img[^>]+(?:src|data-src)=["']([^"']+)["'][^>]*>/gi)
+        )
+        for (const match of imgMatches) {
+          const src = match[1]
+          const lower = src.toLowerCase()
+          if (
+            src.startsWith('http') &&
+            (lower.includes('.jpg') ||
+              lower.includes('.jpeg') ||
+              lower.includes('.png') ||
+              lower.includes('.webp')) &&
+            !lower.includes('icon') &&
+            !lower.includes('logo') &&
+            !lower.includes('1x1') &&
+            !lower.includes('pixel')
+          ) {
+            imageUrls.push(src)
+          }
+        }
+
+        const jsonLdMatches = Array.from(
+          html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)
+        )
+        for (const match of jsonLdMatches) {
+          try {
+            const jsonStr = JSON.stringify(JSON.parse(match[1]))
+            const urlMatches = Array.from(
+              jsonStr.matchAll(/https?:\/\/[^\s"'\\]+\.(?:jpg|jpeg|png|webp)/gi)
+            )
+            for (const urlMatch of urlMatches) {
+              imageUrls.push(urlMatch[0])
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+
+        imageUrls = Array.from(new Set(imageUrls)).slice(0, 10)
+      }
+    } catch (fetchError) {
+      console.error('[INGEST] Fetch error:', fetchError)
+      blocked = true
+    }
+
+    if (blocked || pageText.trim().length < 50) {
+      return NextResponse.json({
         success: false,
-        error: 'PARSE_FAILED',
-        message: 'Die KI-Antwort enthielt kein gültiges JSON.',
-        rawResponse: responseText.slice(0, 8000),
+        error: 'BLOCKED',
+        message:
+          'Diese Plattform blockiert automatischen Zugriff. Bitte kopiere den Inseratstext und nutze Option B "Text einfügen".',
+        blocked: true,
+        urlDetected: url,
+        images: imageUrls,
         fallback: true,
-      },
-      { status: 200 }
-    )
+      })
+    }
+
+    try {
+      const message = await anthropic.messages.create({
+        model: ingestModel(),
+        max_tokens: 4096,
+        system: EXTRACTION_SYSTEM_PROMPT,
+        messages: [
+          {
+            role: 'user',
+            content: `Extrahiere alle Wohnungsdaten aus folgendem Seiteninhalt:\n\nURL: ${url}\n\n${pageText}`,
+          },
+        ],
+      })
+      const rawText =
+        message.content[0]?.type === 'text' ? message.content[0].text.trim() : ''
+      const parsed = parseAnthropicJson(rawText)
+      const data = normalizeExtractedPayload(parsed)
+      return NextResponse.json({
+        success: true,
+        data,
+        images: imageUrls,
+        source: 'url',
+      })
+    } catch (error) {
+      console.error('[INGEST] URL Anthropic error:', error)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'AI_PARSE_FAILED',
+          message: 'Analyse fehlgeschlagen.',
+          blocked: false,
+          images: imageUrls,
+          fallback: true,
+        },
+        { status: 200 }
+      )
+    }
   }
 
-  const data = normalizeTextIngestData(parsed as Record<string, unknown>)
-  console.log('Parsed result:', JSON.stringify(data))
-
-  return NextResponse.json({
-    success: true,
-    data,
-    images: [] as string[],
-  })
-}
-
-export async function POST(request: Request) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!(await isAdmin(session))) {
-      return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
-    }
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
-    }
-
-    let body: unknown
-    try {
-      body = await request.json()
-    } catch {
-      return NextResponse.json({ message: 'Ungültiger Body' }, { status: 400 })
-    }
-    console.log('Ingest API called with:', JSON.stringify(body))
-    const b = body as Record<string, unknown>
-
-    const textPayload = typeof b.text === 'string' ? b.text.trim() : ''
-    const modeStr = typeof b.mode === 'string' ? b.mode : ''
-    const useDedicatedTextIngest =
-      textPayload.length > 0 &&
-      (b.type === 'text' || modeStr === 'text') &&
-      modeStr !== 'images_text' &&
-      modeStr !== 'combined' &&
-      modeStr !== 'url'
-
-    if (useDedicatedTextIngest) {
-      return await handlePlainTextIngest(textPayload)
-    }
-
-    const mode = b.mode
-    if (typeof mode !== 'string' || !MODES.has(mode as AdminIngestMode)) {
-      return NextResponse.json({ message: 'Ungültiger Modus' }, { status: 400 })
-    }
-
+  // ——— Legacy: Bild+Text / URL+Bild (Orchestrator) ———
+  const mode = body.mode
+  if (typeof mode === 'string' && (mode === 'images_text' || mode === 'combined')) {
     try {
       const result = await runAdminListingIngest(session.user.id, {
         mode: mode as AdminIngestMode,
-        url: typeof b.url === 'string' ? b.url : undefined,
-        text: typeof b.text === 'string' ? b.text : undefined,
-        imageUrls: Array.isArray(b.imageUrls) ? b.imageUrls.filter((x): x is string => typeof x === 'string') : undefined,
+        url: typeof body.url === 'string' ? body.url : undefined,
+        text: typeof body.text === 'string' ? body.text : undefined,
+        imageUrls: Array.isArray(body.imageUrls)
+          ? body.imageUrls.filter((x): x is string => typeof x === 'string')
+          : undefined,
       })
       return NextResponse.json({ success: true, ...result })
     } catch (error) {
-      console.error('Ingest detailed error:', error)
-      console.error('Error stack:', error instanceof Error ? error.stack : 'no stack')
+      console.error('Ingest orchestrator error:', error)
       return NextResponse.json(
         {
           success: false,
@@ -258,18 +404,7 @@ export async function POST(request: Request) {
         { status: 200 }
       )
     }
-  } catch (error) {
-    console.error('Ingest outer error:', error)
-    console.error('Error stack:', error instanceof Error ? error.stack : 'no stack')
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'INGEST_EXCEPTION',
-        message:
-          'Die automatische Analyse ist fehlgeschlagen. Bitte die Daten manuell eingeben oder später erneut versuchen.',
-        fallback: true,
-      },
-      { status: 200 }
-    )
   }
+
+  return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
 }

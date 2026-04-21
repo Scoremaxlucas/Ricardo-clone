@@ -41,6 +41,7 @@ const nextConfig = {
     optimisticClientCache: true,
     // Tree-shake barrel imports → kleinere Client-Bundles (lucide, recharts)
     optimizePackageImports: ['lucide-react', 'recharts'],
+    serverComponentsExternalPackages: ['@anthropic-ai/sdk'],
   },
 
   // Optimize images
