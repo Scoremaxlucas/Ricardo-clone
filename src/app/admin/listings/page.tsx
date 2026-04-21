@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import type { ImportSource } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
 import type { Metadata } from 'next'
+import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
 import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
@@ -47,7 +48,7 @@ export default async function AdminListingsPage() {
     redirect('/login?callbackUrl=' + encodeURIComponent('/admin/listings'))
   }
   if (!(await isAdmin(session))) {
-    redirect('/')
+    throwAdminForbidden()
   }
 
   const weekAgo = new Date()

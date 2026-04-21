@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { getServerSession } from 'next-auth/next'
 import type { Metadata } from 'next'
+import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
 import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
@@ -18,7 +19,7 @@ export default async function AdminNewListingPage() {
     redirect('/login?callbackUrl=' + encodeURIComponent('/admin/listings/new'))
   }
   if (!(await isAdmin(session))) {
-    redirect('/')
+    throwAdminForbidden()
   }
 
   return (

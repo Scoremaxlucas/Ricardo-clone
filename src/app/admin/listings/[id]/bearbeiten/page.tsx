@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { parseRentalListingPhotosJson } from '@/lib/rental/rental-listings-public'
 import { getServerSession } from 'next-auth/next'
 import type { Metadata } from 'next'
+import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
 import { notFound, redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
@@ -32,7 +33,7 @@ export default async function AdminEditListingPage({ params }: PageProps) {
     redirect('/login?callbackUrl=' + encodeURIComponent('/admin/listings'))
   }
   if (!(await isAdmin(session))) {
-    redirect('/')
+    throwAdminForbidden()
   }
 
   const { id } = await params

@@ -1,3 +1,4 @@
+import { ADMIN_FORBIDDEN_HTML } from '@/lib/auth/admin-forbidden-html'
 import { getToken } from 'next-auth/jwt'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -127,10 +128,10 @@ export async function middleware(request: NextRequest) {
       if (pathname.startsWith('/api/')) {
         return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
       }
-      return new NextResponse(
-        '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>403</title></head><body><h1>Zugriff verweigert</h1><p>403 — Für diese Seite ist eine Admin-Berechtigung nötig.</p></body></html>',
-        { status: 403, headers: { 'content-type': 'text/html; charset=utf-8' } }
-      )
+      return new NextResponse(ADMIN_FORBIDDEN_HTML, {
+        status: 403,
+        headers: { 'content-type': 'text/html; charset=utf-8' },
+      })
     }
     return NextResponse.next()
   }
