@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
-import { coerceAnthropicListingModel } from '@/lib/rental/anthropic-model'
+import { anthropicListingModelCandidates } from '@/lib/rental/anthropic-model'
 import { runAdminListingIngest, type AdminIngestMode } from '@/lib/rental/listing-ingest-orchestrator'
 import { assertUrlSafeForServerFetch } from '@/lib/rental/listing-url-import-server'
 import { getServerSession } from 'next-auth/next'
@@ -53,10 +53,6 @@ Strikte Regeln:
 - features: Array mit deutschen Strings. Erkenne: Balkon, Terrasse, Garten, Lift, Parkettboden, Einbauküche, Kellerabteil, Parkplatz, Waschmaschine, Tumbler, Geschirrspüler, Badewanne, Dusche, Glasfaser, Minergie
 - landlordContact: E-Mail oder Telefonnummer des Vermieters falls vorhanden
 - confidence: "high" wenn mind. 5 Felder gefüllt, "medium" wenn 3-4, "low" wenn weniger`
-
-function ingestModel(): string {
-  return coerceAnthropicListingModel(process.env.ANTHROPIC_INGEST_MODEL)
-}
 
 function abortAfter(ms: number): AbortSignal {
   if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
@@ -199,34 +195,54 @@ function parseAnthropicJsonRobust(rawText: string): Record<string, unknown> {
   throw new Error(`JSON.parse failed; snippet: ${s.slice(0, 280)}`)
 }
 
+function isAnthropicModelNotFound(error: unknown): boolean {
+  const s = String(error)
+  return s.includes('not_found_error') || (s.includes('404') && s.includes('model'))
+}
+
 async function extractListingFromAnthropic(
   anthropic: Anthropic,
   userContent: string | Anthropic.ContentBlockParam[]
 ): Promise<Record<string, unknown>> {
-  const msg = (await anthropic.messages.create({
-    model: ingestModel(),
-    max_tokens: 8192,
-    stream: false,
-    system: EXTRACTION_SYSTEM_PROMPT,
-    tools: [LISTING_EXTRACT_TOOL as unknown as Anthropic.Messages.Tool],
-    tool_choice: { type: 'tool', name: LISTING_EXTRACT_TOOL.name },
-    messages: [{ role: 'user', content: userContent }],
-  })) as AnthropicNonStreamMessage
+  const models = anthropicListingModelCandidates(process.env.ANTHROPIC_INGEST_MODEL)
+  let lastError: unknown
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i]
+    try {
+      const msg = (await anthropic.messages.create({
+        model,
+        max_tokens: 8192,
+        stream: false,
+        system: EXTRACTION_SYSTEM_PROMPT,
+        tools: [LISTING_EXTRACT_TOOL as unknown as Anthropic.Messages.Tool],
+        tool_choice: { type: 'tool', name: LISTING_EXTRACT_TOOL.name },
+        messages: [{ role: 'user', content: userContent }],
+      })) as AnthropicNonStreamMessage
 
-  for (const block of msg.content) {
-    if (block.type === 'tool_use' && block.name === LISTING_EXTRACT_TOOL.name) {
-      const inp = block.input
-      if (inp && typeof inp === 'object' && !Array.isArray(inp)) {
-        return inp as Record<string, unknown>
+      for (const block of msg.content) {
+        if (block.type === 'tool_use' && block.name === LISTING_EXTRACT_TOOL.name) {
+          const inp = block.input
+          if (inp && typeof inp === 'object' && !Array.isArray(inp)) {
+            return inp as Record<string, unknown>
+          }
+        }
       }
+
+      const joined = joinTextBlocks(msg)
+      if (!joined) {
+        throw new Error('Anthropic: kein tool_use und kein Text-Block in der Antwort')
+      }
+      return parseAnthropicJsonRobust(joined)
+    } catch (e) {
+      if (isAnthropicModelNotFound(e) && i < models.length - 1) {
+        console.warn('[INGEST] Modell nicht verfügbar:', model, '→ Fallback:', models[i + 1])
+        lastError = e
+        continue
+      }
+      throw e
     }
   }
-
-  const joined = joinTextBlocks(msg)
-  if (!joined) {
-    throw new Error('Anthropic: kein tool_use und kein Text-Block in der Antwort')
-  }
-  return parseAnthropicJsonRobust(joined)
+  throw lastError instanceof Error ? lastError : new Error(String(lastError))
 }
 
 const SCREENSHOT_MAX_FILES = 5
