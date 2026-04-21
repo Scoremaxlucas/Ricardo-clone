@@ -6,7 +6,7 @@ import type { ImportListingAiResult } from '@/lib/rental/listing-url-import-type
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ClipboardEvent } from 'react'
 import toast from 'react-hot-toast'
 
 const ROOM_OPTIONS = ['1', '1.5', '2', '2.5', '3', '3.5', '4', '4.5', '5+'] as const
@@ -15,6 +15,21 @@ function roomsToSelect(r: number): string {
   if (r >= 5) return '5+'
   const s = String(r)
   return (ROOM_OPTIONS as readonly string[]).includes(s) ? s : '3'
+}
+
+/** Clipboard paste: nur echte Bild-Dateien (kein Text/HTML). */
+function imageFilesFromClipboard(e: ClipboardEvent): File[] {
+  const out: File[] = []
+  const dt = e.clipboardData
+  if (!dt?.items?.length) return out
+  for (let i = 0; i < dt.items.length; i++) {
+    const it = dt.items[i]
+    if (it.kind !== 'file') continue
+    if (!it.type.startsWith('image/')) continue
+    const f = it.getAsFile()
+    if (f) out.push(f)
+  }
+  return out
 }
 
 export type IngestPermissionBasis =
@@ -188,8 +203,8 @@ export function IngestClient() {
     [aiConfidence]
   )
 
-  const uploadFiles = async (files: FileList | null) => {
-    if (!files?.length || !userId) {
+  const uploadFileArray = async (files: readonly File[]) => {
+    if (!files.length || !userId) {
       if (!userId) toast.error('Bitte anmelden')
       return
     }
@@ -227,8 +242,13 @@ export function IngestClient() {
     }
   }
 
-  const uploadMoreReview = async (files: FileList | null) => {
-    if (!files?.length || !userId) return
+  const uploadFiles = async (files: FileList | null) => {
+    if (!files?.length) return
+    await uploadFileArray(Array.from(files))
+  }
+
+  const uploadMoreReviewFiles = async (files: readonly File[]) => {
+    if (!files.length || !userId) return
     setUploading(true)
     try {
       const next = [...imageUrls]
@@ -261,6 +281,11 @@ export function IngestClient() {
     } finally {
       setUploading(false)
     }
+  }
+
+  const uploadMoreReview = async (files: FileList | null) => {
+    if (!files?.length) return
+    await uploadMoreReviewFiles(Array.from(files))
   }
 
   const applyAnalyzeToForm = useCallback((data: IngestApiResult) => {
@@ -325,8 +350,9 @@ export function IngestClient() {
     setScreenshotFiles([])
   }, [])
 
-  const addScreenshotFiles = (files: FileList | null) => {
+  const addScreenshotFiles = (files: FileList | readonly File[] | null) => {
     if (!files?.length) return
+    const list = files instanceof FileList ? Array.from(files) : [...files]
     const allowedMime = new Set([
       'image/jpeg',
       'image/jpg',
@@ -337,12 +363,12 @@ export function IngestClient() {
       '',
     ])
     const next: File[] = [...screenshotFiles]
-    for (let i = 0; i < files.length; i++) {
+    for (let i = 0; i < list.length; i++) {
       if (next.length >= SCREENSHOT_MAX) {
         toast.error(`Maximal ${SCREENSHOT_MAX} Screenshots`)
         break
       }
-      const f = files[i]
+      const f = list[i]
       const okMime = allowedMime.has(f.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)
       if (!okMime) {
         toast.error('Nur JPG, PNG, WebP oder HEIC')
@@ -798,7 +824,10 @@ export function IngestClient() {
 
           {card === 'screenshot' ?
             <div
-              className="rounded-xl border-2 border-dashed border-teal-300/80 bg-teal-50/40 p-6"
+              tabIndex={0}
+              role="group"
+              aria-label="Screenshot-Bereich"
+              className="rounded-xl border-2 border-dashed border-teal-300/80 bg-teal-50/40 p-6 outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
               onDragOver={e => {
                 e.preventDefault()
                 e.stopPropagation()
@@ -806,6 +835,12 @@ export function IngestClient() {
               onDrop={e => {
                 e.preventDefault()
                 addScreenshotFiles(e.dataTransfer.files)
+              }}
+              onPaste={e => {
+                const pasted = imageFilesFromClipboard(e)
+                if (!pasted.length) return
+                e.preventDefault()
+                addScreenshotFiles(pasted)
               }}
             >
               <p className="text-sm font-semibold text-slate-800">
@@ -820,7 +855,8 @@ export function IngestClient() {
                 className="mt-3 w-full text-sm"
               />
               <p className="mt-2 text-xs text-slate-600">
-                Tipp: Scrolle durch das Inserat und mache mehrere Screenshots, um alle Infos zu erfassen.
+                Tipp: Scrolle durch das Inserat und mache mehrere Screenshots, um alle Infos zu erfassen. Bild aus der
+                Zwischenablage: Bereich anklicken, dann ⌘V / Strg+V.
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {screenshotPreviewUrls.map((src, idx) => (
@@ -843,7 +879,10 @@ export function IngestClient() {
 
           {card === 'images_text' || card === 'combined' ?
             <div
-              className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/80 p-6"
+              tabIndex={0}
+              role="group"
+              aria-label="Bild-Upload"
+              className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/80 p-6 outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
               onDragOver={e => {
                 e.preventDefault()
                 e.stopPropagation()
@@ -852,8 +891,17 @@ export function IngestClient() {
                 e.preventDefault()
                 void uploadFiles(e.dataTransfer.files)
               }}
+              onPaste={e => {
+                const pasted = imageFilesFromClipboard(e)
+                if (!pasted.length) return
+                e.preventDefault()
+                void uploadFileArray(pasted)
+              }}
             >
               <p className="text-sm font-semibold text-slate-800">Bilder (JPG/PNG/WebP, max. 10, je max. 5 MB)</p>
+              <p className="mt-1 text-xs text-slate-600">
+                Aus Zwischenablage: Bereich anklicken, dann ⌘V / Strg+V (nur Bilder, kein reiner Text).
+              </p>
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -933,15 +981,27 @@ export function IngestClient() {
           : null}
 
           <div
-            className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+            tabIndex={0}
+            role="group"
+            aria-label="Bilder im Review"
+            className="rounded-xl border border-slate-200 bg-slate-50 p-4 outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
             onDragOver={e => e.preventDefault()}
             onDrop={e => {
               e.preventDefault()
               void uploadMoreReview(e.dataTransfer.files)
             }}
+            onPaste={e => {
+              const pasted = imageFilesFromClipboard(e)
+              if (!pasted.length) return
+              e.preventDefault()
+              void uploadMoreReviewFiles(pasted)
+            }}
           >
             <p className="text-sm font-bold text-slate-900">Bilder</p>
-            <p className="text-xs text-slate-600">Reihenfolge per Drag-and-drop ändern. Erstes Bild = Hauptbild.</p>
+            <p className="text-xs text-slate-600">
+              Reihenfolge per Drag-and-drop ändern. Erstes Bild = Hauptbild. Aus Zwischenablage: diesen Bereich
+              anklicken, dann ⌘V / Strg+V.
+            </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {imageUrls.map((u, idx) => (
                 <div
