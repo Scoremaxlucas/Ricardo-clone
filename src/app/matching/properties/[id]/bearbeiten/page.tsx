@@ -1,5 +1,6 @@
 import { LandlordAccessDenied } from '@/components/rental/LandlordAccessDenied'
-import { RentalListingLandlordForm, type RentalListingLandlordInitial } from '@/components/rental/RentalListingLandlordForm'
+import { RentalListingLandlordForm } from '@/components/rental/RentalListingLandlordForm'
+import type { RentalListingLandlordInitial } from '@/lib/rental/rental-landlord-initial'
 import { authOptions } from '@/lib/auth'
 import { parseRentalListingPhotosJson } from '@/lib/rental/rental-listings-public'
 import { prisma } from '@/lib/prisma'

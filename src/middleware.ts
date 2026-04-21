@@ -1,3 +1,4 @@
+import { getToken } from 'next-auth/jwt'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { MAIN_SHOP_ORIGIN, WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
@@ -33,6 +34,7 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/api/upload')) return true
   if (pathname.startsWith('/api/user/')) return true
   if (pathname.startsWith('/api/rental-listings')) return true
+  if (pathname.startsWith('/api/admin/rental-listings')) return true
   if (pathname.startsWith('/api/rental-applications')) return true
   if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
   if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
@@ -40,6 +42,7 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname === '/meine-bewerbungen') return true
   if (pathname === '/') return true
   if (pathname === '/matching' || pathname.startsWith('/matching/')) return true
+  if (pathname === '/admin/listings' || pathname.startsWith('/admin/listings/')) return true
   if (
     pathname === '/login' ||
     pathname === '/register' ||
@@ -58,7 +61,7 @@ function redirectToMain(pathname: string, search: string) {
   return NextResponse.redirect(url)
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl
 
   if (
@@ -97,6 +100,39 @@ export function middleware(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7,
     })
     return res
+  }
+
+  if (pathname.startsWith('/admin/listings') || pathname.startsWith('/api/admin/rental-listings')) {
+    const secret = process.env.NEXTAUTH_SECRET
+    if (!secret) {
+      return pathname.startsWith('/api/')
+        ? NextResponse.json({ message: 'Server-Konfiguration fehlt' }, { status: 500 })
+        : new NextResponse('Server-Konfiguration fehlt', { status: 500 })
+    }
+    const token = (await getToken({ req: request, secret })) as {
+      id?: string
+      sub?: string
+      isAdmin?: boolean
+    } | null
+    const userId = token?.id || token?.sub
+    if (!userId) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
+      }
+      const login = new URL('/login', request.url)
+      login.searchParams.set('callbackUrl', pathname + search)
+      return NextResponse.redirect(login)
+    }
+    if (!token?.isAdmin) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
+      }
+      return new NextResponse(
+        '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>403</title></head><body><h1>Zugriff verweigert</h1><p>403 — Für diese Seite ist eine Admin-Berechtigung nötig.</p></body></html>',
+        { status: 403, headers: { 'content-type': 'text/html; charset=utf-8' } }
+      )
+    }
+    return NextResponse.next()
   }
 
   if (isWohnenTenant(request)) {

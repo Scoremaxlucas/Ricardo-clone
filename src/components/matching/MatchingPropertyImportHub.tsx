@@ -4,24 +4,31 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import toast from 'react-hot-toast'
+import { RentalListingLandlordForm } from '@/components/rental/RentalListingLandlordForm'
 import { MatchingPropertyImport } from '@/components/matching/MatchingPropertyImport'
 import { MatchingPropertyWizard, type UrlImportReviewMeta } from '@/components/matching/MatchingPropertyWizard'
+import { mapAiImportToRentalLandlordInitial } from '@/lib/rental/listing-ai-to-rental-initial'
 import { mapAiImportToWizardSnapshot } from '@/lib/rental/listing-url-import-map'
 import type { ImportListingAiResult } from '@/lib/rental/listing-url-import-types'
 
 type Tab = 'url' | 'file'
 
+type Props = {
+  /** Admin: nach Analyse Miet-Inserat (RentalListing) statt MatchingProperty-Wizard */
+  forAdminRental?: boolean
+}
+
 function ManualLink() {
   return (
     <p className="mt-4 text-center text-sm text-slate-600">
-      <Link href="/matching/match-objekte/new" className="font-medium text-teal-800 underline-offset-2 hover:underline">
+      <Link href="/matching/properties/new" className="font-medium text-teal-800 underline-offset-2 hover:underline">
         Stattdessen manuell inserieren →
       </Link>
     </p>
   )
 }
 
-export function MatchingPropertyImportHub() {
+export function MatchingPropertyImportHub({ forAdminRental = false }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('url')
   const [url, setUrl] = useState('')
@@ -30,6 +37,10 @@ export function MatchingPropertyImportHub() {
   const [review, setReview] = useState<{
     snapshot: import('@/lib/matching/landlord-matching-properties').MatchingPropertyWizardSnapshot
     meta: UrlImportReviewMeta
+  } | null>(null)
+  const [adminRentalReview, setAdminRentalReview] = useState<{
+    initial: import('@/lib/rental/rental-landlord-initial').RentalListingLandlordInitial
+    sourceUrl: string
   } | null>(null)
 
   const runAnalyze = useCallback(async () => {
@@ -58,7 +69,7 @@ export function MatchingPropertyImportHub() {
           j.message ||
             'Diese Plattform erlaubt keinen automatischen Zugriff. Bitte fülle das Formular manuell aus.'
         )
-        router.push('/matching/match-objekte/new')
+        router.push('/matching/properties/new')
         return
       }
 
@@ -73,17 +84,25 @@ export function MatchingPropertyImportHub() {
         return
       }
 
-      const mapped = mapAiImportToWizardSnapshot(j.data)
-      setReview({
-        snapshot: mapped.snapshot,
-        meta: {
-          filledFieldCount: mapped.filledFieldCount,
-          confidence: j.data.confidence,
-          platformLabel: j.data.originalPlatform || 'Unbekannt',
-          cantonFromAi: mapped.cantonFromAi,
-        },
-      })
-      toast.success('Analyse abgeschlossen — bitte Daten prüfen.')
+      if (forAdminRental) {
+        setAdminRentalReview({
+          initial: mapAiImportToRentalLandlordInitial(j.data),
+          sourceUrl: trimmed,
+        })
+        toast.success('Analyse abgeschlossen — bitte Daten und Quelle prüfen.')
+      } else {
+        const mapped = mapAiImportToWizardSnapshot(j.data)
+        setReview({
+          snapshot: mapped.snapshot,
+          meta: {
+            filledFieldCount: mapped.filledFieldCount,
+            confidence: j.data.confidence,
+            platformLabel: j.data.originalPlatform || 'Unbekannt',
+            cantonFromAi: mapped.cantonFromAi,
+          },
+        })
+        toast.success('Analyse abgeschlossen — bitte Daten prüfen.')
+      }
     } catch {
       const msg = 'Seite nicht erreichbar. Ist die URL öffentlich zugänglich?'
       setErrorMsg(msg)
@@ -91,12 +110,39 @@ export function MatchingPropertyImportHub() {
     } finally {
       setAnalyzing(false)
     }
-  }, [router, url])
+  }, [router, url, forAdminRental])
 
   const resetUrlFlow = () => {
     setReview(null)
+    setAdminRentalReview(null)
     setErrorMsg(null)
     setUrl('')
+  }
+
+  if (adminRentalReview) {
+    return (
+      <div>
+        <div className="mx-auto max-w-2xl px-4 pt-6">
+          <button
+            type="button"
+            onClick={resetUrlFlow}
+            className="text-sm font-medium text-teal-800 underline-offset-2 hover:underline"
+          >
+            ← Anderen Link analysieren
+          </button>
+        </div>
+        <RentalListingLandlordForm
+          mode="create"
+          variant="admin"
+          minPhotos={0}
+          initial={adminRentalReview.initial}
+          importMetaLocked={{ importedFrom: adminRentalReview.sourceUrl }}
+          submitApiPath="/api/admin/rental-listings"
+          afterSaveRedirect="/admin/listings"
+          backHref="/matching/properties/import"
+        />
+      </div>
+    )
   }
 
   if (review) {
@@ -115,7 +161,7 @@ export function MatchingPropertyImportHub() {
           mode="create"
           initialSnapshot={review.snapshot}
           urlImportReview={review.meta}
-          cancelHref="/matching/match-objekte/import"
+          cancelHref="/matching/properties/import"
         />
       </div>
     )

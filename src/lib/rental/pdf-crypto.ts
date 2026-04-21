@@ -35,3 +35,38 @@ export function encryptPdfForStorageBestEffort(pdfBuffer: Buffer): { buffer: Buf
   }
   return { buffer: encryptPdfForStorage(pdfBuffer), encrypted: true }
 }
+
+const LANDLORD_PLAIN_PREFIX = 'PLAIN1:'
+
+/** Interner Vermieter-Kontakt (UTF-8) — gleicher Schlüssel wie PDF; DB-Feld nur für Admins. */
+export function encryptLandlordContactForStorage(plain: string | null | undefined): string | null {
+  const t = typeof plain === 'string' ? plain.trim() : ''
+  if (!t) return null
+  const { buffer, encrypted } = encryptPdfForStorageBestEffort(Buffer.from(t, 'utf8'))
+  if (!encrypted) {
+    return `${LANDLORD_PLAIN_PREFIX}${t}`
+  }
+  return `GCM1:${buffer.toString('base64')}`
+}
+
+export function decryptLandlordContactFromStorage(stored: string | null | undefined): string | null {
+  if (!stored) return null
+  if (stored.startsWith(LANDLORD_PLAIN_PREFIX)) {
+    return stored.slice(LANDLORD_PLAIN_PREFIX.length)
+  }
+  if (!stored.startsWith('GCM1:')) return null
+  const key = getKey()
+  if (!key) return null
+  const raw = Buffer.from(stored.slice('GCM1:'.length), 'base64')
+  if (raw.length < IV_LEN + TAG_LEN) return null
+  const iv = raw.subarray(0, IV_LEN)
+  const tag = raw.subarray(IV_LEN, IV_LEN + TAG_LEN)
+  const enc = raw.subarray(IV_LEN + TAG_LEN)
+  try {
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv)
+    decipher.setAuthTag(tag)
+    return Buffer.concat([decipher.update(enc), decipher.final()]).toString('utf8')
+  } catch {
+    return null
+  }
+}

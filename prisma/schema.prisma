@@ -1687,6 +1687,13 @@ enum RentalListingStatus {
   archived
 }
 
+/** Herkunft des Miet-Inserats (Akquisition / Admin / Partner). */
+enum ImportSource {
+  SELF // Admin oder Vermieter selbst erfasst
+  IMPORTED // Import-Tool mit Erlaubnis (Original-URL in importedFrom)
+  PARTNER // Partnerplattform (Kennzeichnung in importedFrom)
+}
+
 enum RentalApplicationStatus {
   pending_credit_check
   pending_manual_review
@@ -1715,6 +1722,9 @@ model RentalListing {
   photos              String // JSON string[] URLs, min 3 / max 10 in App
   requiresCreditCheck Boolean              @default(true)
   status              RentalListingStatus  @default(active)
+  importedFrom        String? // Original-URL oder Partner-Kennzeichnung
+  importSource        ImportSource         @default(SELF)
+  landlordContact     String? // AES-GCM (Base64) oder Klartext-Präfix nur ohne Key — nur intern
 
   user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications  RentalApplication[]
@@ -1723,6 +1733,7 @@ model RentalListing {
   @@index([canton, status])
   @@index([rentPerMonth])
   @@index([availableFrom])
+  @@index([importSource])
   @@map("rental_listings")
 }
 

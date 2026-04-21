@@ -1,5 +1,6 @@
 import { MatchingPropertyImportHub } from '@/components/matching/MatchingPropertyImportHub'
 import { authOptions } from '@/lib/auth'
+import { isAdmin } from '@/lib/auth/isAdmin'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
 import { redirect } from 'next/navigation'
@@ -18,5 +19,7 @@ export default async function RentalListingImportPage() {
     redirect('/login?callbackUrl=' + encodeURIComponent(LOGIN_CALLBACK_PATH))
   }
 
-  return <MatchingPropertyImportHub />
+  const forAdminRental = await isAdmin(session)
+
+  return <MatchingPropertyImportHub forAdminRental={forAdminRental} />
 }

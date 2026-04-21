@@ -31,6 +31,7 @@ export function WohnenNavbar() {
   const [navReady, setNavReady] = useState(false)
   const [profile, setProfile] = useState<TenantProfileBrief | undefined>(undefined)
   const [hasListings, setHasListings] = useState(false)
+  const [isAdminUser, setIsAdminUser] = useState(false)
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -49,6 +50,7 @@ export function WohnenNavbar() {
       setNavReady(true)
       setProfile(null)
       setHasListings(false)
+      setIsAdminUser(false)
       return
     }
     if (!user?.id) {
@@ -60,9 +62,10 @@ export function WohnenNavbar() {
     setNavReady(false)
     ;(async () => {
       try {
-        const [tpRes, ownRes] = await Promise.all([
+        const [tpRes, ownRes, adminRes] = await Promise.all([
           fetch('/api/tenant-profile', { credentials: 'same-origin' }),
           fetch('/api/rental-listings?own=true', { credentials: 'same-origin' }),
+          fetch('/api/user/admin-status', { credentials: 'same-origin' }),
         ])
         if (cancelled) return
 
@@ -75,10 +78,14 @@ export function WohnenNavbar() {
 
         const ownJson = (await ownRes.json().catch(() => ({}))) as { hasListings?: boolean }
         setHasListings(Boolean(ownJson.hasListings))
+
+        const adminJson = (await adminRes.json().catch(() => ({}))) as { isAdmin?: boolean }
+        setIsAdminUser(adminJson.isAdmin === true)
       } catch {
         if (!cancelled) {
           setProfile(null)
           setHasListings(false)
+          setIsAdminUser(false)
         }
       } finally {
         if (!cancelled) setNavReady(true)
@@ -263,6 +270,18 @@ export function WohnenNavbar() {
                   Meine Inserate
                 </Link>
               : null}
+              {isAdminUser ?
+                <>
+                  <div className="my-1 border-t border-slate-100" />
+                  <Link
+                    href="/admin/listings"
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <span aria-hidden>⚙️</span> Admin — Inserate
+                  </Link>
+                </>
+              : null}
               <div className="my-1 border-t border-slate-100" />
               <button
                 type="button"
@@ -383,6 +402,15 @@ export function WohnenNavbar() {
         {hasListings ?
           <Link href="/matching/properties" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
             Meine Inserate
+          </Link>
+        : null}
+        {isAdminUser ?
+          <Link
+            href="/admin/listings"
+            className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 font-semibold text-red-700 hover:bg-red-50"
+            onClick={closeAll}
+          >
+            ⚙️ Admin — Inserate
           </Link>
         : null}
         <button

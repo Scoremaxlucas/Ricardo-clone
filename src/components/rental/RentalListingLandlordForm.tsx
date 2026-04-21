@@ -1,14 +1,17 @@
 'use client'
 
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
+import type { RentalListingLandlordInitial } from '@/lib/rental/rental-landlord-initial'
 import type { RentalListingStatus } from '@prisma/client'
-import { HelpCircle, Loader2 } from 'lucide-react'
+import { HelpCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { wohnenToast } from '@/lib/wohnen-toast'
 import toast from 'react-hot-toast'
+
+export type { RentalListingLandlordInitial } from '@/lib/rental/rental-landlord-initial'
 
 const ROOM_OPTIONS = ['1', '1.5', '2', '2.5', '3', '3.5', '4', '4.5', '5+'] as const
 
@@ -18,36 +21,45 @@ function roomsToSelect(r: number): string {
   return (ROOM_OPTIONS as readonly string[]).includes(s) ? s : '3'
 }
 
-export type RentalListingLandlordInitial = {
-  title: string
-  description: string
-  address: string
-  zip: string
-  city: string
-  canton: string
-  rooms: number
-  areaSqm: number
-  floor: number | null
-  rentPerMonth: number
-  utilitiesPerMonth: number | null
-  depositAmount: number | null
-  availableFrom: string
-  requiresCreditCheck: boolean
-  photos: string[]
-  status: RentalListingStatus
-}
+type AcquisitionKind = 'self' | 'imported' | 'partner'
 
 type Props = {
   mode: 'create' | 'edit'
   listingId?: string
   initial?: RentalListingLandlordInitial
   backHref?: string
+  /** `admin`: erweiterte Quelle/Kontakt, optionale Foto-Mindestanzahl */
+  variant?: 'landlord' | 'admin'
+  /** Standard 3 für Vermieter, 0 für Admin-Neuanlage */
+  minPhotos?: number
+  afterSaveRedirect?: string
+  /** z. B. `/api/admin/rental-listings` oder PATCH `/api/admin/rental-listings/:id` */
+  submitApiPath?: string
+  /** Admin: Quelle/Herkunft nur bei Neuanlage (manuell) */
+  adminShowAcquisitionFields?: boolean
+  /** Admin: URL-Import — Quelle fix, nur Erlaubnis-Checkbox + interner Kontakt */
+  importMetaLocked?: { importedFrom: string } | null
 }
 
-export function RentalListingLandlordForm({ mode, listingId, initial, backHref = '/matching/properties' }: Props) {
+export function RentalListingLandlordForm({
+  mode,
+  listingId,
+  initial,
+  backHref = '/matching/properties',
+  variant = 'landlord',
+  minPhotos: minPhotosProp,
+  afterSaveRedirect,
+  submitApiPath,
+  adminShowAcquisitionFields = false,
+  importMetaLocked = null,
+}: Props) {
   const router = useRouter()
   const { data: session } = useSession()
   const userId = (session?.user as { id?: string } | undefined)?.id
+  const isAdminForm = variant === 'admin'
+  const minPhotos = minPhotosProp ?? (isAdminForm ? 0 : 3)
+  const minDescriptionLen = 50
+
   const [title, setTitle] = useState('')
   const [address, setAddress] = useState('')
   const [zip, setZip] = useState('')
@@ -67,8 +79,16 @@ export function RentalListingLandlordForm({ mode, listingId, initial, backHref =
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
+  const [acquisition, setAcquisition] = useState<AcquisitionKind>('self')
+  const [originalUrl, setOriginalUrl] = useState('')
+  const [importPermissionAck, setImportPermissionAck] = useState(false)
+  const [partnerChoice, setPartnerChoice] = useState<'tutti' | 'facebook' | 'other'>('tutti')
+  const [partnerOther, setPartnerOther] = useState('')
+  const [landlordNameInternal, setLandlordNameInternal] = useState('')
+  const [landlordContactInternal, setLandlordContactInternal] = useState('')
+
   useEffect(() => {
-    if (!initial || mode !== 'edit') return
+    if (!initial) return
     setTitle(initial.title)
     setAddress(initial.address)
     setZip(initial.zip)
@@ -84,7 +104,9 @@ export function RentalListingLandlordForm({ mode, listingId, initial, backHref =
     setDescription(initial.description)
     setRequiresCreditCheck(initial.requiresCreditCheck)
     setImageUrls(initial.photos)
-    setListingStatus(initial.status)
+    if (mode === 'edit') {
+      setListingStatus(initial.status)
+    }
   }, [initial, mode])
 
   const roomsValue = useMemo(() => (rooms === '5+' ? 5 : parseFloat(rooms)), [rooms])
@@ -125,19 +147,83 @@ export function RentalListingLandlordForm({ mode, listingId, initial, backHref =
     setImageUrls(prev => prev.filter((_, i) => i !== idx))
   }
 
+  const landlordContactPlainValue = (): string | null => {
+    const name = landlordNameInternal.trim()
+    const contact = landlordContactInternal.trim()
+    if (!name && !contact) return null
+    return `${name ? `Name: ${name}` : ''}${name && contact ? '\n' : ''}${contact ? `Kontakt: ${contact}` : ''}`
+  }
+
+  const buildAdminMeta = ():
+    | { importSource?: 'SELF' | 'IMPORTED' | 'PARTNER'; importedFrom?: string | null; landlordContactPlain: string | null }
+    | null => {
+    if (!isAdminForm) return null
+    const landlordContactPlain = landlordContactPlainValue()
+
+    if (importMetaLocked) {
+      return {
+        importSource: 'IMPORTED',
+        importedFrom: importMetaLocked.importedFrom.trim(),
+        landlordContactPlain,
+      }
+    }
+
+    if (mode === 'edit' && !adminShowAcquisitionFields) {
+      return { landlordContactPlain }
+    }
+
+    let importSource: 'SELF' | 'IMPORTED' | 'PARTNER' = 'SELF'
+    let importedFrom: string | null = null
+    if (adminShowAcquisitionFields) {
+      if (acquisition === 'imported') {
+        importSource = 'IMPORTED'
+        importedFrom = originalUrl.trim() || null
+      } else if (acquisition === 'partner') {
+        importSource = 'PARTNER'
+        if (partnerChoice === 'tutti') importedFrom = 'Tutti.ch'
+        else if (partnerChoice === 'facebook') importedFrom = 'Facebook Marketplace'
+        else importedFrom = partnerOther.trim() ? `Andere: ${partnerOther.trim()}` : 'Andere'
+      }
+    }
+    return { importSource, importedFrom, landlordContactPlain }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (imageUrls.length < 3) {
-      toast.error('Mindestens 3 Fotos erforderlich')
+    if (imageUrls.length < minPhotos) {
+      toast.error(minPhotos === 0 ? 'Maximal 10 Fotos; Fotos optional' : 'Mindestens 3 Fotos erforderlich')
       return
     }
-    if (description.trim().length < 50) {
-      toast.error('Beschreibung mindestens 50 Zeichen')
+    if (description.trim().length < minDescriptionLen) {
+      toast.error(`Beschreibung mindestens ${minDescriptionLen} Zeichen`)
       return
     }
+
+    if (importMetaLocked && !importPermissionAck) {
+      toast.error('Bitte bestätigen: ausdrückliche Erlaubnis des Vermieters zur Veröffentlichung auf Helvenda.')
+      return
+    }
+
+    if (isAdminForm && adminShowAcquisitionFields) {
+      if (acquisition === 'imported') {
+        if (!originalUrl.trim()) {
+          toast.error('Bitte die Original-URL angeben.')
+          return
+        }
+        if (!importPermissionAck) {
+          toast.error('Bitte die Erlaubnis zur Veröffentlichung bestätigen.')
+          return
+        }
+      }
+      if (acquisition === 'partner' && partnerChoice === 'other' && !partnerOther.trim()) {
+        toast.error('Bitte die Partnerplattform unter «Andere» beschreiben.')
+        return
+      }
+    }
+
     setSubmitting(true)
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         title,
         address,
         zip,
@@ -156,9 +242,25 @@ export function RentalListingLandlordForm({ mode, listingId, initial, backHref =
         ...(mode === 'edit' ? { status: listingStatus } : {}),
       }
 
-      const url = mode === 'edit' && listingId ? `/api/rental-listings/${listingId}` : '/api/rental-listings'
+      const adminMeta = buildAdminMeta()
+      if (adminMeta) {
+        if (adminMeta.importSource) payload.importSource = adminMeta.importSource
+        if ('importedFrom' in adminMeta) payload.importedFrom = adminMeta.importedFrom
+        if (adminMeta.landlordContactPlain != null) payload.landlordContactPlain = adminMeta.landlordContactPlain
+      }
+
+      let url: string
+      let method: 'POST' | 'PATCH'
+      if (submitApiPath) {
+        url = mode === 'edit' && listingId ? `${submitApiPath}/${listingId}` : submitApiPath
+        method = mode === 'edit' ? 'PATCH' : 'POST'
+      } else {
+        url = mode === 'edit' && listingId ? `/api/rental-listings/${listingId}` : '/api/rental-listings'
+        method = mode === 'edit' ? 'PATCH' : 'POST'
+      }
+
       const res = await fetch(url, {
-        method: mode === 'edit' ? 'PATCH' : 'POST',
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
@@ -168,12 +270,22 @@ export function RentalListingLandlordForm({ mode, listingId, initial, backHref =
         return
       }
       wohnenToast.listingSaved()
-      router.push(mode === 'edit' ? '/matching/properties' : '/matching/properties')
+      const dest =
+        afterSaveRedirect ||
+        (mode === 'edit' ? (isAdminForm ? '/admin/listings' : '/matching/properties') : '/matching/properties')
+      router.push(dest.startsWith('/') ? dest : '/matching/properties')
       router.refresh()
     } finally {
       setSubmitting(false)
     }
   }
+
+  const photoHint = minPhotos === 0 ? '0–10 Bilder (optional für Admin)' : '3–10 Bilder'
+  const canSubmit =
+    !submitting &&
+    imageUrls.length >= minPhotos &&
+    imageUrls.length <= 10 &&
+    description.trim().length >= minDescriptionLen
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:py-10">
@@ -187,7 +299,9 @@ export function RentalListingLandlordForm({ mode, listingId, initial, backHref =
         {mode === 'edit' ? 'Inserat bearbeiten' : 'Neues Inserat erstellen'}
       </h1>
       <p className="mt-2 text-sm text-slate-600">
-        Pflichtfelder ausfüllen. Fotos über den Helvenda-Upload (3–10 Bilder). Beschreibung mindestens 50 Zeichen.
+        {isAdminForm ?
+          'Admin-Erfassung: Pflichtfelder wie üblich. Fotos optional (0–10). Beschreibung mindestens 50 Zeichen. Interne Vermieter-Kontaktdaten werden nicht öffentlich angezeigt.'
+        : 'Pflichtfelder ausfüllen. Fotos über den Helvenda-Upload (3–10 Bilder). Beschreibung mindestens 50 Zeichen.'}
       </p>
 
       {mode === 'edit' ? (
@@ -229,6 +343,129 @@ export function RentalListingLandlordForm({ mode, listingId, initial, backHref =
       ) : null}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {isAdminForm && importMetaLocked ?
+          <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/80 p-4">
+            <p className="text-sm font-bold text-amber-950">Quelle (Import)</p>
+            <p className="break-all text-xs text-slate-800">{importMetaLocked.importedFrom}</p>
+            <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-900">
+              <input
+                type="checkbox"
+                checked={importPermissionAck}
+                onChange={e => setImportPermissionAck(e.target.checked)}
+                className="mt-1"
+              />
+              <span>
+                Ich habe die ausdrückliche Erlaubnis des Vermieters zur Veröffentlichung auf Helvenda erhalten. *
+              </span>
+            </label>
+          </div>
+        : null}
+        {isAdminForm && adminShowAcquisitionFields ?
+          <div className="space-y-4 rounded-xl border border-rose-200 bg-rose-50/50 p-4">
+            <p className="text-sm font-bold text-rose-900">Quelle des Inserats</p>
+            <div className="space-y-2 text-sm">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="acq"
+                  checked={acquisition === 'self'}
+                  onChange={() => setAcquisition('self')}
+                />
+                Eigenes Inserat (Admin erfasst)
+              </label>
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="acq"
+                  checked={acquisition === 'imported'}
+                  onChange={() => setAcquisition('imported')}
+                />
+                Importiert mit Erlaubnis
+              </label>
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="acq"
+                  checked={acquisition === 'partner'}
+                  onChange={() => setAcquisition('partner')}
+                />
+                Partnerplattform
+              </label>
+            </div>
+            {acquisition === 'imported' ?
+              <div className="space-y-3 border-t border-rose-200 pt-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-800">Original-URL *</label>
+                  <input
+                    type="url"
+                    value={originalUrl}
+                    onChange={e => setOriginalUrl(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    placeholder="https://…"
+                  />
+                </div>
+                <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={importPermissionAck}
+                    onChange={e => setImportPermissionAck(e.target.checked)}
+                    className="mt-1"
+                  />
+                  <span>
+                    Der Vermieter hat ausdrücklich die Erlaubnis zur Veröffentlichung auf Helvenda erteilt. *
+                  </span>
+                </label>
+              </div>
+            : null}
+            {acquisition === 'partner' ?
+              <div className="border-t border-rose-200 pt-3">
+                <label className="mb-1 block text-sm font-medium text-slate-800">Plattform *</label>
+                <select
+                  value={partnerChoice}
+                  onChange={e => setPartnerChoice(e.target.value as 'tutti' | 'facebook' | 'other')}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="tutti">Tutti.ch</option>
+                  <option value="facebook">Facebook Marketplace</option>
+                  <option value="other">Andere</option>
+                </select>
+                {partnerChoice === 'other' ?
+                  <input
+                    type="text"
+                    value={partnerOther}
+                    onChange={e => setPartnerOther(e.target.value)}
+                    className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    placeholder="Name der Plattform"
+                  />
+                : null}
+              </div>
+            : null}
+          </div>
+        : null}
+
+        {isAdminForm ?
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-bold text-slate-900">Vermieter-Kontakt (intern)</p>
+            <p className="text-xs text-slate-600">Nur für Admins sichtbar, nicht öffentlich.</p>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Name des Vermieters</label>
+              <input
+                value={landlordNameInternal}
+                onChange={e => setLandlordNameInternal(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Telefon oder E-Mail</label>
+              <input
+                value={landlordContactInternal}
+                onChange={e => setLandlordContactInternal(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+        : null}
+
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Titel *</label>
           <input
@@ -369,7 +606,9 @@ export function RentalListingLandlordForm({ mode, listingId, initial, backHref =
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Fotos * (3–10)</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Fotos * ({photoHint})
+          </label>
           <input
             type="file"
             accept="image/*"
@@ -401,7 +640,7 @@ export function RentalListingLandlordForm({ mode, listingId, initial, backHref =
             ))}
           </div>
           <p className="mt-1 text-xs text-slate-500">
-            {imageUrls.length} / 3–10 Fotos · Beschreibung ({description.trim().length} Zeichen)
+            {imageUrls.length} / {photoHint} · Beschreibung ({description.trim().length} Zeichen)
           </p>
         </div>
         <div>
@@ -432,7 +671,7 @@ export function RentalListingLandlordForm({ mode, listingId, initial, backHref =
 
         <button
           type="submit"
-          disabled={submitting || imageUrls.length < 3 || description.trim().length < 50}
+          disabled={!canSubmit}
           className="w-full rounded-xl bg-[#18a87c] py-3.5 text-sm font-bold text-white shadow-md hover:opacity-95 disabled:opacity-50"
         >
           {submitting ? 'Wird gespeichert…' : mode === 'edit' ? 'Änderungen speichern' : 'Inserat veröffentlichen'}

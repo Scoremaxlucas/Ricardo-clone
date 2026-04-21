@@ -24,5 +24,13 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     id: string
+    isAdmin?: boolean
   }
+
+  // next-auth v4 liefert getToken zur Laufzeit; die mitgelieferten Typen sind hier unvollständig.
+  export function getToken(params: {
+    req: import('next/server').NextRequest
+    secret?: string
+    raw?: false
+  }): Promise<JWT | null>
 }

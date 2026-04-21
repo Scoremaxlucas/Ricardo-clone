@@ -649,6 +649,14 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                               )}
                             </div>
                           </Link>
+                          <Link
+                            href="/admin/listings"
+                            prefetch={true}
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50"
+                          >
+                            <span aria-hidden>⚙️</span> Admin — Inserate
+                          </Link>
                         </>
                       )}
 
@@ -869,21 +877,33 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
                   {/* Admin Dashboard - subtle, only for admins */}
                   {(deferredData.isAdmin || (session?.user as any)?.isAdmin) && (
-                    <Link
-                      href="/admin/dashboard"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-all duration-200 hover:bg-gray-50"
-                    >
-                      <Shield className="h-5 w-5 text-gray-500" />
-                      <span className="flex-1 text-[15px]">{t.header.adminDashboard}</span>
-                      {deferredData.pendingVerificationCount > 0 && (
-                        <span className="rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-bold text-white">
-                          {deferredData.pendingVerificationCount > 99
-                            ? '99+'
-                            : deferredData.pendingVerificationCount}
+                    <>
+                      <Link
+                        href="/admin/dashboard"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-all duration-200 hover:bg-gray-50"
+                      >
+                        <Shield className="h-5 w-5 text-gray-500" />
+                        <span className="flex-1 text-[15px]">{t.header.adminDashboard}</span>
+                        {deferredData.pendingVerificationCount > 0 && (
+                          <span className="rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-bold text-white">
+                            {deferredData.pendingVerificationCount > 99
+                              ? '99+'
+                              : deferredData.pendingVerificationCount}
+                          </span>
+                        )}
+                      </Link>
+                      <Link
+                        href="/admin/listings"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex w-full items-center gap-3 px-5 py-3 font-semibold text-red-700 transition-all duration-200 hover:bg-red-50"
+                      >
+                        <span className="text-lg" aria-hidden>
+                          ⚙️
                         </span>
-                      )}
-                    </Link>
+                        <span className="flex-1 text-[15px]">Admin — Inserate</span>
+                      </Link>
+                    </>
                   )}
 
                   {/* CTA: Artikel verkaufen */}
