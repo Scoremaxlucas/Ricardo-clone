@@ -39,7 +39,7 @@ export default async function WohnungenPage({ searchParams }: PageProps) {
         <WohnungenSearchFilters />
       </Suspense>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <section className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Mietwohnungen</h1>
         <p className="mt-2 text-sm text-slate-600 sm:text-base">
           Aktive Inserate auf Helvenda — nach Kanton, Zimmerzahl, Budget und Einzugsdatum filtern.
@@ -86,7 +86,7 @@ export default async function WohnungenPage({ searchParams }: PageProps) {
             )}
           </>
         )}
-      </main>
+      </section>
     </>
   )
 }

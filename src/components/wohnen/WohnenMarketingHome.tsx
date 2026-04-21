@@ -103,21 +103,7 @@ export async function WohnenMarketingHome() {
           <p className="mx-auto mt-3 max-w-2xl text-center text-slate-600">
             Wir haben das Modell der grossen Portale auf den Kopf gestellt.
           </p>
-          <div className="mt-10 space-y-3 md:hidden">
-            {[
-              ['Inserat inserieren', 'CHF 14–28 pro Tag', 'Kostenlos'],
-              ['Mieter kontaktieren', 'CHF 39.95 / Monat Pflicht-Abo', 'Kostenlos, sofort'],
-              ['Bewerbungsqualität', 'Unstrukturierte E-Mails', 'Verifiziert mit Betreibungsregister'],
-              ['Login', 'Separates Konto pro Plattform', 'Ein Helvenda-Konto für alles'],
-            ].map(([thema, comp, hel]) => (
-              <div key={String(thema)} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
-                <p className="font-semibold text-slate-900">{thema}</p>
-                <p className="mt-2 text-slate-500 line-through decoration-slate-400">{comp}</p>
-                <p className="mt-2 rounded-lg bg-[#e8f7f2] px-3 py-2 font-bold text-teal-800">{hel}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-10 hidden overflow-x-auto rounded-2xl border border-slate-200 shadow-sm md:block">
+          <div className="mt-10 overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
             <table className="w-full min-w-[640px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">

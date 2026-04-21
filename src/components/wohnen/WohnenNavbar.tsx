@@ -413,7 +413,7 @@ export function WohnenNavbar() {
             <div className="h-8 w-24 animate-pulse rounded-lg bg-slate-200" />
           </div>
         : (
-          <nav className="hidden flex-1 items-center justify-end gap-2 md:flex md:gap-3">
+          <nav className="hidden flex-1 items-center justify-end gap-2 min-[768px]:flex min-[768px]:gap-3">
             {!signedIn ?
               <>
                 <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
@@ -436,7 +436,7 @@ export function WohnenNavbar() {
           </nav>
         )}
 
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-2 min-[768px]:hidden">
           {!showSkeleton && !signedIn ?
             <>
               <Link href="/login" className="rounded-md px-2 py-1 text-sm font-semibold text-teal-900">
@@ -457,7 +457,7 @@ export function WohnenNavbar() {
 
       {/* Mobile slide-in */}
       <div
-        className={`fixed inset-0 z-[60] md:hidden ${mobileOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        className={`fixed inset-0 z-[60] min-[768px]:hidden ${mobileOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
         aria-hidden={!mobileOpen}
       >
         <button
