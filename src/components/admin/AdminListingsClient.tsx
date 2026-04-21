@@ -21,8 +21,17 @@ export type AdminListingRow = {
   importedFrom: string | null
 }
 
+export type AdminListingAttentionRow = {
+  id: string
+  title: string
+  address: string
+  reasonLines: string[]
+  dateLabel: string
+}
+
 type Props = {
   listings: AdminListingRow[]
+  attentionItems: AdminListingAttentionRow[]
   stats: {
     total: number
     active: number
@@ -37,7 +46,7 @@ function statusLabel(s: RentalListingStatus): string {
   return 'Archiviert'
 }
 
-export function AdminListingsClient({ listings: initialListings, stats }: Props) {
+export function AdminListingsClient({ listings: initialListings, attentionItems, stats }: Props) {
   const router = useRouter()
   const [listings, setListings] = useState(initialListings)
   const [cantonFilter, setCantonFilter] = useState('')
@@ -112,6 +121,37 @@ export function AdminListingsClient({ listings: initialListings, stats }: Props)
       <p className="mt-2 max-w-3xl text-sm text-slate-600">
         Alle Inserate auf der Plattform — erstellt, importiert oder von Vermietern inseriert
       </p>
+
+      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-900">Aufmerksamkeit erforderlich</h2>
+        {attentionItems.length === 0 ?
+          <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-sm font-medium text-emerald-900">
+            Alle Inserate sind aktuell ✓
+          </div>
+        : <ul className="mt-4 divide-y divide-slate-100">
+            {attentionItems.map(row => (
+              <li key={row.id} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900">{row.title}</p>
+                  <p className="text-sm text-slate-600">{row.address}</p>
+                  <ul className="mt-2 list-inside list-disc text-xs text-amber-900">
+                    {row.reasonLines.map((line, i) => (
+                      <li key={i}>{line}</li>
+                    ))}
+                  </ul>
+                  <p className="mt-1 text-xs text-slate-500">Stand: {row.dateLabel}</p>
+                </div>
+                <Link
+                  href={`/admin/listings/${row.id}/bearbeiten`}
+                  className="inline-flex shrink-0 items-center justify-center rounded-lg bg-[#18a87c] px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
+                >
+                  Prüfen & Reaktivieren
+                </Link>
+              </li>
+            ))}
+          </ul>
+        }
+      </section>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

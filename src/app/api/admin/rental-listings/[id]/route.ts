@@ -3,7 +3,7 @@ import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
 import { encryptLandlordContactForStorage } from '@/lib/rental/pdf-crypto'
 import type { Prisma } from '@prisma/client'
-import { ImportSource, RentalListingStatus } from '@prisma/client'
+import { DeactivationReason, ImportSource, RentalListingStatus } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
 import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
@@ -116,7 +116,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (!STATUS_VALUES.has(st)) {
         return NextResponse.json({ message: 'Ungültiger Status' }, { status: 400 })
       }
-      data.status = st as RentalListingStatus
+      const next = st as RentalListingStatus
+      data.status = next
+      if (
+        next === 'archived' &&
+        (existing.status === 'active' || existing.status === 'rented')
+      ) {
+        data.autoDeactivatedAt = new Date()
+        data.autoDeactivatedReason = DeactivationReason.MANUAL_ADMIN
+      }
+      if (next === 'active' && existing.status === 'archived') {
+        data.autoDeactivatedAt = null
+        data.autoDeactivatedReason = null
+      }
     }
 
     if (typeof body.importSource === 'string' && SOURCE_SET.has(body.importSource)) {

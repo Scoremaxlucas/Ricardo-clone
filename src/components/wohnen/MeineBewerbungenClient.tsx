@@ -4,7 +4,9 @@ import { WohnenEmptyState } from '@/components/wohnen/WohnenEmptyState'
 import type { RentalApplicationStatus } from '@prisma/client'
 import { ChevronDown, ChevronUp, Inbox } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 
 export type MeineBewerbungRow = {
   id: string
@@ -12,6 +14,7 @@ export type MeineBewerbungRow = {
   status: RentalApplicationStatus
   message: string | null
   viewingRequestedAt: string | null
+  staleReportedAt: string | null
   listing: {
     id: string
     title: string
@@ -57,10 +60,46 @@ function statusBadge(app: MeineBewerbungRow): { text: string; className: string 
   }
 }
 
+const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000
+
+function canShowStaleReport(app: MeineBewerbungRow): boolean {
+  if (app.status !== 'approved') return false
+  if (app.staleReportedAt) return false
+  const age = Date.now() - new Date(app.createdAt).getTime()
+  return age >= THREE_DAYS_MS
+}
+
 function BewerbungCard({ app }: { app: MeineBewerbungRow }) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [staleOpen, setStaleOpen] = useState(false)
+  const [staleNote, setStaleNote] = useState('')
+  const [staleBusy, setStaleBusy] = useState(false)
   const badge = statusBadge(app)
   const date = new Date(app.createdAt).toLocaleDateString('de-CH')
+  const showStale = canShowStaleReport(app)
+
+  const submitStale = async () => {
+    setStaleBusy(true)
+    try {
+      const res = await fetch(`/api/rental-applications/${encodeURIComponent(app.id)}/report-stale`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: staleNote.trim() || undefined }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error((data as { message?: string }).message || 'Melden fehlgeschlagen')
+        return
+      }
+      toast.success('Danke für deine Meldung — wir prüfen das Inserat. ✓')
+      setStaleOpen(false)
+      setStaleNote('')
+      router.refresh()
+    } finally {
+      setStaleBusy(false)
+    }
+  }
 
   return (
     <article className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-stretch sm:justify-between sm:p-5">
@@ -108,7 +147,60 @@ function BewerbungCard({ app }: { app: MeineBewerbungRow }) {
             ) : null}
           </div>
         ) : null}
+        {showStale ?
+          <div className="w-full text-left sm:text-right">
+            <button
+              type="button"
+              onClick={() => setStaleOpen(true)}
+              className="text-xs font-medium text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline"
+            >
+              Wohnung bereits vergeben?
+            </button>
+          </div>
+        : null}
       </div>
+
+      {staleOpen ?
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-slate-900">Wohnung als vergeben melden</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Hast du erfahren, dass diese Wohnung nicht mehr verfügbar ist? Deine Meldung hilft anderen Suchenden.
+            </p>
+            <label className="mt-4 block text-sm font-medium text-slate-800">
+              Was hast du erfahren? (optional)
+              <textarea
+                value={staleNote}
+                onChange={e => setStaleNote(e.target.value.slice(0, 200))}
+                rows={3}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                placeholder="Kurz beschreiben …"
+              />
+            </label>
+            <p className="mt-1 text-xs text-slate-500">{staleNote.length} / 200</p>
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setStaleOpen(false)
+                  setStaleNote('')
+                }}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Abbrechen
+              </button>
+              <button
+                type="button"
+                disabled={staleBusy}
+                onClick={() => void submitStale()}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {staleBusy ? 'Wird gesendet…' : 'Ja, Wohnung ist vergeben'}
+              </button>
+            </div>
+          </div>
+        </div>
+      : null}
     </article>
   )
 }

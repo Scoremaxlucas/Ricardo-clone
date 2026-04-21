@@ -1701,6 +1701,24 @@ enum RentalApplicationStatus {
   rejected
 }
 
+/** URL-Monitoring (Cron): letzter Prüfstatus des Original-Inserats. */
+enum CheckStatus {
+  UNCHECKED // noch nie geprüft
+  ACTIVE // URL erreichbar, keine Vergeben-Hinweise
+  GONE // 404/410
+  RENTED // Text deutet auf vergeben hin
+  UNREACHABLE // Timeout / Netzwerk
+  MANUAL // keine gültige http(s)-URL zum Prüfen
+}
+
+/** Automatische oder manuelle Deaktivierung (Admin-E-Mail / Übersicht). */
+enum DeactivationReason {
+  URL_404
+  URL_RENTED
+  STALE_REPORTS
+  MANUAL_ADMIN
+}
+
 model RentalListing {
   id                  String               @id @default(cuid())
   createdAt           DateTime             @default(now())
@@ -1727,6 +1745,14 @@ model RentalListing {
   landlordContact     String? // AES-GCM (Base64) oder Klartext-Präfix nur ohne Key — nur intern
   /** Admin-Ingest: Erlaubnis-Basis (z. B. public_authority, landlord_direct, landlord_consent, tutti_public) */
   ingestPermissionBasis String?
+  lastCheckedAt             DateTime?
+  lastCheckStatus           CheckStatus          @default(UNCHECKED)
+  staleReportCount          Int                  @default(0)
+  staleReportedAt           DateTime?
+  autoDeactivatedAt         DateTime?
+  autoDeactivatedReason     DeactivationReason?
+  /// Aufeinanderfolgende UNREACHABLE-Läufe (Cron); bei ACTIVE/GONE/RENTED zurücksetzen.
+  urlUnreachableStreak Int @default(0)
 
   user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications  RentalApplication[]
@@ -1736,6 +1762,7 @@ model RentalListing {
   @@index([rentPerMonth])
   @@index([availableFrom])
   @@index([importSource])
+  @@index([status, lastCheckedAt])
   @@map("rental_listings")
 }
 
@@ -1754,6 +1781,8 @@ model RentalApplication {
   rejectionNote       String?                  @db.Text
   tenantProfileId     String?
   tenantProfile       TenantProfile?           @relation(fields: [tenantProfileId], references: [id], onDelete: SetNull)
+  staleReportedAt     DateTime?
+  staleReportNote     String?                  @db.Text
 
   listing   RentalListing @relation(fields: [rentalListingId], references: [id], onDelete: Cascade)
   applicant User          @relation("RentalApplicationApplicant", fields: [applicantUserId], references: [id], onDelete: Cascade)

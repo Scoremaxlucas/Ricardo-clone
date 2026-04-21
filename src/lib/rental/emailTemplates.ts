@@ -416,3 +416,165 @@ Online: <a href="https://betreibungsaemter.ch" style="color:#18a87c;">betreibung
   ].join('\n')
   return { subject, html: layout(inner), text }
 }
+
+/** Admin: Inserat automatisch deaktiviert — URL 404 */
+export function templateAdminListingDeactivatedUrl404(input: {
+  listingTitle: string
+  address: string
+  importedFrom: string
+  listingId: string
+  deactivatedAt: Date
+}): WohnenEmailPayload {
+  const m = mainOrigin()
+  const adminLink = `${m}/admin/listings/${encodeURIComponent(input.listingId)}/bearbeiten`
+  const when = input.deactivatedAt.toLocaleString('de-CH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const inner = `
+<p style="margin:0 0 14px 0;">Das folgende Inserat wurde automatisch deaktiviert, weil die Original-URL einen 404-Fehler zurückgegeben hat:</p>
+<p style="margin:0 0 6px 0;"><strong>Titel:</strong> ${escapeHtml(input.listingTitle)}</p>
+<p style="margin:0 0 6px 0;"><strong>Adresse:</strong> ${escapeHtml(input.address)}</p>
+<p style="margin:0 0 6px 0;"><strong>Original-URL:</strong> ${escapeHtml(input.importedFrom)}</p>
+<p style="margin:0 0 18px 0;"><strong>Deaktiviert am:</strong> ${escapeHtml(when)}</p>
+${buttonRow(adminLink, 'Inserat prüfen')}
+<p style="margin:16px 0 0 0;font-size:14px;color:#4b5563;">Falls die Wohnung noch verfügbar ist, kannst du das Inserat manuell wieder aktivieren.</p>
+`
+  const subject = '[ADMIN] Inserat automatisch deaktiviert — URL 404'
+  const text = [
+    'Inserat automatisch deaktiviert (404).',
+    `Titel: ${input.listingTitle}`,
+    `Adresse: ${input.address}`,
+    `Original-URL: ${input.importedFrom}`,
+    `Deaktiviert am: ${when}`,
+    '',
+    adminLink,
+    '',
+    'Falls die Wohnung noch verfügbar ist, Inserat manuell wieder aktivieren.',
+  ].join('\n')
+  return { subject, html: layout(inner), text }
+}
+
+/** Admin: Inserat automatisch deaktiviert — „vergeben“ laut URL-Text */
+export function templateAdminListingDeactivatedUrlRented(input: {
+  listingTitle: string
+  address: string
+  importedFrom: string
+  listingId: string
+  keyword: string
+  deactivatedAt: Date
+}): WohnenEmailPayload {
+  const m = mainOrigin()
+  const adminLink = `${m}/admin/listings/${encodeURIComponent(input.listingId)}/bearbeiten`
+  const when = input.deactivatedAt.toLocaleString('de-CH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const inner = `
+<p style="margin:0 0 14px 0;">Das folgende Inserat wurde automatisch deaktiviert, weil die Original-URL auf eine vergebene Wohnung hindeutet:</p>
+<p style="margin:0 0 6px 0;"><strong>Titel:</strong> ${escapeHtml(input.listingTitle)}</p>
+<p style="margin:0 0 6px 0;"><strong>Adresse:</strong> ${escapeHtml(input.address)}</p>
+<p style="margin:0 0 6px 0;"><strong>Original-URL:</strong> ${escapeHtml(input.importedFrom)}</p>
+<p style="margin:0 0 6px 0;"><strong>Erkanntes Keyword:</strong> ${escapeHtml(input.keyword)}</p>
+<p style="margin:0 0 18px 0;"><strong>Deaktiviert am:</strong> ${escapeHtml(when)}</p>
+${buttonRow(adminLink, 'Inserat prüfen')}
+<p style="margin:16px 0 0 0;font-size:14px;color:#4b5563;">Falls die Wohnung noch verfügbar ist, kannst du das Inserat manuell wieder aktivieren.</p>
+`
+  const subject = '[ADMIN] Inserat automatisch deaktiviert — Wohnung vergeben'
+  const text = [
+    'Inserat automatisch deaktiviert (vergeben laut URL).',
+    `Titel: ${input.listingTitle}`,
+    `Adresse: ${input.address}`,
+    `Original-URL: ${input.importedFrom}`,
+    `Keyword: ${input.keyword}`,
+    `Deaktiviert am: ${when}`,
+    '',
+    adminLink,
+  ].join('\n')
+  return { subject, html: layout(inner), text }
+}
+
+/** Admin: Inserat wegen mehrerer Bewerber-Meldungen deaktiviert */
+export function templateAdminListingDeactivatedStaleReports(input: {
+  listingTitle: string
+  address: string
+  listingId: string
+  staleReportCount: number
+  lastReportAt: Date
+  notes: string[]
+}): WohnenEmailPayload {
+  const m = mainOrigin()
+  const adminLink = `${m}/admin/listings/${encodeURIComponent(input.listingId)}/bearbeiten`
+  const last = input.lastReportAt.toLocaleString('de-CH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const notesBlock =
+    input.notes.length ?
+      `<ul style="margin:8px 0 0 0;padding-left:20px;">${input.notes
+        .map(n => `<li style="margin:4px 0;">${escapeHtml(n)}</li>`)
+        .join('')}</ul>`
+    : '<p style="margin:8px 0 0 0;color:#6b7280;">(Keine Notizen)</p>'
+  const inner = `
+<p style="margin:0 0 14px 0;">Das folgende Inserat wurde deaktiviert, weil 2 Bewerber gemeldet haben, dass die Wohnung nicht mehr verfügbar ist:</p>
+<p style="margin:0 0 6px 0;"><strong>Titel:</strong> ${escapeHtml(input.listingTitle)}</p>
+<p style="margin:0 0 6px 0;"><strong>Adresse:</strong> ${escapeHtml(input.address)}</p>
+<p style="margin:0 0 6px 0;"><strong>Anzahl Meldungen:</strong> ${escapeHtml(String(input.staleReportCount))}</p>
+<p style="margin:0 0 10px 0;"><strong>Letzte Meldung:</strong> ${escapeHtml(last)}</p>
+<p style="margin:0 0 4px 0;"><strong>Meldungs-Notizen:</strong></p>
+${notesBlock}
+${buttonRow(adminLink, 'Inserat prüfen')}
+<p style="margin:16px 0 0 0;font-size:14px;color:#4b5563;">Falls die Wohnung noch verfügbar ist, kannst du das Inserat manuell wieder aktivieren.</p>
+`
+  const subject = '[ADMIN] Inserat deaktiviert — 2 Bewerber melden „vergeben“'
+  const text = [
+    'Inserat deaktiviert (2 Bewerber-Meldungen).',
+    `Titel: ${input.listingTitle}`,
+    `Adresse: ${input.address}`,
+    `Meldungen: ${input.staleReportCount}`,
+    `Letzte Meldung: ${last}`,
+    'Notizen:',
+    ...input.notes.map(n => `- ${n}`),
+    '',
+    adminLink,
+  ].join('\n')
+  return { subject, html: layout(inner), text }
+}
+
+/** Admin: URL mehrfach nicht erreichbar (3 aufeinanderfolgende UNREACHABLE) */
+export function templateAdminListingUrlUnreachableStreak(input: {
+  listingTitle: string
+  address: string
+  importedFrom: string
+  listingId: string
+}): WohnenEmailPayload {
+  const m = mainOrigin()
+  const adminLink = `${m}/admin/listings/${encodeURIComponent(input.listingId)}/bearbeiten`
+  const inner = `
+<p style="margin:0 0 14px 0;">Die Original-URL eines aktiven Inserats war bei <strong>3 aufeinanderfolgenden</strong> automatischen Prüfungen nicht erreichbar (Timeout oder Netzwerkfehler):</p>
+<p style="margin:0 0 6px 0;"><strong>Titel:</strong> ${escapeHtml(input.listingTitle)}</p>
+<p style="margin:0 0 6px 0;"><strong>Adresse:</strong> ${escapeHtml(input.address)}</p>
+<p style="margin:0 0 18px 0;"><strong>Original-URL:</strong> ${escapeHtml(input.importedFrom)}</p>
+${buttonRow(adminLink, 'Inserat prüfen')}
+<p style="margin:16px 0 0 0;font-size:14px;color:#4b5563;">Bitte prüfen, ob die URL blockiert oder das Inserat manuell zu pflegen ist.</p>
+`
+  const subject = '[ADMIN] Inserat-URL 3× nicht erreichbar — manuelle Prüfung'
+  const text = [
+    'URL 3× nicht erreichbar.',
+    `Titel: ${input.listingTitle}`,
+    `Adresse: ${input.address}`,
+    `URL: ${input.importedFrom}`,
+    '',
+    adminLink,
+  ].join('\n')
+  return { subject, html: layout(inner), text }
+}

@@ -9,6 +9,10 @@ function wohnenBccFromEnv(): string[] | undefined {
 import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
 import {
   templateAdminCreditManualReview,
+  templateAdminListingDeactivatedStaleReports,
+  templateAdminListingDeactivatedUrl404,
+  templateAdminListingDeactivatedUrlRented,
+  templateAdminListingUrlUnreachableStreak,
   templateAdminRentalApplicationManualReview,
   templateLandlordNewApplication,
   templateTenantApplicationSubmitted,
@@ -167,6 +171,96 @@ export async function sendRentalAdminManualReviewEmail(opts: {
   const payload = templateAdminRentalApplicationManualReview({
     listingTitle: opts.listingTitle,
     applicationId: opts.applicationId,
+  })
+  await sendWohnenEmail({
+    to: 'admin@helvenda.ch',
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+  })
+}
+
+export async function sendAdminListingDeactivatedUrl404Email(opts: {
+  listingId: string
+  listingTitle: string
+  address: string
+  importedFrom: string
+  deactivatedAt: Date
+}): Promise<void> {
+  const payload = templateAdminListingDeactivatedUrl404({
+    listingId: opts.listingId,
+    listingTitle: opts.listingTitle,
+    address: opts.address,
+    importedFrom: opts.importedFrom,
+    deactivatedAt: opts.deactivatedAt,
+  })
+  await sendWohnenEmail({
+    to: 'admin@helvenda.ch',
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+  })
+}
+
+export async function sendAdminListingDeactivatedUrlRentedEmail(opts: {
+  listingId: string
+  listingTitle: string
+  address: string
+  importedFrom: string
+  keyword: string
+  deactivatedAt: Date
+}): Promise<void> {
+  const payload = templateAdminListingDeactivatedUrlRented({
+    listingId: opts.listingId,
+    listingTitle: opts.listingTitle,
+    address: opts.address,
+    importedFrom: opts.importedFrom,
+    keyword: opts.keyword,
+    deactivatedAt: opts.deactivatedAt,
+  })
+  await sendWohnenEmail({
+    to: 'admin@helvenda.ch',
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+  })
+}
+
+export async function sendAdminListingDeactivatedStaleReportsEmail(opts: {
+  listingId: string
+  listingTitle: string
+  address: string
+  staleReportCount: number
+  lastReportAt: Date
+  notes: string[]
+}): Promise<void> {
+  const payload = templateAdminListingDeactivatedStaleReports({
+    listingId: opts.listingId,
+    listingTitle: opts.listingTitle,
+    address: opts.address,
+    staleReportCount: opts.staleReportCount,
+    lastReportAt: opts.lastReportAt,
+    notes: opts.notes,
+  })
+  await sendWohnenEmail({
+    to: 'admin@helvenda.ch',
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+  })
+}
+
+export async function sendAdminListingUrlUnreachableStreakEmail(opts: {
+  listingId: string
+  listingTitle: string
+  address: string
+  importedFrom: string
+}): Promise<void> {
+  const payload = templateAdminListingUrlUnreachableStreak({
+    listingId: opts.listingId,
+    listingTitle: opts.listingTitle,
+    address: opts.address,
+    importedFrom: opts.importedFrom,
   })
   await sendWohnenEmail({
     to: 'admin@helvenda.ch',
