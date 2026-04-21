@@ -23,7 +23,7 @@ export type IngestPermissionBasis =
   | 'landlord_consent'
   | 'tutti_public'
 
-type IngestCard = 'url' | 'text' | 'images_text' | 'combined'
+type IngestCard = 'url' | 'text' | 'images_text' | 'combined' | 'screenshot'
 
 type IngestListingRow = ImportListingAiResult & { landlordName?: string; landlordContact?: string }
 
@@ -53,11 +53,13 @@ type IngestUnifiedSuccessBody = {
   success: true
   data: Record<string, unknown>
   images?: string[]
-  source?: string
+  source?: 'text' | 'url' | 'screenshot' | string
 }
 
 const MAX_IMAGES = 10
 const MAX_BYTES = 5 * 1024 * 1024
+const SCREENSHOT_MAX = 5
+const SCREENSHOT_MAX_BYTES = 10 * 1024 * 1024
 
 const ERROR_MESSAGES: Record<string, string> = {
   url_unreachable: 'Seite nicht erreichbar. Versuche Option B — Text einfügen.',
@@ -110,6 +112,9 @@ export function IngestClient() {
   const [urlInput, setUrlInput] = useState('')
   const [textInput, setTextInput] = useState('')
   const [clientImageUrls, setClientImageUrls] = useState<string[]>([])
+  const [screenshotFiles, setScreenshotFiles] = useState<File[]>([])
+  const [screenshotPreviewUrls, setScreenshotPreviewUrls] = useState<string[]>([])
+  const [ingestSourceHint, setIngestSourceHint] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
 
   const [analyzing, setAnalyzing] = useState(false)
@@ -154,10 +159,25 @@ export function IngestClient() {
     return () => clearInterval(t)
   }, [step, analyzing])
 
-  const progressLabels = useMemo(
-    () => ['Quelle wird geladen…', 'Daten werden extrahiert…', 'Bilder werden verarbeitet…', 'Inserat wird erstellt…'],
-    []
-  )
+  useEffect(() => {
+    const urls = screenshotFiles.map(f => URL.createObjectURL(f))
+    setScreenshotPreviewUrls(urls)
+    return () => {
+      urls.forEach(u => URL.revokeObjectURL(u))
+    }
+  }, [screenshotFiles])
+
+  const progressLabels = useMemo(() => {
+    if (card === 'screenshot') {
+      return [
+        'Screenshots werden geladen…',
+        'Claude analysiert die Bilder…',
+        'Daten werden extrahiert…',
+        'Formular wird vorbereitet…',
+      ]
+    }
+    return ['Quelle wird geladen…', 'Daten werden extrahiert…', 'Bilder werden verarbeitet…', 'Inserat wird erstellt…']
+  }, [card])
 
   const activeProgressIndex = analyzing ? Math.min(progressLabels.length - 1, Math.floor(progressTick / 5)) : 3
 
@@ -301,7 +321,41 @@ export function IngestClient() {
     setLandlordContact('')
     setLandlordConsentAck(false)
     setInternalNote('')
+    setIngestSourceHint(null)
+    setScreenshotFiles([])
   }, [])
+
+  const addScreenshotFiles = (files: FileList | null) => {
+    if (!files?.length) return
+    const allowedMime = new Set([
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+      'image/heic',
+      'image/heif',
+      '',
+    ])
+    const next: File[] = [...screenshotFiles]
+    for (let i = 0; i < files.length; i++) {
+      if (next.length >= SCREENSHOT_MAX) {
+        toast.error(`Maximal ${SCREENSHOT_MAX} Screenshots`)
+        break
+      }
+      const f = files[i]
+      const okMime = allowedMime.has(f.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)
+      if (!okMime) {
+        toast.error('Nur JPG, PNG, WebP oder HEIC')
+        continue
+      }
+      if (f.size > SCREENSHOT_MAX_BYTES) {
+        toast.error('Maximal 10 MB pro Screenshot')
+        continue
+      }
+      next.push(f)
+    }
+    setScreenshotFiles(next.slice(0, SCREENSHOT_MAX))
+  }
 
   const runAnalyze = async () => {
     if (!card) {
@@ -335,6 +389,11 @@ export function IngestClient() {
         toast.error('Bitte Bilder und/oder Text angeben.')
         return
       }
+    } else if (card === 'screenshot') {
+      if (screenshotFiles.length === 0) {
+        toast.error('Bitte mindestens einen Screenshot hochladen.')
+        return
+      }
     } else {
       mode = 'combined'
       url = urlInput.trim()
@@ -353,22 +412,33 @@ export function IngestClient() {
     setAnalyzing(true)
     setProgressTick(0)
     setPostAnalyzeWarnings([])
-
-    const requestBody: Record<string, unknown> =
-      card === 'text'
-        ? { type: 'text', text: textInput.trim() }
-        : card === 'url'
-          ? { type: 'url', url: urlInput.trim() }
-          : { mode, url, text, imageUrls }
+    setIngestSourceHint(null)
 
     try {
-      const response = await fetch('/api/admin/ingest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      })
+      let response: Response
+      if (card === 'screenshot') {
+        const fd = new FormData()
+        fd.append('type', 'screenshot')
+        for (const f of screenshotFiles) {
+          fd.append('images', f)
+        }
+        response = await fetch('/api/admin/ingest', { method: 'POST', body: fd })
+      } else {
+        const requestBody: Record<string, unknown> =
+          card === 'text'
+            ? { type: 'text', text: textInput.trim() }
+            : card === 'url'
+              ? { type: 'url', url: urlInput.trim() }
+              : { mode, url, text, imageUrls }
+        response = await fetch('/api/admin/ingest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        })
+      }
       const result = (await response.json().catch(() => null)) as Record<string, unknown> | null
       console.log('[INGEST CLIENT] API result:', result)
+      if (card === 'screenshot') console.log('[INGEST SCREENSHOT] Result:', result)
 
       if (!result || typeof result !== 'object') {
         toast.error('Ungültige Server-Antwort')
@@ -453,7 +523,15 @@ export function IngestClient() {
         setImageUrls(Array.isArray(imgs) ? imgs.filter((u): u is string => typeof u === 'string') : [])
         const conf = d.confidence
         setAiConfidence(conf === 'high' || conf === 'medium' || conf === 'low' ? conf : 'high')
-        if (rawPayload.source === 'url' && card === 'url') {
+        if (rawPayload.source === 'screenshot') {
+          setIngestSourceHint(
+            'Die Screenshots wurden analysiert. Wohnungsfotos für das Inserat kannst du unten manuell hochladen.'
+          )
+          setScreenshotFiles([])
+          setSourceUrlMeta(null)
+          setRecognizedSource('')
+          setIngestBasis('landlord_direct')
+        } else if (rawPayload.source === 'url' && card === 'url') {
           const u = urlInput.trim()
           setSourceUrlMeta(u)
           setRecognizedSource(u)
@@ -475,7 +553,11 @@ export function IngestClient() {
           if (typeof v === 'number') return Number.isFinite(v)
           return false
         }).length
-        toast.success(`Analyse erfolgreich — ${filledCount} Felder erkannt`)
+        toast.success(
+          rawPayload.source === 'screenshot'
+            ? 'Screenshot erfolgreich analysiert ✅'
+            : `Analyse erfolgreich — ${filledCount} Felder erkannt`
+        )
         setStep(3)
         return
       }
@@ -630,7 +712,7 @@ export function IngestClient() {
       {step === 1 ?
         <div className="mt-8 space-y-8">
           <p className="text-sm text-slate-600">Schritt 1 — Quelle wählen</p>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <button type="button" className={cardClass('url')} onClick={() => setCard('url')}>
               <span className="text-2xl" aria-hidden>
                 🔗
@@ -673,6 +755,19 @@ export function IngestClient() {
               </span>
               <span className="mt-3 text-xs text-slate-500">Kombination aus Webseite und Upload</span>
             </button>
+            <button type="button" className={cardClass('screenshot')} onClick={() => setCard('screenshot')}>
+              <span className="text-2xl" aria-hidden>
+                📸
+              </span>
+              <span className="mt-2 text-lg font-bold text-slate-900">Screenshot hochladen</span>
+              <span className="mt-2 text-sm text-slate-600">
+                Mache einen Screenshot des Inserats und lade ihn hoch. Funktioniert auch wenn die Plattform
+                automatischen Zugriff blockiert.
+              </span>
+              <span className="mt-3 text-xs text-slate-500">
+                Geeignet für: Tutti, Homegate, Facebook & Co., wenn URL-Import scheitert
+              </span>
+            </button>
           </div>
 
           {card === 'url' || card === 'combined' ?
@@ -698,6 +793,51 @@ export function IngestClient() {
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                 placeholder="Inseratstext, E-Mail, Notizen …"
               />
+            </div>
+          : null}
+
+          {card === 'screenshot' ?
+            <div
+              className="rounded-xl border-2 border-dashed border-teal-300/80 bg-teal-50/40 p-6"
+              onDragOver={e => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onDrop={e => {
+                e.preventDefault()
+                addScreenshotFiles(e.dataTransfer.files)
+              }}
+            >
+              <p className="text-sm font-semibold text-slate-800">
+                Screenshots (JPG, PNG, WebP; max. {SCREENSHOT_MAX}, je max. 10 MB — HEIC bitte vorher als JPG exportieren)
+              </p>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+                multiple
+                disabled={uploading}
+                onChange={e => addScreenshotFiles(e.target.files)}
+                className="mt-3 w-full text-sm"
+              />
+              <p className="mt-2 text-xs text-slate-600">
+                Tipp: Scrolle durch das Inserat und mache mehrere Screenshots, um alle Infos zu erfassen.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {screenshotPreviewUrls.map((src, idx) => (
+                  <div key={`${src}-${idx}`} className="relative h-24 w-24 overflow-hidden rounded-lg border border-slate-200">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt="" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      className="absolute right-0 top-0 bg-black/60 px-1.5 text-sm text-white"
+                      aria-label="Entfernen"
+                      onClick={() => setScreenshotFiles(prev => prev.filter((_, i) => i !== idx))}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           : null}
 
@@ -745,11 +885,11 @@ export function IngestClient() {
 
           <button
             type="button"
-            disabled={!card}
+            disabled={!card || (card === 'screenshot' && screenshotFiles.length === 0)}
             onClick={() => void runAnalyze()}
             className="w-full rounded-xl bg-[#18a87c] py-3.5 text-sm font-bold text-white shadow-md hover:opacity-95 disabled:opacity-40"
           >
-            Analysieren
+            {card === 'screenshot' ? 'Screenshots analysieren' : 'Analysieren'}
           </button>
         </div>
       : null}
@@ -773,6 +913,13 @@ export function IngestClient() {
       {step === 3 ?
         <form onSubmit={handleSubmit} className="mt-10 space-y-8">
           <p className="text-sm font-semibold text-slate-800">Schritt 3 — Review + Bestätigung</p>
+
+          {ingestSourceHint ?
+            <div className="rounded-xl border border-teal-200 bg-teal-50/90 p-4 text-sm text-teal-950">
+              <p className="font-semibold text-teal-900">Hinweis</p>
+              <p className="mt-1">{ingestSourceHint}</p>
+            </div>
+          : null}
 
           {postAnalyzeWarnings.length ?
             <div className="rounded-xl border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-950">

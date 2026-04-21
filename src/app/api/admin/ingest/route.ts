@@ -8,10 +8,11 @@ import { assertUrlSafeForServerFetch } from '@/lib/rental/listing-url-import-ser
 import { getServerSession } from 'next-auth/next'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 const EXTRACTION_SYSTEM_PROMPT = `Du bist ein Experte für Schweizer Immobilieninserate.
-Deine Aufgabe: Extrahiere strukturierte Daten aus beliebigem Text über Mietwohnungen.
-Der Text kann aus E-Mails, WhatsApp-Nachrichten, Inseraten, oder anderen Quellen stammen.
+Deine Aufgabe: Extrahiere strukturierte Daten aus beliebigem Text über Mietwohnungen oder aus Screenshots/Fotos von Inserats-Seiten.
+Der Text kann aus E-Mails, WhatsApp-Nachrichten, Inseraten, oder anderen Quellen stammen; Bilder können z. B. von Tutti, Homegate oder Social Media stammen.
 Antworte AUSSCHLIESSLICH mit einem validen JSON-Objekt.
 KEINE Backticks, KEIN Markdown, KEIN erklärender Text, NUR das JSON-Objekt selbst.
 
@@ -200,7 +201,7 @@ function parseAnthropicJsonRobust(rawText: string): Record<string, unknown> {
 
 async function extractListingFromAnthropic(
   anthropic: Anthropic,
-  userContent: string
+  userContent: string | Anthropic.ContentBlockParam[]
 ): Promise<Record<string, unknown>> {
   const msg = (await anthropic.messages.create({
     model: ingestModel(),
@@ -228,6 +229,107 @@ async function extractListingFromAnthropic(
   return parseAnthropicJsonRobust(joined)
 }
 
+const SCREENSHOT_MAX_FILES = 5
+const SCREENSHOT_MAX_BYTES = 10 * 1024 * 1024
+
+type VisionMediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
+
+function inferVisionMediaType(file: File): VisionMediaType | null {
+  const type = (file.type || '').toLowerCase().split(';')[0].trim()
+  if (type === 'image/jpeg' || type === 'image/jpg') return 'image/jpeg'
+  if (type === 'image/png') return 'image/png'
+  if (type === 'image/webp') return 'image/webp'
+  if (type === 'image/gif') return 'image/gif'
+  const n = file.name.toLowerCase()
+  if (n.endsWith('.jpg') || n.endsWith('.jpeg')) return 'image/jpeg'
+  if (n.endsWith('.png')) return 'image/png'
+  if (n.endsWith('.webp')) return 'image/webp'
+  if (n.endsWith('.gif')) return 'image/gif'
+  if (type === 'image/heic' || type === 'image/heif' || n.endsWith('.heic') || n.endsWith('.heif')) {
+    return null
+  }
+  return null
+}
+
+async function handleScreenshotIngest(
+  anthropic: Anthropic,
+  formData: FormData
+): Promise<NextResponse> {
+  const raw = formData.getAll('images')
+  const files = raw.filter((x): x is File => typeof File !== 'undefined' && x instanceof File)
+
+  if (files.length === 0) {
+    return NextResponse.json(
+      { success: false, message: 'Bitte mindestens einen Screenshot hochladen.', fallback: true },
+      { status: 200 }
+    )
+  }
+  if (files.length > SCREENSHOT_MAX_FILES) {
+    return NextResponse.json(
+      { success: false, message: `Maximal ${SCREENSHOT_MAX_FILES} Screenshots erlaubt.`, fallback: true },
+      { status: 200 }
+    )
+  }
+
+  const imageBlocks: Anthropic.ContentBlockParam[] = []
+  for (const file of files) {
+    if (file.size > SCREENSHOT_MAX_BYTES) {
+      return NextResponse.json(
+        { success: false, message: 'Bild zu gross. Max. 10MB pro Screenshot.', fallback: true },
+        { status: 200 }
+      )
+    }
+    const mediaType = inferVisionMediaType(file)
+    if (!mediaType) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            'Nur JPG, PNG, WebP und GIF erlaubt. HEIC: bitte auf dem iPhone als JPG exportieren (Teilen → «Als JPEG speichern»).',
+          fallback: true,
+        },
+        { status: 200 }
+      )
+    }
+    const buf = Buffer.from(await file.arrayBuffer())
+    imageBlocks.push({
+      type: 'image',
+      source: { type: 'base64', media_type: mediaType, data: buf.toString('base64') },
+    })
+  }
+
+  const n = imageBlocks.length
+  const caption = `Analysiere diese ${n} Screenshot(s) eines Schweizer Mietwohnungsinserats.
+Extrahiere ALLE sichtbaren Informationen: Titel, Adresse, PLZ, Ort, Zimmer, Fläche, Miete, Nebenkosten, Kaution, Verfügbarkeit, Ausstattung, Kontaktinfos.
+Nutze das vorgegebene Tool «submit_swiss_rental_listing» mit allen erkannten Feldern.`
+
+  imageBlocks.push({ type: 'text', text: caption })
+
+  try {
+    console.log('[INGEST] Screenshot flow, images:', n)
+    const parsed = await extractListingFromAnthropic(anthropic, imageBlocks)
+    const data = normalizeExtractedPayload(parsed)
+    return NextResponse.json({
+      success: true,
+      data,
+      images: [] as string[],
+      source: 'screenshot',
+    })
+  } catch (error) {
+    console.error('[INGEST] Screenshot vision error:', error)
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          'Screenshot konnte nicht analysiert werden. Bitte versuche es mit einem klareren Screenshot oder als JPG/PNG.',
+        details: String(error),
+        fallback: true,
+      },
+      { status: 200 }
+    )
+  }
+}
+
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!(await isAdmin(session))) {
@@ -251,6 +353,34 @@ export async function POST(request: NextRequest) {
   }
 
   const anthropic = new Anthropic({ apiKey })
+
+  const contentType = request.headers.get('content-type') || ''
+
+  if (contentType.includes('multipart/form-data')) {
+    let formData: FormData
+    try {
+      formData = await request.formData()
+    } catch (e) {
+      console.error('[INGEST] multipart parse error:', e)
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            'Upload konnte nicht gelesen werden. Bitte weniger oder kleinere Dateien versuchen (max. 10 MB pro Bild, bis zu 5 Bilder).',
+          fallback: true,
+        },
+        { status: 200 }
+      )
+    }
+    const formType = formData.get('type')
+    if (formType === 'screenshot') {
+      return await handleScreenshotIngest(anthropic, formData)
+    }
+    return NextResponse.json(
+      { success: false, message: 'Unbekannter Formular-Typ.', fallback: true },
+      { status: 200 }
+    )
+  }
 
   let body: Record<string, unknown>
   try {

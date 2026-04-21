@@ -35,7 +35,7 @@ const nextConfig = {
   // Server Actions body size
   experimental: {
     serverActions: {
-      bodySizeLimit: '10mb',
+      bodySizeLimit: '25mb',
     },
     // OPTIMIERT: Optimistic Client Cache für schnellere Navigation
     optimisticClientCache: true,
