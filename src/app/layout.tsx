@@ -31,12 +31,16 @@ const sharedIcons: Metadata['icons'] = {
 
 /** Canonical origin for the current request (avoids wrong metadataBase from env on wohnen.helvenda.ch). */
 function requestOriginUrl(h: { get(name: string): string | null }): URL {
-  const host = (h.get('host') || '').trim()
-  if (!host) return new URL(WOHNEN_SITE_ORIGIN)
-  const forwardedProto = h.get('x-forwarded-proto')?.split(',')[0]?.trim()
-  const isLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1')
-  const proto = forwardedProto || (isLocal ? 'http' : 'https')
-  return new URL(`${proto}://${host}`)
+  try {
+    const host = (h.get('host') || '').trim()
+    if (!host) return new URL(WOHNEN_SITE_ORIGIN)
+    const forwardedProto = h.get('x-forwarded-proto')?.split(',')[0]?.trim()
+    const isLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1')
+    const proto = forwardedProto || (isLocal ? 'http' : 'https')
+    return new URL(`${proto}://${host}`)
+  } catch {
+    return new URL(WOHNEN_SITE_ORIGIN)
+  }
 }
 
 export async function generateMetadata(): Promise<Metadata> {

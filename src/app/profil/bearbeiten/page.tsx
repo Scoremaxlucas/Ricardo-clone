@@ -1,4 +1,5 @@
-import { ProfilErstellenClient, buildInitialFromApi } from '../erstellen/ProfilErstellenClient'
+import { ProfilErstellenClient } from '../erstellen/ProfilErstellenClient'
+import { buildInitialFromApi } from '@/lib/tenant-profile/profil-form-initial'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import type { Metadata } from 'next'

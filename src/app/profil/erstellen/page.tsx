@@ -1,4 +1,5 @@
-import { ProfilErstellenClient, buildInitialFromApi } from './ProfilErstellenClient'
+import { ProfilErstellenClient } from './ProfilErstellenClient'
+import { buildInitialFromApi } from '@/lib/tenant-profile/profil-form-initial'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import type { Metadata } from 'next'
@@ -7,7 +8,7 @@ import { redirect } from 'next/navigation'
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: 'Mieterprofil erstellen — Helvenda Wohnungen',
+    title: { absolute: 'Mieterprofil erstellen — Helvenda Wohnungen' },
     description: 'Persönliche Angaben, Beschäftigung und Referenz — einmal ausfüllen für alle Bewerbungen.',
     robots: { index: false, follow: false },
   }
