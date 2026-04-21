@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { ANTHROPIC_CLAUDE_SONNET_4, coerceAnthropicListingModel } from '@/lib/rental/anthropic-model'
+import { ingestOptionalText } from '@/lib/rental/ingest-optional-text'
 import type { ImportListingAiResult } from '@/lib/rental/listing-url-import-types'
 
 /** Kanonischer Ingest-Modellname (ohne fehlerhafte Env-Overrides). */
@@ -97,8 +98,8 @@ function normalizeAdminRow(o: Record<string, unknown>): AdminIngestAiRow {
     features,
     originalPlatform: typeof o.originalPlatform === 'string' ? o.originalPlatform : '',
     confidence: conf,
-    landlordName: typeof o.landlordName === 'string' ? o.landlordName : '',
-    landlordContact: typeof o.landlordContact === 'string' ? o.landlordContact : '',
+    landlordName: ingestOptionalText(o.landlordName),
+    landlordContact: ingestOptionalText(o.landlordContact),
   }
 }
 

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { anthropicListingModelCandidates } from '@/lib/rental/anthropic-model'
 import { runAdminListingIngest, type AdminIngestMode } from '@/lib/rental/listing-ingest-orchestrator'
+import { ingestOptionalText } from '@/lib/rental/ingest-optional-text'
 import { assertUrlSafeForServerFetch } from '@/lib/rental/listing-url-import-server'
 import { getServerSession } from 'next-auth/next'
 
@@ -113,8 +114,8 @@ function normalizeExtractedPayload(raw: Record<string, unknown>): Record<string,
           ? raw.availableFrom.trim()
           : '',
     features,
-    landlordName: typeof raw.landlordName === 'string' ? raw.landlordName : '',
-    landlordContact: typeof raw.landlordContact === 'string' ? raw.landlordContact : '',
+    landlordName: ingestOptionalText(raw.landlordName),
+    landlordContact: ingestOptionalText(raw.landlordContact),
     confidence,
   }
 }

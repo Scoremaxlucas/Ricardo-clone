@@ -1,6 +1,7 @@
 'use client'
 
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
+import { ingestOptionalText } from '@/lib/rental/ingest-optional-text'
 import { mapAiImportToRentalLandlordInitial } from '@/lib/rental/listing-ai-to-rental-initial'
 import type { ImportListingAiResult } from '@/lib/rental/listing-url-import-types'
 import Link from 'next/link'
@@ -317,8 +318,8 @@ export function IngestClient() {
     } else {
       setIngestBasis('landlord_direct')
     }
-    setLandlordName(data.listing.landlordName?.trim() || '')
-    setLandlordContact(data.listing.landlordContact?.trim() || '')
+    setLandlordName(ingestOptionalText(data.listing.landlordName))
+    setLandlordContact(ingestOptionalText(data.listing.landlordContact))
     setLandlordConsentAck(false)
     setInternalNote('')
   }, [])
@@ -567,8 +568,8 @@ export function IngestClient() {
           setRecognizedSource('')
           setIngestBasis('landlord_direct')
         }
-        setLandlordName(typeof d.landlordName === 'string' ? d.landlordName : '')
-        setLandlordContact(typeof d.landlordContact === 'string' ? d.landlordContact : '')
+        setLandlordName(ingestOptionalText(d.landlordName))
+        setLandlordContact(ingestOptionalText(d.landlordContact))
         setLandlordConsentAck(false)
         setInternalNote('')
         setPostAnalyzeWarnings([])
