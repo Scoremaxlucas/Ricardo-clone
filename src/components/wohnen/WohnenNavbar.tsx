@@ -19,10 +19,6 @@ function creditValid(p: TenantProfileBrief): boolean {
   return new Date(p.creditCheckExpiresAt).getTime() > Date.now()
 }
 
-function NavDivider() {
-  return <span className="hidden h-5 w-px shrink-0 bg-slate-200 sm:inline-block" aria-hidden />
-}
-
 export function WohnenNavbar() {
   const { data: session, status } = useSession()
   const user = session?.user as { id?: string; name?: string | null; email?: string | null; image?: string | null } | undefined
@@ -198,23 +194,7 @@ export function WohnenNavbar() {
 
   const renderAuthButtons = () => {
     if (!signedIn) {
-      return (
-        <>
-          <NavDivider />
-          <Link
-            href="/login"
-            className="hidden rounded-lg border-2 border-teal-700 px-3 py-1.5 text-sm font-semibold text-teal-900 hover:bg-teal-50 sm:inline-flex"
-          >
-            Anmelden
-          </Link>
-          <Link
-            href="/register"
-            className="hidden rounded-lg bg-[#18a87c] px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 sm:inline-flex"
-          >
-            Registrieren
-          </Link>
-        </>
-      )
+      return null
     }
     return (
       <div className="relative hidden items-center gap-2 sm:flex">
@@ -305,18 +285,15 @@ export function WohnenNavbar() {
           <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
             Wohnungen suchen
           </Link>
-          <Link href="/matching/properties/new" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
-            Wohnung inserieren
-          </Link>
-          <Link href="/login" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+          <Link href="/login" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-slate-500 hover:bg-slate-100" onClick={closeAll}>
             Anmelden
           </Link>
           <Link
             href="/register"
-            className="mt-2 flex min-h-[44px] items-center justify-center rounded-lg bg-[#18a87c] px-3 py-2.5 text-center font-semibold text-white"
+            className="mt-2 flex min-h-[44px] items-center justify-center rounded-lg bg-[#18a87c] px-3 py-2.5 text-center font-semibold text-white shadow-sm hover:opacity-95"
             onClick={closeAll}
           >
-            Registrieren
+            Kostenlos registrieren
           </Link>
         </>
       )
@@ -441,19 +418,24 @@ export function WohnenNavbar() {
             <div className="h-8 w-24 animate-pulse rounded-lg bg-slate-200" />
           </div>
         : (
-          <nav className="hidden flex-1 items-center justify-end gap-2 min-[768px]:flex min-[768px]:gap-3">
+          <nav className="hidden flex-1 items-center justify-end gap-3 min-[768px]:flex min-[768px]:gap-4">
             {!signedIn ?
               <>
-                <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+                <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-slate-900">
                   Wohnungen suchen
                 </Link>
                 <Link
-                  href="/matching/properties/new"
-                  className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                  href="/login"
+                  className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                 >
-                  Wohnung inserieren
+                  Anmelden
                 </Link>
-                {renderAuthButtons()}
+                <Link
+                  href="/register"
+                  className="rounded-xl bg-[#18a87c] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+                >
+                  Kostenlos registrieren
+                </Link>
               </>
             : (
               <>
@@ -465,13 +447,6 @@ export function WohnenNavbar() {
         )}
 
         <div className="flex items-center gap-2 min-[768px]:hidden">
-          {!showSkeleton && !signedIn ?
-            <>
-              <Link href="/login" className="rounded-md px-2 py-1 text-sm font-semibold text-teal-900">
-                Anmelden
-              </Link>
-            </>
-          : null}
           <button
             type="button"
             className="inline-flex items-center justify-center rounded-md border border-slate-200 p-2 text-slate-800"

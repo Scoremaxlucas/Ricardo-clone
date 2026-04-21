@@ -48,22 +48,21 @@ const MARKETPLACE_METADATA: Metadata = {
 }
 
 const WOHNEN_METADATA: Metadata = {
-  title: 'Helvenda Wohnungen — Fair mieten und vermieten in der Schweiz',
+  title: 'Helvenda Wohnungen — Mietwohnungen in der Schweiz. Kostenlos. Fair.',
   description:
-    'Kostenlos inserieren, keine Abo-Pflicht für Mieter, verifizierte Bewerbungen mit Betreibungsregister. Helvenda Wohnungen — der faire Schweizer Mietmarkt.',
+    'Mietwohnung suchen ohne Abo-Pflicht. Kostenlos inserieren als Vermieter. Nur verifizierte Anfragen dank integriertem Betreibungsregister. Der faire Schweizer Mietmarkt.',
+  keywords: ['Mietwohnung Schweiz', 'Wohnung mieten Zürich', 'Wohnung inserieren kostenlos', 'Homegate Alternative'],
   openGraph: {
-    title: 'Helvenda Wohnungen — Fair mieten und vermieten in der Schweiz',
-    description:
-      'Kostenlos inserieren, keine Abo-Pflicht für Mieter, verifizierte Bewerbungen mit Betreibungsregister.',
-    type: 'website',
+    title: 'Helvenda Wohnungen — Ohne Abo. Ohne Abzocke.',
+    description: 'Der faire Schweizer Mietmarkt. Kostenlos inserieren, keine Abo-Pflicht für Mieter.',
     locale: 'de_CH',
+    type: 'website',
     siteName: 'Helvenda Wohnungen',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Helvenda Wohnungen — Fair mieten und vermieten in der Schweiz',
-    description:
-      'Kostenlos inserieren, keine Abo-Pflicht für Mieter, verifizierte Bewerbungen mit Betreibungsregister.',
+    title: 'Helvenda Wohnungen — Ohne Abo. Ohne Abzocke.',
+    description: 'Der faire Schweizer Mietmarkt. Kostenlos inserieren, keine Abo-Pflicht für Mieter.',
   },
   alternates: {
     canonical: WOHNEN_SITE_ORIGIN,
