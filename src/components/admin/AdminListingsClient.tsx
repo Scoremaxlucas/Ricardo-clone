@@ -174,12 +174,20 @@ export function AdminListingsClient({ listings: initialListings, stats }: Props)
             <option value="import">Import</option>
           </select>
         </div>
-        <Link
-          href="/admin/listings/new"
-          className="inline-flex items-center justify-center rounded-lg bg-[#18a87c] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 sm:ml-auto"
-        >
-          Neues Inserat
-        </Link>
+        <div className="flex flex-wrap gap-2 sm:ml-auto">
+          <Link
+            href="/admin/listings/ingest"
+            className="inline-flex items-center justify-center rounded-lg bg-[#18a87c] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95"
+          >
+            ⚡ Neues Inserat importieren
+          </Link>
+          <Link
+            href="/admin/listings/new"
+            className="inline-flex items-center justify-center rounded-lg border border-teal-700 bg-white px-4 py-2 text-sm font-semibold text-teal-900 shadow-sm hover:bg-teal-50"
+          >
+            Manuell erstellen
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">

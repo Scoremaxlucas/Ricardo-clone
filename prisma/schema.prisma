@@ -1725,6 +1725,8 @@ model RentalListing {
   importedFrom        String? // Original-URL oder Partner-Kennzeichnung
   importSource        ImportSource         @default(SELF)
   landlordContact     String? // AES-GCM (Base64) oder Klartext-Präfix nur ohne Key — nur intern
+  /** Admin-Ingest: Erlaubnis-Basis (z. B. public_authority, landlord_direct, landlord_consent, tutti_public) */
+  ingestPermissionBasis String?
 
   user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications  RentalApplication[]

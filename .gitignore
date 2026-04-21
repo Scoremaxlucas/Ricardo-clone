@@ -58,3 +58,7 @@ mobile-app/node_modules/
 mobile-app/.expo/
 .vercel
 .env*.local
+
+# Lokale / generierte Artefakte (nicht versionieren)
+tsconfig.tsbuildinfo
+Seller-Outreach-Tracker.xlsx

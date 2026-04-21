@@ -41,6 +41,9 @@ export async function POST(request: Request) {
       importSource: rawSource,
       importedFrom: rawImported,
       landlordContactPlain,
+      status: rawCreateStatus,
+      ingestPermissionBasis: rawIngestBasis,
+      landlordConsentAck,
     } = body
 
     if (!title || !description || !address || !zip || !city || !canton) {
@@ -93,8 +96,24 @@ export async function POST(request: Request) {
     let importedFrom: string | null =
       typeof rawImported === 'string' && rawImported.trim() ? String(rawImported).trim().slice(0, 2000) : null
 
+    const ingestPermissionBasis =
+      typeof rawIngestBasis === 'string' && rawIngestBasis.trim()
+        ? String(rawIngestBasis).trim().slice(0, 120)
+        : null
+
+    if (ingestPermissionBasis === 'landlord_consent' && !Boolean(landlordConsentAck)) {
+      return NextResponse.json(
+        { message: 'Bitte bestätigen: Vermieter hat ausdrücklich zugestimmt.' },
+        { status: 400 }
+      )
+    }
+
     if (importSource === ImportSource.IMPORTED && !importedFrom) {
-      return NextResponse.json({ message: 'Import: Original-URL erforderlich' }, { status: 400 })
+      if (ingestPermissionBasis === 'landlord_consent' && Boolean(landlordConsentAck)) {
+        importedFrom = 'Vermieter-Einwilligung (keine öffentliche URL)'
+      } else {
+        return NextResponse.json({ message: 'Import: Original-URL erforderlich' }, { status: 400 })
+      }
     }
     if (importSource === ImportSource.SELF) {
       importedFrom = null
@@ -104,6 +123,8 @@ export async function POST(request: Request) {
       typeof landlordContactPlain === 'string' && landlordContactPlain.trim()
         ? encryptLandlordContactForStorage(landlordContactPlain.trim())
         : null
+
+    const createStatus = rawCreateStatus === 'archived' ? 'archived' : 'active'
 
     const listing = await prisma.rentalListing.create({
       data: {
@@ -123,10 +144,11 @@ export async function POST(request: Request) {
         availableFrom: avail,
         requiresCreditCheck: Boolean(requiresCreditCheck),
         photos: JSON.stringify(photoArr),
-        status: 'active',
+        status: createStatus,
         importSource,
         importedFrom,
         landlordContact,
+        ingestPermissionBasis,
       },
     })
 

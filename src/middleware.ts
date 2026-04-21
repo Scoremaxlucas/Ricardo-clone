@@ -36,6 +36,7 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/api/user/')) return true
   if (pathname.startsWith('/api/rental-listings')) return true
   if (pathname.startsWith('/api/admin/rental-listings')) return true
+  if (pathname.startsWith('/api/admin/ingest')) return true
   if (pathname.startsWith('/api/rental-applications')) return true
   if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
   if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
@@ -103,7 +104,11 @@ export async function middleware(request: NextRequest) {
     return res
   }
 
-  if (pathname.startsWith('/admin/listings') || pathname.startsWith('/api/admin/rental-listings')) {
+  if (
+    pathname.startsWith('/admin/listings') ||
+    pathname.startsWith('/api/admin/rental-listings') ||
+    pathname.startsWith('/api/admin/ingest')
+  ) {
     const secret = process.env.NEXTAUTH_SECRET
     if (!secret) {
       return pathname.startsWith('/api/')
