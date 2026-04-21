@@ -4,6 +4,8 @@ import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
 import { redirect } from 'next/navigation'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Neues Inserat',
   description: 'Mietwohnung auf Helvenda Wohnungen inserieren.',
