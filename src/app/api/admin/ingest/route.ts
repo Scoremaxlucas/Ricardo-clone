@@ -24,25 +24,47 @@ export async function POST(request: Request) {
     } catch {
       return NextResponse.json({ message: 'Ungültiger Body' }, { status: 400 })
     }
+    console.log('Ingest API called with:', JSON.stringify(body))
     const b = body as Record<string, unknown>
     const mode = b.mode
     if (typeof mode !== 'string' || !MODES.has(mode as AdminIngestMode)) {
       return NextResponse.json({ message: 'Ungültiger Modus' }, { status: 400 })
     }
 
-    const result = await runAdminListingIngest(session.user.id, {
-      mode: mode as AdminIngestMode,
-      url: typeof b.url === 'string' ? b.url : undefined,
-      text: typeof b.text === 'string' ? b.text : undefined,
-      imageUrls: Array.isArray(b.imageUrls) ? b.imageUrls.filter((x): x is string => typeof x === 'string') : undefined,
-    })
-
-    return NextResponse.json(result)
+    try {
+      const result = await runAdminListingIngest(session.user.id, {
+        mode: mode as AdminIngestMode,
+        url: typeof b.url === 'string' ? b.url : undefined,
+        text: typeof b.text === 'string' ? b.text : undefined,
+        imageUrls: Array.isArray(b.imageUrls) ? b.imageUrls.filter((x): x is string => typeof x === 'string') : undefined,
+      })
+      return NextResponse.json({ success: true, ...result })
+    } catch (error) {
+      console.error('Ingest detailed error:', error)
+      console.error('Error stack:', error instanceof Error ? error.stack : 'no stack')
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'INGEST_EXCEPTION',
+          message:
+            'Die automatische Analyse ist fehlgeschlagen. Bitte die Daten manuell eingeben oder später erneut versuchen.',
+          fallback: true,
+        },
+        { status: 200 }
+      )
+    }
   } catch (error) {
-    console.error('[admin/ingest POST]', error)
+    console.error('Ingest outer error:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'no stack')
     return NextResponse.json(
-      { error: 'Interner Fehler', details: String(error) },
-      { status: 500 }
+      {
+        success: false,
+        error: 'INGEST_EXCEPTION',
+        message:
+          'Die automatische Analyse ist fehlgeschlagen. Bitte die Daten manuell eingeben oder später erneut versuchen.',
+        fallback: true,
+      },
+      { status: 200 }
     )
   }
 }

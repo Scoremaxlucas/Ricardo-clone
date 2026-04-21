@@ -9,11 +9,14 @@ import {
 } from '@/lib/rental/listing-ingest-ai'
 import { downloadRemoteImageBuffer } from '@/lib/rental/listing-ingest-download'
 import { extractImageUrlsFromHtml } from '@/lib/rental/listing-ingest-html'
-import { htmlToListingPlainText } from '@/lib/rental/listing-url-import-html'
 import {
-  assertUrlSafeForServerFetch,
-  fetchListingHtml,
-} from '@/lib/rental/listing-url-import-server'
+  buildPlainTextFromOpenGraph,
+  extractOpenGraphFromHtml,
+  fetchOpenGraphHtml,
+  fetchPageContent,
+} from '@/lib/rental/listing-ingest-fetch-page'
+import { htmlToListingPlainText } from '@/lib/rental/listing-url-import-html'
+import { assertUrlSafeForServerFetch } from '@/lib/rental/listing-url-import-server'
 
 export type AdminIngestMode = 'url' | 'text' | 'images_text' | 'combined'
 
@@ -33,14 +36,16 @@ export type AdminIngestOrchestratorResult = {
   errors: string[]
 }
 
-async function ingestImagesFromPageHtml(html: string, pageUrl: string, userId: string): Promise<{
+async function ingestImagesFromExplicitUrls(urls: string[], userId: string): Promise<{
   photos: string[]
   failures: number
 }> {
-  const urls = extractImageUrlsFromHtml(html, pageUrl)
+  const merged = Array.from(
+    new Set(urls.map(u => u.trim()).filter(u => u.startsWith('http')))
+  )
   const photos: string[] = []
   let failures = 0
-  for (const imgUrl of urls) {
+  for (const imgUrl of merged) {
     if (photos.length >= 10) break
     const got = await downloadRemoteImageBuffer(imgUrl, 5000)
     if (!got || !meetsMinImageSize(got.buffer)) {
@@ -154,11 +159,12 @@ export async function runAdminListingIngest(
     sourceUrl = url
     let html = ''
     let httpStatus = 0
+    let discoveredImageUrls: string[] = []
+    let safeUrlStr: string
+
     try {
       const safe = await assertUrlSafeForServerFetch(url)
-      const fetched = await fetchListingHtml(safe)
-      html = fetched.html
-      httpStatus = fetched.status
+      safeUrlStr = safe.toString()
     } catch {
       errors.push('url_unreachable')
       warnings.push('Seite nicht erreichbar. Versuche Option B — Text einfügen.')
@@ -187,44 +193,156 @@ export async function runAdminListingIngest(
       }
     }
 
-    if (httpStatus === 403 || httpStatus === 401) {
-      errors.push('url_blocked_http')
-      warnings.push('Diese Seite blockiert automatischen Zugriff. Kopiere den Text manuell und nutze Option B.')
-    } else if (httpStatus >= 400) {
-      errors.push('url_http_error')
-      warnings.push('Seite nicht erreichbar.')
-    }
+    try {
+      const page = await fetchPageContent(safeUrlStr)
+      httpStatus = page.status
+      html = page.html
+      discoveredImageUrls = page.imageUrls
 
-    const plain = htmlToListingPlainText(html, 8000)
-    const ai = await extractAdminIngestFromPlainText(plain)
-    if (!ai) {
-      errors.push('ai_parse_failed')
-      warnings.push('Analyse fehlgeschlagen — Formular ist leer vorausgefüllt. Bitte manuell ausfüllen.')
-    }
-    let listing: AdminIngestAiRow = ai || emptyAdminIngestRow()
+      if (page.blocked) {
+        let ogHtml = ''
+        try {
+          ogHtml = await fetchOpenGraphHtml(safeUrlStr)
+        } catch {
+          /* zweiter Fetch optional */
+        }
+        const og = extractOpenGraphFromHtml(ogHtml || html)
+        const hasOg = Boolean(og.ogTitle || og.ogDescription || og.ogImage)
 
-    if (mode === 'url' && httpStatus < 400) {
-      const { photos: fromPage, failures } = await ingestImagesFromPageHtml(html, url, userId)
-      imageDownloadFailures += failures
-      photos = fromPage
-      if (fromPage.length === 0) {
-        warnings.push('Keine Bilder gefunden — du kannst sie in Schritt 3 manuell hochladen.')
+        if (hasOg) {
+          const ogPlain = buildPlainTextFromOpenGraph(og)
+          const metaPlain = htmlToListingPlainText(ogHtml || html, 6000)
+          const plain = [ogPlain, metaPlain].filter(Boolean).join('\n\n').trim().slice(0, 8000)
+          const ai = await extractAdminIngestFromPlainText(plain)
+          if (!ai) {
+            errors.push('ai_parse_failed')
+            warnings.push('Analyse fehlgeschlagen — Formular ist leer vorausgefüllt. Bitte manuell ausfüllen.')
+          }
+          let listing: AdminIngestAiRow = ai || emptyAdminIngestRow()
+
+          const imgCandidates: string[] = [...discoveredImageUrls]
+          if (og.ogImage?.startsWith('http')) imgCandidates.unshift(og.ogImage)
+          try {
+            const fromOg = extractImageUrlsFromHtml(ogHtml, safeUrlStr)
+            imgCandidates.push(...fromOg)
+          } catch {
+            /* ignore */
+          }
+
+          if (mode === 'url') {
+            const { photos: fromPage, failures } = await ingestImagesFromExplicitUrls(imgCandidates, userId)
+            imageDownloadFailures += failures
+            photos = fromPage
+            if (fromPage.length === 0) {
+              warnings.push('Keine Bilder gefunden — du kannst sie in Schritt 3 manuell hochladen.')
+            }
+            if (failures > 0) {
+              warnings.push(`${failures} Bild(er) konnten nicht geladen werden.`)
+            }
+          }
+
+          if (mode === 'combined') {
+            const { photos: cPhotos, failures } = await normalizeClientImageUrls(userId, clientImages)
+            imageDownloadFailures += failures
+            photos = cPhotos
+            if (clientImages.length && cPhotos.length === 0) {
+              warnings.push('Keine der hochgeladenen Bilder konnte validiert werden — bitte in Schritt 3 erneut hochladen.')
+            }
+          }
+
+          return { listing, photos, sourceUrl, imageDownloadFailures, warnings, errors }
+        }
+
+        errors.push('platform_blocked')
+        warnings.push(
+          'Diese Plattform blockiert automatischen Zugriff. Bitte Text manuell einfügen.'
+        )
+        let listing = emptyAdminIngestRow()
+        if (mode === 'combined') {
+          const { photos: cPhotos, failures } = await normalizeClientImageUrls(userId, clientImages)
+          imageDownloadFailures += failures
+          photos = cPhotos
+          if (photos.length) {
+            const visionParts = await buffersForVisionFromUrls(photos)
+            const vision = visionParts.length ? await extractFromVisionImages(visionParts) : null
+            listing = mergeVisionIntoListing(listing, vision)
+          }
+          if (clientImages.length && cPhotos.length === 0) {
+            warnings.push('Keine der hochgeladenen Bilder konnte validiert werden — bitte in Schritt 3 erneut hochladen.')
+          }
+        }
+        return { listing, photos, sourceUrl, imageDownloadFailures, warnings, errors }
       }
-      if (failures > 0) {
-        warnings.push(`${failures} Bild(er) konnten nicht geladen werden.`)
+
+      if (httpStatus >= 400) {
+        errors.push('url_http_error')
+        warnings.push('Seite nicht erreichbar.')
+      }
+
+      const plain = htmlToListingPlainText(html, 8000)
+      const ai = await extractAdminIngestFromPlainText(plain)
+      if (!ai) {
+        errors.push('ai_parse_failed')
+        warnings.push('Analyse fehlgeschlagen — Formular ist leer vorausgefüllt. Bitte manuell ausfüllen.')
+      }
+      let listing: AdminIngestAiRow = ai || emptyAdminIngestRow()
+
+      if (mode === 'url' && httpStatus < 400) {
+        const fromHtml = extractImageUrlsFromHtml(html, url)
+        const mergedUrls = Array.from(new Set([...discoveredImageUrls, ...fromHtml]))
+        const { photos: fromPage, failures } = await ingestImagesFromExplicitUrls(mergedUrls, userId)
+        imageDownloadFailures += failures
+        photos = fromPage
+        if (fromPage.length === 0) {
+          warnings.push('Keine Bilder gefunden — du kannst sie in Schritt 3 manuell hochladen.')
+        }
+        if (failures > 0) {
+          warnings.push(`${failures} Bild(er) konnten nicht geladen werden.`)
+        }
+      }
+
+      if (mode === 'combined') {
+        const { photos: cPhotos, failures } = await normalizeClientImageUrls(userId, clientImages)
+        imageDownloadFailures += failures
+        photos = cPhotos
+        if (clientImages.length && cPhotos.length === 0) {
+          warnings.push('Keine der hochgeladenen Bilder konnte validiert werden — bitte in Schritt 3 erneut hochladen.')
+        }
+      }
+
+      return { listing, photos, sourceUrl, imageDownloadFailures, warnings, errors }
+    } catch (e) {
+      if (e instanceof Error && e.message === 'PAGE_NOT_FOUND') {
+        errors.push('page_not_found')
+        warnings.push('Inserat nicht gefunden (404/410).')
+      } else {
+        errors.push('url_unreachable')
+        warnings.push('Seite nicht erreichbar. Versuche Option B — Text einfügen.')
+      }
+      if (mode === 'combined') {
+        const { photos: cPhotos, failures } = await normalizeClientImageUrls(userId, clientImages)
+        imageDownloadFailures += failures
+        photos = cPhotos
+        let listing: AdminIngestAiRow = emptyAdminIngestRow()
+        if (photos.length) {
+          const visionParts = await buffersForVisionFromUrls(photos)
+          const vision = visionParts.length ? await extractFromVisionImages(visionParts) : null
+          listing = mergeVisionIntoListing(listing, vision)
+        }
+        if (clientImages.length && cPhotos.length === 0) {
+          warnings.push('Keine der hochgeladenen Bilder konnte validiert werden — bitte in Schritt 3 erneut hochladen.')
+        }
+        return { listing, photos, sourceUrl, imageDownloadFailures, warnings, errors }
+      }
+      return {
+        listing: emptyAdminIngestRow(),
+        photos: [],
+        sourceUrl,
+        imageDownloadFailures,
+        warnings,
+        errors,
       }
     }
-
-    if (mode === 'combined') {
-      const { photos: cPhotos, failures } = await normalizeClientImageUrls(userId, clientImages)
-      imageDownloadFailures += failures
-      photos = cPhotos
-      if (clientImages.length && cPhotos.length === 0) {
-        warnings.push('Keine der hochgeladenen Bilder konnte validiert werden — bitte in Schritt 3 erneut hochladen.')
-      }
-    }
-
-    return { listing, photos, sourceUrl, imageDownloadFailures, warnings, errors }
   }
 
   // images_text

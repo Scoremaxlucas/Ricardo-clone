@@ -28,6 +28,7 @@ type IngestCard = 'url' | 'text' | 'images_text' | 'combined'
 type IngestListingRow = ImportListingAiResult & { landlordName?: string; landlordContact?: string }
 
 type IngestApiResult = {
+  success?: boolean
   listing: IngestListingRow
   photos: string[]
   sourceUrl: string | null
@@ -36,12 +37,21 @@ type IngestApiResult = {
   errors: string[]
 }
 
+type IngestApiFailureBody = {
+  success: false
+  error?: string
+  message?: string
+  fallback?: boolean
+}
+
 const MAX_IMAGES = 10
 const MAX_BYTES = 5 * 1024 * 1024
 
 const ERROR_MESSAGES: Record<string, string> = {
   url_unreachable: 'Seite nicht erreichbar. Versuche Option B — Text einfügen.',
   url_blocked_http: 'Diese Seite blockiert automatischen Zugriff. Kopiere den Text manuell und nutze Option B.',
+  platform_blocked: 'Diese Plattform blockiert automatischen Zugriff. Bitte Text manuell einfügen.',
+  page_not_found: 'Inserat nicht gefunden (404/410).',
   url_http_error: 'Seite nicht erreichbar.',
   url_missing: 'Bitte eine URL angeben.',
   text_missing: 'Bitte Text einfügen.',
@@ -342,6 +352,14 @@ export function IngestClient() {
       const warnings: string[] = []
       if (raw && typeof raw === 'object' && Array.isArray((raw as IngestApiResult).warnings)) {
         warnings.push(...(raw as IngestApiResult).warnings)
+      }
+      if (raw && typeof raw === 'object' && (raw as IngestApiFailureBody).success === false) {
+        const fail = raw as IngestApiFailureBody
+        toast.error(fail.message || 'Analyse fehlgeschlagen')
+        if (fail.fallback) applyEmptyFallback()
+        setPostAnalyzeWarnings([fail.message || manualFallbackDescription()])
+        setStep(3)
+        return
       }
       if (!res.ok || !raw || typeof raw !== 'object' || !('listing' in raw)) {
         toast.error((raw as { message?: string })?.message || 'Analyse fehlgeschlagen')
