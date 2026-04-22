@@ -52,18 +52,18 @@ function Timeline({ steps }: { steps: Step[] }) {
   return (
     <div className="relative pl-0">
       <div className="pointer-events-none absolute bottom-0 left-4 top-0 w-[2px] bg-[#18a87c]" aria-hidden />
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {steps.map((step, idx) => (
-          <div key={step.n} className="relative flex items-start gap-4">
-            <span className="relative z-[1] flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#18a87c] text-sm font-bold text-white">
+          <div key={step.n} className="relative flex items-start gap-3.5 sm:gap-4">
+            <span className="relative z-[1] flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#18a87c] text-sm font-bold text-white sm:h-9 sm:w-9">
               {step.n}
             </span>
-            <div className="min-w-0 pt-0.5">
-              <div className="flex items-start gap-2.5">
+            <div className="min-w-0 pt-0.5 sm:pt-0">
+              <div className="flex items-start gap-2">
                 <span className="mt-0.5 shrink-0" aria-hidden>
                   {step.icon}
                 </span>
-                <h4 className="text-base font-bold text-slate-900">{step.title}</h4>
+                <h4 className="text-[15px] font-bold text-slate-900 sm:text-base">{step.title}</h4>
               </div>
               <p className="mt-1.5 text-sm leading-relaxed text-[#5a7a6e]">{step.text}</p>
             </div>
@@ -86,7 +86,7 @@ function Column({ variant, steps, title, label }: { variant: 'landlord' | 'tenan
   return (
     <div className="space-y-4">
       <p className={labelClass}>{label}</p>
-      <h3 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-[28px] md:leading-tight">{title}</h3>
+      <h3 className="text-[24px] font-extrabold tracking-tight text-slate-900 md:text-[28px] md:leading-tight">{title}</h3>
       <div className="mt-6">
         <Timeline steps={steps} />
       </div>
@@ -103,12 +103,12 @@ export function WohnenHomeHowItWorks() {
         So einfach war Wohnungssuche noch nie.
       </h2>
 
-      <div className="mt-8 md:hidden">
+      <div className="mt-7 md:hidden">
         <div className="flex border-b border-slate-200">
           <button
             type="button"
             onClick={() => setTab('landlord')}
-            className={`flex-1 pb-3 text-sm font-semibold transition-colors ${
+            className={`flex min-h-[44px] flex-1 items-center justify-center pb-2 text-sm font-semibold transition-colors ${
               tab === 'landlord' ? 'border-b-2 border-[#18a87c] text-[#18a87c]' : 'border-b-2 border-transparent text-slate-500'
             }`}
           >
@@ -117,14 +117,14 @@ export function WohnenHomeHowItWorks() {
           <button
             type="button"
             onClick={() => setTab('tenant')}
-            className={`flex-1 pb-3 text-sm font-semibold transition-colors ${
+            className={`flex min-h-[44px] flex-1 items-center justify-center pb-2 text-sm font-semibold transition-colors ${
               tab === 'tenant' ? 'border-b-2 border-[#18a87c] text-[#18a87c]' : 'border-b-2 border-transparent text-slate-500'
             }`}
           >
             Mietende
           </button>
         </div>
-        <div className="mt-8">
+        <div className="mt-6">
           {tab === 'landlord' ?
             <Column variant="landlord" label="FÜR VERMIETER" title="Weniger Aufwand. Bessere Mieter." steps={LANDLORD_STEPS} />
           : <Column variant="tenant" label="FÜR MIETENDE" title="Einmal verifiziert. Überall beworben." steps={TENANT_STEPS} />}

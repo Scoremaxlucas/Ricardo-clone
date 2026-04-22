@@ -8,7 +8,7 @@ export function WohnenFooter() {
   return (
     <footer className="mt-auto text-white" style={{ backgroundColor: footerBg }}>
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-[2fr_1fr_1fr_1fr] md:gap-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-[2fr_1fr_1fr_1fr] md:gap-8">
           <div>
             <div className="flex items-center gap-2">
               <Logo size="sm" />
@@ -23,24 +23,24 @@ export function WohnenFooter() {
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-teal-200/90">Links</p>
-            <ul className="mt-4 space-y-2 text-sm">
+            <ul className="mt-4 space-y-1.5 text-sm">
               <li>
-                <Link href="/wohnungen" className="text-white/90 hover:text-white hover:underline">
+                <Link href="/wohnungen" className="inline-flex min-h-[36px] items-center text-white/90 hover:text-white hover:underline">
                   Wohnungen suchen
                 </Link>
               </li>
               <li>
-                <Link href="/matching/properties/new" className="text-white/90 hover:text-white hover:underline">
+                <Link href="/matching/properties/new" className="inline-flex min-h-[36px] items-center text-white/90 hover:text-white hover:underline">
                   Wohnung inserieren
                 </Link>
               </li>
               <li>
-                <Link href="/profil" className="text-white/90 hover:text-white hover:underline">
+                <Link href="/profil" className="inline-flex min-h-[36px] items-center text-white/90 hover:text-white hover:underline">
                   Mein Profil
                 </Link>
               </li>
               <li>
-                <Link href="/profil/betreibungsregister" className="text-white/90 hover:text-white hover:underline">
+                <Link href="/profil/betreibungsregister" className="inline-flex min-h-[36px] items-center text-white/90 hover:text-white hover:underline">
                   Betreibungsregister hochladen
                 </Link>
               </li>
@@ -49,19 +49,19 @@ export function WohnenFooter() {
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-teal-200/90">Info</p>
-            <ul className="mt-4 space-y-2 text-sm">
+            <ul className="mt-4 space-y-1.5 text-sm">
               <li>
                 <a
                   href={`${MAIN_SHOP_ORIGIN}/`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white/90 hover:text-white hover:underline"
+                  className="inline-flex min-h-[36px] items-center text-white/90 hover:text-white hover:underline"
                 >
                   Über Helvenda
                 </a>
               </li>
               <li>
-                <Link href="/#wie-es-funktioniert" className="text-white/90 hover:text-white hover:underline">
+                <Link href="/#wie-es-funktioniert" className="inline-flex min-h-[36px] items-center text-white/90 hover:text-white hover:underline">
                   So funktioniert&apos;s
                 </Link>
               </li>
@@ -70,7 +70,7 @@ export function WohnenFooter() {
                   href={`${MAIN_SHOP_ORIGIN}/privacy`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white/90 hover:text-white hover:underline"
+                  className="inline-flex min-h-[36px] items-center text-white/90 hover:text-white hover:underline"
                 >
                   Datenschutz
                 </a>
@@ -80,7 +80,7 @@ export function WohnenFooter() {
                   href={`${MAIN_SHOP_ORIGIN}/terms`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white/90 hover:text-white hover:underline"
+                  className="inline-flex min-h-[36px] items-center text-white/90 hover:text-white hover:underline"
                 >
                   Nutzungsbedingungen
                 </a>
@@ -90,7 +90,7 @@ export function WohnenFooter() {
                   href={`${MAIN_SHOP_ORIGIN}/contact`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white/90 hover:text-white hover:underline"
+                  className="inline-flex min-h-[36px] items-center text-white/90 hover:text-white hover:underline"
                 >
                   Kontakt
                 </a>

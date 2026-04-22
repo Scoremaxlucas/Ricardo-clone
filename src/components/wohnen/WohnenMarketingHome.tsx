@@ -218,12 +218,12 @@ export async function WohnenMarketingHome() {
       </section>
 
       {/* 5. Footer CTA */}
-      <section className="whome-anim whome-d3 bg-[#18a87c] px-4 py-16 sm:px-6 lg:px-8">
+      <section className="whome-anim whome-d3 bg-[#18a87c] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
         <div className="mx-auto max-w-6xl text-white">
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-8">
             <div className="pr-0 md:pr-8">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white">FÜR MIETENDE</p>
-              <h2 className="mt-3 text-[30px] font-extrabold leading-[1.2] tracking-[-0.03em] text-white sm:text-[34px]">
+              <h2 className="mt-3 text-[28px] font-extrabold leading-[1.2] tracking-[-0.03em] text-white sm:text-[34px]">
                 Einmal verifiziert.
                 <br />
                 Überall sofort bewerben.
@@ -236,7 +236,7 @@ export async function WohnenMarketingHome() {
               <div className="mt-7">
                 <Link
                   href="/wohnungen"
-                  className="inline-flex w-full justify-center rounded-[10px] bg-white px-6 py-3 text-base font-bold text-[#18a87c] shadow-sm transition hover:bg-white/95 sm:w-auto"
+                  className="inline-flex min-h-[46px] w-full items-center justify-center rounded-[10px] bg-white px-6 py-3 text-base font-bold text-[#18a87c] shadow-sm transition hover:bg-white/95 sm:w-auto"
                 >
                   Jetzt Wohnungen suchen →
                 </Link>
@@ -245,7 +245,7 @@ export async function WohnenMarketingHome() {
 
             <div className="border-t border-white/20 pt-8 md:border-l md:border-t-0 md:pl-8 md:pt-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white">FÜR VERMIETER</p>
-              <h2 className="mt-3 text-[30px] font-extrabold leading-[1.2] tracking-[-0.03em] text-white sm:text-[34px]">
+              <h2 className="mt-3 text-[28px] font-extrabold leading-[1.2] tracking-[-0.03em] text-white sm:text-[34px]">
                 Schluss mit 80 unqualifizierten
                 <br />
                 Anfragen.
@@ -258,7 +258,7 @@ export async function WohnenMarketingHome() {
               <div className="mt-7">
                 <Link
                   href="/matching/properties/new"
-                  className="inline-flex w-full justify-center rounded-[10px] border border-white bg-transparent px-6 py-3 text-base font-bold text-white transition hover:bg-white/10 sm:w-auto"
+                  className="inline-flex min-h-[46px] w-full items-center justify-center rounded-[10px] border border-white bg-transparent px-6 py-3 text-base font-bold text-white transition hover:bg-white/10 sm:w-auto"
                 >
                   Wohnung inserieren →
                 </Link>
@@ -266,7 +266,7 @@ export async function WohnenMarketingHome() {
             </div>
           </div>
 
-          <div className="mt-10 border-t border-white/25 pt-5 text-center">
+          <div className="mt-8 border-t border-white/25 pt-5 text-center sm:mt-10">
             <p className="text-[12px] uppercase tracking-[0.08em] text-white/45">
               Kein Abo · Keine versteckten Kosten · Jederzeit kündbar
             </p>
