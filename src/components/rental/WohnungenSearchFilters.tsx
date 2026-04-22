@@ -25,7 +25,6 @@ export function WohnungenSearchFilters() {
   const zimmer = sp.get('zimmer') ?? ''
   const maxmiete = sp.get('maxmiete') ?? ''
   const verfuegbar = sp.get('verfuegbar') ?? ''
-  const mode = sp.get('mode') === 'match' ? 'match' : 'all'
 
   const pushParams = useCallback(
     (next: Record<string, string>) => {
@@ -40,8 +39,8 @@ export function WohnungenSearchFilters() {
   )
 
   const current = useMemo(
-    () => ({ mode, kanton, zimmer, maxmiete, verfuegbar }),
-    [mode, kanton, zimmer, maxmiete, verfuegbar]
+    () => ({ kanton, zimmer, maxmiete, verfuegbar }),
+    [kanton, zimmer, maxmiete, verfuegbar]
   )
 
   const update = (patch: Partial<typeof current>) => {
@@ -122,48 +121,8 @@ export function WohnungenSearchFilters() {
   return (
     <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 py-3">
-        <div className="mb-3 hidden gap-2 md:flex">
-          <button
-            type="button"
-            onClick={() => update({ mode: 'match' })}
-            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
-              mode === 'match' ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            Für dich (empfohlen)
-          </button>
-          <button
-            type="button"
-            onClick={() => update({ mode: 'all' })}
-            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
-              mode === 'all' ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            Marktplatz (alle)
-          </button>
-        </div>
-
         <div className="flex items-center justify-between gap-2 md:hidden">
-          <div className="flex gap-1">
-            <button
-              type="button"
-              onClick={() => update({ mode: 'match' })}
-              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                mode === 'match' ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-700'
-              }`}
-            >
-              Für dich
-            </button>
-            <button
-              type="button"
-              onClick={() => update({ mode: 'all' })}
-              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                mode === 'all' ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-700'
-              }`}
-            >
-              Alle
-            </button>
-          </div>
+          <span className="text-sm font-semibold text-slate-800">Filter</span>
           <button
             type="button"
             className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-teal-800"

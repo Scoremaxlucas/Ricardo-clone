@@ -58,6 +58,36 @@ function serializeTenantProfile(row: NonNullable<Awaited<ReturnType<typeof prism
   }
 }
 
+function existingProfileToPatchPayload(
+  row: NonNullable<Awaited<ReturnType<typeof prisma.tenantProfile.findUnique>>>
+) {
+  return {
+    firstName: row.firstName,
+    lastName: row.lastName,
+    dateOfBirth: row.dateOfBirth.toISOString(),
+    currentAddress: row.currentAddress,
+    currentZip: row.currentZip,
+    currentCity: row.currentCity,
+    employmentStatus: row.employmentStatus,
+    employer: row.employer,
+    jobTitle: row.jobTitle,
+    employedSinceYear: row.employedSince ? row.employedSince.getUTCFullYear() : null,
+    employedSinceMonth: row.employedSince ? row.employedSince.getUTCMonth() + 1 : null,
+    monthlyIncomeCategory: row.monthlyIncomeCategory,
+    referenceName: row.referenceName,
+    referencePhone: row.referencePhone,
+    referenceRelation: row.referenceRelation,
+    preferredCanton: row.preferredCanton,
+    preferredPostalCodes: row.preferredPostalCodes,
+    preferredBudgetMin: row.preferredBudgetMin,
+    preferredBudgetMax: row.preferredBudgetMax,
+    preferredMinRooms: row.preferredMinRooms,
+    preferredMaxRooms: row.preferredMaxRooms,
+    preferredMoveInEarliest: row.preferredMoveInEarliest?.toISOString() ?? null,
+    preferredMoveInLatest: row.preferredMoveInLatest?.toISOString() ?? null,
+  }
+}
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
@@ -175,7 +205,16 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => null)
-    return upsertProfileData(userId, body, true)
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ message: 'Ungültiger Request-Body' }, { status: 400 })
+    }
+
+    const merged = {
+      ...existingProfileToPatchPayload(existing),
+      ...(body as Record<string, unknown>),
+    }
+
+    return upsertProfileData(userId, merged, existing.isComplete)
   } catch (e: unknown) {
     console.error('[tenant-profile PATCH]', e)
     return NextResponse.json({ message: e instanceof Error ? e.message : 'Fehler' }, { status: 500 })

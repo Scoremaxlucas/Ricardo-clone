@@ -13,7 +13,7 @@ export type QualificationResult = {
   reasons: QualificationIssue[]
 }
 
-const INCOME_MINIMUMS: Record<string, number> = {
+export const INCOME_MINIMUMS: Record<string, number> = {
   UNDER_3000: 2900,
   FROM_3000_TO_4000: 3900,
   FROM_4000_TO_5500: 5200,

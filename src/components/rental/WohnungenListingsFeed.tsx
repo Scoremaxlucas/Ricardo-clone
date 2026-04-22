@@ -73,7 +73,6 @@ export function WohnungenListingsFeed({ activeCount }: Props) {
   const [data, setData] = useState<ApiResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const mode = sp.get('mode') === 'match' ? 'match' : 'all'
   const url = useMemo(() => buildApiUrl(sp), [sp])
 
   useEffect(() => {
@@ -107,7 +106,7 @@ export function WohnungenListingsFeed({ activeCount }: Props) {
 
   const listings = (data?.listings ?? []).map(toCardData)
   const meta: ApiMeta = data?.meta ?? {
-    mode,
+    mode: 'all',
     isLoggedIn: false,
     needsPreferences: false,
     totalMatched: 0,
@@ -115,40 +114,15 @@ export function WohnungenListingsFeed({ activeCount }: Props) {
     rolloutReason: 'enabled',
   }
 
-  const blockedByMatchState =
-    mode === 'match' && (!meta.isLoggedIn || meta.needsPreferences || meta.rolloutEnabled === false)
-  const globalEmpty = !isLoading && !blockedByMatchState && listings.length === 0 && activeCount === 0
-  const filteredEmpty = !isLoading && !blockedByMatchState && listings.length === 0 && activeCount > 0
+  const globalEmpty = !isLoading && listings.length === 0 && activeCount === 0
+  const filteredEmpty = !isLoading && listings.length === 0 && activeCount > 0
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Mietwohnungen</h1>
+      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Mietwohnungen in der Schweiz</h1>
       <p className="mt-2 text-sm text-slate-600 sm:text-base">
-        {meta.mode === 'match'
-          ? 'Dein persönlicher Match-Feed: die besten Wohnungen zuerst, basierend auf deinen Präferenzen.'
-          : 'Marktplatz-Ansicht: Alle aktiven Inserate — nach Kanton, Zimmerzahl, Budget und Einzugsdatum filtern.'}
+        Alle aktiven Inserate — filtern nach Kanton, Zimmerzahl, Budget und Einzugsdatum.
       </p>
-      {meta.mode === 'match' ? (
-        <p className="mt-1 text-xs font-medium text-emerald-700">
-          Tipp: Match-Score und grüne Gründe zeigen dir, warum ein Inserat besonders gut passt.
-        </p>
-      ) : null}
-
-      {meta.mode === 'match' && !meta.isLoggedIn ? (
-        <div className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          Für „Für dich“ bitte zuerst einloggen.
-        </div>
-      ) : null}
-      {meta.mode === 'match' && meta.rolloutEnabled === false ? (
-        <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
-          „Für dich“ wird aktuell schrittweise ausgerollt und ist für dieses Konto noch nicht aktiviert.
-        </div>
-      ) : null}
-      {meta.mode === 'match' && meta.isLoggedIn && meta.needsPreferences ? (
-        <div className="mt-8 rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-900">
-          Hinterlege optionale Suchpräferenzen in deinem Profil, damit wir passende Wohnungen für dich ranken können.
-        </div>
-      ) : null}
 
       {isLoading ? (
         <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -178,7 +152,6 @@ export function WohnungenListingsFeed({ activeCount }: Props) {
             ) : (
               <>
                 {listings.length} Wohnung{listings.length === 1 ? '' : 'en'} gefunden
-                {meta.mode === 'match' ? ' (gerankt nach Match)' : ''}
               </>
             )}
           </p>
@@ -196,7 +169,7 @@ export function WohnungenListingsFeed({ activeCount }: Props) {
           ) : (
             <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {listings.map(row => (
-                <RentalListingCard key={row.id} listing={row} emphasizeMatch={meta.mode === 'match'} />
+                <RentalListingCard key={row.id} listing={row} />
               ))}
             </div>
           )}

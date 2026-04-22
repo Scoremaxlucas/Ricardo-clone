@@ -126,6 +126,7 @@ export function WohnenNavbar() {
     Boolean(signedIn && navReady && profile?.isComplete) && !okGreen && !creditPending
 
   const showLandlordNav = Boolean(signedIn && navReady && hasListings)
+  const showMatchesNav = Boolean(signedIn && navReady && profile?.isComplete)
   const showTenantCompleteNav = Boolean(
     signedIn && navReady && !hasListings && profile?.isComplete && (okGreen || creditPending)
   )
@@ -140,6 +141,14 @@ export function WohnenNavbar() {
           <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
             Wohnungen suchen
           </Link>
+          {showMatchesNav ? (
+            <Link
+              href="/meine-matches"
+              className="rounded-md bg-teal-50 px-2 py-1.5 font-semibold text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100"
+            >
+              Meine Matches
+            </Link>
+          ) : null}
           <Link href="/matching/properties" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
             Meine Inserate
           </Link>
@@ -173,6 +182,14 @@ export function WohnenNavbar() {
           <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
             Wohnungen suchen
           </Link>
+          {showMatchesNav ? (
+            <Link
+              href="/meine-matches"
+              className="rounded-md bg-teal-50 px-2 py-1.5 font-semibold text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100"
+            >
+              Meine Matches
+            </Link>
+          ) : null}
           <Link
             href="/profil/betreibungsregister"
             className="inline-flex items-center rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-950 ring-1 ring-orange-300 hover:bg-orange-200"
@@ -187,6 +204,12 @@ export function WohnenNavbar() {
         <>
           <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
             Wohnungen suchen
+          </Link>
+          <Link
+            href="/meine-matches"
+            className="rounded-md bg-teal-50 px-2 py-1.5 font-semibold text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100"
+          >
+            Meine Matches
           </Link>
           <Link href="/meine-bewerbungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
             Meine Bewerbungen
@@ -241,6 +264,22 @@ export function WohnenNavbar() {
                 <p className="truncate text-sm font-semibold text-slate-900">{user?.name || 'Benutzer/in'}</p>
                 <p className="truncate text-xs text-slate-500">{user?.email || ''}</p>
               </div>
+              <Link
+                href="/wohnungen"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
+                onClick={() => setMenuOpen(false)}
+              >
+                Wohnungen suchen
+              </Link>
+              {showMatchesNav ? (
+                <Link
+                  href="/meine-matches"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Meine Matches
+                </Link>
+              ) : null}
               <Link
                 href="/profil"
                 className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
@@ -323,6 +362,11 @@ export function WohnenNavbar() {
             <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Wohnungen suchen
             </Link>
+            {showMatchesNav ? (
+              <Link href="/meine-matches" className="flex min-h-[44px] items-center rounded-lg bg-teal-50 px-3 py-2.5 font-semibold text-teal-700 hover:bg-teal-100" onClick={closeAll}>
+                Meine Matches
+              </Link>
+            ) : null}
             <Link href="/matching/properties" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Meine Inserate
             </Link>
@@ -350,6 +394,11 @@ export function WohnenNavbar() {
             <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Wohnungen suchen
             </Link>
+            {showMatchesNav ? (
+              <Link href="/meine-matches" className="flex min-h-[44px] items-center rounded-lg bg-teal-50 px-3 py-2.5 font-semibold text-teal-700 hover:bg-teal-100" onClick={closeAll}>
+                Meine Matches
+              </Link>
+            ) : null}
             <Link
               href="/profil/betreibungsregister"
               className="flex min-h-[44px] items-center rounded-lg bg-orange-100 px-3 py-2.5 font-semibold text-orange-950 hover:bg-orange-200"
@@ -363,6 +412,9 @@ export function WohnenNavbar() {
           <>
             <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Wohnungen suchen
+            </Link>
+            <Link href="/meine-matches" className="flex min-h-[44px] items-center rounded-lg bg-teal-50 px-3 py-2.5 font-semibold text-teal-700 hover:bg-teal-100" onClick={closeAll}>
+              Meine Matches
             </Link>
             <Link href="/meine-bewerbungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Meine Bewerbungen
@@ -388,6 +440,11 @@ export function WohnenNavbar() {
         <Link href="/profil" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
           Mein Profil
         </Link>
+        {showMatchesNav ? (
+          <Link href="/meine-matches" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            Meine Matches
+          </Link>
+        ) : null}
         <Link href="/meine-bewerbungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
           Meine Bewerbungen
         </Link>
