@@ -17,12 +17,12 @@ const EMPLOYMENT_OPTIONS: { value: EmploymentStatus; icon: string; label: string
 ]
 
 const INCOME_OPTIONS: { value: IncomeCategory; label: string }[] = [
-  { value: 'UNDER_2000', label: "Unter CHF 2'000" },
-  { value: 'FROM_2000_TO_3000', label: "CHF 2'000 – 3'000" },
+  { value: 'UNDER_3000', label: "Unter CHF 3'000" },
   { value: 'FROM_3000_TO_4000', label: "CHF 3'000 – 4'000" },
-  { value: 'FROM_4000_TO_5000', label: "CHF 4'000 – 5'000" },
-  { value: 'FROM_5000_TO_7000', label: "CHF 5'000 – 7'000" },
-  { value: 'ABOVE_7000', label: "Über CHF 7'000" },
+  { value: 'FROM_4000_TO_5500', label: "CHF 4'000 – 5'500" },
+  { value: 'FROM_5500_TO_7000', label: "CHF 5'500 – 7'000" },
+  { value: 'FROM_7000_TO_9000', label: "CHF 7'000 – 9'000" },
+  { value: 'ABOVE_9000', label: "Über CHF 9'000" },
 ]
 
 type Props = {
@@ -339,6 +339,9 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
 
             <div>
               <label className="block text-sm font-medium text-slate-700">Monatliches Nettoeinkommen *</label>
+              <p className="mt-1 text-xs text-slate-500">
+                Bitte realistisch inkl. regelmässiger Zulagen wählen (13. Monatslohn anteilig mitgedacht).
+              </p>
               <select
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                 value={form.monthlyIncomeCategory}

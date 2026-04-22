@@ -14,12 +14,12 @@ export type QualificationResult = {
 }
 
 const INCOME_MINIMUMS: Record<string, number> = {
-  UNDER_2000: 1500,
-  FROM_2000_TO_3000: 2500,
-  FROM_3000_TO_4000: 3500,
-  FROM_4000_TO_5000: 4500,
-  FROM_5000_TO_7000: 6000,
-  ABOVE_7000: 7500,
+  UNDER_3000: 2900,
+  FROM_3000_TO_4000: 3900,
+  FROM_4000_TO_5500: 5200,
+  FROM_5500_TO_7000: 6800,
+  FROM_7000_TO_9000: 8800,
+  ABOVE_9000: 10500,
 }
 
 export function qualifyTenant(

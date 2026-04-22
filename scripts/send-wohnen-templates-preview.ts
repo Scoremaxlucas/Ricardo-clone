@@ -85,7 +85,7 @@ async function main() {
       applicantFullName: 'Max Muster',
       employmentStatus: 'EMPLOYED',
       employer: 'Muster AG',
-      incomeCategory: 'FROM_3000_TO_4000',
+      incomeCategory: 'FROM_4000_TO_5500',
       requiresCreditCheck: true,
       creditCheckResult: sampleCreditNoEntries,
       referenceName: 'R. Freund',

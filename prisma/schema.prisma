@@ -1809,12 +1809,12 @@ enum EmploymentStatus {
 }
 
 enum IncomeCategory {
-  UNDER_2000
-  FROM_2000_TO_3000
+  UNDER_3000
   FROM_3000_TO_4000
-  FROM_4000_TO_5000
-  FROM_5000_TO_7000
-  ABOVE_7000
+  FROM_4000_TO_5500
+  FROM_5500_TO_7000
+  FROM_7000_TO_9000
+  ABOVE_9000
 }
 
 enum CreditCheckStatus {

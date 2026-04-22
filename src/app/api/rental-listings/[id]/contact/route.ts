@@ -100,7 +100,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       tenantProfile ? `${tenantProfile.firstName} ${tenantProfile.lastName}`.trim() : applicantDisplay
     const employmentStatus = tenantProfile?.employmentStatus ?? 'OTHER'
     const employer = tenantProfile?.employer ?? null
-    const monthlyIncomeCategory = tenantProfile?.monthlyIncomeCategory ?? 'UNDER_2000'
+    const monthlyIncomeCategory = tenantProfile?.monthlyIncomeCategory ?? 'UNDER_3000'
     const referenceName = tenantProfile?.referenceName ?? null
     const referencePhone = tenantProfile?.referencePhone ?? null
     const addressLine = `${listing.address}, ${listing.zip} ${listing.city}`

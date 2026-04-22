@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
+import { incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { formatDate } from '@/lib/utils/formatDate'
 import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
@@ -89,7 +90,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <p><strong>Beschäftigungsstatus:</strong> {p.employmentStatus}</p>
             <p><strong>Arbeitgeber:</strong> {p.employer || '—'}</p>
             <p><strong>Berufsbezeichnung:</strong> {p.jobTitle || '—'}</p>
-            <p><strong>Einkommenskategorie:</strong> {p.monthlyIncomeCategory}</p>
+            <p><strong>Einkommenskategorie:</strong> {incomeCategoryLabelDe(p.monthlyIncomeCategory)}</p>
             <p><strong>Referenz:</strong> {p.referenceName ? `${p.referenceName} (${p.referenceRelation || '—'})` : '—'}</p>
           </div>
         )}

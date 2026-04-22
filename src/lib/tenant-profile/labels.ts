@@ -10,12 +10,12 @@ const EMPLOYMENT: Record<EmploymentStatus, string> = {
 }
 
 const INCOME: Record<IncomeCategory, string> = {
-  UNDER_2000: "Unter CHF 2'000",
-  FROM_2000_TO_3000: "CHF 2'000 – 3'000",
+  UNDER_3000: "Unter CHF 3'000",
   FROM_3000_TO_4000: "CHF 3'000 – 4'000",
-  FROM_4000_TO_5000: "CHF 4'000 – 5'000",
-  FROM_5000_TO_7000: "CHF 5'000 – 7'000",
-  ABOVE_7000: "Über CHF 7'000",
+  FROM_4000_TO_5500: "CHF 4'000 – 5'500",
+  FROM_5500_TO_7000: "CHF 5'500 – 7'000",
+  FROM_7000_TO_9000: "CHF 7'000 – 9'000",
+  ABOVE_9000: "Über CHF 9'000",
 }
 
 export function employmentLabelDe(s: EmploymentStatus): string {

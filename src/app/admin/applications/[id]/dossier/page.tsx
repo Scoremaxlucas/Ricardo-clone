@@ -4,6 +4,7 @@ import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
 import { qualifyTenant } from '@/lib/rental/qualifyTenant'
+import { incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { formatCHF } from '@/lib/utils/formatCurrency'
 import { formatDate } from '@/lib/utils/formatDate'
 import { getServerSession } from 'next-auth/next'
@@ -62,7 +63,7 @@ export default async function AdminApplicationDossierPage({ params }: { params: 
           <p>Status: {app.tenantProfile.employmentStatus}</p>
           <p>Arbeitgeber: {app.tenantProfile.employer || '—'}</p>
           <p>Berufsbezeichnung: {app.tenantProfile.jobTitle || '—'}</p>
-          <p>Monatliches Nettoeinkommen: {app.tenantProfile.monthlyIncomeCategory}</p>
+          <p>Monatliches Nettoeinkommen: {incomeCategoryLabelDe(app.tenantProfile.monthlyIncomeCategory)}</p>
           <p>Einkommens-Regel (3x Miete): {q.reasons.some(i => i.code === 'INCOME_TOO_LOW') ? '❌ Nicht erfüllt' : '✅ Erfüllt'}</p>
         </section>
         <section className="section">
