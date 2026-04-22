@@ -87,9 +87,14 @@ export default async function MeineMatchesPage() {
 
   const sessionEmail = (session?.user as { email?: string | null } | undefined)?.email?.trim() || null
 
-  const profile = await prisma.tenantProfile.findUnique({ where: { userId } })
+  const [profile, account] = await Promise.all([
+    prisma.tenantProfile.findUnique({ where: { userId } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
+  ])
   if (!profile) redirect('/profil/erstellen?next=/meine-matches')
   if (!profile.isComplete) redirect('/profil/erstellen?next=/meine-matches')
+
+  const accountEmail = account?.email?.trim() || sessionEmail
 
   const listings = await prisma.rentalListing.findMany({
     where: { status: 'active' },
@@ -105,14 +110,15 @@ export default async function MeineMatchesPage() {
       <div className="mx-auto max-w-6xl px-4 pb-10 pt-12">
         <section className="pb-8">
           <h1 className="text-[32px] font-extrabold text-[#0d2b1f]">Guten {greeting}, {profile.firstName}.</h1>
-          {sessionEmail ? (
+          {accountEmail ? (
             <p className="mt-2 text-sm text-slate-600">
-              Angemeldet als <span className="font-semibold text-slate-800">{sessionEmail}</span>
-              <span className="text-slate-500"> — der Vorname kommt aus deinem </span>
+              Konto (laut Datenbank):{' '}
+              <span className="font-semibold text-slate-800">{accountEmail}</span>
+              <span className="text-slate-500"> — der Vorname oben stammt aus deinem </span>
               <Link href="/profil/bearbeiten" className="font-semibold text-teal-800 underline-offset-2 hover:underline">
                 Mieterprofil
               </Link>
-              <span className="text-slate-500">.</span>
+              <span className="text-slate-500"> (unabhängig vom Marktplatz-Namen).</span>
             </p>
           ) : null}
           {matches.length > 0 ? (

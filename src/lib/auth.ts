@@ -295,6 +295,7 @@ export const authOptions = {
         token.nickname = user.nickname
         token.isAdmin = user.isAdmin === true || false
         token.email = user.email
+        token.name = user.name
 
         // For OAuth users, fetch additional fields from DB
         if (account?.provider === 'google') {
@@ -329,6 +330,12 @@ export const authOptions = {
         session.user.image = token.image as string
         session.user.nickname = token.nickname as string | null
         session.user.isAdmin = (token.isAdmin as boolean) || false
+        if (typeof token.email === 'string' && token.email) {
+          session.user.email = token.email
+        }
+        if (typeof token.name === 'string') {
+          session.user.name = token.name
+        }
       }
       return session
     },
