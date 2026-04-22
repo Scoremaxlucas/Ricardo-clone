@@ -112,13 +112,8 @@ export default async function MeineMatchesPage() {
           <h1 className="text-[32px] font-extrabold text-[#0d2b1f]">Guten {greeting}, {profile.firstName}.</h1>
           {accountEmail ? (
             <p className="mt-2 text-sm text-slate-600">
-              Konto (laut Datenbank):{' '}
+              <span className="text-slate-500">Angemeldet als</span>{' '}
               <span className="font-semibold text-slate-800">{accountEmail}</span>
-              <span className="text-slate-500"> — der Vorname oben stammt aus deinem </span>
-              <Link href="/profil/bearbeiten" className="font-semibold text-teal-800 underline-offset-2 hover:underline">
-                Mieterprofil
-              </Link>
-              <span className="text-slate-500"> (unabhängig vom Marktplatz-Namen).</span>
             </p>
           ) : null}
           {matches.length > 0 ? (
