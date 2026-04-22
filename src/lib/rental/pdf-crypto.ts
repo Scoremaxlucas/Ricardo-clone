@@ -36,6 +36,33 @@ export function encryptPdfForStorageBestEffort(pdfBuffer: Buffer): { buffer: Buf
   return { buffer: encryptPdfForStorage(pdfBuffer), encrypted: true }
 }
 
+/** Entschlüsselt Binärpaket IV||Tag||Cipher (AES-256-GCM) zurück in PDF-Bytes. */
+export function decryptPdfFromStorage(encrypted: Buffer): Buffer {
+  const key = getKey()
+  if (!key) {
+    throw new Error('RENTAL_PDF_ENCRYPTION_KEY fehlt (64 Hex-Zeichen = 32 Bytes)')
+  }
+  if (encrypted.length < IV_LEN + TAG_LEN + 1) {
+    throw new Error('Ungültiges verschlüsseltes PDF-Format')
+  }
+  const iv = encrypted.subarray(0, IV_LEN)
+  const tag = encrypted.subarray(IV_LEN, IV_LEN + TAG_LEN)
+  const enc = encrypted.subarray(IV_LEN + TAG_LEN)
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv)
+  decipher.setAuthTag(tag)
+  return Buffer.concat([decipher.update(enc), decipher.final()])
+}
+
+/** Wenn Schlüssel fehlt oder Entschlüsselung fehlschlägt, gib Original zurück (Dev/Legacy). */
+export function decryptPdfFromStorageBestEffort(input: Buffer): { buffer: Buffer; decrypted: boolean } {
+  try {
+    const out = decryptPdfFromStorage(input)
+    return { buffer: out, decrypted: true }
+  } catch {
+    return { buffer: input, decrypted: false }
+  }
+}
+
 const LANDLORD_PLAIN_PREFIX = 'PLAIN1:'
 
 /** Interner Vermieter-Kontakt (UTF-8) — gleicher Schlüssel wie PDF; DB-Feld nur für Admins. */

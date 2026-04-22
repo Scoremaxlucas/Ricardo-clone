@@ -28,6 +28,7 @@ export function WohnenNavbar() {
   const [profile, setProfile] = useState<TenantProfileBrief | undefined>(undefined)
   const [hasListings, setHasListings] = useState(false)
   const [isAdminUser, setIsAdminUser] = useState(false)
+  const [pendingManualReviews, setPendingManualReviews] = useState(0)
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -58,10 +59,11 @@ export function WohnenNavbar() {
     setNavReady(false)
     ;(async () => {
       try {
-        const [tpRes, ownRes, adminRes] = await Promise.all([
+        const [tpRes, ownRes, adminRes, reviewRes] = await Promise.all([
           fetch('/api/tenant-profile', { credentials: 'same-origin' }),
           fetch('/api/rental-listings?own=true', { credentials: 'same-origin' }),
           fetch('/api/user/admin-status', { credentials: 'same-origin' }),
+          fetch('/api/admin/credit-check/pending-count', { credentials: 'same-origin' }),
         ])
         if (cancelled) return
 
@@ -77,11 +79,14 @@ export function WohnenNavbar() {
 
         const adminJson = (await adminRes.json().catch(() => ({}))) as { isAdmin?: boolean }
         setIsAdminUser(adminJson.isAdmin === true)
+        const reviewJson = (await reviewRes.json().catch(() => ({}))) as { count?: number }
+        setPendingManualReviews(typeof reviewJson.count === 'number' ? reviewJson.count : 0)
       } catch {
         if (!cancelled) {
           setProfile(null)
           setHasListings(false)
           setIsAdminUser(false)
+          setPendingManualReviews(0)
         }
       } finally {
         if (!cancelled) setNavReady(true)
@@ -208,7 +213,6 @@ export function WohnenNavbar() {
           type="button"
           onClick={() => setMenuOpen(m => !m)}
           className="flex items-center gap-2 rounded-full border border-slate-200 p-0.5 pl-0.5 hover:bg-slate-50"
-          aria-expanded={menuOpen ? 'true' : 'false'}
           aria-haspopup="menu"
         >
           {user?.image ?
@@ -253,12 +257,13 @@ export function WohnenNavbar() {
               {isAdminUser ?
                 <>
                   <div className="my-1 border-t border-slate-100" />
-                  <Link
-                    href="/admin/listings"
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <span aria-hidden>⚙️</span> Admin — Inserate
+                  <p className="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wide text-slate-500">⚙️ Admin</p>
+                  <Link href="/admin/listings" className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onClick={() => setMenuOpen(false)}>Inserate verwalten</Link>
+                  <Link href="/admin/users" className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onClick={() => setMenuOpen(false)}>User verwalten</Link>
+                  <Link href="/admin/applications" className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onClick={() => setMenuOpen(false)}>Alle Bewerbungen</Link>
+                  <Link href="/admin/users?filter=pending_review" className="flex items-center justify-between gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onClick={() => setMenuOpen(false)}>
+                    <span>⚠️ Manuelle Reviews</span>
+                    {pendingManualReviews > 0 ? <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{pendingManualReviews}</span> : null}
                   </Link>
                 </>
               : null}
@@ -382,13 +387,16 @@ export function WohnenNavbar() {
           </Link>
         : null}
         {isAdminUser ?
-          <Link
-            href="/admin/listings"
-            className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 font-semibold text-red-700 hover:bg-red-50"
-            onClick={closeAll}
-          >
-            ⚙️ Admin — Inserate
-          </Link>
+          <>
+            <p className="px-3 pt-2 text-xs font-bold uppercase tracking-wide text-slate-500">⚙️ Admin</p>
+            <Link href="/admin/listings" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 font-semibold text-red-700 hover:bg-red-50" onClick={closeAll}>Inserate verwalten</Link>
+            <Link href="/admin/users" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 font-semibold text-red-700 hover:bg-red-50" onClick={closeAll}>User verwalten</Link>
+            <Link href="/admin/applications" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 font-semibold text-red-700 hover:bg-red-50" onClick={closeAll}>Alle Bewerbungen</Link>
+            <Link href="/admin/users?filter=pending_review" className="flex min-h-[44px] items-center justify-between rounded-lg px-3 py-2.5 font-semibold text-red-700 hover:bg-red-50" onClick={closeAll}>
+              <span>⚠️ Manuelle Reviews</span>
+              {pendingManualReviews > 0 ? <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{pendingManualReviews}</span> : null}
+            </Link>
+          </>
         : null}
         <button
           type="button"
@@ -461,7 +469,6 @@ export function WohnenNavbar() {
       {/* Mobile slide-in */}
       <div
         className={`fixed inset-0 z-[60] min-[768px]:hidden ${mobileOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
-        aria-hidden={!mobileOpen}
       >
         <button
           type="button"
