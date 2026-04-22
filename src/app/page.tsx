@@ -5,11 +5,14 @@ import { HomeClient } from '@/components/home/HomeClient'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { WohnenMarketingHome } from '@/components/wohnen/WohnenMarketingHome'
+import { authOptions } from '@/lib/auth'
 import { getFeaturedProducts } from '@/lib/products'
+import { prisma } from '@/lib/prisma'
 import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import { isWohnenMatchingHostFromHeaders } from '@/lib/tenant-host'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import type { Metadata } from 'next'
+import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { Suspense } from 'react'
@@ -80,7 +83,22 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Home() {
   const h = await headers()
   if (isWohnenMatchingHostFromHeaders(h)) {
-    return <WohnenMarketingHome />
+    const session = await getServerSession(authOptions)
+    let primaryHref = '/wohnungen'
+    let primaryLabel = 'Wohnungen suchen'
+
+    if (session?.user?.id) {
+      const profile = await prisma.tenantProfile.findUnique({
+        where: { userId: session.user.id },
+        select: { isComplete: true },
+      })
+      if (profile?.isComplete) {
+        primaryHref = '/meine-matches'
+        primaryLabel = 'Meine Matches ansehen'
+      }
+    }
+
+    return <WohnenMarketingHome primaryHref={primaryHref} primaryLabel={primaryLabel} />
   }
 
   const featuredProducts = await getFeaturedProducts(10)

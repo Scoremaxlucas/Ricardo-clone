@@ -3,9 +3,7 @@ import { RentalListingCard } from '@/components/rental/RentalListingCard'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { matchListings } from '@/lib/rental/matchListings'
-import { INCOME_MINIMUMS } from '@/lib/rental/qualifyTenant'
 import { rentalListingRowToCardData } from '@/lib/rental/rental-listings-public'
-import { incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { formatCHF } from '@/lib/utils/formatCurrency'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
@@ -19,58 +17,65 @@ export const metadata: Metadata = {
   description: 'Deine persönlich passenden Mietwohnungen.',
 }
 
-function matchesEmptyState(reason: 'INCOME_BLOCKED' | 'CANTON_RESTRICTED' | 'CREDIT_CHECK_REQUIRED' | 'NO_MATCHES', info: {
-  incomeLabel: string
-  maxAffordableRent: number
-  preferredCanton: string | null
-}) {
-  if (reason === 'INCOME_BLOCKED') {
-    return (
-      <div className="mt-10 rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-700">
-        <h2 className="text-lg font-bold text-slate-900">Noch keine Wohnungen in deiner Preisklasse</h2>
-        <p className="mt-2">
-          Basierend auf deinem Einkommensprofil ({info.incomeLabel}) suchen wir Wohnungen bis {formatCHF(info.maxAffordableRent)} / Monat.
-          Aktuell sind keine passenden Inserate verfügbar.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link href="/wohnungen" className="rounded-lg bg-teal-700 px-4 py-2 font-semibold text-white">Alle Wohnungen ansehen →</Link>
-          <Link href="/profil/bearbeiten" className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700">Präferenzen anpassen →</Link>
-        </div>
-      </div>
-    )
-  }
-  if (reason === 'CANTON_RESTRICTED') {
-    return (
-      <div className="mt-10 rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-700">
-        <h2 className="text-lg font-bold text-slate-900">Keine Matches im Kanton {info.preferredCanton || '—'}</h2>
-        <p className="mt-2">
-          Es gibt aktuell keine Wohnungen die zu deinen Präferenzen passen. Möchtest du den Kanton erweitern?
-        </p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link href="/wohnungen" className="rounded-lg bg-teal-700 px-4 py-2 font-semibold text-white">Alle Kantone anzeigen</Link>
-          <Link href="/profil/bearbeiten" className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700">Präferenzen anpassen →</Link>
-        </div>
-      </div>
-    )
-  }
-  if (reason === 'CREDIT_CHECK_REQUIRED') {
-    return (
-      <div className="mt-10 rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-        <h2 className="text-lg font-bold">⚠️ Betreibungsregister erforderlich</h2>
-        <p className="mt-2">
-          Viele Vermieter verlangen einen Betreibungsregisterauszug. Lade deinen Auszug hoch um alle Matches zu sehen.
-        </p>
-        <div className="mt-4">
-          <Link href="/profil/betreibungsregister" className="rounded-lg bg-amber-700 px-4 py-2 font-semibold text-white">
-            Jetzt hochladen →
-          </Link>
-        </div>
-      </div>
-    )
-  }
+function dayGreeting(now: Date): string {
+  const h = now.getHours()
+  if (h >= 5 && h < 11) return 'Morgen'
+  if (h >= 11 && h < 18) return 'Tag'
+  return 'Abend'
+}
+
+function IconPin() {
   return (
-    <div className="mt-10 rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-700">
-      Aktuell keine passenden Matches gefunden.
+    <svg aria-hidden viewBox="0 0 20 20" className="h-3.5 w-3.5">
+      <path fill="currentColor" d="M10 1.7a5.3 5.3 0 0 0-5.3 5.3c0 3.8 4.1 8.9 5 10a.4.4 0 0 0 .6 0c.9-1.1 5-6.2 5-10A5.3 5.3 0 0 0 10 1.7Zm0 7.5A2.2 2.2 0 1 1 10 4.8a2.2 2.2 0 0 1 0 4.4Z" />
+    </svg>
+  )
+}
+
+function IconBed() {
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className="h-3.5 w-3.5">
+      <path fill="currentColor" d="M3 5.5a1 1 0 0 1 2 0v2h10V6a1.5 1.5 0 1 1 3 0v6.5a1 1 0 1 1-2 0V11H4v1.5a1 1 0 1 1-2 0v-7Z" />
+    </svg>
+  )
+}
+
+function IconChf() {
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className="h-3.5 w-3.5">
+      <path fill="currentColor" d="M13.9 3.3a6.4 6.4 0 1 0 0 13.4 6.2 6.2 0 0 0 3.8-1.2l-1-1.5a4.3 4.3 0 0 1-2.7.9A4.5 4.5 0 0 1 9.5 10a4.5 4.5 0 0 1 4.4-4.9c1 0 2 .3 2.7.9l1-1.5a6.2 6.2 0 0 0-3.7-1.2ZM2 8.8h6.5v1.8H2V8.8Z" />
+    </svg>
+  )
+}
+
+function IconShieldCheck({ colorClass }: { colorClass: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className={`h-3.5 w-3.5 ${colorClass}`}>
+      <path fill="currentColor" d="M10 1.8 3.4 4.2v5.3c0 4 2.6 7 6.3 8.8a.8.8 0 0 0 .6 0c3.7-1.8 6.3-4.8 6.3-8.8V4.2L10 1.8Zm3 6.3-3.4 3.4a.8.8 0 0 1-1.1 0L7 10.1l1.1-1.1 1 1 2.8-2.8L13 8.1Z" />
+    </svg>
+  )
+}
+
+function EmptyStateCard() {
+  return (
+    <div className="mx-auto mt-8 max-w-[500px] rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+        <svg aria-hidden viewBox="0 0 24 24" className="h-7 w-7">
+          <path fill="currentColor" d="m21.7 20.3-5-5a7 7 0 1 0-1.4 1.4l5 5a1 1 0 0 0 1.4-1.4ZM5 10a5 5 0 1 1 10 0A5 5 0 0 1 5 10Z" />
+        </svg>
+      </div>
+      <h2 className="mt-4 text-xl font-bold text-slate-900">Noch keine Matches</h2>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600">
+        Wir haben noch keine Wohnungen die genau zu deinen Präferenzen passen. Sobald etwas Passendes inseriert wird, melden wir uns.
+      </p>
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <Link href="/profil/bearbeiten" className="rounded-lg border border-teal-300 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50">
+          Präferenzen anpassen
+        </Link>
+        <Link href="/wohnungen" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          Alle Wohnungen ansehen
+        </Link>
+      </div>
     </div>
   )
 }
@@ -90,56 +95,83 @@ export default async function MeineMatchesPage() {
   })
 
   const { matches, emptyReason } = matchListings(profile, listings)
-  const incomeLabel = incomeCategoryLabelDe(profile.monthlyIncomeCategory)
-  const maxAffordableRent = Math.floor((INCOME_MINIMUMS[profile.monthlyIncomeCategory] ?? 0) / 3)
+  const now = new Date()
+  const greeting = dayGreeting(now)
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Deine Matches</h1>
-      <p className="mt-2 text-sm text-slate-600">
-        {matches.length} Wohnungen passen zu deinem Profil
-      </p>
+    <main className="min-h-screen bg-[#f8fdfb]">
+      <div className="mx-auto max-w-6xl px-4 pb-10 pt-12">
+        <section className="pb-8">
+          <h1 className="text-[32px] font-extrabold text-[#0d2b1f]">Guten {greeting}, {profile.firstName}.</h1>
+          {matches.length > 0 ? (
+            <p className="mt-3 text-[17px] text-slate-700">
+              Wir haben <span className="font-extrabold text-teal-700">{matches.length}</span> Wohnungen gefunden die zu dir passen.
+            </p>
+          ) : (
+            <p className="mt-3 text-[17px] text-slate-500">
+              Noch keine Wohnungen die genau zu dir passen — wir suchen täglich weiter.
+            </p>
+          )}
+        </section>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        {profile.preferredCanton ? (
-          <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">📍 Kanton {profile.preferredCanton}</span>
-        ) : null}
-        <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">💰 {incomeLabel} / Monat</span>
-        <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
-          {profile.creditCheckStatus === 'APPROVED' ? '✅ Betreibungsregister gültig' : '⚠️ Betreibungsregister fehlt/ungültig'}
-        </span>
-        <Link href="/profil/bearbeiten" className="ml-auto text-sm font-semibold text-teal-800 hover:underline">
-          Profil anpassen →
-        </Link>
-      </div>
-
-      <MatchPreferencesInlineEditor
-        initial={{
-          preferredCanton: profile.preferredCanton,
-          preferredMinRooms: profile.preferredMinRooms,
-          preferredBudgetMax: profile.preferredBudgetMax,
-          preferredMoveInEarliest: profile.preferredMoveInEarliest?.toISOString() ?? null,
-        }}
-      />
-
-      {emptyReason
-        ? matchesEmptyState(emptyReason, {
-            incomeLabel,
-            maxAffordableRent,
-            preferredCanton: profile.preferredCanton,
-          })
-        : (
-          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {matches.map(m => {
-              const card = rentalListingRowToCardData({
-                ...m.listing,
-                __matchScore: m.score,
-                __matchHighlights: m.highlights,
-              })
-              return <RentalListingCard key={m.listing.id} listing={card} showMatchBadge />
-            })}
+        <section className="mb-8 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            {profile.preferredCanton ? (
+              <span className="inline-flex items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
+                <IconPin /> Kanton {profile.preferredCanton}
+              </span>
+            ) : null}
+            {profile.preferredMinRooms != null ? (
+              <span className="inline-flex items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
+                <IconBed /> ab {profile.preferredMinRooms} Zi.
+              </span>
+            ) : null}
+            {profile.preferredBudgetMax != null ? (
+              <span className="inline-flex items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
+                <IconChf /> bis {formatCHF(profile.preferredBudgetMax)}/Mo
+              </span>
+            ) : null}
+            {profile.creditCheckStatus === 'APPROVED' ? (
+              <span className="inline-flex items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
+                <IconShieldCheck colorClass="text-emerald-600" /> Verifiziert
+              </span>
+            ) : (
+              <Link
+                href="/profil/betreibungsregister"
+                className="inline-flex items-center gap-1.5 rounded-[20px] bg-orange-100 px-3 py-[5px] text-xs font-semibold text-orange-800 ring-1 ring-orange-200 hover:bg-orange-200"
+              >
+                <IconShieldCheck colorClass="text-orange-600" /> Betreibungsregister hochladen
+              </Link>
+            )}
           </div>
-        )}
+
+          <MatchPreferencesInlineEditor
+            initial={{
+              preferredCanton: profile.preferredCanton,
+              preferredMinRooms: profile.preferredMinRooms,
+              preferredBudgetMax: profile.preferredBudgetMax,
+              preferredMoveInEarliest: profile.preferredMoveInEarliest?.toISOString() ?? null,
+            }}
+          />
+        </section>
+
+        <section className="mt-6">
+          {emptyReason || matches.length === 0 ? (
+            <EmptyStateCard />
+          ) : (
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {matches.map(m => {
+                const card = rentalListingRowToCardData({
+                  ...m.listing,
+                  __matchScore: m.score,
+                  __matchHighlights: m.highlights,
+                })
+                return <RentalListingCard key={m.listing.id} listing={card} matchScore={m.score} />
+              })}
+            </div>
+          )}
+        </section>
+      </div>
     </main>
   )
 }

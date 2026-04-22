@@ -30,6 +30,14 @@ export function MatchPreferencesInlineEditor({ initial }: Props) {
     initial.preferredMoveInEarliest ? initial.preferredMoveInEarliest.slice(0, 10) : ''
   )
 
+  function onCancel() {
+    setPreferredCanton(initial.preferredCanton ?? '')
+    setPreferredMinRooms(initial.preferredMinRooms != null ? String(initial.preferredMinRooms) : '')
+    setPreferredBudgetMax(initial.preferredBudgetMax != null ? String(initial.preferredBudgetMax) : '')
+    setPreferredMoveInEarliest(initial.preferredMoveInEarliest ? initial.preferredMoveInEarliest.slice(0, 10) : '')
+    setOpen(false)
+  }
+
   async function onSave() {
     setSaving(true)
     try {
@@ -46,7 +54,7 @@ export function MatchPreferencesInlineEditor({ initial }: Props) {
       })
       const json = (await res.json().catch(() => ({}))) as { message?: string }
       if (!res.ok) throw new Error(json.message || 'Speichern fehlgeschlagen')
-      toast.success('Präferenzen gespeichert')
+      toast.success('Präferenzen gespeichert ✓')
       router.refresh()
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Speichern fehlgeschlagen')
@@ -56,17 +64,21 @@ export function MatchPreferencesInlineEditor({ initial }: Props) {
   }
 
   return (
-    <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+    <section className="mt-4">
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="text-sm font-semibold text-slate-900"
+        className="rounded-full border border-teal-300 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50"
       >
-        {open ? '▼' : '►'} Präferenzen anpassen
+        Präferenzen anpassen
       </button>
 
-      {open ? (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div
+        className={`overflow-hidden rounded-b-xl border-x border-b border-teal-200 bg-white shadow-sm transition-all duration-250 ease-in-out ${
+          open ? 'mt-3 max-h-[560px] border-t-[3px] opacity-100' : 'mt-0 max-h-0 border-t-0 opacity-0'
+        }`}
+      >
+        <div className="grid gap-3 p-4 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
             Bevorzugter Kanton
             <select
@@ -133,11 +145,18 @@ export function MatchPreferencesInlineEditor({ initial }: Props) {
               disabled={saving}
               className="inline-flex min-h-[40px] items-center rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
             >
-              {saving ? 'Speichern…' : 'Speichern'}
+              {saving ? 'Speichern…' : 'Speichern & aktualisieren'}
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="ml-2 inline-flex min-h-[40px] items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Abbrechen
             </button>
           </div>
         </div>
-      ) : null}
+      </div>
     </section>
   )
 }

@@ -29,7 +29,7 @@ type Props = {
   listing: RentalListingCardData
   /** LCP: erstes Bild auf der Seite priorisieren */
   imagePriority?: boolean
-  showMatchBadge?: boolean
+  matchScore?: number
 }
 
 function firstPhoto(urls: string[]): string | null {
@@ -47,12 +47,12 @@ function validDate(d: string | Date | null | undefined): Date | null {
 }
 
 function matchBadge(score: number): { label: string; cls: string } {
-  if (score >= 80) return { label: '⭐ Sehr guter Match', cls: 'bg-emerald-600 text-white' }
-  if (score >= 60) return { label: '✓ Guter Match', cls: 'border border-emerald-500 bg-white text-emerald-700' }
-  return { label: '~ Passabler Match', cls: 'bg-slate-200 text-slate-700' }
+  if (score >= 80) return { label: '⭐ Sehr gut', cls: 'bg-emerald-600 text-white' }
+  if (score >= 60) return { label: '✓ Gut', cls: 'border border-emerald-500 bg-white text-emerald-700' }
+  return { label: '~ Passabel', cls: 'bg-slate-200 text-slate-700' }
 }
 
-export function RentalListingCard({ listing: l, imagePriority = false, showMatchBadge = false }: Props) {
+export function RentalListingCard({ listing: l, imagePriority = false, matchScore }: Props) {
   const main = firstPhoto(l.photos)
   const now = Date.now()
   const created = validDate(l.createdAt)
@@ -86,9 +86,9 @@ export function RentalListingCard({ listing: l, imagePriority = false, showMatch
             </span>
           : null}
           <RentalQualificationBadge listingId={l.id} />
-          {showMatchBadge && typeof l.matchScore === 'number' ? (
-            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm ${matchBadge(l.matchScore).cls}`}>
-              {matchBadge(l.matchScore).label}
+          {typeof matchScore === 'number' ? (
+            <span className={`rounded-full px-[10px] py-1 text-[11px] font-bold shadow-sm ${matchBadge(matchScore).cls}`}>
+              {matchBadge(matchScore).label}
             </span>
           ) : null}
         </div>

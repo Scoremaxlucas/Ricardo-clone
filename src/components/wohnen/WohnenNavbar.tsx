@@ -135,99 +135,25 @@ export function WohnenNavbar() {
 
   const renderDesktopCenterLinks = () => {
     if (!signedIn || !navReady) return null
-    if (showLandlordNav) {
+    if (profile?.isComplete) {
       return (
         <>
-          <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
-            Wohnungen suchen
-          </Link>
-          {showMatchesNav ? (
-            <Link
-              href="/meine-matches"
-              className="rounded-md bg-teal-50 px-2 py-1.5 font-semibold text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100"
-            >
-              Meine Matches
-            </Link>
-          ) : null}
-          <Link href="/matching/properties" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
-            Meine Inserate
-          </Link>
-          <Link
-            href="/matching/properties/new"
-            className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-          >
-            Neues Inserat
-          </Link>
-        </>
-      )
-    }
-    if (showIncompleteNav) {
-      return (
-        <>
-          <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
-            Wohnungen suchen
-          </Link>
-          <Link
-            href="/profil/erstellen"
-            className="inline-flex animate-pulse items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900 ring-1 ring-amber-300 hover:bg-amber-200"
-          >
-            ⚠️ Profil erstellen
-          </Link>
-        </>
-      )
-    }
-    if (showCreditRenew) {
-      return (
-        <>
-          <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
-            Wohnungen suchen
-          </Link>
-          {showMatchesNav ? (
-            <Link
-              href="/meine-matches"
-              className="rounded-md bg-teal-50 px-2 py-1.5 font-semibold text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100"
-            >
-              Meine Matches
-            </Link>
-          ) : null}
-          <Link
-            href="/profil/betreibungsregister"
-            className="inline-flex items-center rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-950 ring-1 ring-orange-300 hover:bg-orange-200"
-          >
-            ⚠️ Auszug erneuern
-          </Link>
-        </>
-      )
-    }
-    if (showTenantCompleteNav) {
-      return (
-        <>
-          <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
-            Wohnungen suchen
-          </Link>
           <Link
             href="/meine-matches"
-            className="rounded-md bg-teal-50 px-2 py-1.5 font-semibold text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100"
+            className="rounded-md bg-teal-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-teal-800"
           >
             Meine Matches
           </Link>
-          <Link href="/meine-bewerbungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
-            Meine Bewerbungen
-          </Link>
           <Link
-            href="/matching/properties/new"
-            className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+            href="/wohnungen"
+            className="rounded-md px-2 py-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
           >
-            Wohnung inserieren
+            Alle Wohnungen
           </Link>
         </>
       )
     }
-    return (
-      <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
-        Wohnungen suchen
-      </Link>
-    )
+    return null
   }
 
   const renderAuthButtons = () => {
@@ -499,22 +425,28 @@ export function WohnenNavbar() {
                   Wohnungen suchen
                 </Link>
                 <Link
-                  href="/login"
-                  className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                  href="/register"
+                  className="rounded-xl bg-[#18a87c] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
                 >
-                  Anmelden
+                  Registrieren
+                </Link>
+              </>
+            : profile?.isComplete ? (
+              <>
+                {renderDesktopCenterLinks()}
+                {renderAuthButtons()}
+              </>
+            ) : (
+              <>
+                <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-slate-900">
+                  Wohnungen suchen
                 </Link>
                 <Link
                   href="/register"
                   className="rounded-xl bg-[#18a87c] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
                 >
-                  Kostenlos registrieren
+                  Registrieren
                 </Link>
-              </>
-            : (
-              <>
-                {renderDesktopCenterLinks()}
-                {renderAuthButtons()}
               </>
             )}
           </nav>

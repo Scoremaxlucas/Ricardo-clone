@@ -20,6 +20,11 @@ function LoginPageContent() {
   const rawCallbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect') || '/'
   const callbackUrl = validateCallbackUrl(rawCallbackUrl)
 
+  const determinePostLoginRoute = () => {
+    if (callbackUrl && callbackUrl !== '/') return callbackUrl
+    return '/meine-matches'
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -64,8 +69,9 @@ function LoginPageContent() {
         setEmail('')
         setPassword('')
         await getSession()
+        const postLoginHref = determinePostLoginRoute()
         setTimeout(() => {
-          router.push(callbackUrl)
+          router.push(postLoginHref)
           router.refresh()
         }, 100)
       } else {
@@ -199,7 +205,7 @@ function LoginPageContent() {
           type="button"
           onClick={() => {
             setIsLoading(true)
-            signIn('google', { callbackUrl })
+            void signIn('google', { callbackUrl: determinePostLoginRoute() })
           }}
           disabled={isLoading}
           className="mt-4 flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 disabled:opacity-50"

@@ -63,7 +63,9 @@ function toCardData(listing: ApiListing): RentalListingCardData {
 }
 
 function buildApiUrl(sp: URLSearchParams | Readonly<URLSearchParams>): string {
-  const q = sp.toString()
+  const p = new URLSearchParams(sp.toString())
+  p.delete('mode')
+  const q = p.toString()
   return q ? `/api/rental-listings?${q}` : '/api/rental-listings'
 }
 

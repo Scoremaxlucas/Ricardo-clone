@@ -1,10 +1,8 @@
 import { WohnenHomeHowItWorks } from '@/components/wohnen/WohnenHomeHowItWorks'
 import { WohnenHomeListingCards, type WohnenHomeListingSerialized } from '@/components/wohnen/WohnenHomeListingCards'
-import { authOptions } from '@/lib/auth'
 import { loadWohnenHomeListings } from '@/lib/rental/wohnen-home-listings'
 import { prisma } from '@/lib/prisma'
 import { RentalListingStatus } from '@prisma/client'
-import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
@@ -60,22 +58,17 @@ function StaticListingPlaceholders() {
   )
 }
 
-export async function WohnenMarketingHome() {
-  const session = await getServerSession(authOptions)
-  const userId = session?.user?.id ?? null
-
-  const [listings, activeCount, profile] = await Promise.all([
+export async function WohnenMarketingHome({
+  primaryHref = '/wohnungen',
+  primaryLabel = 'Wohnungen suchen',
+}: {
+  primaryHref?: string
+  primaryLabel?: string
+}) {
+  const [listings, activeCount] = await Promise.all([
     loadWohnenHomeListings(6),
     prisma.rentalListing.count({ where: { status: RentalListingStatus.active } }),
-    userId
-      ? prisma.tenantProfile.findUnique({
-          where: { userId },
-          select: { isComplete: true },
-        })
-      : Promise.resolve(null),
   ])
-
-  const wohnenSearchHref = userId && profile?.isComplete ? '/meine-matches' : '/wohnungen'
 
   const serialized = serializeListingsForClient(listings)
 
@@ -133,11 +126,11 @@ export async function WohnenMarketingHome() {
 
           <div className="mx-auto mt-10 flex max-w-xl flex-col items-stretch justify-center gap-4 sm:mx-auto sm:flex-row sm:items-center sm:gap-6">
             <Link
-              href={wohnenSearchHref}
+              href={primaryHref}
               className="inline-flex w-full justify-center rounded-xl bg-[#18a87c] px-10 py-4 text-lg font-semibold text-white shadow-sm transition hover:opacity-95 sm:w-auto"
               style={{ padding: '16px 40px', fontSize: '18px', borderRadius: '12px' }}
             >
-              Wohnungen suchen
+              {primaryLabel}
             </Link>
             <Link
               href="/matching/properties/new"
@@ -251,7 +244,7 @@ export async function WohnenMarketingHome() {
               </p>
               <div className="mt-7">
                 <Link
-                  href={wohnenSearchHref}
+                  href={primaryHref}
                   className="inline-flex min-h-[46px] w-full items-center justify-center rounded-[10px] bg-white px-6 py-3 text-base font-bold text-[#18a87c] shadow-sm transition hover:bg-white/95 sm:w-auto"
                 >
                   Jetzt Wohnungen suchen →
