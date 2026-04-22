@@ -125,35 +125,26 @@ export function WohnungenSearchFilters() {
         <div className="mb-3 hidden gap-2 md:flex">
           <button
             type="button"
-            onClick={() => update({ mode: 'all' })}
-            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
-              mode === 'all' ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            Alle Wohnungen
-          </button>
-          <button
-            type="button"
             onClick={() => update({ mode: 'match' })}
             className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
               mode === 'match' ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            Für dich
+            Für dich (empfohlen)
+          </button>
+          <button
+            type="button"
+            onClick={() => update({ mode: 'all' })}
+            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
+              mode === 'all' ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            Marktplatz (alle)
           </button>
         </div>
 
         <div className="flex items-center justify-between gap-2 md:hidden">
           <div className="flex gap-1">
-            <button
-              type="button"
-              onClick={() => update({ mode: 'all' })}
-              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                mode === 'all' ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-700'
-              }`}
-            >
-              Alle
-            </button>
             <button
               type="button"
               onClick={() => update({ mode: 'match' })}
@@ -162,6 +153,15 @@ export function WohnungenSearchFilters() {
               }`}
             >
               Für dich
+            </button>
+            <button
+              type="button"
+              onClick={() => update({ mode: 'all' })}
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                mode === 'all' ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-700'
+              }`}
+            >
+              Alle
             </button>
           </div>
           <button

@@ -125,9 +125,14 @@ export function WohnungenListingsFeed({ activeCount }: Props) {
       <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Mietwohnungen</h1>
       <p className="mt-2 text-sm text-slate-600 sm:text-base">
         {meta.mode === 'match'
-          ? 'Deine persönlich passenden Wohnungen — nach Match-Stärke gerankt.'
-          : 'Aktive Inserate auf Helvenda — nach Kanton, Zimmerzahl, Budget und Einzugsdatum filtern.'}
+          ? 'Dein persönlicher Match-Feed: die besten Wohnungen zuerst, basierend auf deinen Präferenzen.'
+          : 'Marktplatz-Ansicht: Alle aktiven Inserate — nach Kanton, Zimmerzahl, Budget und Einzugsdatum filtern.'}
       </p>
+      {meta.mode === 'match' ? (
+        <p className="mt-1 text-xs font-medium text-emerald-700">
+          Tipp: Match-Score und grüne Gründe zeigen dir, warum ein Inserat besonders gut passt.
+        </p>
+      ) : null}
 
       {meta.mode === 'match' && !meta.isLoggedIn ? (
         <div className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
@@ -191,7 +196,7 @@ export function WohnungenListingsFeed({ activeCount }: Props) {
           ) : (
             <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {listings.map(row => (
-                <RentalListingCard key={row.id} listing={row} />
+                <RentalListingCard key={row.id} listing={row} emphasizeMatch={meta.mode === 'match'} />
               ))}
             </div>
           )}

@@ -29,6 +29,7 @@ type Props = {
   listing: RentalListingCardData
   /** LCP: erstes Bild auf der Seite priorisieren */
   imagePriority?: boolean
+  emphasizeMatch?: boolean
 }
 
 function firstPhoto(urls: string[]): string | null {
@@ -45,7 +46,7 @@ function validDate(d: string | Date | null | undefined): Date | null {
   return Number.isNaN(dt.getTime()) ? null : dt
 }
 
-export function RentalListingCard({ listing: l, imagePriority = false }: Props) {
+export function RentalListingCard({ listing: l, imagePriority = false, emphasizeMatch = false }: Props) {
   const main = firstPhoto(l.photos)
   const now = Date.now()
   const created = validDate(l.createdAt)
@@ -92,6 +93,12 @@ export function RentalListingCard({ listing: l, imagePriority = false }: Props) 
         : null}
       </div>
       <div className="flex flex-1 flex-col p-4">
+        {emphasizeMatch && typeof l.matchScore === 'number' ? (
+          <div className="mb-2 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5">
+            <p className="text-xs font-semibold text-emerald-900">Passend für dich</p>
+            <p className="text-sm font-extrabold text-emerald-700">{l.matchScore}% Match</p>
+          </div>
+        ) : null}
         <h3 className="line-clamp-1 font-bold text-slate-900 group-hover:text-teal-800">{l.title}</h3>
         <p className="mt-1 text-sm text-slate-600">
           {l.rooms} Zi. · {l.areaSqm} m²
@@ -112,9 +119,26 @@ export function RentalListingCard({ listing: l, imagePriority = false }: Props) 
           </p>
         : null}
         {l.matchHighlights && l.matchHighlights.length > 0 ? (
-          <p className="mt-2 text-xs font-medium text-emerald-700">
-            {l.matchHighlights.slice(0, 2).join(' · ')}
-          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {l.matchHighlights.slice(0, 3).map((reason, idx) => (
+              <span
+                key={`${reason}-${idx}`}
+                className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700"
+              >
+                {reason}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        {emphasizeMatch ? (
+          <div className="mt-3 flex gap-2">
+            <span className="inline-flex min-h-[34px] items-center rounded-md bg-emerald-600 px-3 text-xs font-semibold text-white">
+              Jetzt bewerben
+            </span>
+            <span className="inline-flex min-h-[34px] items-center rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700">
+              Merken
+            </span>
+          </div>
         ) : null}
       </div>
     </Link>
