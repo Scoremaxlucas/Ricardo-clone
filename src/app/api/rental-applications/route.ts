@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { sendRentalApplicantSuccessEmail, sendRentalLandlordNewApplicationEmail } from '@/lib/rental/emails'
+import { qualifyTenant } from '@/lib/rental/qualifyTenant'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest) {
         city: true,
         rooms: true,
         rentPerMonth: true,
+        utilitiesPerMonth: true,
         requiresCreditCheck: true,
         status: true,
         user: {
@@ -60,18 +62,18 @@ export async function POST(request: NextRequest) {
     if (!tenantProfile) {
       return NextResponse.json({ code: 'NO_PROFILE', message: 'Mieterprofil fehlt' }, { status: 403 })
     }
-    if (!tenantProfile.isComplete) {
-      return NextResponse.json({ code: 'NO_PROFILE', message: 'Profil unvollständig' }, { status: 403 })
-    }
 
-    if (listing.requiresCreditCheck) {
-      const ok =
-        tenantProfile.creditCheckStatus === 'APPROVED' &&
-        tenantProfile.creditCheckExpiresAt != null &&
-        tenantProfile.creditCheckExpiresAt.getTime() > Date.now()
-      if (!ok) {
-        return NextResponse.json({ code: 'CREDIT_CHECK_REQUIRED', message: 'Betreibungsregister erforderlich' }, { status: 403 })
-      }
+    const qualification = qualifyTenant(tenantProfile, listing)
+    if (!qualification.qualified) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'NOT_QUALIFIED',
+          message: 'Du erfüllst die Anforderungen für diese Wohnung noch nicht.',
+          issues: qualification.reasons,
+        },
+        { status: 403 }
+      )
     }
 
     const blocking = await prisma.rentalApplication.findFirst({

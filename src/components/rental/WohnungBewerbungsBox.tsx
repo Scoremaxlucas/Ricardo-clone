@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import type { QualificationIssue } from '@/lib/rental/qualifyTenant'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 type Props = {
   listingId: string
@@ -34,8 +35,51 @@ export function WohnungBewerbungsBox({
 }: Props) {
   const router = useRouter()
   const [modal, setModal] = useState(false)
+  const [qualifying, setQualifying] = useState(false)
+  const [qualified, setQualified] = useState<boolean | null>(null)
+  const [issues, setIssues] = useState<QualificationIssue[]>([])
 
   const bewerbenPath = `/wohnungen/${listingId}/bewerben`
+
+  useEffect(() => {
+    if (!userId || isOwner || alreadyApplied) return
+    let cancelled = false
+    setQualifying(true)
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/rental-applications/qualify?listingId=${encodeURIComponent(listingId)}`, {
+          credentials: 'same-origin',
+        })
+        const data = (await res.json().catch(() => ({}))) as {
+          qualified?: boolean
+          issues?: QualificationIssue[]
+          requiresLogin?: boolean
+        }
+        if (cancelled) return
+        if (data.requiresLogin) {
+          setQualified(null)
+          setIssues([])
+          return
+        }
+        setQualified(data.qualified === true)
+        setIssues(Array.isArray(data.issues) ? data.issues : [])
+      } catch {
+        if (!cancelled) {
+          setQualified(tenantApplyReady)
+          setIssues([])
+        }
+      } finally {
+        if (!cancelled) setQualifying(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [userId, isOwner, alreadyApplied, listingId, tenantApplyReady])
+
+  const blockingCount = useMemo(() => issues.filter(i => i.blocking).length, [issues])
+  const isQualifiedNow = userId ? (qualified ?? tenantApplyReady) : false
+  const notQualified = Boolean(userId && !alreadyApplied && !isQualifiedNow)
 
   const onPrimaryClick = () => {
     if (isOwner) return
@@ -43,14 +87,8 @@ export function WohnungBewerbungsBox({
       setModal(true)
       return
     }
-    if (!profileComplete) {
-      router.push(`/profil/erstellen?next=${encodeURIComponent(bewerbenPath)}`)
-      return
-    }
-    if (requiresCreditCheck && !creditCheckOk) {
-      router.push(
-        `/profil/betreibungsregister?next=${encodeURIComponent(bewerbenPath)}&reason=required`
-      )
+    if (notQualified) {
+      router.push(bewerbenPath)
       return
     }
     if (alreadyApplied) return
@@ -66,15 +104,14 @@ export function WohnungBewerbungsBox({
   }
 
   const label = (() => {
-    if (!userId) return 'Jetzt bewerben'
-    if (!profileComplete) return 'Profil erstellen & bewerben'
-    if (requiresCreditCheck && !creditCheckOk) return 'Betreibungsregister hochladen'
+    if (!userId) return 'Anmelden zum Bewerben'
     if (alreadyApplied) return 'Bereits beworben ✓'
+    if (notQualified) return 'Anforderungen prüfen'
     return 'Jetzt bewerben'
   })()
 
   const disabled = Boolean(userId && alreadyApplied)
-  const isTealPrimary = userId && tenantApplyReady && !alreadyApplied
+  const isTealPrimary = (!userId || isQualifiedNow) && !alreadyApplied
 
   return (
     <>
@@ -107,13 +144,23 @@ export function WohnungBewerbungsBox({
           className={
             disabled
               ? `${compact ? 'mt-3' : 'mt-5'} w-full min-h-[44px] cursor-not-allowed rounded-xl bg-slate-300 px-4 py-3 text-center text-sm font-bold text-slate-600`
-              : isTealPrimary
+              : notQualified
+                ? `${compact ? 'mt-3' : 'mt-5'} w-full min-h-[44px] rounded-xl bg-orange-500 px-4 py-3 text-center text-sm font-bold text-white shadow-md transition hover:bg-orange-600`
+                : isTealPrimary
                 ? `${compact ? 'mt-3' : 'mt-5'} w-full min-h-[44px] rounded-xl bg-[#18a87c] px-4 py-3 text-center text-sm font-bold text-white shadow-md transition hover:opacity-95`
                 : `${compact ? 'mt-3' : 'mt-5'} w-full min-h-[44px] rounded-xl border-2 border-teal-700 bg-white px-4 py-3 text-center text-sm font-bold text-teal-800 shadow-sm transition hover:bg-teal-50`
           }
         >
-          {label}
+          {qualifying ? 'Prüfe Anforderungen…' : label}
         </button>
+        {!compact && userId && !alreadyApplied && notQualified && blockingCount > 0 ? (
+          <p className="mt-2 text-center text-xs font-medium text-orange-700">
+            {blockingCount} {blockingCount === 1 ? 'Punkt ausstehend' : 'Punkte ausstehend'}
+          </p>
+        ) : null}
+        {!compact && userId && !alreadyApplied && isQualifiedNow ? (
+          <p className="mt-2 text-center text-xs font-medium text-emerald-700">✓ Du erfüllst alle Anforderungen</p>
+        ) : null}
 
         {!compact ?
           <p className="mt-4 text-center text-[11px] text-slate-500">🔒 Deine Daten werden verschlüsselt übertragen</p>

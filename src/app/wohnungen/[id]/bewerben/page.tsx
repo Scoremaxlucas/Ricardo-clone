@@ -1,6 +1,8 @@
 import { BewerbenClient, type BewerbenListingPreview, type BewerbenTenantPreview } from '@/app/wohnungen/[id]/bewerben/BewerbenClient'
+import { QualificationGate } from '@/components/rental/QualificationGate'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { qualifyTenant } from '@/lib/rental/qualifyTenant'
 import { fetchActiveRentalListingById, parseRentalListingPhotosJson } from '@/lib/rental/rental-listings-public'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
@@ -50,22 +52,22 @@ export default async function WohnungBewerbenPage({ params }: PageProps) {
   }
 
   const tenantProfile = await prisma.tenantProfile.findUnique({ where: { userId } })
-  if (!tenantProfile || !tenantProfile.isComplete) {
+  if (!tenantProfile) {
     redirect('/profil/erstellen?next=' + encodeURIComponent(`/wohnungen/${listingId}/bewerben`))
   }
-
-  if (listing.requiresCreditCheck) {
-    const creditOk =
-      tenantProfile.creditCheckStatus === 'APPROVED' &&
-      tenantProfile.creditCheckExpiresAt != null &&
-      tenantProfile.creditCheckExpiresAt.getTime() > Date.now()
-    if (!creditOk) {
-      redirect(
-        '/profil/betreibungsregister?next=' +
-          encodeURIComponent(`/wohnungen/${listingId}/bewerben`) +
-          '&reason=required'
-      )
-    }
+  const qualification = qualifyTenant(tenantProfile, listing)
+  if (!qualification.qualified) {
+    return (
+      <QualificationGate
+        issues={qualification.reasons}
+        listing={{
+          id: listing.id,
+          title: listing.title,
+          rentPerMonth: listing.rentPerMonth,
+          firstPhotoUrl: firstPhotoUrl(listing.photos),
+        }}
+      />
+    )
   }
 
   const listingPreview: BewerbenListingPreview = {

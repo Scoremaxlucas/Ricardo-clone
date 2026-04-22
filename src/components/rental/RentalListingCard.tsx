@@ -4,6 +4,7 @@ import { formatDate } from '@/lib/utils/formatDate'
 import { Building2, Calendar, MapPin } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { RentalQualificationBadge } from '@/components/rental/RentalQualificationBadge'
 
 export type RentalListingCardData = {
   id: string
@@ -75,6 +76,7 @@ export function RentalListingCard({ listing: l, imagePriority = false }: Props) 
               Neu
             </span>
           : null}
+          <RentalQualificationBadge listingId={l.id} />
         </div>
         {l.requiresCreditCheck ?
           <span className="pointer-events-none absolute right-2 top-2 rounded-full border border-teal-200 bg-white/95 px-2 py-0.5 text-[11px] font-medium text-teal-800 shadow-sm">
