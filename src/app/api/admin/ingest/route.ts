@@ -9,6 +9,10 @@ import { runAdminListingIngest, type AdminIngestMode } from '@/lib/rental/listin
 import { fetchPageContent } from '@/lib/rental/listing-ingest-fetch-page'
 import { isApartmentPhoto } from '@/lib/rental/listing-ingest-html'
 import { ingestOptionalText } from '@/lib/rental/ingest-optional-text'
+import {
+  rewriteContextFromUnknown,
+  rewriteDescriptionInHelvendarVoice,
+} from '@/lib/rental/rewriteDescription'
 import { htmlToListingPlainText } from '@/lib/rental/listing-url-import-html'
 import { assertUrlSafeForServerFetch } from '@/lib/rental/listing-url-import-server'
 import { getServerSession } from 'next-auth/next'
@@ -242,6 +246,31 @@ async function extractListingFromAnthropic(
   throw lastError instanceof Error ? lastError : new Error(String(lastError))
 }
 
+async function rewriteParsedDescription(
+  parsed: Record<string, unknown>
+): Promise<{ parsed: Record<string, unknown>; rewritten: boolean }> {
+  const original = typeof parsed.description === 'string' ? parsed.description.trim() : ''
+  if (!original || original.length < 10) return { parsed, rewritten: false }
+
+  console.log('[INGEST] Rewriting description in Helvenda voice...')
+  try {
+    const rewritten = await rewriteDescriptionInHelvendarVoice(
+      original,
+      rewriteContextFromUnknown(parsed)
+    )
+    if (rewritten && rewritten !== original) {
+      parsed.description = rewritten
+      console.log('[INGEST] Description rewritten successfully')
+      return { parsed, rewritten: true }
+    }
+    console.log('[INGEST] Description rewrite kept original text')
+    return { parsed, rewritten: false }
+  } catch (rewriteError) {
+    console.error('[INGEST] Description rewrite failed, using original:', rewriteError)
+    return { parsed, rewritten: false }
+  }
+}
+
 async function uploadExtractedImageUrls(
   urls: string[],
   sourceUrl: string,
@@ -363,12 +392,14 @@ Nutze das vorgegebene Tool «submit_swiss_rental_listing» mit allen erkannten F
   try {
     console.log('[INGEST] Screenshot flow, images:', n)
     const parsed = await extractListingFromAnthropic(anthropic, imageBlocks)
-    const data = normalizeExtractedPayload(parsed)
+    const rewritten = await rewriteParsedDescription(parsed)
+    const data = normalizeExtractedPayload(rewritten.parsed)
     return NextResponse.json({
       success: true,
       data,
       images: [] as string[],
       source: 'screenshot',
+      rewrittenDescription: rewritten.rewritten,
     })
   } catch (error) {
     console.error('[INGEST] Screenshot vision error:', error)
@@ -471,13 +502,15 @@ export async function POST(request: NextRequest) {
         anthropic,
         `Extrahiere alle Wohnungsdaten aus folgendem Text:\n\n${t.slice(0, 12000)}`
       )
-      const data = normalizeExtractedPayload(parsed)
+      const rewritten = await rewriteParsedDescription(parsed)
+      const data = normalizeExtractedPayload(rewritten.parsed)
       console.log('[INGEST] Parsed result keys:', Object.keys(data).join(', '))
       return NextResponse.json({
         success: true,
         data,
         images: [] as string[],
         source: 'text',
+        rewrittenDescription: rewritten.rewritten,
       })
     } catch (error) {
       console.error('[INGEST] Text flow error:', error)
@@ -564,12 +597,14 @@ export async function POST(request: NextRequest) {
         anthropic,
         `Extrahiere alle Wohnungsdaten aus folgendem Seiteninhalt:\n\nURL: ${url}\n\n${pageText}`
       )
-      const data = normalizeExtractedPayload(parsed)
+      const rewritten = await rewriteParsedDescription(parsed)
+      const data = normalizeExtractedPayload(rewritten.parsed)
       return NextResponse.json({
         success: true,
         data,
         images: imageUrls,
         source: 'url',
+        rewrittenDescription: rewritten.rewritten,
       })
     } catch (error) {
       console.error('[INGEST] URL Anthropic error:', error)

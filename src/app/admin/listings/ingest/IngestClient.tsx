@@ -70,6 +70,7 @@ type IngestUnifiedSuccessBody = {
   data: Record<string, unknown>
   images?: string[]
   source?: 'text' | 'url' | 'screenshot' | string
+  rewrittenDescription?: boolean
 }
 
 const MAX_IMAGES = 10
@@ -152,6 +153,7 @@ export function IngestClient() {
   const [depositAmount, setDepositAmount] = useState('')
   const [availableFrom, setAvailableFrom] = useState('')
   const [description, setDescription] = useState('')
+  const [descriptionWasRewritten, setDescriptionWasRewritten] = useState(false)
   const [requiresCreditCheck, setRequiresCreditCheck] = useState(true)
   const [imageUrls, setImageUrls] = useState<string[]>([])
 
@@ -305,6 +307,7 @@ export function IngestClient() {
     setDepositAmount(mapped.depositAmount != null ? String(mapped.depositAmount) : '')
     setAvailableFrom(mapped.availableFrom.slice(0, 10))
     setDescription(mapped.description)
+    setDescriptionWasRewritten(false)
     setRequiresCreditCheck(mapped.requiresCreditCheck)
     setImageUrls(data.photos)
     setAiConfidence(row.confidence || 'low')
@@ -339,6 +342,7 @@ export function IngestClient() {
     setDepositAmount('')
     setAvailableFrom(new Date().toISOString().slice(0, 10))
     setDescription(d)
+    setDescriptionWasRewritten(false)
     setImageUrls([])
     setAiConfidence('low')
     setRecognizedSource('')
@@ -520,6 +524,7 @@ export function IngestClient() {
         }
         setTitle(typeof d.title === 'string' ? d.title : '')
         setDescription(desc)
+        setDescriptionWasRewritten(rawPayload.rewrittenDescription === true)
         setAddress(typeof d.address === 'string' ? d.address : '')
         setZip(typeof d.zip === 'string' ? d.zip.replace(/\D/g, '').slice(0, 4) : '')
         setCity(typeof d.city === 'string' ? d.city : '')
@@ -592,6 +597,7 @@ export function IngestClient() {
       if (result.success === true && 'listing' in result) {
         const data = result as unknown as IngestApiResult
         applyAnalyzeToForm(data)
+        setDescriptionWasRewritten(false)
         const errMsgs = (data.errors || []).map(e => ERROR_MESSAGES[e] || e).filter(Boolean)
         const extra: string[] = [...(data.warnings || [])]
         if (typeof data.imageDownloadFailures === 'number' && data.imageDownloadFailures > 0) {
@@ -1224,13 +1230,23 @@ export function IngestClient() {
               : null}
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Beschreibung *</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Beschreibung *
+                {descriptionWasRewritten ?
+                  <span className="ml-2 rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700">
+                    ✓ Umgeschrieben von Helvenda AI
+                  </span>
+                : null}
+              </label>
               <textarea
                 required
                 minLength={50}
                 rows={6}
                 value={description}
-                onChange={e => setDescription(e.target.value)}
+                onChange={e => {
+                  setDescription(e.target.value)
+                  setDescriptionWasRewritten(false)
+                }}
                 className={`w-full rounded-lg border px-3 py-2 ${
                   fieldAmber(description.trim().length < 50)
                     ? 'border-amber-400 bg-amber-50/50 ring-1 ring-amber-200'
