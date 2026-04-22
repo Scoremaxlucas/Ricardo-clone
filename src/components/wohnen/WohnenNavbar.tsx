@@ -1,7 +1,7 @@
 'use client'
 
 import { Logo } from '@/components/ui/Logo'
-import { Home, LogOut, Menu, User, X } from 'lucide-react'
+import { LogOut, Menu, User, X } from 'lucide-react'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useState } from 'react'
@@ -426,8 +426,7 @@ export function WohnenNavbar() {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2" onClick={closeAll}>
           <Logo size="sm" />
-          <Home className="h-4 w-4 shrink-0 text-[#0f766e]" aria-hidden />
-          <span className="truncate text-sm font-bold tracking-tight text-[#0f766e] sm:text-base">Helvenda Wohnungen</span>
+          <span className="truncate text-sm font-bold tracking-tight text-[#0f766e] sm:text-base">Wohnungen</span>
         </Link>
 
         {showSkeleton ?

@@ -100,13 +100,16 @@ export async function WohnenMarketingHome() {
       />
 
       {/* 1. Hero */}
-      <section className="relative flex min-h-[85vh] flex-col justify-center bg-white bg-gradient-to-b from-[#18a87c]/[0.05] to-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section
+        className="relative flex min-h-[85vh] flex-col justify-center bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+        style={{ backgroundImage: 'linear-gradient(180deg, #e8f7f2 0%, #ffffff 40%)' }}
+      >
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#18a87c]">🇨🇭 DER FAIRE SCHWEIZER MIETMARKT</p>
 
-          <h1 className="mx-auto mt-6 max-w-[20ch] text-[42px] font-black leading-none tracking-[-0.02em] text-slate-900 sm:max-w-none md:max-w-[18ch] md:text-[72px]">
+          <h1 className="mx-auto mt-6 max-w-[20ch] text-[36px] font-black leading-none tracking-[-0.02em] text-slate-900 sm:max-w-none md:max-w-[18ch] md:text-[64px]">
             <span className="block text-slate-900">Wohnung finden.</span>
-            <span className="mt-2 block text-[#18a87c] md:mt-3">Ohne Abo. Ohne Abzocke.</span>
+            <span className="mt-2 block whitespace-nowrap text-[#18a87c] md:mt-3">Ohne Abo. Ohne Abzocke.</span>
           </h1>
 
           <p className="mx-auto mt-8 max-w-[600px] text-[22px] font-normal leading-[1.6] text-[#5a7a6e]">
@@ -138,7 +141,7 @@ export async function WohnenMarketingHome() {
           </div>
 
           {activeCount > 0 ?
-            <p className="mx-auto mt-12 flex items-center justify-center gap-2 text-base font-bold text-[#18a87c]">
+            <p className="mx-auto mt-5 flex items-center justify-center gap-2 text-base font-bold text-[#18a87c]">
               <span className="whome-pulse-dot inline-block text-[#18a87c]" aria-hidden>
                 ●
               </span>
