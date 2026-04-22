@@ -8,14 +8,16 @@ export function WohnenFooter() {
   return (
     <footer className="mt-auto text-white" style={{ backgroundColor: footerBg }}>
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-8">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-[2fr_1fr_1fr_1fr] md:gap-8">
           <div>
             <div className="flex items-center gap-2">
               <Logo size="sm" />
               <span className="text-lg font-bold tracking-tight text-white">Helvenda Wohnungen</span>
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-white/85">
-              Die faire Wohnungsplattform der Schweiz — kostenlos inserieren, nur verifizierte Anfragen.
+            <p className="mt-4 text-[14px] leading-relaxed text-white/85">
+              Helvenda Wohnungen ist der Schweizer Mietmarktplatz
+              <br />
+              der auf Qualität setzt — für Vermieter und Mietende gleichermassen.
             </p>
           </div>
 
@@ -33,13 +35,13 @@ export function WohnenFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/matching/properties/import" className="text-white/90 hover:text-white hover:underline">
-                  Wohnung importieren
+                <Link href="/profil" className="text-white/90 hover:text-white hover:underline">
+                  Mein Profil
                 </Link>
               </li>
               <li>
-                <Link href="/profil" className="text-white/90 hover:text-white hover:underline">
-                  Mein Profil
+                <Link href="/profil/betreibungsregister" className="text-white/90 hover:text-white hover:underline">
+                  Betreibungsregister hochladen
                 </Link>
               </li>
             </ul>
@@ -57,6 +59,11 @@ export function WohnenFooter() {
                 >
                   Über Helvenda
                 </a>
+              </li>
+              <li>
+                <Link href="/#wie-es-funktioniert" className="text-white/90 hover:text-white hover:underline">
+                  So funktioniert&apos;s
+                </Link>
               </li>
               <li>
                 <a
@@ -90,22 +97,22 @@ export function WohnenFooter() {
               </li>
             </ul>
           </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-teal-200/90">Vertrauen & Sicherheit</p>
+            <ul className="mt-4 space-y-2 text-[13px] text-white/60">
+              <li>🇨🇭 100% Schweizer Plattform</li>
+              <li>🔒 Daten verschlüsselt gespeichert</li>
+              <li>✓ Betreibungsregister verifiziert</li>
+              <li>✓ Einkommensregel geprüft</li>
+            </ul>
+          </div>
         </div>
 
         <div className="mt-12 border-t border-white/15 pt-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-center text-xs text-white/70 sm:text-left">
-              © 2026 Helvenda Wohnungen · Score-Max GmbH · Zollikerberg
-            </p>
-            <a
-              href={MAIN_SHOP_ORIGIN}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-center text-xs text-white/80 hover:text-white sm:text-right"
-            >
-              🛒 Zum Marktplatz → helvenda.ch
-            </a>
-          </div>
+          <p className="text-center text-xs text-white/70">
+            © 2026 Helvenda Wohnungen · Score-Max GmbH · Zollikerberg
+          </p>
         </div>
       </div>
     </footer>

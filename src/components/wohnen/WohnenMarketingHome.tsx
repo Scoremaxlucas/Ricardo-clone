@@ -1,6 +1,5 @@
 import { WohnenHomeHowItWorks } from '@/components/wohnen/WohnenHomeHowItWorks'
 import { WohnenHomeListingCards, type WohnenHomeListingSerialized } from '@/components/wohnen/WohnenHomeListingCards'
-import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 import { loadWohnenHomeListings } from '@/lib/rental/wohnen-home-listings'
 import { prisma } from '@/lib/prisma'
 import { RentalListingStatus } from '@prisma/client'
@@ -166,7 +165,11 @@ export async function WohnenMarketingHome() {
       </section>
 
       {/* 3. Wie es funktioniert */}
-      <section className="whome-anim whome-d1 border-t border-slate-100 bg-slate-50/50 px-4 py-16 sm:px-6 lg:px-8">
+      <section
+        id="wie-es-funktioniert"
+        className="whome-anim whome-d1 border-t border-slate-100 bg-[#f5fdfb] px-4 py-16 sm:px-6 lg:px-8"
+        style={{ backgroundImage: 'linear-gradient(to bottom, #f5fdfb 0%, #f5fdfb 78%, #ffffff 100%)' }}
+      >
         <WohnenHomeHowItWorks />
       </section>
 
@@ -216,33 +219,58 @@ export async function WohnenMarketingHome() {
 
       {/* 5. Footer CTA */}
       <section className="whome-anim whome-d3 bg-[#18a87c] px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center text-white">
-          <h2 className="text-[28px] font-extrabold tracking-[-0.04em] sm:text-[36px] sm:tracking-[-0.06em]">Deine nächste Wohnung wartet.</h2>
-          <p className="mx-auto mt-4 max-w-xl text-base font-normal leading-relaxed text-white/95">
-            Registriere dich kostenlos — und bewirb dich in weniger als 2 Minuten auf deine erste Wohnung.
-          </p>
-          <div className="mx-auto mt-10 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center sm:gap-4">
-            <Link
-              href="/wohnungen"
-              className="inline-flex w-full justify-center rounded-xl bg-white px-8 py-4 text-base font-bold text-[#18a87c] shadow-md transition hover:bg-white/95 sm:w-auto"
-            >
-              Jetzt Wohnungen suchen
-            </Link>
-            <Link
-              href="/matching/properties/new"
-              className="inline-flex w-full justify-center rounded-xl border-2 border-white bg-transparent px-8 py-4 text-base font-bold text-white transition hover:bg-white/10 sm:w-auto"
-            >
-              Als Vermieter inserieren
-            </Link>
+        <div className="mx-auto max-w-6xl text-white">
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-8">
+            <div className="pr-0 md:pr-8">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white">FÜR MIETENDE</p>
+              <h2 className="mt-3 text-[30px] font-extrabold leading-[1.2] tracking-[-0.03em] text-white sm:text-[34px]">
+                Einmal verifiziert.
+                <br />
+                Überall sofort bewerben.
+              </h2>
+              <p className="mt-4 text-[15px] leading-relaxed text-white/75">
+                Kein Formular. Kein Abo.
+                <br />
+                Nur echte Wohnungen.
+              </p>
+              <div className="mt-7">
+                <Link
+                  href="/wohnungen"
+                  className="inline-flex w-full justify-center rounded-[10px] bg-white px-6 py-3 text-base font-bold text-[#18a87c] shadow-sm transition hover:bg-white/95 sm:w-auto"
+                >
+                  Jetzt Wohnungen suchen →
+                </Link>
+              </div>
+            </div>
+
+            <div className="border-t border-white/20 pt-8 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white">FÜR VERMIETER</p>
+              <h2 className="mt-3 text-[30px] font-extrabold leading-[1.2] tracking-[-0.03em] text-white sm:text-[34px]">
+                Schluss mit 80 unqualifizierten
+                <br />
+                Anfragen.
+              </h2>
+              <p className="mt-4 text-[15px] leading-relaxed text-white/75">
+                Kostenlos inserieren.
+                <br />
+                Nur verifizierte Bewerber.
+              </p>
+              <div className="mt-7">
+                <Link
+                  href="/matching/properties/new"
+                  className="inline-flex w-full justify-center rounded-[10px] border border-white bg-transparent px-6 py-3 text-base font-bold text-white transition hover:bg-white/10 sm:w-auto"
+                >
+                  Wohnung inserieren →
+                </Link>
+              </div>
+            </div>
           </div>
-          <p className="mt-8 text-[14px] font-normal text-white/[0.7]">
-            Kein Abo. Keine versteckten Kosten. Jederzeit kündbar.
-          </p>
-          <p className="mt-10 text-xs text-white/75">
-            <a href={MAIN_SHOP_ORIGIN} className="underline-offset-2 hover:underline">
-              Artikel & Auktionen auf dem Schweizer Marktplatz → helvenda.ch
-            </a>
-          </p>
+
+          <div className="mt-10 border-t border-white/25 pt-5 text-center">
+            <p className="text-[12px] uppercase tracking-[0.08em] text-white/45">
+              Kein Abo · Keine versteckten Kosten · Jederzeit kündbar
+            </p>
+          </div>
         </div>
       </section>
     </div>

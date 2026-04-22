@@ -1,25 +1,27 @@
 'use client'
 
+import { IconDocument, IconHandshake, IconListing, IconProfile, IconRocket, IconShield } from '@/components/icons/WohnenHowItWorksIcons'
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 
-type Step = { n: number; icon: string; title: string; text: string }
+type Step = { n: number; icon: ReactNode; title: string; text: string }
 
 const LANDLORD_STEPS: Step[] = [
   {
     n: 1,
-    icon: '🏠',
+    icon: <IconListing className="h-6 w-6 text-[#18a87c]" />,
     title: 'In 5 Minuten live',
     text: 'Inserat kostenlos erstellen oder von einer anderen Plattform importieren — mit einem Klick vorausgefüllt.',
   },
   {
     n: 2,
-    icon: '✅',
+    icon: <IconShield className="h-6 w-6 text-[#18a87c]" />,
     title: 'Nur ernsthafte Anfragen',
     text: 'Jeder Bewerber hat sein Betreibungsregister bereits verifiziert. Du sparst Stunden an Filtern und Rückfragen.',
   },
   {
     n: 3,
-    icon: '💬',
+    icon: <IconHandshake className="h-6 w-6 text-[#18a87c]" />,
     title: 'Direkt zum richtigen Mieter',
     text: 'Wähle aus verifizierten Profilen und vereinbare die Besichtigung — alles auf der Plattform.',
   },
@@ -28,35 +30,49 @@ const LANDLORD_STEPS: Step[] = [
 const TENANT_STEPS: Step[] = [
   {
     n: 1,
-    icon: '👤',
+    icon: <IconProfile className="h-6 w-6 text-[#18a87c]" />,
     title: 'Profil einmal erstellen',
     text: 'Name, Einkommen, Beschäftigung — alles an einem Ort gespeichert. Nie wieder dasselbe Formular ausfüllen.',
   },
   {
     n: 2,
-    icon: '🔒',
+    icon: <IconDocument className="h-6 w-6 text-[#18a87c]" />,
     title: 'Sofort ernst genommen werden',
     text: 'Lade dein Betreibungsregister einmal hoch — es gilt für alle deine Bewerbungen und zeigt Vermietern nur: Einträge ja/nein.',
   },
   {
     n: 3,
-    icon: '🚀',
+    icon: <IconRocket className="h-6 w-6 text-[#18a87c]" />,
     title: 'Bewerben in 30 Sekunden',
     text: 'Kein Formular ausfüllen. Kein erneutes Hochladen. Einmal verifiziert — überall sofort bewerben.',
   },
 ]
 
-function StepCard({ step }: { step: Step }) {
+function Timeline({ steps }: { steps: Step[] }) {
   return (
-    <div className="relative rounded-xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-      <span className="absolute left-6 top-6 flex h-8 w-8 items-center justify-center rounded-full bg-[#18a87c] text-sm font-bold text-white">
-        {step.n}
-      </span>
-      <div className="mb-3 mt-10 text-[40px] leading-none" aria-hidden>
-        {step.icon}
+    <div className="relative pl-0">
+      <div className="pointer-events-none absolute bottom-0 left-4 top-0 w-[2px] bg-[#18a87c]" aria-hidden />
+      <div className="space-y-8">
+        {steps.map((step, idx) => (
+          <div key={step.n} className="relative flex items-start gap-4">
+            <span className="relative z-[1] flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#18a87c] text-sm font-bold text-white">
+              {step.n}
+            </span>
+            <div className="min-w-0 pt-0.5">
+              <div className="flex items-start gap-2.5">
+                <span className="mt-0.5 shrink-0" aria-hidden>
+                  {step.icon}
+                </span>
+                <h4 className="text-base font-bold text-slate-900">{step.title}</h4>
+              </div>
+              <p className="mt-1.5 text-sm leading-relaxed text-[#5a7a6e]">{step.text}</p>
+            </div>
+            {idx === steps.length - 1 ? (
+              <span className="absolute -bottom-2 left-4 top-8 w-[2px] bg-[#f5fdfb]" aria-hidden />
+            ) : null}
+          </div>
+        ))}
       </div>
-      <h3 className="text-lg font-bold leading-snug text-slate-900">{step.title}</h3>
-      <p className="mt-2 text-[15px] font-normal leading-relaxed text-[#5a7a6e]">{step.text}</p>
     </div>
   )
 }
@@ -71,10 +87,8 @@ function Column({ variant, steps, title, label }: { variant: 'landlord' | 'tenan
     <div className="space-y-4">
       <p className={labelClass}>{label}</p>
       <h3 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-[28px] md:leading-tight">{title}</h3>
-      <div className="mt-6 space-y-4">
-        {steps.map(s => (
-          <StepCard key={s.n} step={s} />
-        ))}
+      <div className="mt-6">
+        <Timeline steps={steps} />
       </div>
     </div>
   )
