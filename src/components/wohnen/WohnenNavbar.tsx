@@ -58,12 +58,16 @@ export function WohnenNavbar() {
     let cancelled = false
     setNavReady(false)
     ;(async () => {
+      let resolvedAdmin = false
       try {
-        const [tpRes, ownRes, adminRes, reviewRes] = await Promise.all([
+        const adminRes = await fetch('/api/user/admin-status', { credentials: 'same-origin' })
+        const adminJson = (await adminRes.json().catch(() => ({}))) as { isAdmin?: boolean }
+        resolvedAdmin = adminJson.isAdmin === true
+        if (!cancelled) setIsAdminUser(resolvedAdmin)
+
+        const [tpRes, ownRes] = await Promise.all([
           fetch('/api/tenant-profile', { credentials: 'same-origin' }),
           fetch('/api/rental-listings?own=true', { credentials: 'same-origin' }),
-          fetch('/api/user/admin-status', { credentials: 'same-origin' }),
-          fetch('/api/admin/credit-check/pending-count', { credentials: 'same-origin' }),
         ])
         if (cancelled) return
 
@@ -77,15 +81,21 @@ export function WohnenNavbar() {
         const ownJson = (await ownRes.json().catch(() => ({}))) as { hasListings?: boolean }
         setHasListings(Boolean(ownJson.hasListings))
 
-        const adminJson = (await adminRes.json().catch(() => ({}))) as { isAdmin?: boolean }
-        setIsAdminUser(adminJson.isAdmin === true)
-        const reviewJson = (await reviewRes.json().catch(() => ({}))) as { count?: number }
-        setPendingManualReviews(typeof reviewJson.count === 'number' ? reviewJson.count : 0)
+        if (resolvedAdmin) {
+          const reviewRes = await fetch('/api/admin/credit-check/pending-count', {
+            credentials: 'same-origin',
+          })
+          const reviewJson = (await reviewRes.json().catch(() => ({}))) as { count?: number }
+          setPendingManualReviews(typeof reviewJson.count === 'number' ? reviewJson.count : 0)
+        } else {
+          setPendingManualReviews(0)
+        }
       } catch {
         if (!cancelled) {
           setProfile(null)
           setHasListings(false)
-          setIsAdminUser(false)
+          // Admin-Status nicht auf false zurücksetzen, falls nur Zusatz-Fetches fehlschlagen.
+          setIsAdminUser(prev => prev || resolvedAdmin)
           setPendingManualReviews(0)
         }
       } finally {
