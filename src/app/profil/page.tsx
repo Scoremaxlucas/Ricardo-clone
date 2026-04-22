@@ -1,9 +1,11 @@
 import { ProfilCreditPanel } from '@/components/wohnen/ProfilCreditPanel'
 import { authOptions } from '@/lib/auth'
+import { parsePostalCodesList } from '@/lib/matching/evaluate-match'
 import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { prisma } from '@/lib/prisma'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { isCreditCheckResult } from '@/lib/rental/types'
+import { formatCHF } from '@/lib/utils/formatCurrency'
 import { formatDate } from '@/lib/utils/formatDate'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
@@ -18,6 +20,38 @@ export const metadata: Metadata = {
 function creditResult(row: unknown): CreditCheckResult | null {
   if (!row || typeof row !== 'object') return null
   return isCreditCheckResult(row) ? row : null
+}
+
+function preferenceLines(profile: {
+  preferredCanton: string | null
+  preferredPostalCodes: string | null
+  preferredBudgetMin: number | null
+  preferredBudgetMax: number | null
+  preferredMinRooms: number | null
+  preferredMaxRooms: number | null
+  preferredMoveInEarliest: Date | null
+  preferredMoveInLatest: Date | null
+}): string[] {
+  const lines: string[] = []
+  if (profile.preferredCanton) lines.push(`Bevorzugter Kanton: ${profile.preferredCanton}`)
+  const zips = parsePostalCodesList(profile.preferredPostalCodes)
+  if (zips.length > 0) lines.push(`Bevorzugte PLZ: ${zips.join(', ')}`)
+  if (profile.preferredBudgetMin != null || profile.preferredBudgetMax != null) {
+    const min = profile.preferredBudgetMin != null ? formatCHF(profile.preferredBudgetMin) : 'offen'
+    const max = profile.preferredBudgetMax != null ? formatCHF(profile.preferredBudgetMax) : 'offen'
+    lines.push(`Budget: ${min} bis ${max}`)
+  }
+  if (profile.preferredMinRooms != null || profile.preferredMaxRooms != null) {
+    const min = profile.preferredMinRooms != null ? `${profile.preferredMinRooms}` : 'offen'
+    const max = profile.preferredMaxRooms != null ? `${profile.preferredMaxRooms}` : 'offen'
+    lines.push(`Zimmer: ${min} bis ${max}`)
+  }
+  if (profile.preferredMoveInEarliest != null || profile.preferredMoveInLatest != null) {
+    const from = profile.preferredMoveInEarliest ? formatDate(profile.preferredMoveInEarliest) : 'offen'
+    const to = profile.preferredMoveInLatest ? formatDate(profile.preferredMoveInLatest) : 'offen'
+    lines.push(`Einzug: ${from} bis ${to}`)
+  }
+  return lines
 }
 
 export default async function ProfilPage() {
@@ -40,6 +74,7 @@ export default async function ProfilPage() {
   )
   const incomeText = incomeCategoryLabelDe(profile.monthlyIncomeCategory)
   const creditJson = creditResult(profile.creditCheckResult)
+  const prefs = preferenceLines(profile)
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
@@ -90,6 +125,32 @@ export default async function ProfilPage() {
             </div>
             <p className="mt-4 text-sm text-slate-800">{empText}</p>
             <p className="mt-2 text-sm text-slate-600">Einkommen (Kategorie): {incomeText}</p>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <h2 className="text-lg font-bold text-slate-900">Suchpräferenzen</h2>
+              <Link
+                href="/profil/bearbeiten"
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                Bearbeiten
+              </Link>
+            </div>
+            {prefs.length > 0 ? (
+              <ul className="mt-4 space-y-2 text-sm text-slate-800">
+                {prefs.map(item => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4 text-sm text-slate-600">
+                Keine Suchpräferenzen hinterlegt —{' '}
+                <Link href="/profil/bearbeiten" className="font-semibold text-teal-800 underline-offset-2 hover:underline">
+                  Jetzt hinzufügen
+                </Link>
+              </p>
+            )}
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
