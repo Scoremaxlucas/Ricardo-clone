@@ -2,6 +2,7 @@
 
 import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
 import type { ProfilFormInitial } from '@/lib/tenant-profile/profil-form-initial'
+import { SWISS_CANTONS } from '@/lib/swiss-cantons'
 import { employmentLabelDe } from '@/lib/tenant-profile/labels'
 import { wohnenToast } from '@/lib/wohnen-toast'
 import { useRouter } from 'next/navigation'
@@ -129,6 +130,14 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
         referenceName: form.referenceName.trim() || null,
         referencePhone: form.referencePhone.trim() || null,
         referenceRelation: form.referenceRelation.trim() || null,
+        preferredCanton: form.preferredCanton.trim() || null,
+        preferredPostalCodes: form.preferredPostalCodes.trim() || null,
+        preferredBudgetMin: form.preferredBudgetMin ? Number(form.preferredBudgetMin) : null,
+        preferredBudgetMax: form.preferredBudgetMax ? Number(form.preferredBudgetMax) : null,
+        preferredMinRooms: form.preferredMinRooms ? Number(form.preferredMinRooms) : null,
+        preferredMaxRooms: form.preferredMaxRooms ? Number(form.preferredMaxRooms) : null,
+        preferredMoveInEarliest: form.preferredMoveInEarliest || null,
+        preferredMoveInLatest: form.preferredMoveInLatest || null,
       }
       const res = await fetch('/api/tenant-profile', {
         method: mode === 'edit' ? 'PATCH' : 'POST',
@@ -389,6 +398,112 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
                 value={form.referenceRelation}
                 onChange={e => setField('referenceRelation', e.target.value)}
               />
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h3 className="text-sm font-bold text-slate-900">Suchpräferenzen (optional)</h3>
+              <p className="mt-1 text-xs text-slate-600">
+                Diese Angaben verbessern deine Empfehlungen und Lead-Qualität, sind aber nicht verpflichtend.
+              </p>
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Bevorzugter Kanton</label>
+                  <select
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    value={form.preferredCanton}
+                    onChange={e => setField('preferredCanton', e.target.value)}
+                  >
+                    <option value="">Kein Fokus</option>
+                    {SWISS_CANTONS.map(c => (
+                      <option key={c.code} value={c.code}>
+                        {c.code} — {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">PLZ-Wünsche (kommagetrennt)</label>
+                  <input
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    placeholder="z. B. 8001, 8004"
+                    value={form.preferredPostalCodes}
+                    onChange={e => setField('preferredPostalCodes', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Budget min. (CHF)</label>
+                  <input
+                    inputMode="numeric"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    value={form.preferredBudgetMin}
+                    onChange={e => setField('preferredBudgetMin', e.target.value.replace(/[^\d]/g, ''))}
+                  />
+                  {errors.preferredBudgetMin ? (
+                    <p className="mt-1 text-xs text-red-600">{errors.preferredBudgetMin}</p>
+                  ) : null}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Budget max. (CHF)</label>
+                  <input
+                    inputMode="numeric"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    value={form.preferredBudgetMax}
+                    onChange={e => setField('preferredBudgetMax', e.target.value.replace(/[^\d]/g, ''))}
+                  />
+                  {errors.preferredBudgetMax ? (
+                    <p className="mt-1 text-xs text-red-600">{errors.preferredBudgetMax}</p>
+                  ) : null}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Zimmer min.</label>
+                  <input
+                    inputMode="decimal"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    value={form.preferredMinRooms}
+                    onChange={e => setField('preferredMinRooms', e.target.value.replace(',', '.'))}
+                  />
+                  {errors.preferredMinRooms ? (
+                    <p className="mt-1 text-xs text-red-600">{errors.preferredMinRooms}</p>
+                  ) : null}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Zimmer max.</label>
+                  <input
+                    inputMode="decimal"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    value={form.preferredMaxRooms}
+                    onChange={e => setField('preferredMaxRooms', e.target.value.replace(',', '.'))}
+                  />
+                  {errors.preferredMaxRooms ? (
+                    <p className="mt-1 text-xs text-red-600">{errors.preferredMaxRooms}</p>
+                  ) : null}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Einzug frühestens</label>
+                  <input
+                    type="date"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    value={form.preferredMoveInEarliest}
+                    onChange={e => setField('preferredMoveInEarliest', e.target.value)}
+                  />
+                  {errors.preferredMoveInEarliest ? (
+                    <p className="mt-1 text-xs text-red-600">{errors.preferredMoveInEarliest}</p>
+                  ) : null}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Einzug spätestens</label>
+                  <input
+                    type="date"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    value={form.preferredMoveInLatest}
+                    onChange={e => setField('preferredMoveInLatest', e.target.value)}
+                  />
+                  {errors.preferredMoveInLatest ? (
+                    <p className="mt-1 text-xs text-red-600">{errors.preferredMoveInLatest}</p>
+                  ) : null}
+                </div>
+              </div>
             </div>
 
             <div className="border-t border-slate-200 pt-4">

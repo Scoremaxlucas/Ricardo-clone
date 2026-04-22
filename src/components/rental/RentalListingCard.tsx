@@ -21,6 +21,8 @@ export type RentalListingCardData = {
   photos: string[]
   requiresCreditCheck: boolean
   createdAt: Date
+  matchScore?: number
+  matchHighlights?: string[]
 }
 
 type Props = {
@@ -77,6 +79,11 @@ export function RentalListingCard({ listing: l, imagePriority = false }: Props) 
             </span>
           : null}
           <RentalQualificationBadge listingId={l.id} />
+          {typeof l.matchScore === 'number' ? (
+            <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
+              Match {l.matchScore}%
+            </span>
+          ) : null}
         </div>
         {l.requiresCreditCheck ?
           <span className="pointer-events-none absolute right-2 top-2 rounded-full border border-teal-200 bg-white/95 px-2 py-0.5 text-[11px] font-medium text-teal-800 shadow-sm">
@@ -104,6 +111,11 @@ export function RentalListingCard({ listing: l, imagePriority = false }: Props) 
             Verfügbar ab {formatDate(available)}
           </p>
         : null}
+        {l.matchHighlights && l.matchHighlights.length > 0 ? (
+          <p className="mt-2 text-xs font-medium text-emerald-700">
+            {l.matchHighlights.slice(0, 2).join(' · ')}
+          </p>
+        ) : null}
       </div>
     </Link>
   )

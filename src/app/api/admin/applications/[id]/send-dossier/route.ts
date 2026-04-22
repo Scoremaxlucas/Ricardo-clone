@@ -1,6 +1,12 @@
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { sendEmail } from '@/lib/email/sender'
+import { evaluateMatch } from '@/lib/matching/evaluate-match'
+import {
+  hasAnyTenantPreferences,
+  matchReasonToGermanLabel,
+  tenantPreferencesToSeekerInput,
+} from '@/lib/matching/tenant-preferences-match'
 import { prisma } from '@/lib/prisma'
 import { qualifyTenant } from '@/lib/rental/qualifyTenant'
 import { incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
@@ -32,6 +38,26 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
 
   const q = qualifyTenant(app.tenantProfile, app.listing)
   const applicantName = [app.tenantProfile.firstName, app.tenantProfile.lastName].filter(Boolean).join(' ') || app.applicant.name || 'Bewerber/in'
+  const hasPrefs = hasAnyTenantPreferences(app.tenantProfile)
+  const match = hasPrefs
+    ? evaluateMatch(
+        tenantPreferencesToSeekerInput(app.tenantProfile),
+        {
+          id: app.listing.id,
+          canton: app.listing.canton,
+          zip: app.listing.zip,
+          rooms: Number(app.listing.rooms),
+          rentPerMonth: app.listing.rentPerMonth,
+          availableFrom: app.listing.availableFrom,
+          status: app.listing.status === 'active' ? 'active' : 'archived',
+        },
+        {}
+      )
+    : null
+  const matchReasons =
+    match && match.reasons.length > 0
+      ? match.reasons.map(r => matchReasonToGermanLabel(r)).join(', ')
+      : 'Keine spezifischen Match-Hinweise'
 
   const html = `<h2>HELVENDA WOHNUNGEN — LEAD DOSSIER</h2>
 <p>Erstellt: ${formatDate(new Date())} · Ref: ${app.id}</p>
@@ -48,7 +74,9 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
 <h3>NACHRICHT DES BEWERBERS</h3>
 <p>${app.message || '—'}</p>
 <h3>QUALIFIKATIONS-CHECK</h3>
-<p>${q.qualified ? '✅ Alle Anforderungen erfüllt' : `⚠️ Offen: ${q.reasons.map(i => i.message).join(', ')}`}</p>`
+<p>${q.qualified ? '✅ Alle Anforderungen erfüllt' : `⚠️ Offen: ${q.reasons.map(i => i.message).join(', ')}`}</p>
+<h3>MATCHING (MIETERWÜNSCHE)</h3>
+<p>${!hasPrefs ? '— Keine Suchpräferenzen hinterlegt.' : `${match?.hardFailed ? '❌ Harte Präferenzen nicht erfüllt' : '✅ Präferenzen erfüllt'}<br/>Match-Score: ${match?.score ?? 0}%<br/>Gründe: ${matchReasons}`}</p>`
 
   await sendEmail({
     to: app.listing.user.email,

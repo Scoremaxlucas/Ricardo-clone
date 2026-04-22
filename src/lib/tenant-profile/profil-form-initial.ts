@@ -16,6 +16,14 @@ export type ProfilFormInitial = {
   referenceName: string
   referencePhone: string
   referenceRelation: string
+  preferredCanton: string
+  preferredPostalCodes: string
+  preferredBudgetMin: string
+  preferredBudgetMax: string
+  preferredMinRooms: string
+  preferredMaxRooms: string
+  preferredMoveInEarliest: string
+  preferredMoveInLatest: string
 }
 
 function defaultForm(): ProfilFormInitial {
@@ -35,6 +43,14 @@ function defaultForm(): ProfilFormInitial {
     referenceName: '',
     referencePhone: '',
     referenceRelation: '',
+    preferredCanton: '',
+    preferredPostalCodes: '',
+    preferredBudgetMin: '',
+    preferredBudgetMax: '',
+    preferredMinRooms: '',
+    preferredMaxRooms: '',
+    preferredMoveInEarliest: '',
+    preferredMoveInLatest: '',
   }
 }
 
@@ -77,5 +93,13 @@ export function buildInitialFromApi(p: Record<string, unknown> | null | undefine
     referenceName: String(p.referenceName ?? ''),
     referencePhone: String(p.referencePhone ?? ''),
     referenceRelation: String(p.referenceRelation ?? ''),
+    preferredCanton: String(p.preferredCanton ?? ''),
+    preferredPostalCodes: String(p.preferredPostalCodes ?? ''),
+    preferredBudgetMin: p.preferredBudgetMin != null ? String(p.preferredBudgetMin) : '',
+    preferredBudgetMax: p.preferredBudgetMax != null ? String(p.preferredBudgetMax) : '',
+    preferredMinRooms: p.preferredMinRooms != null ? String(p.preferredMinRooms) : '',
+    preferredMaxRooms: p.preferredMaxRooms != null ? String(p.preferredMaxRooms) : '',
+    preferredMoveInEarliest: dobInputValue(String(p.preferredMoveInEarliest ?? '')),
+    preferredMoveInLatest: dobInputValue(String(p.preferredMoveInLatest ?? '')),
   }
 }

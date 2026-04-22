@@ -1851,6 +1851,16 @@ model TenantProfile {
   referencePhone        String?
   referenceRelation     String?
 
+  // Optionale Suchpräferenzen (Phase 1 Matching für Wohnen)
+  preferredCanton       String?
+  preferredPostalCodes  String?             @db.Text
+  preferredBudgetMin    Int?
+  preferredBudgetMax    Int?
+  preferredMinRooms     Float?
+  preferredMaxRooms     Float?
+  preferredMoveInEarliest DateTime?
+  preferredMoveInLatest   DateTime?
+
   creditCheckStatus     CreditCheckStatus @default(NONE)
   creditCheckResult     Json?
   encryptedFileRef      String?

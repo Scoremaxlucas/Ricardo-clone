@@ -1,0 +1,202 @@
+'use client'
+
+import { RentalListingCard, type RentalListingCardData } from '@/components/rental/RentalListingCard'
+import { WohnenEmptyState } from '@/components/wohnen/WohnenEmptyState'
+import { Building2, Search } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
+
+type ApiListing = {
+  id: string
+  title: string
+  city: string
+  canton: string
+  rooms: number
+  areaSqm: number
+  floor: number | null
+  rentPerMonth: number
+  utilitiesPerMonth: number | null
+  availableFrom: string
+  requiresCreditCheck: boolean
+  createdAt: string
+  imageUrls: string[]
+  matchScore?: number
+  matchHighlights?: string[]
+}
+
+type ApiMeta = {
+  mode: 'all' | 'match'
+  isLoggedIn: boolean
+  needsPreferences: boolean
+  totalMatched: number
+  rolloutEnabled?: boolean
+  rolloutReason?: string
+}
+
+type ApiResponse = {
+  listings: ApiListing[]
+  meta: ApiMeta
+}
+
+type Props = {
+  activeCount: number
+}
+
+function toCardData(listing: ApiListing): RentalListingCardData {
+  return {
+    id: listing.id,
+    title: listing.title,
+    city: listing.city,
+    canton: listing.canton,
+    rooms: Number(listing.rooms),
+    areaSqm: Number(listing.areaSqm),
+    floor: listing.floor,
+    rentPerMonth: listing.rentPerMonth,
+    utilitiesPerMonth: listing.utilitiesPerMonth,
+    availableFrom: listing.availableFrom,
+    photos: listing.imageUrls || [],
+    requiresCreditCheck: listing.requiresCreditCheck,
+    createdAt: new Date(listing.createdAt),
+    matchScore: listing.matchScore,
+    matchHighlights: listing.matchHighlights,
+  }
+}
+
+function buildApiUrl(sp: URLSearchParams | Readonly<URLSearchParams>): string {
+  const q = sp.toString()
+  return q ? `/api/rental-listings?${q}` : '/api/rental-listings'
+}
+
+export function WohnungenListingsFeed({ activeCount }: Props) {
+  const sp = useSearchParams()
+  const [isLoading, setIsLoading] = useState(true)
+  const [data, setData] = useState<ApiResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const mode = sp.get('mode') === 'match' ? 'match' : 'all'
+  const url = useMemo(() => buildApiUrl(sp), [sp])
+
+  useEffect(() => {
+    let cancelled = false
+    const controller = new AbortController()
+
+    async function run() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const res = await fetch(url, { signal: controller.signal, credentials: 'same-origin' })
+        const json = (await res.json()) as ApiResponse | { message?: string }
+        if (!res.ok) {
+          throw new Error((json as { message?: string }).message || 'Fehler beim Laden')
+        }
+        if (!cancelled) setData(json as ApiResponse)
+      } catch (e: unknown) {
+        if (cancelled || controller.signal.aborted) return
+        setError(e instanceof Error ? e.message : 'Fehler beim Laden')
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    run()
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [url])
+
+  const listings = (data?.listings ?? []).map(toCardData)
+  const meta: ApiMeta = data?.meta ?? {
+    mode,
+    isLoggedIn: false,
+    needsPreferences: false,
+    totalMatched: 0,
+    rolloutEnabled: true,
+    rolloutReason: 'enabled',
+  }
+
+  const blockedByMatchState =
+    mode === 'match' && (!meta.isLoggedIn || meta.needsPreferences || meta.rolloutEnabled === false)
+  const globalEmpty = !isLoading && !blockedByMatchState && listings.length === 0 && activeCount === 0
+  const filteredEmpty = !isLoading && !blockedByMatchState && listings.length === 0 && activeCount > 0
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-8">
+      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Mietwohnungen</h1>
+      <p className="mt-2 text-sm text-slate-600 sm:text-base">
+        {meta.mode === 'match'
+          ? 'Deine persönlich passenden Wohnungen — nach Match-Stärke gerankt.'
+          : 'Aktive Inserate auf Helvenda — nach Kanton, Zimmerzahl, Budget und Einzugsdatum filtern.'}
+      </p>
+
+      {meta.mode === 'match' && !meta.isLoggedIn ? (
+        <div className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          Für „Für dich“ bitte zuerst einloggen.
+        </div>
+      ) : null}
+      {meta.mode === 'match' && meta.rolloutEnabled === false ? (
+        <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
+          „Für dich“ wird aktuell schrittweise ausgerollt und ist für dieses Konto noch nicht aktiviert.
+        </div>
+      ) : null}
+      {meta.mode === 'match' && meta.isLoggedIn && meta.needsPreferences ? (
+        <div className="mt-8 rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-900">
+          Hinterlege optionale Suchpräferenzen in deinem Profil, damit wir passende Wohnungen für dich ranken können.
+        </div>
+      ) : null}
+
+      {isLoading ? (
+        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-[330px] animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="mt-10 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+          {error}
+        </div>
+      ) : globalEmpty ? (
+        <div className="mt-16">
+          <WohnenEmptyState
+            icon={Building2}
+            title="Noch keine Wohnungen inseriert"
+            description="Sobald Inserate live sind, erscheinen sie hier."
+            actionHref="/matching/properties/new"
+            actionLabel="Erste Wohnung inserieren"
+          />
+        </div>
+      ) : (
+        <>
+          <p className="mt-8 text-sm font-medium text-slate-700">
+            {filteredEmpty ? (
+              <>Keine Wohnungen gefunden — Filter anpassen oder später nochmal schauen.</>
+            ) : (
+              <>
+                {listings.length} Wohnung{listings.length === 1 ? '' : 'en'} gefunden
+                {meta.mode === 'match' ? ' (gerankt nach Match)' : ''}
+              </>
+            )}
+          </p>
+
+          {filteredEmpty ? (
+            <div className="mt-10">
+              <WohnenEmptyState
+                icon={Search}
+                title="Keine Wohnungen gefunden"
+                description="Passe die Filter an oder setze sie zurück."
+                actionHref="/wohnungen"
+                actionLabel="Filter zurücksetzen"
+              />
+            </div>
+          ) : (
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {listings.map(row => (
+                <RentalListingCard key={row.id} listing={row} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  )
+}

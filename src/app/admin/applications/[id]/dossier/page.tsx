@@ -2,6 +2,12 @@ import { AdminLeadDossierActions } from '@/components/admin/AdminLeadDossierActi
 import { authOptions } from '@/lib/auth'
 import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
 import { isAdmin } from '@/lib/auth/isAdmin'
+import { evaluateMatch } from '@/lib/matching/evaluate-match'
+import {
+  hasAnyTenantPreferences,
+  matchReasonToGermanLabel,
+  tenantPreferencesToSeekerInput,
+} from '@/lib/matching/tenant-preferences-match'
 import { prisma } from '@/lib/prisma'
 import { qualifyTenant } from '@/lib/rental/qualifyTenant'
 import { incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
@@ -33,6 +39,22 @@ export default async function AdminApplicationDossierPage({ params }: { params: 
 
   const q = qualifyTenant(app.tenantProfile, app.listing)
   const c = (app.tenantProfile.creditCheckResult as Record<string, unknown> | null) || {}
+  const hasPrefs = hasAnyTenantPreferences(app.tenantProfile)
+  const match = hasPrefs
+    ? evaluateMatch(
+        tenantPreferencesToSeekerInput(app.tenantProfile),
+        {
+          id: app.listing.id,
+          canton: app.listing.canton,
+          zip: app.listing.zip,
+          rooms: Number(app.listing.rooms),
+          rentPerMonth: app.listing.rentPerMonth,
+          availableFrom: app.listing.availableFrom,
+          status: app.listing.status === 'active' ? 'active' : 'archived',
+        },
+        {}
+      )
+    : null
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
@@ -87,6 +109,23 @@ export default async function AdminApplicationDossierPage({ params }: { params: 
           <p>{q.reasons.some(i => i.code === 'INCOME_TOO_LOW') ? '❌ Einkommen erfüllt 3x-Regel' : '✅ Einkommen erfüllt 3x-Regel'}</p>
           <p>{q.reasons.some(i => i.code === 'PROFILE_INCOMPLETE') ? '❌ Profil vollständig' : '✅ Profil vollständig'}</p>
           <p>{q.qualified ? '✅ Alle Anforderungen erfüllt' : '⚠️ Anforderungen noch nicht vollständig erfüllt'}</p>
+        </section>
+        <section className="section">
+          <h3 className="font-bold">MATCHING (MIETERWÜNSCHE)</h3>
+          {!hasPrefs ? (
+            <p>— Keine Suchpräferenzen hinterlegt.</p>
+          ) : (
+            <>
+              <p>{match?.hardFailed ? '❌ Harte Präferenzen nicht erfüllt' : '✅ Präferenzen erfüllt'}</p>
+              <p>Match-Score: <strong>{match?.score ?? 0}%</strong></p>
+              <p>
+                Gründe:{' '}
+                {(match?.reasons?.length ?? 0) > 0
+                  ? match?.reasons.map(r => matchReasonToGermanLabel(r)).join(', ')
+                  : 'Keine spezifischen Match-Hinweise'}
+              </p>
+            </>
+          )}
         </section>
       </article>
 

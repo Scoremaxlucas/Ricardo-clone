@@ -1,5 +1,8 @@
 import { authOptions } from '@/lib/auth'
+import { evaluateMatch, parsePostalCodesList } from '@/lib/matching/evaluate-match'
 import { prisma } from '@/lib/prisma'
+import { trackRentalMatchMetricsEvent } from '@/lib/rental/match-metrics'
+import { decideRentalMatchRollout } from '@/lib/rental/match-rollout'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -12,6 +15,29 @@ function safeParsePhotos(raw: string): string[] {
   } catch {
     return []
   }
+}
+
+function hasAnyPreferences(profile: {
+  preferredCanton: string | null
+  preferredPostalCodes: string | null
+  preferredBudgetMin: number | null
+  preferredBudgetMax: number | null
+  preferredMinRooms: number | null
+  preferredMaxRooms: number | null
+  preferredMoveInEarliest: Date | null
+  preferredMoveInLatest: Date | null
+} | null): boolean {
+  if (!profile) return false
+  return Boolean(
+    profile.preferredCanton ||
+      parsePostalCodesList(profile.preferredPostalCodes).length > 0 ||
+      profile.preferredBudgetMin != null ||
+      profile.preferredBudgetMax != null ||
+      profile.preferredMinRooms != null ||
+      profile.preferredMaxRooms != null ||
+      profile.preferredMoveInEarliest != null ||
+      profile.preferredMoveInLatest != null
+  )
 }
 
 /** GET: nur aktive Inserate, öffentlich — oder `?own=true` für eingeloggten Vermieter (Navbar). */
@@ -29,10 +55,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ hasListings: count > 0 })
     }
 
-    const canton = searchParams.get('canton')?.trim() || ''
-    const minRooms = searchParams.get('minRooms')
-    const maxRent = searchParams.get('maxRent')
-    const availableFrom = searchParams.get('availableFrom')?.trim() || ''
+    const mode = searchParams.get('mode') === 'match' ? 'match' : 'all'
+    const canton = searchParams.get('canton')?.trim() || searchParams.get('kanton')?.trim() || ''
+    const minRooms = searchParams.get('minRooms') ?? searchParams.get('zimmer')
+    const maxRent = searchParams.get('maxRent') ?? searchParams.get('maxmiete')
+    const availableFrom = searchParams.get('availableFrom')?.trim() || searchParams.get('verfuegbar')?.trim() || ''
 
     const where: Record<string, unknown> = {
       status: 'active',
@@ -93,7 +120,182 @@ export async function GET(request: NextRequest) {
       imageUrls: safeParsePhotos(l.photos),
     }))
 
-    return NextResponse.json({ listings: parsed })
+    if (mode !== 'match') {
+      await trackRentalMatchMetricsEvent(request, null, {
+        mode: 'all',
+        isLoggedIn: false,
+        needsPreferences: false,
+        rolloutBlocked: false,
+        rolloutReason: 'mode_all',
+        totalResults: parsed.length,
+        matchedResults: parsed.length,
+      })
+      return NextResponse.json({
+        listings: parsed,
+        meta: {
+          mode: 'all',
+          isLoggedIn: false,
+          needsPreferences: false,
+          totalMatched: parsed.length,
+        },
+      })
+    }
+
+    const session = await getServerSession(authOptions)
+    const userId = session?.user?.id ?? null
+    const user = userId
+      ? await prisma.user.findUnique({
+          where: { id: userId },
+          select: { isAdmin: true },
+        })
+      : null
+    const rollout = decideRentalMatchRollout({ userId, isAdmin: Boolean(user?.isAdmin) })
+
+    if (!rollout.enabled) {
+      await trackRentalMatchMetricsEvent(request, userId, {
+        mode: 'match',
+        isLoggedIn: Boolean(userId),
+        needsPreferences: false,
+        rolloutBlocked: true,
+        rolloutReason: rollout.reason,
+        totalResults: 0,
+        matchedResults: 0,
+      })
+      return NextResponse.json({
+        listings: [],
+        meta: {
+          mode: 'match',
+          isLoggedIn: Boolean(userId),
+          needsPreferences: false,
+          totalMatched: 0,
+          rolloutEnabled: false,
+          rolloutReason: rollout.reason,
+        },
+      })
+    }
+
+    if (!userId) {
+      await trackRentalMatchMetricsEvent(request, null, {
+        mode: 'match',
+        isLoggedIn: false,
+        needsPreferences: false,
+        rolloutBlocked: false,
+        rolloutReason: 'missing_user',
+        totalResults: 0,
+        matchedResults: 0,
+      })
+      return NextResponse.json({
+        listings: [],
+        meta: {
+          mode: 'match',
+          isLoggedIn: false,
+          needsPreferences: false,
+          totalMatched: 0,
+          rolloutEnabled: true,
+          rolloutReason: 'enabled',
+        },
+      })
+    }
+
+    const profile = await prisma.tenantProfile.findUnique({
+      where: { userId },
+      select: {
+        preferredCanton: true,
+        preferredPostalCodes: true,
+        preferredBudgetMin: true,
+        preferredBudgetMax: true,
+        preferredMinRooms: true,
+        preferredMaxRooms: true,
+        preferredMoveInEarliest: true,
+        preferredMoveInLatest: true,
+      },
+    })
+
+    if (!hasAnyPreferences(profile)) {
+      await trackRentalMatchMetricsEvent(request, userId, {
+        mode: 'match',
+        isLoggedIn: true,
+        needsPreferences: true,
+        rolloutBlocked: false,
+        rolloutReason: 'needs_preferences',
+        totalResults: 0,
+        matchedResults: 0,
+      })
+      return NextResponse.json({
+        listings: [],
+        meta: {
+          mode: 'match',
+          isLoggedIn: true,
+          needsPreferences: true,
+          totalMatched: 0,
+          rolloutEnabled: true,
+          rolloutReason: 'enabled',
+        },
+      })
+    }
+
+    const seeker = {
+      cantonPreference: profile?.preferredCanton ?? null,
+      postalCodesWanted: profile?.preferredPostalCodes ?? null,
+      budgetMin: profile?.preferredBudgetMin ?? null,
+      budgetMax: profile?.preferredBudgetMax ?? null,
+      minRooms: profile?.preferredMinRooms ?? null,
+      maxRooms: profile?.preferredMaxRooms ?? null,
+      moveInEarliest: profile?.preferredMoveInEarliest ?? null,
+      moveInLatest: profile?.preferredMoveInLatest ?? null,
+      hasPets: false,
+    }
+
+    const ranked = parsed
+      .map(l => {
+        const result = evaluateMatch(
+          seeker,
+          {
+            id: l.id,
+            canton: l.canton,
+            zip: l.zip,
+            rooms: Number(l.rooms),
+            rentPerMonth: l.rentPerMonth,
+            availableFrom: new Date(l.availableFrom),
+            status: 'active',
+          },
+          {}
+        )
+        return { listing: l, result }
+      })
+      .filter(x => !x.result.hardFailed)
+      .map(x => ({
+        ...x.listing,
+        matchScore: x.result.score,
+        matchHighlights: x.result.reasons
+          .filter(r => r.kind === 'soft')
+          .slice(0, 2)
+          .map(r => r.detail || 'Guter Match'),
+      }))
+      .sort((a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+    await trackRentalMatchMetricsEvent(request, userId, {
+      mode: 'match',
+      isLoggedIn: true,
+      needsPreferences: false,
+      rolloutBlocked: false,
+      rolloutReason: 'enabled',
+      totalResults: parsed.length,
+      matchedResults: ranked.length,
+      scoreValues: ranked.map(x => x.matchScore ?? 0),
+    })
+
+    return NextResponse.json({
+      listings: ranked,
+      meta: {
+        mode: 'match',
+        isLoggedIn: true,
+        needsPreferences: false,
+        totalMatched: ranked.length,
+        rolloutEnabled: true,
+        rolloutReason: 'enabled',
+      },
+    })
   } catch (e: unknown) {
     console.error('[rental-listings GET]', e)
     const msg = e instanceof Error ? e.message : 'Fehler'

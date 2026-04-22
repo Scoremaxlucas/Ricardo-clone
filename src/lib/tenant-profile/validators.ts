@@ -34,6 +34,14 @@ export type TenantProfilePayload = {
   referenceName?: string | null
   referencePhone?: string | null
   referenceRelation?: string | null
+  preferredCanton?: string | null
+  preferredPostalCodes?: string | null
+  preferredBudgetMin?: number | null
+  preferredBudgetMax?: number | null
+  preferredMinRooms?: number | null
+  preferredMaxRooms?: number | null
+  preferredMoveInEarliest?: string | null
+  preferredMoveInLatest?: string | null
 }
 
 function minAge18(dob: Date): boolean {
@@ -64,6 +72,9 @@ export function validateTenantProfilePayload(
   const employer = b.employer != null ? String(b.employer).trim() : ''
   const jobTitle = b.jobTitle != null ? String(b.jobTitle).trim() : ''
   const monthlyIncomeCategory = b.monthlyIncomeCategory as IncomeCategory
+  const preferredCanton = b.preferredCanton != null ? String(b.preferredCanton).trim().toUpperCase() : ''
+  const preferredPostalCodes =
+    b.preferredPostalCodes != null ? String(b.preferredPostalCodes).trim() : ''
 
   if (!firstName) return { ok: false, message: 'Vorname fehlt', field: 'firstName' }
   if (!lastName) return { ok: false, message: 'Nachname fehlt', field: 'lastName' }
@@ -90,6 +101,66 @@ export function validateTenantProfilePayload(
   }
   if (!INCOME.includes(monthlyIncomeCategory)) {
     return { ok: false, message: 'Einkommenskategorie ungültig', field: 'monthlyIncomeCategory' }
+  }
+
+  const preferredBudgetMin =
+    b.preferredBudgetMin == null || b.preferredBudgetMin === '' ? null : Number(b.preferredBudgetMin)
+  const preferredBudgetMax =
+    b.preferredBudgetMax == null || b.preferredBudgetMax === '' ? null : Number(b.preferredBudgetMax)
+  if (
+    preferredBudgetMin != null &&
+    (!Number.isFinite(preferredBudgetMin) || preferredBudgetMin < 0 || preferredBudgetMin > 50000)
+  ) {
+    return { ok: false, message: 'Mindestbudget ungültig', field: 'preferredBudgetMin' }
+  }
+  if (
+    preferredBudgetMax != null &&
+    (!Number.isFinite(preferredBudgetMax) || preferredBudgetMax < 0 || preferredBudgetMax > 50000)
+  ) {
+    return { ok: false, message: 'Maximalbudget ungültig', field: 'preferredBudgetMax' }
+  }
+  if (preferredBudgetMin != null && preferredBudgetMax != null && preferredBudgetMin > preferredBudgetMax) {
+    return { ok: false, message: 'Mindestbudget darf nicht über Maximalbudget liegen', field: 'preferredBudgetMin' }
+  }
+
+  const preferredMinRooms =
+    b.preferredMinRooms == null || b.preferredMinRooms === '' ? null : Number(b.preferredMinRooms)
+  const preferredMaxRooms =
+    b.preferredMaxRooms == null || b.preferredMaxRooms === '' ? null : Number(b.preferredMaxRooms)
+  if (preferredMinRooms != null && (!Number.isFinite(preferredMinRooms) || preferredMinRooms < 0.5 || preferredMinRooms > 12)) {
+    return { ok: false, message: 'Min. Zimmer ungültig', field: 'preferredMinRooms' }
+  }
+  if (preferredMaxRooms != null && (!Number.isFinite(preferredMaxRooms) || preferredMaxRooms < 0.5 || preferredMaxRooms > 12)) {
+    return { ok: false, message: 'Max. Zimmer ungültig', field: 'preferredMaxRooms' }
+  }
+  if (preferredMinRooms != null && preferredMaxRooms != null && preferredMinRooms > preferredMaxRooms) {
+    return { ok: false, message: 'Min. Zimmer darf nicht über Max. Zimmer liegen', field: 'preferredMinRooms' }
+  }
+
+  const preferredMoveInEarliest =
+    b.preferredMoveInEarliest == null || b.preferredMoveInEarliest === ''
+      ? null
+      : String(b.preferredMoveInEarliest).trim()
+  const preferredMoveInLatest =
+    b.preferredMoveInLatest == null || b.preferredMoveInLatest === ''
+      ? null
+      : String(b.preferredMoveInLatest).trim()
+  if (preferredMoveInEarliest && Number.isNaN(new Date(preferredMoveInEarliest).getTime())) {
+    return { ok: false, message: 'Frühester Einzugstermin ungültig', field: 'preferredMoveInEarliest' }
+  }
+  if (preferredMoveInLatest && Number.isNaN(new Date(preferredMoveInLatest).getTime())) {
+    return { ok: false, message: 'Spätester Einzugstermin ungültig', field: 'preferredMoveInLatest' }
+  }
+  if (
+    preferredMoveInEarliest &&
+    preferredMoveInLatest &&
+    new Date(preferredMoveInEarliest).getTime() > new Date(preferredMoveInLatest).getTime()
+  ) {
+    return {
+      ok: false,
+      message: 'Frühester Einzugstermin darf nicht nach dem spätesten liegen',
+      field: 'preferredMoveInEarliest',
+    }
   }
 
   let employedSinceYear: number | null = null
@@ -130,6 +201,14 @@ export function validateTenantProfilePayload(
       referenceName: b.referenceName != null ? String(b.referenceName).trim() || null : null,
       referencePhone: b.referencePhone != null ? String(b.referencePhone).trim() || null : null,
       referenceRelation: b.referenceRelation != null ? String(b.referenceRelation).trim() || null : null,
+      preferredCanton: preferredCanton || null,
+      preferredPostalCodes: preferredPostalCodes || null,
+      preferredBudgetMin: preferredBudgetMin == null ? null : Math.round(preferredBudgetMin),
+      preferredBudgetMax: preferredBudgetMax == null ? null : Math.round(preferredBudgetMax),
+      preferredMinRooms,
+      preferredMaxRooms,
+      preferredMoveInEarliest,
+      preferredMoveInLatest,
     },
   }
 }
