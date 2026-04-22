@@ -24,6 +24,33 @@ function isWohnenTenant(request: NextRequest): boolean {
   return false
 }
 
+/** www / apex Marktplatz-Host — Mieter-UI soll auf wohnen.helvenda.ch laufen (Navbar/Footer). */
+function isMainHelvendaMarketplaceHost(host: string): boolean {
+  const h = host.toLowerCase()
+  if (!h || h === 'localhost' || h === '127.0.0.1') return false
+  try {
+    const mainHost = new URL(MAIN_SHOP_ORIGIN).hostname.toLowerCase()
+    if (h === mainHost) return true
+    if (mainHost.startsWith('www.')) {
+      const apex = mainHost.slice(4)
+      if (h === apex) return true
+    }
+  } catch {
+    /* ignore */
+  }
+  return h === 'helvenda.ch' || h === 'www.helvenda.ch'
+}
+
+/** Auf dem Marktplatz-Host diese Pfade zur Wohnen-Subdomain umleiten (ein Layout, eine Session). */
+function tenantPathsRedirectToWohnen(pathname: string): boolean {
+  if (pathname === '/meine-matches') return true
+  if (pathname === '/meine-bewerbungen') return true
+  if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
+  if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
+  if (pathname === '/matching' || pathname.startsWith('/matching/')) return true
+  return false
+}
+
 /**
  * Nur Matching-MVP + Auth + minimale APIs. Kein Marktplatz-/Miet-Inserat-UI auf dieser Subdomain.
  */
@@ -43,6 +70,7 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
   if (pathname.startsWith('/api/tenant-profile')) return true
   if (pathname === '/meine-bewerbungen') return true
+  if (pathname === '/meine-matches') return true
   if (pathname === '/') return true
   if (pathname === '/matching' || pathname.startsWith('/matching/')) return true
   if (pathname === '/admin/listings' || pathname.startsWith('/admin/listings/')) return true
@@ -79,18 +107,10 @@ export async function middleware(request: NextRequest) {
 
   const host = rawHost(request)
 
-  // Marktplatz (www): Matching-Einstieg nur auf wohnen.helvenda.ch
-  if (pathname === '/matching' || pathname.startsWith('/matching/')) {
-    let mainHost = ''
-    try {
-      mainHost = new URL(MAIN_SHOP_ORIGIN).hostname.toLowerCase()
-    } catch {
-      mainHost = ''
-    }
-    if (mainHost && host === mainHost && !isWohnenTenant(request)) {
-      const target = new URL(pathname + search, WOHNEN_SITE_ORIGIN)
-      return NextResponse.redirect(target)
-    }
+  // Marktplatz (www / apex): gesamte Mieter- und Vermieter-Matching-UI nur auf wohnen.helvenda.ch
+  if (!isWohnenTenant(request) && isMainHelvendaMarketplaceHost(host) && tenantPathsRedirectToWohnen(pathname)) {
+    const target = new URL(pathname + search, WOHNEN_SITE_ORIGIN)
+    return NextResponse.redirect(target)
   }
 
   // localhost: ?subdomain=wohnen → Cookie setzen und Query entfernen (damit Folge-Klicks funktionieren)

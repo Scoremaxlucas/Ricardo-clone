@@ -85,6 +85,8 @@ export default async function MeineMatchesPage() {
   const userId = session?.user?.id
   if (!userId) redirect('/login?callbackUrl=/meine-matches')
 
+  const sessionEmail = (session?.user as { email?: string | null } | undefined)?.email?.trim() || null
+
   const profile = await prisma.tenantProfile.findUnique({ where: { userId } })
   if (!profile) redirect('/profil/erstellen?next=/meine-matches')
   if (!profile.isComplete) redirect('/profil/erstellen?next=/meine-matches')
@@ -103,6 +105,16 @@ export default async function MeineMatchesPage() {
       <div className="mx-auto max-w-6xl px-4 pb-10 pt-12">
         <section className="pb-8">
           <h1 className="text-[32px] font-extrabold text-[#0d2b1f]">Guten {greeting}, {profile.firstName}.</h1>
+          {sessionEmail ? (
+            <p className="mt-2 text-sm text-slate-600">
+              Angemeldet als <span className="font-semibold text-slate-800">{sessionEmail}</span>
+              <span className="text-slate-500"> — der Vorname kommt aus deinem </span>
+              <Link href="/profil/bearbeiten" className="font-semibold text-teal-800 underline-offset-2 hover:underline">
+                Mieterprofil
+              </Link>
+              <span className="text-slate-500">.</span>
+            </p>
+          ) : null}
           {matches.length > 0 ? (
             <p className="mt-3 text-[17px] text-slate-700">
               Wir haben <span className="font-extrabold text-teal-700">{matches.length}</span> Wohnungen gefunden die zu dir passen.
