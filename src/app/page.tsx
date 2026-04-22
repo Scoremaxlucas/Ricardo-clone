@@ -87,6 +87,7 @@ export default async function Home() {
     let primaryHref = '/wohnungen'
     let primaryLabel = 'Wohnungen suchen'
 
+    // Mieter mit vollständigem Profil: Einstieg über personalisierte Matches (Server + Client Navbar konsistent).
     if (session?.user?.id) {
       const profile = await prisma.tenantProfile.findUnique({
         where: { userId: session.user.id },

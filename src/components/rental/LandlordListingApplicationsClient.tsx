@@ -192,7 +192,7 @@ function LandlordApplicationCard({
           type="button"
           disabled={Boolean(busyId) || rejected || hasViewing}
           onClick={() => onOpenView(row)}
-          className="min-h-[44px] rounded-xl bg-[#18a87c] px-3 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
+          className="min-h-[48px] w-full rounded-xl bg-[#18a87c] px-3 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40 lg:w-auto"
         >
           Besichtigung anfragen
         </button>
@@ -200,7 +200,7 @@ function LandlordApplicationCard({
           type="button"
           disabled={Boolean(busyId) || rejected || hasViewing}
           onClick={() => onOpenReject(row)}
-          className="min-h-[44px] rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="min-h-[48px] w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 lg:w-auto"
         >
           Ablehnen
         </button>
@@ -407,7 +407,8 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
           role="dialog"
           aria-modal="true"
         >
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl">
+          <div className="wohnen-bottom-sheet-panel max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-[20px] bg-white px-5 pb-6 pt-2 shadow-xl sm:rounded-2xl sm:px-6 sm:pt-6">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#e0e0e0] sm:hidden" aria-hidden />
             <h2 className="text-lg font-bold text-slate-900">Besichtigung anfragen</h2>
             <div className="mt-4 space-y-3">
               <div>
@@ -417,7 +418,7 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
                   min={minDate}
                   value={viewDate}
                   onChange={e => setViewDate(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  className="mt-1 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base sm:min-h-0 sm:text-sm"
                 />
               </div>
               <div>
@@ -425,7 +426,7 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
                 <select
                   value={viewTime}
                   onChange={e => setViewTime(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  className="mt-1 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base sm:min-h-0 sm:text-sm"
                 >
                   {times.map(t => (
                     <option key={t} value={t}>
@@ -441,7 +442,7 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
                   onChange={e => setViewNote(e.target.value)}
                   rows={3}
                   placeholder="z. B. Treffpunkt"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="mt-1 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base sm:min-h-0 sm:text-sm"
                 />
               </div>
             </div>
@@ -472,7 +473,8 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl">
+          <div className="wohnen-bottom-sheet-panel w-full max-w-md rounded-t-[20px] bg-white px-5 pb-6 pt-2 shadow-xl sm:rounded-2xl sm:px-6 sm:pt-6">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#e0e0e0] sm:hidden" aria-hidden />
             <h2 className="text-lg font-bold text-slate-900">Bewerbung ablehnen</h2>
             <p className="mt-3 text-sm text-slate-600">
               Der Bewerber wird nicht benachrichtigt — die Ablehnung ist nur intern sichtbar.

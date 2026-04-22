@@ -100,7 +100,7 @@ export default async function WohnungDetailPage({ params }: PageProps) {
   pills.push(`Verfügbar ab ${formatDate(listing.availableFrom)}`)
 
   return (
-    <main className="pb-28 lg:pb-16">
+    <main className="pb-[5.5rem] lg:pb-16">
       <RentalListingDetailGallery imageUrls={photos} />
 
       <div className="mx-auto max-w-6xl px-4 py-6">
@@ -177,19 +177,21 @@ export default async function WohnungDetailPage({ params }: PageProps) {
             <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
               Weitere Wohnungen in {cantonLabel(listing.canton)}
             </h2>
-            <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 flex gap-4 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch] lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible">
               {similar.map(row => (
-                <RentalListingCard key={row.id} listing={rentalListingRowToCardData(row)} />
+                <div key={row.id} className="w-[min(85vw,320px)] shrink-0 lg:w-auto lg:min-w-0">
+                  <RentalListingCard listing={rentalListingRowToCardData(row)} />
+                </div>
               ))}
             </div>
           </section>
         ) : null}
       </div>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 lg:hidden">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 lg:hidden">
         <div
-          className="pointer-events-auto border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur supports-[backdrop-filter]:bg-white/90"
-          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+          className="pointer-events-auto border-t border-[#e8f7f2] bg-white px-5 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]"
+          style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
         >
           <div className="mx-auto max-w-6xl">
             <WohnungBewerbungsBox

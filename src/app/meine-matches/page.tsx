@@ -114,31 +114,31 @@ export default async function MeineMatchesPage() {
           )}
         </section>
 
-        <section className="mb-8 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-          <div className="flex flex-wrap items-center gap-2">
+        <section className="mb-8 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-5">
+          <div className="-mx-1 flex flex-nowrap gap-2 overflow-x-auto px-1 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {profile.preferredCanton ? (
-              <span className="inline-flex items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
                 <IconPin /> Kanton {profile.preferredCanton}
               </span>
             ) : null}
             {profile.preferredMinRooms != null ? (
-              <span className="inline-flex items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
                 <IconBed /> ab {profile.preferredMinRooms} Zi.
               </span>
             ) : null}
             {profile.preferredBudgetMax != null ? (
-              <span className="inline-flex items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
                 <IconChf /> bis {formatCHF(profile.preferredBudgetMax)}/Mo
               </span>
             ) : null}
             {profile.creditCheckStatus === 'APPROVED' ? (
-              <span className="inline-flex items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
                 <IconShieldCheck colorClass="text-emerald-600" /> Verifiziert
               </span>
             ) : (
               <Link
                 href="/profil/betreibungsregister"
-                className="inline-flex items-center gap-1.5 rounded-[20px] bg-orange-100 px-3 py-[5px] text-xs font-semibold text-orange-800 ring-1 ring-orange-200 hover:bg-orange-200"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-orange-100 px-3 py-[5px] text-xs font-semibold text-orange-800 ring-1 ring-orange-200 hover:bg-orange-200"
               >
                 <IconShieldCheck colorClass="text-orange-600" /> Betreibungsregister hochladen
               </Link>
@@ -159,7 +159,7 @@ export default async function MeineMatchesPage() {
           {emptyReason || matches.length === 0 ? (
             <EmptyStateCard />
           ) : (
-            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {matches.map(m => {
                 const card = rentalListingRowToCardData({
                   ...m.listing,

@@ -288,7 +288,7 @@ export function RentalListingLandlordForm({
     description.trim().length >= minDescriptionLen
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 sm:py-10">
+    <main className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
       <div className="mb-6">
         <Link href={backHref} className="text-sm font-medium text-teal-800 hover:underline">
           ← Zurück
@@ -307,7 +307,7 @@ export function RentalListingLandlordForm({
       {mode === 'edit' ? (
         <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
           <p className="text-sm font-semibold text-slate-900">Status</p>
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="mt-3 flex flex-col gap-3 md:flex-row md:flex-wrap">
             <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm">
               <input
                 type="radio"
@@ -342,7 +342,7 @@ export function RentalListingLandlordForm({
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         {isAdminForm && importMetaLocked ?
           <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/80 p-4">
             <p className="text-sm font-bold text-amber-950">Quelle (Import)</p>
@@ -484,7 +484,7 @@ export function RentalListingLandlordForm({
             className="w-full rounded-lg border border-slate-300 px-3 py-2"
           />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">PLZ *</label>
             <input
@@ -520,7 +520,7 @@ export function RentalListingLandlordForm({
             ))}
           </select>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Anzahl Zimmer *</label>
             <select
@@ -559,7 +559,7 @@ export function RentalListingLandlordForm({
             className="w-full rounded-lg border border-slate-300 px-3 py-2"
           />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Monatsmiete CHF *</label>
             <input
@@ -632,7 +632,8 @@ export function RentalListingLandlordForm({
                 <button
                   type="button"
                   onClick={() => removeImage(idx)}
-                  className="absolute right-0 top-0 bg-black/60 px-1 text-xs text-white"
+                  className="absolute right-0 top-0 flex min-h-[44px] min-w-[44px] items-start justify-end bg-black/60 pb-1 pl-1 text-sm font-bold leading-none text-white"
+                  aria-label="Foto entfernen"
                 >
                   ×
                 </button>
@@ -672,7 +673,7 @@ export function RentalListingLandlordForm({
         <button
           type="submit"
           disabled={!canSubmit}
-          className="w-full rounded-xl bg-[#18a87c] py-3.5 text-sm font-bold text-white shadow-md hover:opacity-95 disabled:opacity-50"
+          className="min-h-[52px] w-full rounded-xl bg-[#18a87c] py-3.5 text-sm font-bold text-white shadow-md hover:opacity-95 disabled:opacity-50"
         >
           {submitting ? 'Wird gespeichert…' : mode === 'edit' ? 'Änderungen speichern' : 'Inserat veröffentlichen'}
         </button>

@@ -97,8 +97,10 @@ export function WohnungBewerbungsBox({
 
   if (isOwner) {
     return (
-      <div className={`rounded-2xl border border-slate-200 bg-white shadow-lg ${compact ? 'p-4' : 'p-6'}`}>
-        <p className="text-center text-sm font-medium text-slate-600">Das ist dein eigenes Inserat.</p>
+      <div className={`rounded-2xl border border-slate-200 bg-white shadow-lg ${compact ? 'border-0 p-0 shadow-none ring-0' : 'p-6'}`}>
+        <p className={`text-center text-sm font-medium text-slate-600 ${compact ? 'py-2' : ''}`}>
+          Das ist dein eigenes Inserat.
+        </p>
       </div>
     )
   }
@@ -113,46 +115,60 @@ export function WohnungBewerbungsBox({
   const disabled = Boolean(userId && alreadyApplied)
   const isTealPrimary = (!userId || isQualifiedNow) && !alreadyApplied
 
+  const primaryBtnClass = (() => {
+    const base = 'min-h-[48px] shrink-0 rounded-xl px-4 py-2.5 text-center text-sm font-bold transition sm:min-h-[44px]'
+    if (disabled) {
+      return `${base} cursor-not-allowed bg-slate-300 text-slate-600`
+    }
+    if (notQualified) {
+      return `${base} bg-orange-500 text-white shadow-md hover:bg-orange-600`
+    }
+    if (isTealPrimary) {
+      return `${base} bg-[#18a87c] text-white shadow-md hover:opacity-95`
+    }
+    return `${base} border-2 border-teal-700 bg-white text-teal-800 shadow-sm hover:bg-teal-50`
+  })()
+
   return (
     <>
       <div
         className={`rounded-2xl border border-slate-200 bg-white shadow-lg ring-1 ring-slate-100 ${
-          compact ? 'p-4 ring-0' : 'p-6'
+          compact ? 'border-0 p-0 shadow-none ring-0' : 'p-6'
         }`}
       >
         {!compact ?
           <div className="h-1 w-full rounded-full bg-[#18a87c]" aria-hidden />
         : null}
-        <p
-          className={`text-center font-bold text-slate-900 ${compact ? 'text-lg' : 'mt-4 text-2xl'}`}
-        >
-          CHF {rentPerMonth.toLocaleString('de-CH')}.—{' '}
-          <span className={`font-semibold text-slate-600 ${compact ? 'text-sm' : 'text-base'}`}>/ Monat</span>
-        </p>
 
-        {requiresCreditCheck && !compact ?
-          <div className="mt-4 rounded-xl bg-teal-50 px-3 py-3 text-xs leading-relaxed text-teal-900">
-            📄 Dieser Vermieter verlangt einen Betreibungsregisterauszug. Lade ihn einmalig in deinem Profil hoch — er
-            gilt für alle deine Bewerbungen.
+        {compact ?
+          <div className="flex items-center justify-between gap-3">
+            <p className="min-w-0 text-left text-base font-bold leading-tight text-slate-900">
+              CHF {rentPerMonth.toLocaleString('de-CH')}.—
+              <span className="block text-xs font-semibold text-slate-600">/ Monat</span>
+            </p>
+            <button type="button" onClick={onPrimaryClick} disabled={disabled} className={`${primaryBtnClass} max-w-[58%]`}>
+              {qualifying ? 'Prüfe…' : label}
+            </button>
           </div>
-        : null}
+        : (
+          <>
+            <p className="mt-4 text-center text-2xl font-bold text-slate-900">
+              CHF {rentPerMonth.toLocaleString('de-CH')}.—{' '}
+              <span className="text-base font-semibold text-slate-600">/ Monat</span>
+            </p>
 
-        <button
-          type="button"
-          onClick={onPrimaryClick}
-          disabled={disabled}
-          className={
-            disabled
-              ? `${compact ? 'mt-3' : 'mt-5'} w-full min-h-[44px] cursor-not-allowed rounded-xl bg-slate-300 px-4 py-3 text-center text-sm font-bold text-slate-600`
-              : notQualified
-                ? `${compact ? 'mt-3' : 'mt-5'} w-full min-h-[44px] rounded-xl bg-orange-500 px-4 py-3 text-center text-sm font-bold text-white shadow-md transition hover:bg-orange-600`
-                : isTealPrimary
-                ? `${compact ? 'mt-3' : 'mt-5'} w-full min-h-[44px] rounded-xl bg-[#18a87c] px-4 py-3 text-center text-sm font-bold text-white shadow-md transition hover:opacity-95`
-                : `${compact ? 'mt-3' : 'mt-5'} w-full min-h-[44px] rounded-xl border-2 border-teal-700 bg-white px-4 py-3 text-center text-sm font-bold text-teal-800 shadow-sm transition hover:bg-teal-50`
-          }
-        >
-          {qualifying ? 'Prüfe Anforderungen…' : label}
-        </button>
+            {requiresCreditCheck ?
+              <div className="mt-4 rounded-xl bg-teal-50 px-3 py-3 text-xs leading-relaxed text-teal-900">
+                📄 Dieser Vermieter verlangt einen Betreibungsregisterauszug. Lade ihn einmalig in deinem Profil hoch — er
+                gilt für alle deine Bewerbungen.
+              </div>
+            : null}
+
+            <button type="button" onClick={onPrimaryClick} disabled={disabled} className={`${primaryBtnClass} mt-5 w-full`}>
+              {qualifying ? 'Prüfe Anforderungen…' : label}
+            </button>
+          </>
+        )}
         {!compact && userId && !alreadyApplied && notQualified && blockingCount > 0 ? (
           <p className="mt-2 text-center text-xs font-medium text-orange-700">
             {blockingCount} {blockingCount === 1 ? 'Punkt ausstehend' : 'Punkte ausstehend'}
@@ -174,7 +190,8 @@ export function WohnungBewerbungsBox({
           aria-modal="true"
           aria-labelledby="wohnung-login-title"
         >
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl">
+          <div className="wohnen-bottom-sheet-panel max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-[20px] bg-white px-5 pb-6 pt-2 shadow-xl sm:rounded-2xl sm:px-6 sm:pt-6">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#e0e0e0] sm:hidden" aria-hidden />
             <h2 id="wohnung-login-title" className="text-lg font-bold text-slate-900">
               Melde dich an oder registriere dich um dich zu bewerben
             </h2>

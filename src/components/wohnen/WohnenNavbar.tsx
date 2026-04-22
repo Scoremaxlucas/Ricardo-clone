@@ -19,6 +19,14 @@ function creditValid(p: TenantProfileBrief): boolean {
   return new Date(p.creditCheckExpiresAt).getTime() > Date.now()
 }
 
+const mobileDrawerLink =
+  'flex min-h-[52px] items-center border-b border-[#e8f7f2] px-3 text-sm font-medium text-slate-800 hover:bg-[#f5fdfb]'
+const mobileDrawerLinkTeal =
+  'flex min-h-[52px] items-center border-b border-[#e8f7f2] bg-[#e8f7f2] px-3 text-sm font-semibold text-[#107a5a] hover:bg-[#dff5eb]'
+
+/** Nach Login: Matches zuerst (unvollständiges Profil wird von /meine-matches weitergeleitet). */
+const WOHNEN_LOGIN_HREF = '/login?callbackUrl=%2Fmeine-matches'
+
 export function WohnenNavbar() {
   const { data: session, status } = useSession()
   const user = session?.user as { id?: string; name?: string | null; email?: string | null; image?: string | null } | undefined
@@ -161,7 +169,7 @@ export function WohnenNavbar() {
       return null
     }
     return (
-      <div className="relative hidden items-center gap-2 sm:flex">
+      <div className="relative hidden items-center gap-2 md:flex">
         {showTenantCompleteNav && okGreen ?
           <span
             className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm ring-2 ring-emerald-200"
@@ -197,6 +205,15 @@ export function WohnenNavbar() {
               >
                 Wohnungen suchen
               </Link>
+              {showIncompleteNav ? (
+                <Link
+                  href="/profil/erstellen"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-50"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Profil erstellen
+                </Link>
+              ) : null}
               {showMatchesNav ? (
                 <Link
                   href="/meine-matches"
@@ -262,15 +279,15 @@ export function WohnenNavbar() {
     if (!signedIn) {
       return (
         <>
-          <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+          <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
             Wohnungen suchen
           </Link>
-          <Link href="/login" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-slate-500 hover:bg-slate-100" onClick={closeAll}>
+          <Link href={WOHNEN_LOGIN_HREF} className={`${mobileDrawerLink} text-slate-600`} onClick={closeAll}>
             Anmelden
           </Link>
           <Link
             href="/register"
-            className="mt-2 flex min-h-[44px] items-center justify-center rounded-lg bg-[#18a87c] px-3 py-2.5 text-center font-semibold text-white shadow-sm hover:opacity-95"
+            className="flex min-h-[52px] items-center justify-center border-b border-[#e8f7f2] bg-[#18a87c] px-3 text-center text-sm font-semibold text-white hover:opacity-95"
             onClick={closeAll}
           >
             Kostenlos registrieren
@@ -283,32 +300,33 @@ export function WohnenNavbar() {
     }
     return (
       <>
+        {showMatchesNav ? (
+          <Link href="/meine-matches" className={mobileDrawerLinkTeal} onClick={closeAll}>
+            Meine Matches
+          </Link>
+        ) : null}
+
         {showLandlordNav ?
           <>
-            <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
               Wohnungen suchen
             </Link>
-            {showMatchesNav ? (
-              <Link href="/meine-matches" className="flex min-h-[44px] items-center rounded-lg bg-teal-50 px-3 py-2.5 font-semibold text-teal-700 hover:bg-teal-100" onClick={closeAll}>
-                Meine Matches
-              </Link>
-            ) : null}
-            <Link href="/matching/properties" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/matching/properties" className={mobileDrawerLink} onClick={closeAll}>
               Meine Inserate
             </Link>
-            <Link href="/matching/properties/new" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/matching/properties/new" className={mobileDrawerLink} onClick={closeAll}>
               Neues Inserat
             </Link>
           </>
         : null}
         {showIncompleteNav ?
           <>
-            <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
               Wohnungen suchen
             </Link>
             <Link
               href="/profil/erstellen"
-              className="flex min-h-[44px] items-center rounded-lg bg-amber-100 px-3 py-2.5 font-semibold text-amber-950 hover:bg-amber-200"
+              className={`${mobileDrawerLink} bg-amber-50 font-semibold text-amber-950 hover:bg-amber-100`}
               onClick={closeAll}
             >
               ⚠️ Profil erstellen
@@ -317,17 +335,12 @@ export function WohnenNavbar() {
         : null}
         {showCreditRenew && !showLandlordNav ?
           <>
-            <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
               Wohnungen suchen
             </Link>
-            {showMatchesNav ? (
-              <Link href="/meine-matches" className="flex min-h-[44px] items-center rounded-lg bg-teal-50 px-3 py-2.5 font-semibold text-teal-700 hover:bg-teal-100" onClick={closeAll}>
-                Meine Matches
-              </Link>
-            ) : null}
             <Link
               href="/profil/betreibungsregister"
-              className="flex min-h-[44px] items-center rounded-lg bg-orange-100 px-3 py-2.5 font-semibold text-orange-950 hover:bg-orange-200"
+              className={`${mobileDrawerLink} bg-orange-50 font-semibold text-orange-950 hover:bg-orange-100`}
               onClick={closeAll}
             >
               ⚠️ Auszug erneuern
@@ -336,64 +349,70 @@ export function WohnenNavbar() {
         : null}
         {showTenantCompleteNav ?
           <>
-            <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
               Wohnungen suchen
             </Link>
-            <Link href="/meine-matches" className="flex min-h-[44px] items-center rounded-lg bg-teal-50 px-3 py-2.5 font-semibold text-teal-700 hover:bg-teal-100" onClick={closeAll}>
-              Meine Matches
-            </Link>
-            <Link href="/meine-bewerbungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/meine-bewerbungen" className={mobileDrawerLink} onClick={closeAll}>
               Meine Bewerbungen
             </Link>
-            <Link href="/matching/properties/new" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/matching/properties/new" className={mobileDrawerLink} onClick={closeAll}>
               Wohnung inserieren
             </Link>
           </>
         : null}
         {!showLandlordNav && !showIncompleteNav && !showCreditRenew && !showTenantCompleteNav ?
-          <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+          <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
             Wohnungen suchen
           </Link>
         : null}
 
         <div className="my-2 border-t border-slate-200" />
 
-        <div className="px-3 py-2">
+        <div className="border-b border-[#e8f7f2] px-3 py-3">
           <p className="text-xs font-semibold text-slate-500">Konto</p>
           <p className="truncate text-sm font-semibold text-slate-900">{user?.name || 'Benutzer/in'}</p>
           <p className="truncate text-xs text-slate-500">{user?.email || ''}</p>
         </div>
-        <Link href="/profil" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+        <Link href="/profil" className={mobileDrawerLink} onClick={closeAll}>
           Mein Profil
         </Link>
-        {showMatchesNav ? (
-          <Link href="/meine-matches" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
-            Meine Matches
-          </Link>
-        ) : null}
-        <Link href="/meine-bewerbungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+        <Link href="/meine-bewerbungen" className={mobileDrawerLink} onClick={closeAll}>
           Meine Bewerbungen
         </Link>
         {hasListings ?
-          <Link href="/matching/properties" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+          <Link href="/matching/properties" className={mobileDrawerLink} onClick={closeAll}>
             Meine Inserate
           </Link>
         : null}
         {isAdminUser ?
           <>
-            <p className="px-3 pt-2 text-xs font-bold uppercase tracking-wide text-slate-500">⚙️ Admin</p>
-            <Link href="/admin/listings" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 font-semibold text-red-700 hover:bg-red-50" onClick={closeAll}>Inserate verwalten</Link>
-            <Link href="/admin/users" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 font-semibold text-red-700 hover:bg-red-50" onClick={closeAll}>User verwalten</Link>
-            <Link href="/admin/applications" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 font-semibold text-red-700 hover:bg-red-50" onClick={closeAll}>Alle Bewerbungen</Link>
-            <Link href="/admin/users?filter=pending_review" className="flex min-h-[44px] items-center justify-between rounded-lg px-3 py-2.5 font-semibold text-red-700 hover:bg-red-50" onClick={closeAll}>
-              <span>⚠️ Manuelle Reviews</span>
-              {pendingManualReviews > 0 ? <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{pendingManualReviews}</span> : null}
+            <p className="border-b border-[#e8f7f2] px-3 pb-2 pt-3 text-xs font-bold uppercase tracking-wide text-slate-500">⚙️ Admin</p>
+            <Link href="/admin/listings" className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`} onClick={closeAll}>
+              Inserate verwalten
+            </Link>
+            <Link href="/admin/users" className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`} onClick={closeAll}>
+              User verwalten
+            </Link>
+            <Link href="/admin/applications" className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`} onClick={closeAll}>
+              Alle Bewerbungen
+            </Link>
+            <Link
+              href="/admin/users?filter=pending_review"
+              className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`}
+              onClick={closeAll}
+            >
+              <span className="flex w-full items-center justify-between gap-2">
+                <span>⚠️ Manuelle Reviews</span>
+                {pendingManualReviews > 0 ? (
+                  <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{pendingManualReviews}</span>
+                ) : null}
+              </span>
             </Link>
           </>
         : null}
         <button
           type="button"
-          className="mt-2 w-full rounded-lg px-3 py-2.5 text-left font-medium text-red-600 hover:bg-red-50"
+          className="mt-1 flex min-h-[52px] w-full items-center border-b border-[#e8f7f2] px-3 text-left text-sm font-medium text-red-600 hover:bg-red-50"
           onClick={() => void signOut({ callbackUrl: '/' })}
         >
           Abmelden
@@ -413,16 +432,22 @@ export function WohnenNavbar() {
         </Link>
 
         {showSkeleton ?
-          <div className="hidden flex-1 items-center justify-end gap-3 sm:flex">
+          <div className="hidden flex-1 items-center justify-end gap-3 md:flex">
             <div className="h-4 w-28 animate-pulse rounded bg-slate-200" />
             <div className="h-8 w-24 animate-pulse rounded-lg bg-slate-200" />
           </div>
         : (
-          <nav className="hidden flex-1 items-center justify-end gap-3 min-[768px]:flex min-[768px]:gap-4">
+          <nav className="hidden flex-1 items-center justify-end gap-3 md:flex md:gap-4">
             {!signedIn ?
               <>
                 <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-slate-900">
                   Wohnungen suchen
+                </Link>
+                <Link
+                  href={WOHNEN_LOGIN_HREF}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                >
+                  Anmelden
                 </Link>
                 <Link
                   href="/register"
@@ -442,42 +467,41 @@ export function WohnenNavbar() {
                   Wohnungen suchen
                 </Link>
                 <Link
-                  href="/register"
-                  className="rounded-xl bg-[#18a87c] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+                  href="/profil/erstellen"
+                  className="rounded-md bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-200"
                 >
-                  Registrieren
+                  Profil erstellen
                 </Link>
+                {renderAuthButtons()}
               </>
             )}
           </nav>
         )}
 
-        <div className="flex items-center gap-2 min-[768px]:hidden">
+        <div className="flex items-center gap-2 md:hidden">
           <button
             type="button"
-            className="inline-flex items-center justify-center rounded-md border border-slate-200 p-2 text-slate-800"
+            className="inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-teal-200 bg-white text-[#18a87c] shadow-sm"
             aria-label={mobileOpen ? 'Menü schliessen' : 'Menü öffnen'}
             onClick={() => setMobileOpen(o => !o)}
           >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileOpen ? <X className="h-6 w-6" strokeWidth={2} /> : <Menu className="h-6 w-6" strokeWidth={2} />}
           </button>
         </div>
       </div>
 
       {/* Mobile slide-in */}
-      <div
-        className={`fixed inset-0 z-[60] min-[768px]:hidden ${mobileOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
-      >
+      <div className={`fixed inset-0 z-[60] md:hidden ${mobileOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
         <button
           type="button"
-          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ease-out ${
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-[250ms] ease-out ${
             mobileOpen ? 'opacity-100' : 'opacity-0'
           }`}
           aria-label="Menü schliessen"
           onClick={() => setMobileOpen(false)}
         />
         <div
-          className={`absolute inset-y-0 right-0 flex w-[min(100%,20rem)] max-w-full flex-col border-l border-slate-200 bg-white shadow-xl transition-transform duration-300 ease-out ${
+          className={`absolute inset-y-0 right-0 flex w-[85vw] max-w-[360px] flex-col border-l border-slate-200 bg-white shadow-[-12px_0_24px_rgba(0,0,0,0.12)] transition-transform duration-[250ms] ease-out ${
             mobileOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
@@ -485,14 +509,14 @@ export function WohnenNavbar() {
             <span className="text-sm font-bold text-slate-900">Menü</span>
             <button
               type="button"
-              className="rounded-md p-2 text-slate-600 hover:bg-slate-100"
+              className="inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
               aria-label="Schliessen"
               onClick={() => setMobileOpen(false)}
             >
               <X className="h-5 w-5" />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto px-2 py-4 text-sm font-medium">{mobileNavLinks()}</div>
+          <div className="flex-1 overflow-y-auto px-0 py-0 text-sm font-medium">{mobileNavLinks()}</div>
         </div>
       </div>
     </header>

@@ -127,7 +127,7 @@ export function WohnungenListingsFeed({ activeCount }: Props) {
       </p>
 
       {isLoading ? (
-        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-[330px] animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
           ))}
@@ -169,7 +169,7 @@ export function WohnungenListingsFeed({ activeCount }: Props) {
               />
             </div>
           ) : (
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
               {listings.map(row => (
                 <RentalListingCard key={row.id} listing={row} />
               ))}

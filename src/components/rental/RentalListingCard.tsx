@@ -64,7 +64,7 @@ export function RentalListingCard({ listing: l, imagePriority = false, matchScor
       href={`/wohnungen/${l.id}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:cursor-pointer hover:border-teal-300 hover:shadow-md"
     >
-      <div className="relative aspect-[4/3] bg-slate-100">
+      <div className="relative aspect-video bg-slate-100 md:aspect-[4/3]">
         {main ?
           <Image
             src={main}
@@ -99,12 +99,14 @@ export function RentalListingCard({ listing: l, imagePriority = false, matchScor
         : null}
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-1 font-bold text-slate-900 group-hover:text-teal-800">{l.title}</h3>
+        <h3 className="line-clamp-2 font-bold leading-snug text-slate-900 group-hover:text-teal-800">
+          {l.title}
+        </h3>
         <p className="mt-1 text-sm text-slate-600">
           {l.rooms} Zi. · {l.areaSqm} m²
           {l.floor != null && l.floor !== undefined ? ` · Etage ${l.floor}` : ''}
         </p>
-        <p className="mt-2 text-lg font-bold text-[#18a87c]">{formatCHF(l.rentPerMonth)} / Monat</p>
+        <p className="mt-2 text-xl font-bold text-[#18a87c] md:text-[28px] md:leading-none">{formatCHF(l.rentPerMonth)} / Monat</p>
         {l.utilitiesPerMonth != null ?
           <p className="text-xs text-slate-500">+ NK {formatCHF(l.utilitiesPerMonth)}</p>
         : null}

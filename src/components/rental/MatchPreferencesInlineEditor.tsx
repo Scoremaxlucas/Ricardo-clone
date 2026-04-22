@@ -68,7 +68,7 @@ export function MatchPreferencesInlineEditor({ initial }: Props) {
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="rounded-full border border-teal-300 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50"
+        className="flex min-h-[48px] w-full items-center justify-center rounded-full border border-teal-300 px-4 text-sm font-semibold text-teal-700 hover:bg-teal-50 md:inline-flex md:min-h-0 md:w-auto md:px-3 md:py-1.5 md:text-xs"
       >
         Präferenzen anpassen
       </button>
@@ -78,14 +78,14 @@ export function MatchPreferencesInlineEditor({ initial }: Props) {
           open ? 'mt-3 max-h-[560px] border-t-[3px] opacity-100' : 'mt-0 max-h-0 border-t-0 opacity-0'
         }`}
       >
-        <div className="grid gap-3 p-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2">
           <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
             Bevorzugter Kanton
             <select
               title="Bevorzugter Kanton"
               value={preferredCanton}
               onChange={e => setPreferredCanton(e.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+              className="min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base text-slate-900 md:min-h-0 md:text-sm"
             >
               <option value="">Alle</option>
               {SWISS_CANTONS.map(c => (
@@ -102,7 +102,7 @@ export function MatchPreferencesInlineEditor({ initial }: Props) {
               title="Minimum Zimmer"
               value={preferredMinRooms}
               onChange={e => setPreferredMinRooms(e.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+              className="min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base text-slate-900 md:min-h-0 md:text-sm"
             >
               {ROOM_OPTIONS.map(v => (
                 <option key={v || 'all'} value={v}>
@@ -118,7 +118,7 @@ export function MatchPreferencesInlineEditor({ initial }: Props) {
               title="Maximale Miete"
               value={preferredBudgetMax}
               onChange={e => setPreferredBudgetMax(e.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+              className="min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base text-slate-900 md:min-h-0 md:text-sm"
             >
               {MAX_RENT_OPTIONS.map(v => (
                 <option key={v || 'all'} value={v}>
@@ -134,23 +134,23 @@ export function MatchPreferencesInlineEditor({ initial }: Props) {
               type="date"
               value={preferredMoveInEarliest}
               onChange={e => setPreferredMoveInEarliest(e.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+              className="min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base text-slate-900 md:min-h-0 md:text-sm"
             />
           </label>
 
-          <div className="sm:col-span-2">
+          <div className="flex flex-col gap-2 md:col-span-2 md:flex-row md:flex-wrap">
             <button
               type="button"
               onClick={() => void onSave()}
               disabled={saving}
-              className="inline-flex min-h-[40px] items-center rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+              className="inline-flex min-h-[48px] w-full items-center justify-center rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60 md:w-auto"
             >
               {saving ? 'Speichern…' : 'Speichern & aktualisieren'}
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="ml-2 inline-flex min-h-[40px] items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="inline-flex min-h-[48px] w-full items-center justify-center rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 md:w-auto"
             >
               Abbrechen
             </button>

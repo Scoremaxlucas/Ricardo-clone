@@ -2,7 +2,7 @@
 
 import { isVercelBlobImageUrl } from '@/lib/rental/remote-image'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type Props = { imageUrls: string[] }
 
@@ -11,6 +11,28 @@ export function RentalListingDetailGallery({ imageUrls }: Props) {
   const urls = imageUrls.filter(u => typeof u === 'string' && u.length > 0)
   const main = urls[0]
   const thumbs = urls.slice(1, 5)
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const [activeIdx, setActiveIdx] = useState(0)
+
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el || urls.length === 0) return
+
+    const measure = () => {
+      const first = el.children[0] as HTMLElement | undefined
+      const w = first?.offsetWidth || el.clientWidth || 1
+      const i = Math.round(el.scrollLeft / w)
+      setActiveIdx(Math.max(0, Math.min(urls.length - 1, i)))
+    }
+
+    measure()
+    el.addEventListener('scroll', measure, { passive: true })
+    window.addEventListener('resize', measure)
+    return () => {
+      el.removeEventListener('scroll', measure)
+      window.removeEventListener('resize', measure)
+    }
+  }, [urls.length])
 
   if (urls.length === 0) {
     return (
@@ -27,12 +49,16 @@ export function RentalListingDetailGallery({ imageUrls }: Props) {
   return (
     <>
       <div className="border-b border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-6xl px-0 lg:px-4">
-          <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-smooth px-4 py-3 lg:hidden">
+        <div className="relative mx-auto max-w-6xl lg:px-4">
+          <div
+            ref={scrollerRef}
+            className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pb-3 pt-3 [-webkit-overflow-scrolling:touch] lg:hidden"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             {urls.map((src, i) => (
               <div
                 key={i}
-                className="relative h-52 w-[85vw] max-w-md shrink-0 snap-center overflow-hidden rounded-xl bg-slate-200"
+                className="relative aspect-[4/3] w-screen max-w-[100vw] shrink-0 snap-start overflow-hidden bg-slate-200 sm:rounded-xl"
               >
                 <Image
                   src={src}
@@ -46,6 +72,14 @@ export function RentalListingDetailGallery({ imageUrls }: Props) {
               </div>
             ))}
           </div>
+          {urls.length > 1 ? (
+            <div
+              className="pointer-events-none absolute bottom-5 right-3 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white lg:hidden"
+              aria-live="polite"
+            >
+              {activeIdx + 1} / {urls.length}
+            </div>
+          ) : null}
 
           <div className="hidden gap-3 py-4 lg:flex">
             <div className="relative aspect-[4/3] w-[60%] shrink-0 overflow-hidden rounded-2xl bg-slate-200">

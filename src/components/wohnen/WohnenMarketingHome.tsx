@@ -107,47 +107,51 @@ export async function WohnenMarketingHome({
 
       {/* 1. Hero */}
       <section
-        className="relative flex min-h-[85vh] flex-col justify-center bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+        className="relative flex min-h-[85vh] flex-col justify-center bg-white px-5 pt-12 pb-16 sm:px-6 sm:pt-20 sm:pb-20 md:px-8 md:pt-20"
         style={{ backgroundImage: 'linear-gradient(180deg, #e8f7f2 0%, #ffffff 40%)' }}
       >
         <div className="mx-auto max-w-4xl text-center">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#18a87c]">🇨🇭 DER FAIRE SCHWEIZER MIETMARKT</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#18a87c] md:text-[13px]">
+            🇨🇭 DER FAIRE SCHWEIZER MIETMARKT
+          </p>
 
-          <h1 className="mx-auto mt-6 max-w-[20ch] text-[36px] font-black leading-none tracking-[-0.02em] text-slate-900 sm:max-w-none md:max-w-[18ch] md:text-[64px]">
+          <h1 className="mx-auto mt-5 max-w-[22ch] text-[36px] font-black leading-[1.05] tracking-[-0.02em] text-slate-900 sm:max-w-none md:mt-6 md:max-w-[18ch] md:text-[72px] md:leading-none">
             <span className="block text-slate-900">Wohnung finden.</span>
-            <span className="mt-2 block whitespace-nowrap text-[#18a87c] md:mt-3">Ohne Abo. Ohne Abzocke.</span>
+            <span className="mt-2 block text-[#18a87c] md:mt-3">
+              Ohne Abo.
+              <br className="md:hidden" /> Ohne Abzocke.
+            </span>
           </h1>
 
-          <p className="mx-auto mt-8 max-w-[600px] text-[22px] font-normal leading-[1.6] text-[#5a7a6e]">
+          <p className="mx-auto mt-6 max-w-[600px] text-base font-normal leading-relaxed text-[#5a7a6e] md:mt-8 md:text-[22px] md:leading-[1.6]">
             Wohnungssuche in der Schweiz ist stressig genug.
             <br />
             Bei Helvenda bewirbst du dich einmal — und wirst überall sofort ernst genommen.
           </p>
 
-          <div className="mx-auto mt-10 flex max-w-xl flex-col items-stretch justify-center gap-4 sm:mx-auto sm:flex-row sm:items-center sm:gap-6">
+          <div className="mx-auto mt-8 flex max-w-xl flex-col items-stretch justify-center gap-3 sm:mt-10 sm:flex-row sm:items-center sm:gap-6">
             <Link
               href={primaryHref}
-              className="inline-flex w-full justify-center rounded-xl bg-[#18a87c] px-10 py-4 text-lg font-semibold text-white shadow-sm transition hover:opacity-95 sm:w-auto"
-              style={{ padding: '16px 40px', fontSize: '18px', borderRadius: '12px' }}
+              className="inline-flex h-[52px] w-full items-center justify-center rounded-xl bg-[#18a87c] px-6 text-base font-semibold text-white shadow-sm transition hover:opacity-95 md:h-auto md:px-10 md:py-4 md:text-lg"
             >
               {primaryLabel}
             </Link>
             <Link
               href="/matching/properties/new"
-              className="w-full text-center text-lg font-semibold text-[#5a7a6e] transition hover:text-[#18a87c] sm:w-auto sm:py-4"
+              className="flex h-[52px] w-full items-center justify-center text-center text-base font-semibold text-[#5a7a6e] transition hover:text-[#18a87c] sm:h-auto sm:w-auto sm:py-4 md:text-lg"
             >
               Als Vermieter inserieren →
             </Link>
           </div>
 
-          <div className="mx-auto mt-10 flex max-w-2xl flex-wrap justify-center gap-x-6 gap-y-2 text-[14px] font-normal text-[#8aa89e]">
+          <div className="mx-auto mt-8 flex max-w-2xl flex-wrap justify-center gap-x-2 gap-y-2 text-xs font-normal text-[#8aa89e] sm:mt-10 sm:gap-x-6 sm:text-sm md:text-[14px]">
             <span>✓ Inserieren kostenlos</span>
             <span>✓ Nur verifizierte Bewerber</span>
             <span>✓ Kein Pflicht-Abo</span>
           </div>
 
           {activeCount > 0 ?
-            <p className="mx-auto mt-5 flex items-center justify-center gap-2 text-base font-bold text-[#18a87c]">
+            <p className="mx-auto mt-4 flex flex-wrap items-center justify-center gap-2 text-sm font-bold text-[#18a87c] sm:mt-5 md:text-base">
               <span className="whome-pulse-dot inline-block text-[#18a87c]" aria-hidden>
                 ●
               </span>
@@ -190,7 +194,7 @@ export async function WohnenMarketingHome({
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-base font-normal text-[#5a7a6e]">Die Antwort in Zahlen.</p>
           <div
-            className="mt-10 overflow-x-auto rounded-2xl border border-slate-200 shadow-sm [-webkit-overflow-scrolling:touch]"
+            className="table-wrapper mt-10 rounded-2xl border border-slate-200 shadow-sm [-webkit-overflow-scrolling:touch]"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <table className="w-full min-w-[640px] border-collapse text-left">

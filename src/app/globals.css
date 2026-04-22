@@ -70,6 +70,9 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: clip;
 }
 
 /* ===== GLOBAL SMOOTH TRANSITIONS (Ricardo-Style) ===== */
@@ -226,14 +229,35 @@ html {
   background-color: #134e4a;
   height: 100%;
   width: 100%;
-  /* KEIN overflow-x: hidden hier - das bricht position: sticky! */
+  max-width: 100vw;
+  /* clip statt hidden: verhindert horizontales Scrollen ohne sticky zu brechen */
+  overflow-x: clip;
 }
 
-body {
-  width: 100%;
-  max-width: 100vw;
-  /* overflow-x: clip statt hidden - erlaubt sticky zu funktionieren */
-  overflow-x: clip;
+/* Tabellen: horizontal scrollen wenn in Wrapper gelegt */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Wohnen: Bottom-Sheet Einblend-Animation (Mieter/Vermieter) */
+@keyframes wohnenBottomSheetSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.wohnen-bottom-sheet-panel {
+  animation: wohnenBottomSheetSlideUp 0.25s ease both;
+}
+
+@media (min-width: 640px) {
+  .wohnen-bottom-sheet-panel {
+    animation: none;
+  }
 }
 
 /* Animationen */
@@ -1323,8 +1347,10 @@ div.min-h-screen > footer {
   }
 
   /* Prevent iOS zoom on input focus */
-  input, textarea, select {
-    font-size: max(16px, 1em);
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
   }
 }
 

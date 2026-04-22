@@ -172,14 +172,14 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
         Mit einem vollständigen Profil kannst du dich auf Wohnungen bewerben — dein Einkommen erscheint nur als Kategorie.
       </p>
 
-      <ol className="mt-8 flex items-center justify-between gap-2 text-xs font-medium text-slate-500 sm:text-sm">
+      <ol className="mt-8 flex max-w-md items-center justify-center gap-3 text-xs font-medium text-slate-500 sm:mx-auto sm:max-w-none sm:justify-between sm:gap-2 sm:text-sm">
         {[1, 2, 3].map(n => (
-          <li key={n} className="flex flex-1 items-center gap-2">
+          <li key={n} className="flex flex-1 items-center gap-2 sm:min-w-0">
             <span
               className={
                 step >= n
-                  ? 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#18a87c] text-white'
-                  : 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white'
+                  ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#18a87c] text-sm text-white sm:h-8 sm:w-8 sm:text-xs'
+                  : 'flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-sm sm:h-8 sm:w-8 sm:text-xs'
               }
             >
               {n}
@@ -187,74 +187,74 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
             <span className="hidden min-w-0 sm:inline">
               {n === 1 ? 'Persönlich' : n === 2 ? 'Beruf' : 'Referenz'}
             </span>
-            {n < 3 ? <span className="hidden h-px flex-1 bg-slate-200 sm:block" aria-hidden /> : null}
+            {n < 3 ? <span className="hidden h-px min-w-[12px] flex-1 bg-slate-200 sm:block" aria-hidden /> : null}
           </li>
         ))}
       </ol>
 
-      {errors._form ? <p className="mt-4 text-sm text-red-600">{errors._form}</p> : null}
+      {errors._form ? <p className="mt-4 text-[13px] text-red-600">{errors._form}</p> : null}
 
       <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
         {step === 1 ? (
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-slate-900">Schritt 1 — Persönliche Angaben</h2>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Vorname *</label>
+              <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Vorname *</label>
               <input
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                 value={form.firstName}
                 onChange={e => setField('firstName', e.target.value)}
               />
-              {errors.firstName ? <p className="mt-1 text-xs text-red-600">{errors.firstName}</p> : null}
+              {errors.firstName ? <p className="mt-1 text-[13px] text-red-600">{errors.firstName}</p> : null}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Nachname *</label>
+              <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Nachname *</label>
               <input
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                 value={form.lastName}
                 onChange={e => setField('lastName', e.target.value)}
               />
-              {errors.lastName ? <p className="mt-1 text-xs text-red-600">{errors.lastName}</p> : null}
+              {errors.lastName ? <p className="mt-1 text-[13px] text-red-600">{errors.lastName}</p> : null}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Geburtsdatum *</label>
+              <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Geburtsdatum *</label>
               <input
                 type="date"
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                 value={form.dateOfBirth}
                 onChange={e => setField('dateOfBirth', e.target.value)}
               />
-              {errors.dateOfBirth ? <p className="mt-1 text-xs text-red-600">{errors.dateOfBirth}</p> : null}
+              {errors.dateOfBirth ? <p className="mt-1 text-[13px] text-red-600">{errors.dateOfBirth}</p> : null}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Aktuelle Strasse und Hausnummer *</label>
+              <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Aktuelle Strasse und Hausnummer *</label>
               <input
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                 value={form.currentAddress}
                 onChange={e => setField('currentAddress', e.target.value)}
               />
-              {errors.currentAddress ? <p className="mt-1 text-xs text-red-600">{errors.currentAddress}</p> : null}
+              {errors.currentAddress ? <p className="mt-1 text-[13px] text-red-600">{errors.currentAddress}</p> : null}
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-700">PLZ (Schweiz) *</label>
+                <label className="mb-1.5 block text-[14px] font-medium text-slate-700">PLZ (Schweiz) *</label>
                 <input
                   inputMode="numeric"
                   maxLength={4}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                   value={form.currentZip}
                   onChange={e => setField('currentZip', e.target.value.replace(/\D/g, '').slice(0, 4))}
                 />
-                {errors.currentZip ? <p className="mt-1 text-xs text-red-600">{errors.currentZip}</p> : null}
+                {errors.currentZip ? <p className="mt-1 text-[13px] text-red-600">{errors.currentZip}</p> : null}
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">Ort *</label>
+                <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Ort *</label>
                 <input
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                   value={form.currentCity}
                   onChange={e => setField('currentCity', e.target.value)}
                 />
-                {errors.currentCity ? <p className="mt-1 text-xs text-red-600">{errors.currentCity}</p> : null}
+                {errors.currentCity ? <p className="mt-1 text-[13px] text-red-600">{errors.currentCity}</p> : null}
               </div>
             </div>
           </div>
@@ -264,12 +264,12 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
           <div className="space-y-5">
             <h2 className="text-lg font-bold text-slate-900">Schritt 2 — Beschäftigung &amp; Einkommen</h2>
             <fieldset>
-              <legend className="text-sm font-medium text-slate-700">Beschäftigungsstatus *</legend>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <legend className="text-[14px] font-medium text-slate-700">Beschäftigungsstatus *</legend>
+              <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3">
                 {EMPLOYMENT_OPTIONS.map(opt => (
                   <label
                     key={opt.value}
-                    className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
+                    className={`flex min-h-[48px] cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm md:min-h-0 ${
                       form.employmentStatus === opt.value
                         ? 'border-teal-600 bg-teal-50'
                         : 'border-slate-200 bg-white hover:bg-slate-50'
@@ -292,27 +292,27 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
             {needsEmployer ? (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Arbeitgeber / Firma *</label>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Arbeitgeber / Firma *</label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                     value={form.employer}
                     onChange={e => setField('employer', e.target.value)}
                   />
-                  {errors.employer ? <p className="mt-1 text-xs text-red-600">{errors.employer}</p> : null}
+                  {errors.employer ? <p className="mt-1 text-[13px] text-red-600">{errors.employer}</p> : null}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Berufsbezeichnung (optional)</label>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Berufsbezeichnung (optional)</label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                     value={form.jobTitle}
                     onChange={e => setField('jobTitle', e.target.value)}
                   />
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Angestellt seit — Monat (optional)</label>
+                    <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Angestellt seit — Monat (optional)</label>
                     <select
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                       value={form.employedSinceMonth}
                       onChange={e => setField('employedSinceMonth', e.target.value)}
                     >
@@ -325,9 +325,9 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Angestellt seit — Jahr (optional)</label>
+                    <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Angestellt seit — Jahr (optional)</label>
                     <select
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                       value={form.employedSinceYear}
                       onChange={e => setField('employedSinceYear', e.target.value)}
                     >
@@ -341,18 +341,18 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
                   </div>
                 </div>
                 {errors.employedSinceMonth ? (
-                  <p className="text-xs text-red-600">{errors.employedSinceMonth}</p>
+                  <p className="text-[13px] text-red-600">{errors.employedSinceMonth}</p>
                 ) : null}
               </>
             ) : null}
 
             <div>
-              <label className="block text-sm font-medium text-slate-700">Monatliches Nettoeinkommen *</label>
-              <p className="mt-1 text-xs text-slate-500">
+              <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Monatliches Nettoeinkommen *</label>
+              <p className="mt-0 text-xs text-slate-500">
                 Bitte realistisch inkl. regelmässiger Zulagen wählen (13. Monatslohn anteilig mitgedacht).
               </p>
               <select
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-2 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                 value={form.monthlyIncomeCategory}
                 onChange={e => setField('monthlyIncomeCategory', e.target.value as IncomeCategory)}
               >
@@ -374,26 +374,26 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
           <div className="space-y-6">
             <h2 className="text-lg font-bold text-slate-900">Schritt 3 — Referenz &amp; Kontrolle</h2>
             <div>
-              <label className="flex items-center gap-1 text-sm font-medium text-slate-700">
+              <label className="mb-1.5 flex items-center gap-1 text-[14px] font-medium text-slate-700">
                 Referenz (optional)
                 <span className="cursor-help text-slate-400" title="Eine frühere Vermieter-Referenz erhöht deine Chancen erheblich">
                   (?)
                 </span>
               </label>
               <input
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                 placeholder="Name der Referenzperson"
                 value={form.referenceName}
                 onChange={e => setField('referenceName', e.target.value)}
               />
               <input
-                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-2 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                 placeholder="Telefonnummer"
                 value={form.referencePhone}
                 onChange={e => setField('referencePhone', e.target.value)}
               />
               <input
-                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-2 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                 placeholder='Beziehung (z.B. "Frühere Vermieterin")'
                 value={form.referenceRelation}
                 onChange={e => setField('referenceRelation', e.target.value)}
@@ -406,11 +406,11 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
                 Diese Angaben verbessern deine Empfehlungen und Lead-Qualität, sind aber nicht verpflichtend.
               </p>
 
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Bevorzugter Kanton</label>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Bevorzugter Kanton</label>
                   <select
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                     value={form.preferredCanton}
                     onChange={e => setField('preferredCanton', e.target.value)}
                   >
@@ -423,84 +423,84 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">PLZ-Wünsche (kommagetrennt)</label>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">PLZ-Wünsche (kommagetrennt)</label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                     placeholder="z. B. 8001, 8004"
                     value={form.preferredPostalCodes}
                     onChange={e => setField('preferredPostalCodes', e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Budget min. (CHF)</label>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Budget min. (CHF)</label>
                   <input
                     inputMode="numeric"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                     value={form.preferredBudgetMin}
                     onChange={e => setField('preferredBudgetMin', e.target.value.replace(/[^\d]/g, ''))}
                   />
                   {errors.preferredBudgetMin ? (
-                    <p className="mt-1 text-xs text-red-600">{errors.preferredBudgetMin}</p>
+                    <p className="mt-1 text-[13px] text-red-600">{errors.preferredBudgetMin}</p>
                   ) : null}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Budget max. (CHF)</label>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Budget max. (CHF)</label>
                   <input
                     inputMode="numeric"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                     value={form.preferredBudgetMax}
                     onChange={e => setField('preferredBudgetMax', e.target.value.replace(/[^\d]/g, ''))}
                   />
                   {errors.preferredBudgetMax ? (
-                    <p className="mt-1 text-xs text-red-600">{errors.preferredBudgetMax}</p>
+                    <p className="mt-1 text-[13px] text-red-600">{errors.preferredBudgetMax}</p>
                   ) : null}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Zimmer min.</label>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Zimmer min.</label>
                   <input
                     inputMode="decimal"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                     value={form.preferredMinRooms}
                     onChange={e => setField('preferredMinRooms', e.target.value.replace(',', '.'))}
                   />
                   {errors.preferredMinRooms ? (
-                    <p className="mt-1 text-xs text-red-600">{errors.preferredMinRooms}</p>
+                    <p className="mt-1 text-[13px] text-red-600">{errors.preferredMinRooms}</p>
                   ) : null}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Zimmer max.</label>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Zimmer max.</label>
                   <input
                     inputMode="decimal"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                     value={form.preferredMaxRooms}
                     onChange={e => setField('preferredMaxRooms', e.target.value.replace(',', '.'))}
                   />
                   {errors.preferredMaxRooms ? (
-                    <p className="mt-1 text-xs text-red-600">{errors.preferredMaxRooms}</p>
+                    <p className="mt-1 text-[13px] text-red-600">{errors.preferredMaxRooms}</p>
                   ) : null}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Einzug frühestens</label>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Einzug frühestens</label>
                   <input
                     type="date"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                     value={form.preferredMoveInEarliest}
                     onChange={e => setField('preferredMoveInEarliest', e.target.value)}
                   />
                   {errors.preferredMoveInEarliest ? (
-                    <p className="mt-1 text-xs text-red-600">{errors.preferredMoveInEarliest}</p>
+                    <p className="mt-1 text-[13px] text-red-600">{errors.preferredMoveInEarliest}</p>
                   ) : null}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Einzug spätestens</label>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Einzug spätestens</label>
                   <input
                     type="date"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                     value={form.preferredMoveInLatest}
                     onChange={e => setField('preferredMoveInLatest', e.target.value)}
                   />
                   {errors.preferredMoveInLatest ? (
-                    <p className="mt-1 text-xs text-red-600">{errors.preferredMoveInLatest}</p>
+                    <p className="mt-1 text-[13px] text-red-600">{errors.preferredMoveInLatest}</p>
                   ) : null}
                 </div>
               </div>
@@ -550,13 +550,13 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
               />
               <span>Ich bestätige, dass alle Angaben wahrheitsgemäss sind. *</span>
             </label>
-            {errors.confirmTruth ? <p className="text-xs text-red-600">{errors.confirmTruth}</p> : null}
+            {errors.confirmTruth ? <p className="text-[13px] text-red-600">{errors.confirmTruth}</p> : null}
 
             <button
               type="button"
               disabled={submitting}
               onClick={submit}
-              className="w-full rounded-xl bg-[#18a87c] py-3.5 text-sm font-bold text-white shadow-md hover:opacity-95 disabled:opacity-60"
+              className="min-h-[52px] w-full rounded-xl bg-[#18a87c] py-3.5 text-sm font-bold text-white shadow-md hover:opacity-95 disabled:opacity-60"
             >
               {submitting ? 'Speichern…' : 'Profil speichern'}
             </button>
@@ -564,28 +564,28 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
         ) : null}
 
         {step < 3 ? (
-          <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-between">
             <button
               type="button"
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              onClick={goNext}
+              className="order-1 min-h-[52px] w-full rounded-lg bg-[#18a87c] px-4 py-3 text-sm font-semibold text-white hover:opacity-95 sm:order-2 sm:w-auto sm:px-6"
+            >
+              Weiter
+            </button>
+            <button
+              type="button"
+              className="order-2 min-h-[52px] w-full rounded-lg border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 sm:order-1 sm:w-auto sm:px-6"
               onClick={goBack}
               disabled={step === 1}
             >
               Zurück
             </button>
-            <button
-              type="button"
-              onClick={goNext}
-              className="rounded-lg bg-[#18a87c] px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
-            >
-              Weiter
-            </button>
           </div>
         ) : (
-          <div className="mt-8 flex justify-start">
+          <div className="mt-8">
             <button
               type="button"
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="min-h-[52px] w-full rounded-lg border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:w-auto"
               onClick={goBack}
             >
               Zurück
