@@ -271,10 +271,17 @@ async function uploadExtractedImageUrls(
     })
   )
 
-  return settled
+  const uploaded = settled
     .filter((r): r is PromiseFulfilledResult<string | null> => r.status === 'fulfilled')
     .map(r => r.value)
     .filter((x): x is string => typeof x === 'string' && x.length > 0)
+
+  // Falls CDN-Hotlinking den Download blockiert, trotzdem Bild-URLs zurückgeben
+  // statt leerer Liste (wichtig für schnelle Import-Workflows).
+  if (uploaded.length === 0 && photosToDownload.length > 0) {
+    return photosToDownload
+  }
+  return uploaded
 }
 
 const SCREENSHOT_MAX_FILES = 5

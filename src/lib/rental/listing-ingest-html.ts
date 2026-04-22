@@ -12,7 +12,9 @@ function absUrl(base: URL | null, raw: string): string | null {
 export function isApartmentPhoto(url: string): boolean {
   const lower = url.toLowerCase()
   const hasImageExt = /\.(jpg|jpeg|png|webp)(\?|$)/i.test(url)
-  if (!hasImageExt) return false
+  const hasImageHint =
+    /image|img|photo|media|cdn|upload|listing|gallery|property|wohnung|immobil/.test(lower)
+  if (!hasImageExt && !hasImageHint) return false
 
   const blockedPatterns = [
     'logo',
@@ -57,10 +59,6 @@ export function isApartmentPhoto(url: string): boolean {
     'thumbnail-placeholder',
     'no-image',
     'noimage',
-    'immoscout',
-    'homegate',
-    'tutti',
-    'urbanhome',
     '/static/',
     '/assets/icons/',
     '/assets/logos/',
