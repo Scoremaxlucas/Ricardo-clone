@@ -1,5 +1,6 @@
 import type { RentalListingLandlordInitial } from '@/lib/rental/rental-landlord-initial'
 
+import { ingestOptionalText } from '@/lib/rental/ingest-optional-text'
 import type { ImportListingAiResult } from '@/lib/rental/listing-url-import-types'
 
 function normalizeCanton(c: string): string {
@@ -57,7 +58,7 @@ export function mapAiImportToRentalLandlordInitial(ai: ImportListingAiResult): R
   return {
     title: (ai.title || '').trim().slice(0, 200) || 'Mietwohnung',
     description,
-    address: (ai.address || '').trim().slice(0, 500),
+    address: ingestOptionalText(ai.address).slice(0, 500),
     zip,
     city: (ai.city || '').trim().slice(0, 120),
     canton,

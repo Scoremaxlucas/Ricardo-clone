@@ -83,7 +83,7 @@ function normalizeAdminRow(o: Record<string, unknown>): AdminIngestAiRow {
   return {
     title: typeof o.title === 'string' ? o.title : '',
     description: typeof o.description === 'string' ? o.description : '',
-    address: typeof o.address === 'string' ? o.address : '',
+    address: ingestOptionalText(o.address),
     zip: typeof o.zip === 'string' ? o.zip : '',
     city: typeof o.city === 'string' ? o.city : '',
     canton: typeof o.canton === 'string' ? o.canton : '',

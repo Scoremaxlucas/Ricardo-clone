@@ -1,5 +1,56 @@
+const BAD_URL_HINTS = [
+  'logo',
+  'icon',
+  'favicon',
+  'avatar',
+  'sprite',
+  'placeholder',
+  'tracking',
+  'pixel',
+  'mapbox',
+  'googleapis.com/maps',
+]
+
+const GOOD_URL_HINTS = [
+  'gallery',
+  'listing',
+  'property',
+  'apartment',
+  'wohnung',
+  'immobil',
+  'photo',
+  'image',
+]
+
+function absUrl(base: URL | null, raw: string): string | null {
+  const u = raw.trim().split(/\s+/)[0]
+  if (!u || u.startsWith('data:')) return null
+  try {
+    const full = base ? new URL(u, base).toString() : new URL(u).toString()
+    return /^https?:\/\//i.test(full) ? full : null
+  } catch {
+    return null
+  }
+}
+
+function scoreImageCandidate(url: string, tag: string): number {
+  const lowerUrl = url.toLowerCase()
+  const lowerTag = tag.toLowerCase()
+  let s = 0
+  if (/\.(jpe?g|png|webp)(\?|$)/i.test(lowerUrl)) s += 3
+  if (GOOD_URL_HINTS.some(k => lowerUrl.includes(k) || lowerTag.includes(k))) s += 4
+  if (BAD_URL_HINTS.some(k => lowerUrl.includes(k) || lowerTag.includes(k))) s -= 8
+  if (/thumb|thumbnail|small|icon|logo/i.test(lowerUrl)) s -= 4
+  if (lowerTag.includes('srcset')) s += 1
+  return s
+}
+
 /**
- * <img src="…"> aus HTML sammeln (absolute URLs).
+ * Robuste Bild-Erkennung aus HTML:
+ * - absolute + relative URLs
+ * - src / data-src / srcset
+ * - OG/Twitter-Images + JSON-LD image URLs
+ * - heuristische Sortierung (Wohnungsfotos zuerst)
  */
 export function extractImageUrlsFromHtml(html: string, baseUrl: string): string[] {
   const base = (() => {
@@ -9,39 +60,59 @@ export function extractImageUrlsFromHtml(html: string, baseUrl: string): string[
       return null
     }
   })()
-  const out: string[] = []
-  const seen = new Set<string>()
 
-  const push = (raw: string | undefined | null) => {
+  const scored = new Map<string, number>()
+  const push = (raw: string | undefined | null, tag = '') => {
     if (!raw) return
-    const u = raw.trim().split(/\s+/)[0]
-    if (!u || u.startsWith('data:')) return
-    let abs: string
-    try {
-      abs = base ? new URL(u, base).toString() : new URL(u).toString()
-    } catch {
-      return
-    }
-    if (!/^https?:\/\//i.test(abs)) return
-    if (seen.has(abs)) return
-    seen.add(abs)
-    out.push(abs)
+    const url = absUrl(base, raw)
+    if (!url) return
+    const score = scoreImageCandidate(url, tag)
+    if (score < -2) return
+    scored.set(url, Math.max(scored.get(url) ?? -999, score))
   }
 
-  const re = /<img\b[^>]*>/gi
+  const imgRe = /<img\b[^>]*>/gi
   let m: RegExpExecArray | null
-  while ((m = re.exec(html)) !== null) {
+  while ((m = imgRe.exec(html)) !== null) {
     const tag = m[0]
     const src = /src\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]
     const dataSrc = /data-src\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]
+    const dataLazy = /data-lazy-src\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]
     const srcset = /srcset\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]
-    push(src)
-    push(dataSrc)
+    push(src, tag)
+    push(dataSrc, tag)
+    push(dataLazy, tag)
     if (srcset) {
-      const first = srcset.split(',')[0]?.trim().split(/\s+/)[0]
-      push(first)
+      for (const part of srcset.split(',')) {
+        push(part.trim().split(/\s+/)[0], `${tag} srcset`)
+      }
     }
   }
 
-  return out.slice(0, 30)
+  const metaRe = /<meta\b[^>]*>/gi
+  while ((m = metaRe.exec(html)) !== null) {
+    const tag = m[0]
+    const prop = /property\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]?.toLowerCase() ?? ''
+    const name = /name\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]?.toLowerCase() ?? ''
+    const content = /content\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]
+    if (!content) continue
+    if (prop === 'og:image' || prop === 'og:image:url' || name === 'twitter:image') {
+      push(content, `${tag} meta`)
+    }
+  }
+
+  const jsonLdRe = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+  while ((m = jsonLdRe.exec(html)) !== null) {
+    const payload = m[1]
+    const urlRe = /https?:\/\/[^\s"'<>]+?\.(?:jpg|jpeg|png|webp)(?:\?[^\s"'<>]*)?/gi
+    let um: RegExpExecArray | null
+    while ((um = urlRe.exec(payload)) !== null) {
+      push(um[0], 'jsonld')
+    }
+  }
+
+  return Array.from(scored.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([u]) => u)
+    .slice(0, 30)
 }

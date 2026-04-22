@@ -230,7 +230,8 @@ export async function runAdminListingIngest(
           }
 
           if (mode === 'url') {
-            const { photos: fromPage, failures } = await ingestImagesFromExplicitUrls(imgCandidates, userId)
+            const dedupedCandidates = Array.from(new Set(imgCandidates))
+            const { photos: fromPage, failures } = await ingestImagesFromExplicitUrls(dedupedCandidates, userId)
             imageDownloadFailures += failures
             photos = fromPage
             if (fromPage.length === 0) {
@@ -289,7 +290,8 @@ export async function runAdminListingIngest(
 
       if (mode === 'url' && httpStatus < 400) {
         const fromHtml = extractImageUrlsFromHtml(html, url)
-        const mergedUrls = Array.from(new Set([...discoveredImageUrls, ...fromHtml]))
+        // HTML-Heuristik priorisiert Wohnungsfotos stärker als der rohe Fetch-Parser.
+        const mergedUrls = Array.from(new Set([...fromHtml, ...discoveredImageUrls]))
         const { photos: fromPage, failures } = await ingestImagesFromExplicitUrls(mergedUrls, userId)
         imageDownloadFailures += failures
         photos = fromPage

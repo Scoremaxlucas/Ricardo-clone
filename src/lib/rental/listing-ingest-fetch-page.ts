@@ -1,3 +1,4 @@
+import { extractImageUrlsFromHtml } from '@/lib/rental/listing-ingest-html'
 /**
  * Robuster HTML-Fetch für Admin-Ingest (Tutti & Co. — oft kein vollständiges SSR-HTML).
  */
@@ -87,53 +88,12 @@ export async function fetchPageContent(url: string): Promise<FetchPageContentRes
     }
 
     const html = await response.text()
-
-    const imageUrls: string[] = []
-    const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi
-    let match: RegExpExecArray | null
-    while ((match = imgRegex.exec(html)) !== null) {
-      const src = match[1]
-      const lower = src.toLowerCase()
-      if (
-        src.startsWith('http') &&
-        !lower.includes('icon') &&
-        !lower.includes('logo') &&
-        !lower.includes('avatar') &&
-        !lower.includes('1x1') &&
-        (lower.includes('.jpg') ||
-          lower.includes('.jpeg') ||
-          lower.includes('.png') ||
-          lower.includes('.webp'))
-      ) {
-        imageUrls.push(src)
-      }
-    }
-
-    const dataSrcRegex = /data-src=["']([^"']+\.(?:jpg|jpeg|png|webp)[^"']*)["']/gi
-    while ((match = dataSrcRegex.exec(html)) !== null) {
-      if (match[1].startsWith('http')) {
-        imageUrls.push(match[1])
-      }
-    }
-
-    const jsonLdRegex = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
-    while ((match = jsonLdRegex.exec(html)) !== null) {
-      try {
-        const jsonData = JSON.parse(match[1].trim()) as unknown
-        const jsonStr = JSON.stringify(jsonData)
-        const urlRegex = /https?:\/\/[^\s"']+\.(?:jpg|jpeg|png|webp)/gi
-        let urlMatch: RegExpExecArray | null
-        while ((urlMatch = urlRegex.exec(jsonStr)) !== null) {
-          imageUrls.push(urlMatch[0])
-        }
-      } catch {
-        /* leeres oder ungültiges JSON-LD ignorieren */
-      }
-    }
+    const finalUrl = response.url || url
+    const imageUrls = extractImageUrlsFromHtml(html, finalUrl)
 
     return {
       html,
-      imageUrls: Array.from(new Set(imageUrls)).slice(0, 10),
+      imageUrls: Array.from(new Set(imageUrls)).slice(0, 12),
       blocked: false,
       status,
     }

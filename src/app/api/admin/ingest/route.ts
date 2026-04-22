@@ -97,7 +97,7 @@ function normalizeExtractedPayload(raw: Record<string, unknown>): Record<string,
   return {
     title: typeof raw.title === 'string' ? raw.title : '',
     description: typeof raw.description === 'string' ? raw.description : '',
-    address: typeof raw.address === 'string' ? raw.address : '',
+    address: ingestOptionalText(raw.address),
     zip: typeof raw.zip === 'string' ? raw.zip.replace(/\D/g, '').slice(0, 4) : '',
     city: typeof raw.city === 'string' ? raw.city : '',
     canton: typeof raw.canton === 'string' ? raw.canton.trim().toUpperCase().slice(0, 2) : '',

@@ -1070,18 +1070,8 @@ export function IngestClient() {
               : null}
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Adresse *</label>
-              <input
-                required
-                value={address}
-                onChange={e => setAddress(e.target.value)}
-                className={`w-full rounded-lg border px-3 py-2 ${
-                  fieldAmber(!address.trim()) ? 'border-amber-400 bg-amber-50/50 ring-1 ring-amber-200' : 'border-slate-300'
-                }`}
-              />
-              {fieldAmber(!address.trim()) ?
-                <p className="mt-1 text-xs text-amber-800">Bitte prüfen</p>
-              : null}
+              <label className="mb-1 block text-sm font-medium text-slate-700">Adresse (optional)</label>
+              <input value={address} onChange={e => setAddress(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>

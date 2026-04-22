@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       landlordConsentAck,
     } = body
 
-    if (!title || !description || !address || !zip || !city || !canton) {
+    if (!title || !description || !zip || !city || !canton) {
       return NextResponse.json({ message: 'Pflichtfelder fehlen' }, { status: 400 })
     }
     if (String(description).trim().length < 50) {
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
         userId: session.user.id,
         title: String(title).trim(),
         description: String(description).trim(),
-        address: String(address).trim(),
+        address: typeof address === 'string' ? address.trim() : '',
         zip: String(zip).trim(),
         city: String(city).trim(),
         canton: String(canton).trim().toUpperCase(),
