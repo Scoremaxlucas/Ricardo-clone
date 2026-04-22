@@ -21,6 +21,10 @@
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/admin/ingest/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
     }
   },
   "crons": [

@@ -1,27 +1,3 @@
-const BAD_URL_HINTS = [
-  'logo',
-  'icon',
-  'favicon',
-  'avatar',
-  'sprite',
-  'placeholder',
-  'tracking',
-  'pixel',
-  'mapbox',
-  'googleapis.com/maps',
-]
-
-const GOOD_URL_HINTS = [
-  'gallery',
-  'listing',
-  'property',
-  'apartment',
-  'wohnung',
-  'immobil',
-  'photo',
-  'image',
-]
-
 function absUrl(base: URL | null, raw: string): string | null {
   const u = raw.trim().split(/\s+/)[0]
   if (!u || u.startsWith('data:')) return null
@@ -33,24 +9,76 @@ function absUrl(base: URL | null, raw: string): string | null {
   }
 }
 
-function scoreImageCandidate(url: string, tag: string): number {
-  const lowerUrl = url.toLowerCase()
-  const lowerTag = tag.toLowerCase()
-  let s = 0
-  if (/\.(jpe?g|png|webp)(\?|$)/i.test(lowerUrl)) s += 3
-  if (GOOD_URL_HINTS.some(k => lowerUrl.includes(k) || lowerTag.includes(k))) s += 4
-  if (BAD_URL_HINTS.some(k => lowerUrl.includes(k) || lowerTag.includes(k))) s -= 8
-  if (/thumb|thumbnail|small|icon|logo/i.test(lowerUrl)) s -= 4
-  if (lowerTag.includes('srcset')) s += 1
-  return s
+export function isApartmentPhoto(url: string): boolean {
+  const lower = url.toLowerCase()
+  const hasImageExt = /\.(jpg|jpeg|png|webp)(\?|$)/i.test(url)
+  if (!hasImageExt) return false
+
+  const blockedPatterns = [
+    'logo',
+    'icon',
+    'favicon',
+    'sprite',
+    'placeholder',
+    'avatar',
+    'profile',
+    'user',
+    'badge',
+    'banner',
+    'header',
+    'footer',
+    'nav',
+    'menu',
+    'button',
+    'arrow',
+    'chevron',
+    'close',
+    'search',
+    'star',
+    'rating',
+    'social',
+    'facebook',
+    'twitter',
+    'instagram',
+    'linkedin',
+    'whatsapp',
+    'share',
+    'print',
+    'map',
+    '1x1',
+    'pixel',
+    'tracking',
+    'analytics',
+    'spacer',
+    'blank',
+    'transparent',
+    'empty',
+    'default',
+    'thumbnail-placeholder',
+    'no-image',
+    'noimage',
+    'immoscout',
+    'homegate',
+    'tutti',
+    'urbanhome',
+    '/static/',
+    '/assets/icons/',
+    '/assets/logos/',
+    '/ui/',
+    '/components/',
+    '/layout/',
+  ]
+  if (blockedPatterns.some(p => lower.includes(p))) return false
+  if (/[_-](16|24|32|48|64|96|100|128|150|160|200)x\1/i.test(url)) return false
+  return true
 }
 
 /**
- * Robuste Bild-Erkennung aus HTML:
- * - absolute + relative URLs
- * - src / data-src / srcset
- * - OG/Twitter-Images + JSON-LD image URLs
- * - heuristische Sortierung (Wohnungsfotos zuerst)
+ * Prioritäts-Reihenfolge:
+ * 1) og:image / twitter:image
+ * 2) JSON-LD
+ * 3) <img src/srcset>
+ * 4) data-src / data-lazy-src
  */
 export function extractImageUrlsFromHtml(html: string, baseUrl: string): string[] {
   const base = (() => {
@@ -61,14 +89,31 @@ export function extractImageUrlsFromHtml(html: string, baseUrl: string): string[
     }
   })()
 
-  const scored = new Map<string, number>()
-  const push = (raw: string | undefined | null, tag = '') => {
+  const metaImages: string[] = []
+  const jsonLdImages: string[] = []
+  const imgTagImages: string[] = []
+  const dataSrcImages: string[] = []
+  const push = (arr: string[], raw: string | undefined | null) => {
     if (!raw) return
     const url = absUrl(base, raw)
-    if (!url) return
-    const score = scoreImageCandidate(url, tag)
-    if (score < -2) return
-    scored.set(url, Math.max(scored.get(url) ?? -999, score))
+    if (url) arr.push(url)
+  }
+
+  const ogImageMatches = Array.from(
+    html.matchAll(
+      /<meta[^>]+(?:property=["']og:image["']|name=["']twitter:image["'])[^>]+content=["']([^"']+)["'][^>]*>/gi
+    )
+  )
+  for (const match of ogImageMatches) {
+    if (match[1].startsWith('http')) metaImages.push(match[1])
+  }
+  const ogImageMatches2 = Array.from(
+    html.matchAll(
+      /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property=["']og:image["']|name=["']twitter:image["'])[^>]*>/gi
+    )
+  )
+  for (const match of ogImageMatches2) {
+    if (match[1].startsWith('http')) metaImages.push(match[1])
   }
 
   const imgRe = /<img\b[^>]*>/gi
@@ -76,29 +121,17 @@ export function extractImageUrlsFromHtml(html: string, baseUrl: string): string[
   while ((m = imgRe.exec(html)) !== null) {
     const tag = m[0]
     const src = /src\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]
+    const srcset = /srcset\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]
     const dataSrc = /data-src\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]
     const dataLazy = /data-lazy-src\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]
-    const srcset = /srcset\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]
-    push(src, tag)
-    push(dataSrc, tag)
-    push(dataLazy, tag)
+    push(imgTagImages, src)
     if (srcset) {
       for (const part of srcset.split(',')) {
-        push(part.trim().split(/\s+/)[0], `${tag} srcset`)
+        push(imgTagImages, part.trim().split(/\s+/)[0])
       }
     }
-  }
-
-  const metaRe = /<meta\b[^>]*>/gi
-  while ((m = metaRe.exec(html)) !== null) {
-    const tag = m[0]
-    const prop = /property\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]?.toLowerCase() ?? ''
-    const name = /name\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]?.toLowerCase() ?? ''
-    const content = /content\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]
-    if (!content) continue
-    if (prop === 'og:image' || prop === 'og:image:url' || name === 'twitter:image') {
-      push(content, `${tag} meta`)
-    }
+    push(dataSrcImages, dataSrc)
+    push(dataSrcImages, dataLazy)
   }
 
   const jsonLdRe = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
@@ -107,12 +140,12 @@ export function extractImageUrlsFromHtml(html: string, baseUrl: string): string[
     const urlRe = /https?:\/\/[^\s"'<>]+?\.(?:jpg|jpeg|png|webp)(?:\?[^\s"'<>]*)?/gi
     let um: RegExpExecArray | null
     while ((um = urlRe.exec(payload)) !== null) {
-      push(um[0], 'jsonld')
+      jsonLdImages.push(um[0])
     }
   }
 
-  return Array.from(scored.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([u]) => u)
+  return [...metaImages, ...jsonLdImages, ...imgTagImages, ...dataSrcImages]
+    .filter(isApartmentPhoto)
+    .filter((url, index, arr) => arr.indexOf(url) === index)
     .slice(0, 30)
 }

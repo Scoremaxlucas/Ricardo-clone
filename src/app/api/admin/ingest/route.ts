@@ -3,8 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { anthropicListingModelCandidates } from '@/lib/rental/anthropic-model'
+import { uploadImageToBlob } from '@/lib/blob-storage'
+import { fetchPageWithBrowser } from '@/lib/rental/fetchWithBrowser'
 import { runAdminListingIngest, type AdminIngestMode } from '@/lib/rental/listing-ingest-orchestrator'
+import { fetchPageContent } from '@/lib/rental/listing-ingest-fetch-page'
+import { isApartmentPhoto } from '@/lib/rental/listing-ingest-html'
 import { ingestOptionalText } from '@/lib/rental/ingest-optional-text'
+import { htmlToListingPlainText } from '@/lib/rental/listing-url-import-html'
 import { assertUrlSafeForServerFetch } from '@/lib/rental/listing-url-import-server'
 import { getServerSession } from 'next-auth/next'
 
@@ -54,15 +59,6 @@ Strikte Regeln:
 - features: Array mit deutschen Strings. Erkenne: Balkon, Terrasse, Garten, Lift, Parkettboden, Einbauküche, Kellerabteil, Parkplatz, Waschmaschine, Tumbler, Geschirrspüler, Badewanne, Dusche, Glasfaser, Minergie
 - landlordContact: E-Mail oder Telefonnummer des Vermieters falls vorhanden
 - confidence: "high" wenn mind. 5 Felder gefüllt, "medium" wenn 3-4, "low" wenn weniger`
-
-function abortAfter(ms: number): AbortSignal {
-  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
-    return AbortSignal.timeout(ms)
-  }
-  const ac = new AbortController()
-  setTimeout(() => ac.abort(), ms)
-  return ac.signal
-}
 
 function coerceFiniteNumber(v: unknown): number | null {
   if (typeof v === 'number' && Number.isFinite(v)) return v
@@ -244,6 +240,41 @@ async function extractListingFromAnthropic(
     }
   }
   throw lastError instanceof Error ? lastError : new Error(String(lastError))
+}
+
+async function uploadExtractedImageUrls(
+  urls: string[],
+  sourceUrl: string,
+  userId: string
+): Promise<string[]> {
+  const photosToDownload = urls.filter(isApartmentPhoto).slice(0, 10)
+  const settled = await Promise.allSettled(
+    photosToDownload.map(async (imageUrl, idx) => {
+      const response = await fetch(imageUrl, {
+        signal: AbortSignal.timeout(8000),
+        headers: { Referer: sourceUrl },
+      })
+      if (!response.ok) return null
+      const arr = Buffer.from(await response.arrayBuffer())
+      const contentType = response.headers.get('content-type')?.toLowerCase() || 'image/jpeg'
+      const ext =
+        contentType.includes('png') ? 'png' : contentType.includes('webp') ? 'webp' : 'jpg'
+      const file = new File([new Uint8Array(arr)], `ingest-${Date.now()}-${idx}.${ext}`, {
+        type: contentType.includes('png')
+          ? 'image/png'
+          : contentType.includes('webp')
+            ? 'image/webp'
+            : 'image/jpeg',
+      })
+      const path = `rental-listing-ingest/${userId}/${Date.now()}-${idx}.${ext}`
+      return await uploadImageToBlob(file, path)
+    })
+  )
+
+  return settled
+    .filter((r): r is PromiseFulfilledResult<string | null> => r.status === 'fulfilled')
+    .map(r => r.value)
+    .filter((x): x is string => typeof x === 'string' && x.length > 0)
 }
 
 const SCREENSHOT_MAX_FILES = 5
@@ -472,19 +503,9 @@ export async function POST(request: NextRequest) {
     try {
       const safe = await assertUrlSafeForServerFetch(url)
       const fetchUrl = safe.toString()
-      const response = await fetch(fetchUrl, {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'de-CH,de;q=0.9,en;q=0.8',
-        },
-        signal: abortAfter(10_000),
-      })
+      let result = await fetchPageContent(fetchUrl)
 
-      if (response.status === 403 || response.status === 429 || response.status === 401) {
-        blocked = true
-      } else if (response.status === 404 || response.status === 410) {
+      if (result.status === 404 || result.status === 410) {
         return NextResponse.json(
           {
             success: false,
@@ -494,56 +515,25 @@ export async function POST(request: NextRequest) {
           },
           { status: 200 }
         )
-      } else {
-        const html = await response.text()
-        pageText = html
-          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-          .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .substring(0, 8000)
-
-        const imgMatches = Array.from(
-          html.matchAll(/<img[^>]+(?:src|data-src)=["']([^"']+)["'][^>]*>/gi)
-        )
-        for (const match of imgMatches) {
-          const src = match[1]
-          const lower = src.toLowerCase()
-          if (
-            src.startsWith('http') &&
-            (lower.includes('.jpg') ||
-              lower.includes('.jpeg') ||
-              lower.includes('.png') ||
-              lower.includes('.webp')) &&
-            !lower.includes('icon') &&
-            !lower.includes('logo') &&
-            !lower.includes('1x1') &&
-            !lower.includes('pixel')
-          ) {
-            imageUrls.push(src)
-          }
-        }
-
-        const jsonLdMatches = Array.from(
-          html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)
-        )
-        for (const match of jsonLdMatches) {
-          try {
-            const jsonStr = JSON.stringify(JSON.parse(match[1]))
-            const urlMatches = Array.from(
-              jsonStr.matchAll(/https?:\/\/[^\s"'\\]+\.(?:jpg|jpeg|png|webp)/gi)
-            )
-            for (const urlMatch of urlMatches) {
-              imageUrls.push(urlMatch[0])
-            }
-          } catch {
-            /* ignore */
-          }
-        }
-
-        imageUrls = Array.from(new Set(imageUrls)).slice(0, 10)
       }
+      if (result.blocked || result.imageUrls.length === 0) {
+        console.log('[INGEST] Falling back to browser fetch for:', fetchUrl)
+        try {
+          const browserResult = await fetchPageWithBrowser(fetchUrl)
+          result = {
+            html: browserResult.html,
+            imageUrls: browserResult.imageUrls,
+            blocked: false,
+            status: 200,
+          }
+        } catch (browserError) {
+          console.error('[INGEST] Browser fetch failed:', browserError)
+        }
+      }
+
+      blocked = result.blocked
+      pageText = htmlToListingPlainText(result.html, 8000)
+      imageUrls = await uploadExtractedImageUrls(result.imageUrls, fetchUrl, session.user.id)
     } catch (fetchError) {
       console.error('[INGEST] Fetch error:', fetchError)
       blocked = true

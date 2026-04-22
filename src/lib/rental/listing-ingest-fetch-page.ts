@@ -79,7 +79,7 @@ export async function fetchPageContent(url: string): Promise<FetchPageContentRes
 
     const status = response.status
 
-    if (status === 403 || status === 429) {
+    if (status === 401 || status === 403 || status === 429) {
       return { html: '', imageUrls: [], blocked: true, status }
     }
 

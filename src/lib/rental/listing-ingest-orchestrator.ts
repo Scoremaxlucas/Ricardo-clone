@@ -8,7 +8,7 @@ import {
   type AdminIngestAiRow,
 } from '@/lib/rental/listing-ingest-ai'
 import { downloadRemoteImageBuffer } from '@/lib/rental/listing-ingest-download'
-import { extractImageUrlsFromHtml } from '@/lib/rental/listing-ingest-html'
+import { extractImageUrlsFromHtml, isApartmentPhoto } from '@/lib/rental/listing-ingest-html'
 import {
   buildPlainTextFromOpenGraph,
   extractOpenGraphFromHtml,
@@ -41,7 +41,7 @@ async function ingestImagesFromExplicitUrls(urls: string[], userId: string): Pro
   failures: number
 }> {
   const merged = Array.from(
-    new Set(urls.map(u => u.trim()).filter(u => u.startsWith('http')))
+    new Set(urls.map(u => u.trim()).filter(u => u.startsWith('http') && isApartmentPhoto(u)))
   )
   const photos: string[] = []
   let failures = 0
