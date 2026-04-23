@@ -131,7 +131,7 @@ export default async function AdminUsersPage({
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <h1 className="text-3xl font-bold text-slate-900">User-Verwaltung</h1>
-      <p className="mt-1 text-sm text-slate-600">Vollständige Übersicht über Konten, Profile und Betreibungsregister-Status.</p>
+      <p className="mt-1 text-sm text-slate-600">Vollständige Übersicht über Konten, Profile und Status des Betreibungsregisterauszugs.</p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-4">
@@ -143,7 +143,7 @@ export default async function AdminUsersPage({
           <p className="mt-1 text-2xl font-bold text-slate-900">{stats.completeProfiles}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <p className="text-xs text-slate-500">User mit gültigem Betreibungsregister</p>
+          <p className="text-xs text-slate-500">User mit gültigem Betreibungsregisterauszug</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">{stats.validCredit}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4">
@@ -190,7 +190,7 @@ export default async function AdminUsersPage({
               <th className="px-4 py-3">Registriert am</th>
               <th className="px-4 py-3">Rolle</th>
               <th className="px-4 py-3">Profil-Status</th>
-              <th className="px-4 py-3">Betreibungsregister</th>
+              <th className="px-4 py-3">Betreibungsregisterauszug</th>
               <th className="px-4 py-3">Bewerbungen</th>
               <th className="px-4 py-3">Inserate</th>
               <th className="px-4 py-3 text-right">Aktionen</th>

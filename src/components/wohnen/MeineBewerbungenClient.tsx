@@ -42,7 +42,7 @@ function statusBadge(app: MeineBewerbungRow): { text: string; className: string 
       }
     case 'pending_credit_check':
       return {
-        text: '🔄 Betreibungsregister wird geprüft',
+        text: '🔄 Betreibungsregisterauszug wird geprüft',
         className: 'border-amber-200 bg-amber-50 text-amber-900',
       }
     case 'pending_manual_review':

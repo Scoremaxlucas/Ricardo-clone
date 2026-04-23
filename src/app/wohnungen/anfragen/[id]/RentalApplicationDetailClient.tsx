@@ -127,7 +127,7 @@ export function RentalApplicationDetailClient() {
         </div>
 
         <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="font-semibold text-gray-900">Betreibungsregister</h2>
+          <h2 className="font-semibold text-gray-900">Betreibungsregisterauszug</h2>
           <div className="mt-3">
             <CreditCheckBadge status={app.status} creditCheckResult={creditParsed} />
           </div>

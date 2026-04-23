@@ -53,8 +53,8 @@ export async function generateMetadata(): Promise<Metadata> {
         template: '%s | Helvenda Wohnungen',
       },
       description:
-        'Kostenlos Wohnungen inserieren. Keine Abo-Pflicht für Mieter. Nur verifizierte Anfragen mit integriertem Betreibungsregister.',
-      keywords: ['Wohnung mieten Schweiz', 'Wohnung inserieren kostenlos', 'Mietwohnung Zürich', 'Betreibungsregister Mieter'],
+        'Kostenlos Wohnungen inserieren. Keine Abo-Pflicht für Mieter. Nur verifizierte Anfragen mit integriertem Betreibungsregisterauszug.',
+      keywords: ['Wohnung mieten Schweiz', 'Wohnung inserieren kostenlos', 'Mietwohnung Zürich', 'Betreibungsregisterauszug Mieter'],
       openGraph: {
         siteName: 'Helvenda Wohnungen',
         locale: 'de_CH',

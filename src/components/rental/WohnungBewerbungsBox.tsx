@@ -12,7 +12,7 @@ type Props = {
   userId: string | null
   profileComplete: boolean
   creditCheckOk: boolean
-  /** Profil + ggf. Betreibungsregister erfüllt */
+  /** Profil + ggf. Betreibungsregisterauszug erfüllt */
   tenantApplyReady: boolean
   /** Bereits eine laufende / genehmigte Bewerbung auf dieses Inserat */
   alreadyApplied: boolean

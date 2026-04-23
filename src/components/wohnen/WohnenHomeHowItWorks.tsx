@@ -17,7 +17,7 @@ const LANDLORD_STEPS: Step[] = [
     n: 2,
     icon: <IconShield className="h-6 w-6 text-[#18a87c]" />,
     title: 'Nur ernsthafte Anfragen',
-    text: 'Jeder Bewerber hat sein Betreibungsregister bereits verifiziert. Du sparst Stunden an Filtern und Rückfragen.',
+    text: 'Jeder Bewerber hat seinen Betreibungsregisterauszug bereits verifiziert. Du sparst Stunden an Filtern und Rückfragen.',
   },
   {
     n: 3,

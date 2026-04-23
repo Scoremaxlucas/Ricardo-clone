@@ -40,7 +40,7 @@ export function CreditCheckBadge({ status, creditCheckResult }: Props) {
         <div className="flex items-start gap-3 rounded-xl border border-teal-200 bg-teal-50/80 px-4 py-3">
           <Loader2 className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-teal-600" />
           <div>
-            <p className="font-semibold text-teal-900">Betreibungsregister</p>
+            <p className="font-semibold text-teal-900">Betreibungsregisterauszug</p>
             <p className="text-sm text-teal-800">Automatische Auswertung läuft…</p>
           </div>
         </div>
@@ -55,7 +55,7 @@ export function CreditCheckBadge({ status, creditCheckResult }: Props) {
         <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
           <div>
-            <p className="font-semibold text-red-900">Betreibungsregister</p>
+            <p className="font-semibold text-red-900">Betreibungsregisterauszug</p>
             <p className="text-sm text-red-800">
               Auszug nicht akzeptiert (ungültig oder älter als 3 Monate).
             </p>
@@ -74,7 +74,7 @@ export function CreditCheckBadge({ status, creditCheckResult }: Props) {
         <div className="flex items-start gap-3 rounded-xl border border-teal-300 bg-teal-50 px-4 py-3">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-teal-600" />
           <div>
-            <p className="font-semibold text-teal-900">Betreibungsregister</p>
+            <p className="font-semibold text-teal-900">Betreibungsregisterauszug</p>
             <p className="text-sm text-teal-800">
               Keine Einträge · Ausgestellt: {r.issueDate} · {r.canton}
             </p>
@@ -90,7 +90,7 @@ export function CreditCheckBadge({ status, creditCheckResult }: Props) {
       <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
         <div>
-          <p className="font-semibold text-amber-900">Betreibungsregister</p>
+          <p className="font-semibold text-amber-900">Betreibungsregisterauszug</p>
           <p className="text-sm text-amber-900">
             {r.entryCount} Einträge · Gesamtbetrag: {categoryLabelDe(r.totalAmountCategory)} · Ausgestellt:{' '}
             {r.issueDate}

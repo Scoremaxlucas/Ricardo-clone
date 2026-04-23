@@ -63,6 +63,8 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
   listingId: string
   listingTitle: string
   applicantFullName: string
+  applicantContactPhone: string | null
+  applicantContactEmail: string | null
   applicantMessage?: string | null
   requiresCreditCheck: boolean
   creditCheckResult: unknown
@@ -77,6 +79,8 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
     listingTitle: opts.listingTitle,
     listingId: opts.listingId,
     applicantFullName: opts.applicantFullName,
+    applicantContactPhone: opts.applicantContactPhone,
+    applicantContactEmail: opts.applicantContactEmail,
     employmentStatus: opts.employmentStatus,
     employer: opts.employer,
     incomeCategory: opts.monthlyIncomeCategory,

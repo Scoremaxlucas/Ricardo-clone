@@ -83,6 +83,8 @@ async function main() {
       listingTitle: '3.5-Zi-Wohnung mit Balkon',
       listingId: 'clxxxxxxxxxxxxxx',
       applicantFullName: 'Max Muster',
+      applicantContactPhone: '+41 79 000 00 00',
+      applicantContactEmail: 'bewerbung@example.com',
       employmentStatus: 'EMPLOYED',
       employer: 'Muster AG',
       incomeCategory: 'FROM_4000_TO_5500',
@@ -99,8 +101,8 @@ async function main() {
       rooms: 3.5,
       rentPerMonth: 1850,
     }) },
-    { name: '3 Mieter — Betreibungsregister ungültig', ...templateTenantCreditRejected({ tenantFirstName: 'Max' }) },
-    { name: '4 Mieter — Betreibungsregister verifiziert', ...templateTenantCreditVerified({
+    { name: '3 Mieter — Betreibungsregisterauszug ungültig', ...templateTenantCreditRejected({ tenantFirstName: 'Max' }) },
+    { name: '4 Mieter — Betreibungsregisterauszug verifiziert', ...templateTenantCreditVerified({
       tenantFirstName: 'Max',
       result: sampleCreditNoEntries,
       validUntil,

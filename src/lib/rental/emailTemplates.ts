@@ -109,6 +109,8 @@ export function templateLandlordNewApplication(input: {
   listingTitle: string
   listingId: string
   applicantFullName: string
+  applicantContactPhone: string | null
+  applicantContactEmail: string | null
   employmentStatus: EmploymentStatus
   employer: string | null
   incomeCategory: IncomeCategory
@@ -129,9 +131,19 @@ export function templateLandlordNewApplication(input: {
 <p style="margin:0 0 14px 0;">Hallo ${escapeHtml(input.landlordFirstName)},</p>
 <p style="margin:0 0 14px 0;">du hast eine neue Bewerbung für dein Inserat <strong>„${escapeHtml(input.listingTitle)}“</strong> erhalten.</p>
 <p style="margin:0 0 6px 0;"><strong>Bewerber:</strong> ${escapeHtml(input.applicantFullName)}</p>
+${
+  input.applicantContactPhone?.trim() ?
+    `<p style="margin:0 0 6px 0;"><strong>Telefon:</strong> ${escapeHtml(input.applicantContactPhone.trim())}</p>`
+  : ''
+}
+${
+  input.applicantContactEmail?.trim() ?
+    `<p style="margin:0 0 6px 0;"><strong>E-Mail (Kontakt):</strong> ${escapeHtml(input.applicantContactEmail.trim())}</p>`
+  : ''
+}
 <p style="margin:0 0 6px 0;"><strong>Beschäftigung:</strong> ${employmentLine(input.employmentStatus, input.employer)}</p>
 <p style="margin:0 0 6px 0;"><strong>Einkommen:</strong> ${escapeHtml(incomeCategoryLabelDe(input.incomeCategory))}</p>
-<p style="margin:0 0 6px 0;"><strong>Betreibungsregister:</strong> ${escapeHtml(betreibungsLineForLandlord(input.requiresCreditCheck, input.creditCheckResult))}</p>
+<p style="margin:0 0 6px 0;"><strong>Betreibungsregisterauszug:</strong> ${escapeHtml(betreibungsLineForLandlord(input.requiresCreditCheck, input.creditCheckResult))}</p>
 <p style="margin:0 0 18px 0;"><strong>Referenz:</strong> ${escapeHtml(referenceLine(input.referenceName, input.referencePhone))}</p>
 ${msgBox}
 ${buttonRow(link, 'Bewerbung ansehen')}
@@ -143,9 +155,11 @@ ${buttonRow(link, 'Bewerbung ansehen')}
     '',
     `Du hast eine neue Bewerbung für dein Inserat „${input.listingTitle}“ erhalten.`,
     `Bewerber: ${input.applicantFullName}`,
+    input.applicantContactPhone?.trim() ? `Telefon: ${input.applicantContactPhone.trim()}` : '',
+    input.applicantContactEmail?.trim() ? `E-Mail (Kontakt): ${input.applicantContactEmail.trim()}` : '',
     `Beschäftigung: ${employmentLabelDe(input.employmentStatus)}${input.employer?.trim() ? ` · ${input.employer.trim()}` : ''}`,
     `Einkommen: ${incomeCategoryLabelDe(input.incomeCategory)}`,
-    `Betreibungsregister: ${betreibungsLineForLandlord(input.requiresCreditCheck, input.creditCheckResult)}`,
+    `Betreibungsregisterauszug: ${betreibungsLineForLandlord(input.requiresCreditCheck, input.creditCheckResult)}`,
     `Referenz: ${referenceLine(input.referenceName, input.referencePhone)}`,
     input.applicantMessage?.trim() ? `\nNachricht:\n${input.applicantMessage.trim()}` : '',
     '',
@@ -193,7 +207,7 @@ ${buttonRow(link, 'Meine Bewerbungen')}
   return { subject, html: layout(inner), text }
 }
 
-/** Template 3 — Betreibungsregister ungültig (Mieter) */
+/** Template 3 — Betreibungsregisterauszug ungültig (Mieter) */
 export function templateTenantCreditRejected(input: { tenantFirstName: string }): WohnenEmailPayload {
   const o = wohnenOrigin()
   const link = `${o}/profil/betreibungsregister`
@@ -227,7 +241,7 @@ Online: <a href="https://betreibungsaemter.ch" style="color:#18a87c;">betreibung
   return { subject, html: layout(inner), text }
 }
 
-/** Template 4 — Betreibungsregister verifiziert (Mieter) */
+/** Template 4 — Betreibungsregisterauszug verifiziert (Mieter) */
 export function templateTenantCreditVerified(input: {
   tenantFirstName: string
   result: CreditCheckResult
@@ -250,7 +264,7 @@ export function templateTenantCreditVerified(input: {
 Dein Auszug gilt automatisch für alle deine Bewerbungen und muss nicht erneut hochgeladen werden.</p>
 ${buttonRow(link, 'Wohnungen suchen')}
 `
-  const subject = 'Dein Betreibungsregister wurde verifiziert ✅'
+  const subject = 'Dein Betreibungsregisterauszug wurde verifiziert ✅'
   const text = [
     `Hallo ${input.tenantFirstName},`,
     '',
@@ -274,7 +288,7 @@ export function templateTenantCreditManualReview(input: { tenantFirstName: strin
 Du erhältst eine E-Mail sobald die Prüfung abgeschlossen ist.</p>
 ${buttonRow(link, 'Zu meinem Profil')}
 `
-  const subject = 'Dein Betreibungsregister wird manuell geprüft'
+  const subject = 'Dein Betreibungsregisterauszug wird manuell geprüft'
   const text = [
     `Hallo ${input.tenantFirstName},`,
     '',
@@ -330,7 +344,7 @@ export function templateAdminRentalApplicationManualReview(input: {
   const o = wohnenOrigin()
   const link = `${o}/wohnungen/anfragen/${encodeURIComponent(input.applicationId)}`
   const inner = `
-<p style="margin:0 0 14px 0;">Eine Betreibungsregister-Analyse aus einer Mietanfrage konnte nicht automatisch abgeschlossen werden.</p>
+<p style="margin:0 0 14px 0;">Die Prüfung eines Betreibungsregisterauszugs aus einer Mietanfrage konnte nicht automatisch abgeschlossen werden.</p>
 <p style="margin:0 0 6px 0;"><strong>Inserat:</strong> ${escapeHtml(input.listingTitle)}</p>
 <p style="margin:0 0 18px 0;"><strong>Anfrage-ID:</strong> ${escapeHtml(input.applicationId)}</p>
 ${buttonRow(link, 'Anfrage öffnen')}
@@ -385,7 +399,7 @@ ${buttonRow(link, 'Meine Bewerbungen')}
   return { subject, html: layout(inner), text }
 }
 
-/** Template 8 — Betreibungsregister läuft bald ab (Mieter) */
+/** Template 8 — Betreibungsregisterauszug läuft bald ab (Mieter) */
 export function templateTenantCreditExpiryReminder(input: {
   tenantFirstName: string
   expiresOn: Date
@@ -406,7 +420,7 @@ ${buttonRow(link, 'Jetzt erneuern')}
 Bestelle ihn beim Betreibungsamt deines Wohnorts (ca. CHF 17.—).<br>
 Online: <a href="https://betreibungsaemter.ch" style="color:#18a87c;">betreibungsaemter.ch</a></p>
 `
-  const subject = 'Dein Betreibungsregister läuft in 3 Tagen ab ⚠️'
+  const subject = 'Dein Betreibungsregisterauszug läuft in 3 Tagen ab ⚠️'
   const text = [
     `Hallo ${input.tenantFirstName},`,
     '',

@@ -105,7 +105,11 @@ export default async function AdminApplicationDossierPage({ params }: { params: 
         </section>
         <section className="section">
           <h3 className="font-bold">QUALIFIKATIONS-CHECK</h3>
-          <p>{q.reasons.some(i => i.code === 'CREDIT_CHECK_MISSING' || i.code === 'CREDIT_CHECK_EXPIRED') ? '❌ Betreibungsregister gültig' : '✅ Betreibungsregister gültig'}</p>
+          <p>
+            {q.reasons.some(i => i.code === 'CREDIT_CHECK_MISSING' || i.code === 'CREDIT_CHECK_EXPIRED') ?
+              '❌ Betreibungsregisterauszug fehlt oder abgelaufen'
+            : '✅ Betreibungsregisterauszug in Ordnung'}
+          </p>
           <p>{q.reasons.some(i => i.code === 'INCOME_TOO_LOW') ? '❌ Einkommen erfüllt 3x-Regel' : '✅ Einkommen erfüllt 3x-Regel'}</p>
           <p>{q.reasons.some(i => i.code === 'PROFILE_INCOMPLETE') ? '❌ Profil vollständig' : '✅ Profil vollständig'}</p>
           <p>{q.qualified ? '✅ Alle Anforderungen erfüllt' : '⚠️ Anforderungen noch nicht vollständig erfüllt'}</p>

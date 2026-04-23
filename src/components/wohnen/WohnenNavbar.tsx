@@ -173,7 +173,7 @@ export function WohnenNavbar() {
         {showTenantCompleteNav && okGreen ?
           <span
             className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm ring-2 ring-emerald-200"
-            title="Profil und Betreibungsregister gültig"
+            title="Profil und Betreibungsregisterauszug gültig"
           />
         : null}
         <button

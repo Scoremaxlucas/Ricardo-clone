@@ -1814,7 +1814,20 @@ enum IncomeCategory {
   FROM_4000_TO_5500
   FROM_5500_TO_7000
   FROM_7000_TO_9000
-  ABOVE_9000
+  FROM_9000_TO_12000
+  FROM_12000_TO_16000
+  FROM_16000_TO_22000
+  FROM_22000_TO_30000
+  FROM_30000_TO_45000
+  FROM_45000_TO_65000
+  FROM_65000_TO_90000
+  ABOVE_90000
+}
+
+enum HouseholdPets {
+  UNSPECIFIED
+  NONE
+  HAS_PETS
 }
 
 enum CreditCheckStatus {
@@ -1847,6 +1860,15 @@ model TenantProfile {
 
   monthlyIncomeCategory IncomeCategory
 
+  /** Erreichbarkeit für Vermieter (Pflicht im Mieterprofil). */
+  contactPhone          String             @default("")
+  /** Optional: abweichende E-Mail für Bewerbungen; leer = Konto-E-Mail. */
+  applicationEmail      String?
+
+  /** Freiwillig: Nutzer bestätigt Nichtraucher(in) in der Wohnung (kein negatives Gegenfeld). */
+  declaresNonSmoker Boolean?
+  householdPets       HouseholdPets @default(UNSPECIFIED)
+
   referenceName         String?
   referencePhone        String?
   referenceRelation     String?
@@ -1866,7 +1888,7 @@ model TenantProfile {
   encryptedFileRef      String?
   creditCheckUploadedAt DateTime?
   creditCheckExpiresAt  DateTime?
-  /** Letzte E-Mail „Betreibungsregister läuft ab“ (Cron, max. 1× / 24h Fenster) */
+  /** Letzte E-Mail „Betreibungsregisterauszug läuft ab“ (Cron, max. 1× / 24h Fenster) */
   expiryReminderSentAt  DateTime?
 
   isComplete            Boolean            @default(false)

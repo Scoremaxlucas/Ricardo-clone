@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
 
     let message = 'Auswertung abgeschlossen.'
     if (finalStatus === 'APPROVED') {
-      message = 'Betreibungsregister erfolgreich verifiziert.'
+      message = 'Betreibungsregisterauszug erfolgreich verifiziert.'
     } else if (finalStatus === 'REJECTED') {
       message = 'Das Dokument konnte nicht akzeptiert werden.'
     } else if (finalStatus === 'PENDING_MANUAL_REVIEW') {

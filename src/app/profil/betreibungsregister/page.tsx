@@ -6,7 +6,7 @@ import { getServerSession } from 'next-auth/next'
 import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
-  title: 'Betreibungsregister | Helvenda Wohnungen',
+  title: 'Betreibungsregisterauszug | Helvenda Wohnungen',
   description: 'Betreibungsregisterauszug als PDF hochladen und prüfen lassen.',
 }
 

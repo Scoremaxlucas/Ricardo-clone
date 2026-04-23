@@ -27,7 +27,10 @@ export default async function ProfilErstellenPage({
     redirect('/login?callbackUrl=' + encodeURIComponent('/profil/erstellen'))
   }
 
-  const existing = await prisma.tenantProfile.findUnique({ where: { userId } })
+  const [existing, user] = await Promise.all([
+    prisma.tenantProfile.findUnique({ where: { userId } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true, phone: true } }),
+  ])
   if (existing) {
     redirect('/profil')
   }
@@ -37,5 +40,18 @@ export default async function ProfilErstellenPage({
   const next = Array.isArray(nextRaw) ? nextRaw[0] : nextRaw
   const redirectAfterSave = next && next.startsWith('/') ? next : '/profil'
 
-  return <ProfilErstellenClient mode="create" initial={buildInitialFromApi(null)} redirectAfterSave={redirectAfterSave} />
+  const initial = {
+    ...buildInitialFromApi(null),
+    contactPhone: user?.phone?.trim() ?? '',
+  }
+  const accountEmail = user?.email?.trim() ?? ''
+
+  return (
+    <ProfilErstellenClient
+      mode="create"
+      initial={initial}
+      redirectAfterSave={redirectAfterSave}
+      accountEmail={accountEmail}
+    />
+  )
 }

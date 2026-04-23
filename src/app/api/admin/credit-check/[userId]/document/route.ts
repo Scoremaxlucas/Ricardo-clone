@@ -22,7 +22,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ userId
     return NextResponse.json({ message: 'User nicht gefunden' }, { status: 404 })
   }
   if (!profile.encryptedFileRef) {
-    return NextResponse.json({ message: 'Kein Betreibungsregister-Dokument vorhanden' }, { status: 404 })
+    return NextResponse.json({ message: 'Kein Betreibungsregisterauszug-Dokument vorhanden' }, { status: 404 })
   }
 
   const remote = await fetch(profile.encryptedFileRef, { signal: AbortSignal.timeout(10_000) })

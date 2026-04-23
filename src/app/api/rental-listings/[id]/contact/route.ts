@@ -87,7 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const applicant = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { email: true, firstName: true, name: true, nickname: true },
+      select: { email: true, phone: true, firstName: true, name: true, nickname: true },
     })
     if (!applicant?.email) {
       return NextResponse.json({ message: 'Keine E-Mail im Profil' }, { status: 400 })
@@ -104,6 +104,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const referenceName = tenantProfile?.referenceName ?? null
     const referencePhone = tenantProfile?.referencePhone ?? null
     const addressLine = `${listing.address}, ${listing.zip} ${listing.city}`
+    const applicantContactEmail = tenantProfile?.applicationEmail?.trim() || applicant.email
+    const applicantContactPhone = tenantProfile?.contactPhone?.trim() || applicant.phone?.trim() || null
 
     if (!listing.requiresCreditCheck) {
       const app = await prisma.rentalApplication.create({
@@ -124,6 +126,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             listingId: listing.id,
             listingTitle: listing.title,
             applicantFullName,
+            applicantContactPhone,
+            applicantContactEmail,
             applicantMessage: message,
             requiresCreditCheck: false,
             creditCheckResult: null,
@@ -134,7 +138,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             referencePhone,
           }),
           sendRentalApplicantSuccessEmail({
-            applicantEmail: applicant.email,
+            applicantEmail: applicantContactEmail,
             applicantUserId: session.user.id,
             applicantFirst: applicant,
             listingTitle: listing.title,
@@ -248,6 +252,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             listingId: listing.id,
             listingTitle: listing.title,
             applicantFullName,
+            applicantContactPhone,
+            applicantContactEmail,
             applicantMessage: message,
             requiresCreditCheck: true,
             creditCheckResult: creditJson,
@@ -258,7 +264,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             referencePhone,
           }),
           sendRentalApplicantSuccessEmail({
-            applicantEmail: applicant.email,
+            applicantEmail: applicantContactEmail,
             applicantUserId: session.user.id,
             applicantFirst: applicant,
             listingTitle: listing.title,
@@ -274,7 +280,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     } else if (statusAfterParse === 'pending_manual_review') {
       try {
         await sendRentalApplicantSuccessEmail({
-          applicantEmail: applicant.email,
+          applicantEmail: applicantContactEmail,
           applicantUserId: session.user.id,
           applicantFirst: applicant,
           listingTitle: listing.title,

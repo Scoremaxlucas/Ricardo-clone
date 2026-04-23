@@ -9,10 +9,10 @@ export function creditCheckBadgeSummaryForEmail(
     return 'Manuelle Überprüfung läuft'
   }
   if (status === 'pending_credit_check') {
-    return 'Betreibungsregister wird geprüft'
+    return 'Betreibungsregisterauszug wird geprüft'
   }
   if (status === 'rejected' || !result) {
-    return 'Betreibungsregister nicht akzeptiert'
+    return 'Betreibungsregisterauszug nicht akzeptiert'
   }
   if (!result.hasEntries) {
     return `Keine Einträge · Ausgestellt: ${result.issueDate} · ${result.canton}`

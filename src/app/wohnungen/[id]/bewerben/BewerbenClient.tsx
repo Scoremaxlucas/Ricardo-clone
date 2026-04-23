@@ -217,7 +217,7 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
             {requiresCreditCheck ? (
               <>
                 <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-900">
-                  ✅ Dein Betreibungsregister wird automatisch mitgeschickt.
+                  ✅ Dein Betreibungsregisterauszug wird automatisch mitgeschickt.
                 </div>
                 <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm text-slate-800">
                   <input

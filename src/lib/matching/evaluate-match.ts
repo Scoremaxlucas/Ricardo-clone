@@ -11,6 +11,16 @@ function normCanton(c: string): string {
   return c.trim().toUpperCase()
 }
 
+/** Mehrere Kantons-Codes aus Komma-String (Mieterprofil). */
+function parseCantonPreference(raw: string | null | undefined): string[] {
+  if (raw == null || !String(raw).trim()) return []
+  const parts = String(raw)
+    .split(',')
+    .map(s => normCanton(s))
+    .filter(Boolean)
+  return Array.from(new Set(parts))
+}
+
 function normZip(z: string): string {
   return z.trim()
 }
@@ -44,15 +54,15 @@ export function evaluateMatch(
     return { score: 0, hardFailed: true, reasons }
   }
 
-  // —— Hart: Kanton ——
-  if (seeker.cantonPreference) {
-    const want = normCanton(seeker.cantonPreference)
+  // —— Hart: Kanton (ein oder mehrere erlaubte Codes) ——
+  const wantedCantons = parseCantonPreference(seeker.cantonPreference)
+  if (wantedCantons.length > 0) {
     const got = normCanton(property.canton)
-    if (want && got !== want) {
+    if (!wantedCantons.includes(got)) {
       reasons.push({
         kind: 'hard',
         code: 'CANTON_MISMATCH',
-        detail: `Gesucht ${want}, Objekt ${got}.`,
+        detail: `Gesucht einer von [${wantedCantons.join(', ')}], Objekt ${got}.`,
       })
       return { score: 0, hardFailed: true, reasons }
     }
@@ -145,7 +155,7 @@ export function evaluateMatch(
   // —— Weich: Score ——
   let score = 55
 
-  if (seeker.cantonPreference && normCanton(seeker.cantonPreference) === normCanton(property.canton)) {
+  if (wantedCantons.length > 0 && wantedCantons.includes(normCanton(property.canton))) {
     score += 15
     reasons.push({ kind: 'soft', code: 'CANTON_MATCH', detail: 'Kanton passt.' })
   }

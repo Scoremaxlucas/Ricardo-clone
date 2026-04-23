@@ -75,9 +75,9 @@ export async function WohnenMarketingHome({
   const comparisonRows: { tema: string; hg: string; hv: string }[] = [
     { tema: 'Inserat inserieren', hg: 'CHF 14–28 pro Tag', hv: 'Kostenlos' },
     { tema: 'Mieter kontaktieren', hg: 'CHF 39.95 / Monat Pflicht-Abo', hv: 'Kostenlos, sofort' },
-    { tema: 'Bewerbungsqualität', hg: 'Unstrukturierte E-Mails', hv: 'Verifiziert mit Betreibungsregister' },
+    { tema: 'Bewerbungsqualität', hg: 'Unstrukturierte E-Mails', hv: 'Verifiziert mit Betreibungsregisterauszug' },
     { tema: 'Login', hg: 'Separates Konto pro Plattform', hv: 'Ein Helvenda-Konto für alles' },
-    { tema: 'Inserate-Qualität', hg: 'Keine Vorprüfung', hv: 'Betreibungsregister inklusive' },
+    { tema: 'Inserate-Qualität', hg: 'Keine Vorprüfung', hv: 'Betreibungsregisterauszug inklusive' },
     { tema: 'Mieterplus-Abo', hg: 'CHF 39.95/Monat Pflicht', hv: 'Nie — kostenlos für alle' },
   ]
 

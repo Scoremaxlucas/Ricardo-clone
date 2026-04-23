@@ -49,7 +49,7 @@ function scoreListing(profile: TenantProfile, listing: RentalListing): MatchResu
 
   if (profile.creditCheckStatus === 'APPROVED') {
     score += 10
-    highlights.push('Betreibungsregister gültig')
+    highlights.push('Betreibungsregisterauszug gültig')
   }
 
   if (daysSinceCreated(listing.createdAt) <= 7) {

@@ -78,7 +78,7 @@ export function BetreibungsregisterClient() {
       const message = typeof data.message === 'string' ? data.message : ''
 
       if (status === 'APPROVED') {
-        toast.success('Betreibungsregister erfolgreich verifiziert ✅')
+        toast.success('Betreibungsregisterauszug erfolgreich verifiziert ✅')
         router.push('/profil')
         router.refresh()
         return
@@ -110,7 +110,7 @@ export function BetreibungsregisterClient() {
       <Link href="/profil" className="text-sm font-medium text-teal-800 underline-offset-2 hover:underline">
         ← Zurück zum Profil
       </Link>
-      <h1 className="mt-4 text-2xl font-bold text-slate-900">Betreibungsregister hochladen</h1>
+      <h1 className="mt-4 text-2xl font-bold text-slate-900">Betreibungsregisterauszug hochladen</h1>
       <p className="mt-2 text-sm text-slate-600">
         Lade einen gültigen Schweizer Betreibungsregisterauszug (PDF, max. 3 Monate alt) hoch.
       </p>

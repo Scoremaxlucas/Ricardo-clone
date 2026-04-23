@@ -1,6 +1,6 @@
 'use client'
 
-import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
+import type { EmploymentStatus, HouseholdPets, IncomeCategory } from '@prisma/client'
 import type { ProfilFormInitial } from '@/lib/tenant-profile/profil-form-initial'
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
 import { employmentLabelDe } from '@/lib/tenant-profile/labels'
@@ -23,14 +23,35 @@ const INCOME_OPTIONS: { value: IncomeCategory; label: string }[] = [
   { value: 'FROM_4000_TO_5500', label: "CHF 4'000 – 5'500" },
   { value: 'FROM_5500_TO_7000', label: "CHF 5'500 – 7'000" },
   { value: 'FROM_7000_TO_9000', label: "CHF 7'000 – 9'000" },
-  { value: 'ABOVE_9000', label: "Über CHF 9'000" },
+  { value: 'FROM_9000_TO_12000', label: "CHF 9'000 – 12'000" },
+  { value: 'FROM_12000_TO_16000', label: "CHF 12'000 – 16'000" },
+  { value: 'FROM_16000_TO_22000', label: "CHF 16'000 – 22'000" },
+  { value: 'FROM_22000_TO_30000', label: "CHF 22'000 – 30'000" },
+  { value: 'FROM_30000_TO_45000', label: "CHF 30'000 – 45'000" },
+  { value: 'FROM_45000_TO_65000', label: "CHF 45'000 – 65'000" },
+  { value: 'FROM_65000_TO_90000', label: "CHF 65'000 – 90'000" },
+  { value: 'ABOVE_90000', label: "Über CHF 90'000" },
+]
+
+const PETS_OPTIONS: { value: HouseholdPets; label: string }[] = [
+  { value: 'UNSPECIFIED', label: 'Keine Angabe' },
+  { value: 'NONE', label: 'Keine Haustiere im Haushalt' },
+  { value: 'HAS_PETS', label: 'Mit Haustieren' },
 ]
 
 type Props = {
   mode: 'create' | 'edit'
   initial: ProfilFormInitial
   redirectAfterSave: string
+  accountEmail: string
 }
+
+function contactPhoneDigitsOk(raw: string): boolean {
+  const digits = raw.replace(/\D/g, '')
+  return digits.length >= 10 && digits.length <= 15
+}
+
+const OPTIONAL_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function minAge18(dobStr: string): boolean {
   const dob = new Date(dobStr)
@@ -42,7 +63,7 @@ function minAge18(dobStr: string): boolean {
   return age >= 18
 }
 
-export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Props) {
+export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accountEmail }: Props) {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<ProfilFormInitial>(initial)
@@ -57,11 +78,26 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
     return Array.from({ length: 45 }, (_, i) => y - i)
   }, [])
 
-  const setField = useCallback((key: keyof ProfilFormInitial, value: string) => {
+  const setField = useCallback(<K extends keyof ProfilFormInitial>(key: K, value: ProfilFormInitial[K]) => {
     setForm(f => ({ ...f, [key]: value }))
     setErrors(e => {
       const n = { ...e }
-      delete n[key]
+      delete n[key as string]
+      return n
+    })
+  }, [])
+
+  const togglePreferredCanton = useCallback((code: string) => {
+    setForm(f => {
+      const has = f.preferredCantonCodes.includes(code)
+      const preferredCantonCodes = has
+        ? f.preferredCantonCodes.filter(c => c !== code)
+        : [...f.preferredCantonCodes, code].sort()
+      return { ...f, preferredCantonCodes }
+    })
+    setErrors(e => {
+      const n = { ...e }
+      delete n.preferredCanton
       return n
     })
   }, [])
@@ -75,6 +111,14 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
     if (!form.currentAddress.trim()) e.currentAddress = 'Adresse ist erforderlich'
     if (!/^\d{4}$/.test(form.currentZip.trim())) e.currentZip = 'PLZ muss genau 4 Ziffern haben'
     if (!form.currentCity.trim()) e.currentCity = 'Ort ist erforderlich'
+    if (!form.contactPhone.trim()) e.contactPhone = 'Telefonnummer ist erforderlich'
+    else if (!contactPhoneDigitsOk(form.contactPhone)) {
+      e.contactPhone = 'Bitte eine gültige Nummer (mind. 10 Ziffern, z. B. mit +41)'
+    }
+    const altMail = form.applicationEmail.trim()
+    if (altMail && !OPTIONAL_EMAIL_RE.test(altMail)) {
+      e.applicationEmail = 'Ungültige E-Mail-Adresse'
+    }
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -96,6 +140,9 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
   const validateStep3 = (): boolean => {
     const e: Record<string, string> = {}
     if (!confirmTruth) e.confirmTruth = 'Bitte bestätige die Richtigkeit deiner Angaben'
+    if (form.preferredCantonCodes.length > 12) {
+      e.preferredCanton = 'Maximal 12 Kantone auswählbar'
+    }
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -121,16 +168,20 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
         currentAddress: form.currentAddress.trim(),
         currentZip: form.currentZip.trim(),
         currentCity: form.currentCity.trim(),
+        contactPhone: form.contactPhone.trim(),
+        applicationEmail: form.applicationEmail.trim() || null,
         employmentStatus: form.employmentStatus,
         employer: needsEmployer ? form.employer.trim() : null,
         jobTitle: form.jobTitle.trim() || null,
         employedSinceYear: form.employedSinceYear ? Number(form.employedSinceYear) : null,
         employedSinceMonth: form.employedSinceMonth ? Number(form.employedSinceMonth) : null,
         monthlyIncomeCategory: form.monthlyIncomeCategory,
+        declaresNonSmoker: form.declaresNonSmoker ? true : null,
+        householdPets: form.householdPets,
         referenceName: form.referenceName.trim() || null,
         referencePhone: form.referencePhone.trim() || null,
         referenceRelation: form.referenceRelation.trim() || null,
-        preferredCanton: form.preferredCanton.trim() || null,
+        preferredCanton: form.preferredCantonCodes.length ? form.preferredCantonCodes.join(',') : null,
         preferredPostalCodes: form.preferredPostalCodes.trim() || null,
         preferredBudgetMin: form.preferredBudgetMin ? Number(form.preferredBudgetMin) : null,
         preferredBudgetMax: form.preferredBudgetMax ? Number(form.preferredBudgetMax) : null,
@@ -162,6 +213,16 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
   }
 
   const summaryIncome = INCOME_OPTIONS.find(o => o.value === form.monthlyIncomeCategory)?.label ?? ''
+  const summaryCantons = useMemo(() => {
+    if (!form.preferredCantonCodes.length) return ''
+    return form.preferredCantonCodes
+      .map(code => {
+        const n = SWISS_CANTONS.find(c => c.code === code)?.name
+        return n ? `${code} (${n})` : code
+      })
+      .join(', ')
+  }, [form.preferredCantonCodes])
+  const summaryPetsLabel = PETS_OPTIONS.find(o => o.value === form.householdPets)?.label ?? ''
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:py-10">
@@ -255,6 +316,49 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
                   onChange={e => setField('currentCity', e.target.value)}
                 />
                 {errors.currentCity ? <p className="mt-1 text-[13px] text-red-600">{errors.currentCity}</p> : null}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+              <h3 className="text-sm font-bold text-slate-900">Erreichbarkeit für Vermieter</h3>
+              <p className="mt-1 text-xs text-slate-600">
+                Login-E-Mail aus deinem Konto (nicht änderbar hier). Optional kannst du für Bewerbungen eine andere
+                Adresse angeben.
+              </p>
+              <div className="mt-3">
+                <span className="text-[14px] font-medium text-slate-700">Konto-E-Mail</span>
+                <p className="mt-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800">
+                  {accountEmail || '—'}
+                </p>
+              </div>
+              <div className="mt-3">
+                <label className="mb-1.5 block text-[14px] font-medium text-slate-700">
+                  Bewerbungs-E-Mail <span className="font-normal text-slate-500">(optional)</span>
+                </label>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  placeholder="Leer lassen = Konto-E-Mail"
+                  className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
+                  value={form.applicationEmail}
+                  onChange={e => setField('applicationEmail', e.target.value)}
+                />
+                {errors.applicationEmail ? (
+                  <p className="mt-1 text-[13px] text-red-600">{errors.applicationEmail}</p>
+                ) : null}
+              </div>
+              <div className="mt-3">
+                <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Telefonnummer *</label>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="z. B. +41 79 123 45 67"
+                  className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
+                  value={form.contactPhone}
+                  onChange={e => setField('contactPhone', e.target.value)}
+                />
+                {errors.contactPhone ? <p className="mt-1 text-[13px] text-red-600">{errors.contactPhone}</p> : null}
               </div>
             </div>
           </div>
@@ -367,6 +471,44 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
             <div className="rounded-xl bg-teal-50 px-3 py-3 text-xs leading-relaxed text-teal-900">
               🔒 Dein genaues Einkommen wird nie angezeigt — Vermieter sehen nur die Kategorie.
             </div>
+
+            <fieldset className="rounded-xl border border-slate-200 p-4">
+              <legend className="px-1 text-[14px] font-medium text-slate-700">Haushalt (optional)</legend>
+              <p className="text-xs text-slate-500">
+                Hilft Vermieterinnen und Vermieter bei der Passung — freiwillig, ohne negatives «Raucher»-Feld.
+              </p>
+              <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={form.declaresNonSmoker}
+                  onChange={e => setField('declaresNonSmoker', e.target.checked)}
+                  className="mt-1"
+                />
+                <span>Ich rauche nicht in der Wohnung (freiwillige Angabe)</span>
+              </label>
+              <div className="mt-4">
+                <span className="text-[14px] font-medium text-slate-700">Haustiere</span>
+                <div className="mt-2 space-y-2">
+                  {PETS_OPTIONS.map(opt => (
+                    <label
+                      key={opt.value}
+                      className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                        form.householdPets === opt.value ? 'border-teal-600 bg-teal-50' : 'border-slate-200 bg-white'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="householdPets"
+                        className="sr-only"
+                        checked={form.householdPets === opt.value}
+                        onChange={() => setField('householdPets', opt.value)}
+                      />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </fieldset>
           </div>
         ) : null}
 
@@ -406,22 +548,42 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
                 Diese Angaben verbessern deine Empfehlungen und Lead-Qualität, sind aber nicht verpflichtend.
               </p>
 
-              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="mt-3 space-y-3">
                 <div>
-                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Bevorzugter Kanton</label>
-                  <select
-                    className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
-                    value={form.preferredCanton}
-                    onChange={e => setField('preferredCanton', e.target.value)}
-                  >
-                    <option value="">Kein Fokus</option>
-                    {SWISS_CANTONS.map(c => (
-                      <option key={c.code} value={c.code}>
-                        {c.code} — {c.name}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Bevorzugte Kantone (optional)</label>
+                  <p className="text-xs text-slate-500">Mehrfachauswahl möglich — leer lassen, wenn egal.</p>
+                  <div className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-slate-200 p-2 sm:max-h-none sm:overflow-visible">
+                    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                      {SWISS_CANTONS.map(c => {
+                        const checked = form.preferredCantonCodes.includes(c.code)
+                        return (
+                          <label
+                            key={c.code}
+                            className={`flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 text-xs sm:text-[13px] ${
+                              checked ? 'border-teal-600 bg-teal-50' : 'border-slate-200 bg-white hover:bg-slate-50'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => togglePreferredCanton(c.code)}
+                              className="shrink-0"
+                            />
+                            <span className="min-w-0 truncate">
+                              {c.code} — {c.name}
+                            </span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  {errors.preferredCanton ? (
+                    <p className="mt-1 text-[13px] text-red-600">{errors.preferredCanton}</p>
+                  ) : null}
                 </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-[14px] font-medium text-slate-700">PLZ-Wünsche (kommagetrennt)</label>
                   <input
@@ -520,6 +682,18 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
+                  <dt>Kontakt</dt>
+                  <dd className="text-right">
+                    <span className="text-slate-600">Tel.</span> {form.contactPhone}
+                    <br />
+                    <span className="text-slate-600">E-Mail</span>{' '}
+                    {form.applicationEmail.trim() || accountEmail}
+                    <button type="button" className="ml-2 text-teal-800 underline" onClick={() => setStep(1)}>
+                      Bearbeiten
+                    </button>
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
                   <dt>Beruf / Einkommen</dt>
                   <dd className="text-right">
                     {employmentLabelDe(form.employmentStatus)}
@@ -527,6 +701,26 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
                     <br />
                     {summaryIncome}
                     <button type="button" className="ml-2 text-teal-800 underline" onClick={() => setStep(2)}>
+                      Bearbeiten
+                    </button>
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt>Haushalt</dt>
+                  <dd className="text-right">
+                    {form.declaresNonSmoker ? <span>Raucht nicht in der Wohnung (freiwillig)</span> : null}
+                    {form.declaresNonSmoker ? <br /> : null}
+                    <span>{summaryPetsLabel}</span>
+                    <button type="button" className="ml-2 text-teal-800 underline" onClick={() => setStep(2)}>
+                      Bearbeiten
+                    </button>
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt>Suchfokus</dt>
+                  <dd className="text-right">
+                    {summaryCantons ? <span>Kantone: {summaryCantons}</span> : <span className="text-slate-500">Keine Kantone</span>}
+                    <button type="button" className="ml-2 text-teal-800 underline" onClick={() => setStep(3)}>
                       Bearbeiten
                     </button>
                   </dd>

@@ -227,7 +227,7 @@ export default async function AdminApplicationsPage({
               <th className="px-4 py-3">Bewerber</th>
               <th className="px-4 py-3">Listing</th>
               <th className="px-4 py-3">Bewerbungsdatum</th>
-              <th className="px-4 py-3">Betreibungsregister</th>
+              <th className="px-4 py-3">Betreibungsregisterauszug</th>
               <th className="px-4 py-3">Bewerbungs-Status</th>
               <th className="px-4 py-3 text-right">Aktionen</th>
             </tr>

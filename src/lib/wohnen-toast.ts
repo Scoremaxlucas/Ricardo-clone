@@ -19,7 +19,7 @@ export const wohnenToast = {
       duration: 4000,
     }),
   profileSaved: () => toast.success('Profil erfolgreich gespeichert ✅'),
-  creditVerified: () => toast.success('Betreibungsregister verifiziert ✅'),
+  creditVerified: () => toast.success('Betreibungsregisterauszug verifiziert ✅'),
   creditInvalid: () => toast.error('Dokument ungültig — bitte neuen Auszug hochladen'),
   viewingRequested: () => toast.success('Besichtigung erfolgreich angefragt ✅'),
   applicationRejected: () =>

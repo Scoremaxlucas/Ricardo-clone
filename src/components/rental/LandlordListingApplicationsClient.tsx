@@ -3,10 +3,10 @@
 import { CreditCheckBadge } from '@/components/rental/CreditCheckBadge'
 import { WohnenEmptyState } from '@/components/wohnen/WohnenEmptyState'
 import type { RentalApplicationBadgeStatus } from '@/components/rental/CreditCheckBadge'
-import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
+import { employmentSummaryDe, householdPetsLabelDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { isCreditCheckResult } from '@/lib/rental/types'
-import type { EmploymentStatus, IncomeCategory, RentalApplicationStatus } from '@prisma/client'
+import type { EmploymentStatus, HouseholdPets, IncomeCategory, RentalApplicationStatus } from '@prisma/client'
 import { wohnenToast } from '@/lib/wohnen-toast'
 import { Inbox, Loader2 } from 'lucide-react'
 import Link from 'next/link'
@@ -31,7 +31,11 @@ export type LandlordApplicationRow = {
     jobTitle: string | null
     employedSince: string | null
     monthlyIncomeCategory: IncomeCategory
+    declaresNonSmoker: boolean | null
+    householdPets: HouseholdPets
     referenceName: string | null
+    contactPhone: string | null
+    contactEmail: string | null
   } | null
 }
 
@@ -129,6 +133,15 @@ function LandlordApplicationCard({
       )
     : '—'
   const income = t ? `${incomeCategoryLabelDe(t.monthlyIncomeCategory)} / Monat` : '—'
+  const householdLine =
+    t ?
+      [
+        t.declaresNonSmoker === true ? 'Raucht nicht in der Wohnung (freiwillig)' : null,
+        t.householdPets !== 'UNSPECIFIED' ? householdPetsLabelDe(t.householdPets) : null,
+      ]
+        .filter(Boolean)
+        .join(' · ') || null
+    : null
   const hasRef = Boolean(t?.referenceName?.trim())
   const creditParsed: CreditCheckResult | null = isCreditCheckResult(row.creditCheckResult) ? row.creditCheckResult : null
   const msg = row.message?.trim() || ''
@@ -169,6 +182,16 @@ function LandlordApplicationCard({
       <div className="min-w-0 flex-1 border-t border-slate-100 pt-4 text-sm lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
         <p className="text-slate-800">{emp}</p>
         <p className="mt-1 text-slate-700">{income}</p>
+        {householdLine ?
+          <p className="mt-1 text-xs text-slate-600">{householdLine}</p>
+        : null}
+        {t?.contactPhone || t?.contactEmail ?
+          <p className="mt-1 text-xs text-slate-600">
+            {t.contactPhone ? <span>Tel. {t.contactPhone}</span> : null}
+            {t.contactPhone && t.contactEmail ? <span> · </span> : null}
+            {t.contactEmail ? <span>{t.contactEmail}</span> : null}
+          </p>
+        : null}
         <p className={`mt-2 text-sm ${hasRef ? 'font-medium text-teal-900' : 'text-slate-500'}`}>
           {hasRef ? '✓ Referenz vorhanden' : 'Keine Referenz'}
         </p>

@@ -41,7 +41,7 @@ export function WohnenFooter() {
               </li>
               <li>
                 <Link href="/profil/betreibungsregister" className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline">
-                  Betreibungsregister hochladen
+                  Betreibungsregisterauszug hochladen
                 </Link>
               </li>
             </ul>
@@ -103,7 +103,7 @@ export function WohnenFooter() {
             <ul className="mt-4 space-y-2 text-[13px] text-white/60">
               <li>🇨🇭 100% Schweizer Plattform</li>
               <li>🔒 Daten verschlüsselt gespeichert</li>
-              <li>✓ Betreibungsregister verifiziert</li>
+              <li>✓ Betreibungsregisterauszug verifiziert</li>
               <li>✓ Einkommensregel geprüft</li>
             </ul>
           </div>

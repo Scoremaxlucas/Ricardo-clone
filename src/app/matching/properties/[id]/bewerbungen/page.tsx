@@ -44,6 +44,7 @@ export default async function LandlordListingApplicationsPage({ params }: PagePr
     orderBy: { createdAt: 'desc' },
     include: {
       tenantProfile: true,
+      applicant: { select: { email: true, phone: true } },
     },
   })
 
@@ -67,7 +68,13 @@ export default async function LandlordListingApplicationsPage({ params }: PagePr
           jobTitle: a.tenantProfile.jobTitle,
           employedSince: a.tenantProfile.employedSince?.toISOString() ?? null,
           monthlyIncomeCategory: a.tenantProfile.monthlyIncomeCategory,
+          declaresNonSmoker: a.tenantProfile.declaresNonSmoker,
+          householdPets: a.tenantProfile.householdPets,
           referenceName: a.tenantProfile.referenceName,
+          contactPhone:
+            a.tenantProfile.contactPhone?.trim() || a.applicant.phone?.trim() || null,
+          contactEmail:
+            a.tenantProfile.applicationEmail?.trim() || a.applicant.email || null,
         }
       : null,
   }))

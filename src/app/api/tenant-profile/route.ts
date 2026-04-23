@@ -1,5 +1,5 @@
 import { authOptions } from '@/lib/auth'
-import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
+import { employmentSummaryDe, householdPetsLabelDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import {
   employedSinceDateFromParts,
   validateTenantProfilePayload,
@@ -17,7 +17,16 @@ function creditResultFromJson(value: unknown): CreditCheckResult | null {
   return isCreditCheckResult(value) ? value : null
 }
 
-function serializeTenantProfile(row: NonNullable<Awaited<ReturnType<typeof prisma.tenantProfile.findUnique>>>) {
+type TenantProfileWithUser = NonNullable<
+  Awaited<ReturnType<typeof prisma.tenantProfile.findUnique>>
+> & {
+  user?: { email: string } | null
+}
+
+function serializeTenantProfile(row: TenantProfileWithUser) {
+  const accountEmail = row.user?.email?.trim() ?? ''
+  const applicationEmail = row.applicationEmail?.trim() || null
+  const contactEmailEffective = (applicationEmail || accountEmail || '').trim() || null
   return {
     id: row.id,
     userId: row.userId,
@@ -27,11 +36,18 @@ function serializeTenantProfile(row: NonNullable<Awaited<ReturnType<typeof prism
     currentAddress: row.currentAddress,
     currentZip: row.currentZip,
     currentCity: row.currentCity,
+    contactPhone: row.contactPhone ?? '',
+    applicationEmail,
+    accountEmail,
+    contactEmailEffective,
     employmentStatus: row.employmentStatus,
     employer: row.employer,
     jobTitle: row.jobTitle,
     employedSince: row.employedSince?.toISOString() ?? null,
     monthlyIncomeCategory: row.monthlyIncomeCategory,
+    declaresNonSmoker: row.declaresNonSmoker,
+    householdPets: row.householdPets,
+    householdPetsLabelDe: householdPetsLabelDe(row.householdPets),
     referenceName: row.referenceName,
     referencePhone: row.referencePhone,
     referenceRelation: row.referenceRelation,
@@ -68,12 +84,16 @@ function existingProfileToPatchPayload(
     currentAddress: row.currentAddress,
     currentZip: row.currentZip,
     currentCity: row.currentCity,
+    contactPhone: row.contactPhone ?? '',
+    applicationEmail: row.applicationEmail,
     employmentStatus: row.employmentStatus,
     employer: row.employer,
     jobTitle: row.jobTitle,
     employedSinceYear: row.employedSince ? row.employedSince.getUTCFullYear() : null,
     employedSinceMonth: row.employedSince ? row.employedSince.getUTCMonth() + 1 : null,
     monthlyIncomeCategory: row.monthlyIncomeCategory,
+    declaresNonSmoker: row.declaresNonSmoker,
+    householdPets: row.householdPets,
     referenceName: row.referenceName,
     referencePhone: row.referencePhone,
     referenceRelation: row.referenceRelation,
@@ -96,7 +116,10 @@ export async function GET() {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    const row = await prisma.tenantProfile.findUnique({ where: { userId } })
+    const row = await prisma.tenantProfile.findUnique({
+      where: { userId },
+      include: { user: { select: { email: true } } },
+    })
     if (!row) {
       return NextResponse.json({ profile: null })
     }
@@ -127,11 +150,15 @@ async function upsertProfileData(userId: string, body: unknown, setComplete: boo
       currentAddress: d.currentAddress,
       currentZip: d.currentZip,
       currentCity: d.currentCity,
+      contactPhone: d.contactPhone,
+      applicationEmail: d.applicationEmail,
       employmentStatus: d.employmentStatus,
       employer,
       jobTitle: d.jobTitle || null,
       employedSince,
       monthlyIncomeCategory: d.monthlyIncomeCategory,
+      declaresNonSmoker: d.declaresNonSmoker,
+      householdPets: d.householdPets,
       referenceName: d.referenceName,
       referencePhone: d.referencePhone,
       referenceRelation: d.referenceRelation,
@@ -152,11 +179,15 @@ async function upsertProfileData(userId: string, body: unknown, setComplete: boo
       currentAddress: d.currentAddress,
       currentZip: d.currentZip,
       currentCity: d.currentCity,
+      contactPhone: d.contactPhone,
+      applicationEmail: d.applicationEmail,
       employmentStatus: d.employmentStatus,
       employer,
       jobTitle: d.jobTitle || null,
       employedSince,
       monthlyIncomeCategory: d.monthlyIncomeCategory,
+      declaresNonSmoker: d.declaresNonSmoker,
+      householdPets: d.householdPets,
       referenceName: d.referenceName,
       referencePhone: d.referencePhone,
       referenceRelation: d.referenceRelation,

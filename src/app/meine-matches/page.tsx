@@ -153,7 +153,7 @@ export default async function MeineMatchesPage() {
                 href="/profil/betreibungsregister"
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-orange-100 px-3 py-[5px] text-xs font-semibold text-orange-800 ring-1 ring-orange-200 hover:bg-orange-200"
               >
-                <IconShieldCheck colorClass="text-orange-600" /> Betreibungsregister hochladen
+                <IconShieldCheck colorClass="text-orange-600" /> Betreibungsregisterauszug hochladen
               </Link>
             )}
           </div>

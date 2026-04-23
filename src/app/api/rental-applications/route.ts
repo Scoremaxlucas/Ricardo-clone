@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     const applicant = await prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, firstName: true, name: true, nickname: true },
+      select: { email: true, phone: true, firstName: true, name: true, nickname: true },
     })
     if (!applicant?.email) {
       return NextResponse.json({ code: 'BAD_REQUEST', message: 'Keine E-Mail im Konto' }, { status: 400 })
@@ -125,6 +125,8 @@ export async function POST(request: NextRequest) {
 
     const applicantFullName = `${tenantProfile.firstName} ${tenantProfile.lastName}`.trim() || applicantDisplay
     const addressLine = `${listing.address}, ${listing.zip} ${listing.city}`
+    const applicantContactEmail = tenantProfile.applicationEmail?.trim() || applicant.email
+    const applicantContactPhone = tenantProfile.contactPhone?.trim() || applicant.phone?.trim() || null
 
     const emailResults = await Promise.allSettled([
       sendRentalLandlordNewApplicationEmail({
@@ -134,6 +136,8 @@ export async function POST(request: NextRequest) {
         listingId: listing.id,
         listingTitle: listing.title,
         applicantFullName,
+        applicantContactPhone,
+        applicantContactEmail,
         applicantMessage: message,
         requiresCreditCheck: listing.requiresCreditCheck,
         creditCheckResult: tenantProfile.creditCheckResult,
@@ -144,7 +148,7 @@ export async function POST(request: NextRequest) {
         referencePhone: tenantProfile.referencePhone,
       }),
       sendRentalApplicantSuccessEmail({
-        applicantEmail: applicant.email,
+        applicantEmail: applicantContactEmail,
         applicantUserId: userId,
         applicantFirst: applicant,
         listingTitle: listing.title,
