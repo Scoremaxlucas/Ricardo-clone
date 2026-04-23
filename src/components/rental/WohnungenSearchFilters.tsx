@@ -206,10 +206,6 @@ export function WohnungenSearchFilters() {
       </div>
 
       <div className="px-4 py-4 sm:px-5 sm:py-5">
-        <p className="mb-4 text-xs text-slate-600 sm:text-sm">
-          Schnellsuche wie auf grossen Portalen: zuerst Ort und Kanton, Details in einem Panel.
-        </p>
-
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:gap-3">
           <div className="min-w-0 flex-1">
             <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-600">Ort, PLZ oder Titel</span>
@@ -440,15 +436,6 @@ export function WohnungenSearchFilters() {
           </div>
         </div>
       ) : null}
-
-      <p className="border-t border-slate-100 px-4 py-3 text-[11px] leading-relaxed text-slate-500 sm:px-5 sm:text-xs">
-        Auf Homegate &amp; Co. gibt es oft noch mehr Kriterien (Möbel, Haustiere, Baujahr …) — dafür bräuchten wir
-        zusätzliche Inserat-Felder. Für deine Profil-Passung nutze{' '}
-        <Link href="/meine-matches" className="font-semibold text-teal-700 underline-offset-2 hover:underline">
-          Meine Matches
-        </Link>
-        .
-      </p>
     </section>
   )
 }
