@@ -21,7 +21,7 @@ type Props = {
 function ManualLink() {
   return (
     <p className="mt-4 text-center text-sm text-slate-600">
-      <Link href="/matching/properties/new" className="font-medium text-teal-800 underline-offset-2 hover:underline">
+      <Link href="/matching/properties/new/erfassen" className="font-medium text-teal-800 underline-offset-2 hover:underline">
         Stattdessen manuell inserieren →
       </Link>
     </p>
@@ -69,7 +69,7 @@ export function MatchingPropertyImportHub({ forAdminRental = false }: Props) {
           j.message ||
             'Diese Plattform erlaubt keinen automatischen Zugriff. Bitte fülle das Formular manuell aus.'
         )
-        router.push('/matching/properties/new')
+        router.push('/matching/properties/new/erfassen')
         return
       }
 

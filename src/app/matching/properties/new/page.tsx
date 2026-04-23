@@ -1,4 +1,4 @@
-import { RentalListingCreateFlow } from '@/components/rental/RentalListingCreateFlow'
+import { RentalListingNewEntryLanding } from '@/components/rental/RentalListingNewEntryLanding'
 import { authOptions } from '@/lib/auth'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Neues Inserat',
-  description: 'Mietwohnung auf Helvenda Wohnungen inserieren.',
+  description: 'Mietwohnung auf Helvenda Wohnungen inserieren — manuell oder per URL-Import.',
 }
 
 export default async function NewLandlordRentalPropertyPage() {
@@ -18,5 +18,5 @@ export default async function NewLandlordRentalPropertyPage() {
     redirect('/login?callbackUrl=' + encodeURIComponent('/matching/properties/new'))
   }
 
-  return <RentalListingCreateFlow />
+  return <RentalListingNewEntryLanding />
 }
