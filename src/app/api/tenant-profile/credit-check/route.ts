@@ -129,10 +129,19 @@ export async function POST(request: NextRequest) {
     }
 
     let message = 'Auswertung abgeschlossen.'
+    let detail: string | undefined
     if (finalStatus === 'APPROVED') {
       message = 'Betreibungsregisterauszug erfolgreich verifiziert.'
     } else if (finalStatus === 'REJECTED') {
       message = 'Das Dokument konnte nicht akzeptiert werden.'
+      if (creditJson) {
+        if (!creditJson.isValid) {
+          detail =
+            'Die automatische Prüfung erkennt darin keinen gültigen Schweizer Betreibungsregisterauszug (z. B. Muster, falsches Format oder kein amtlicher Auszug).'
+        } else if (!creditJson.isRecent) {
+          detail = 'Das Ausstellungsdatum liegt ausserhalb der maximalen Frist von drei Monaten.'
+        }
+      }
     } else if (finalStatus === 'PENDING_MANUAL_REVIEW') {
       message = 'Dokument wird manuell geprüft.'
     }
@@ -140,6 +149,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       status: finalStatus,
       message,
+      ...(detail ? { detail } : {}),
     })
   } catch (e: unknown) {
     console.error('[tenant-profile/credit-check POST]', e)

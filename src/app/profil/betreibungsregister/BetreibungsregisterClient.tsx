@@ -67,7 +67,11 @@ export function BetreibungsregisterClient() {
       fd.append('file', file)
       fd.append('confirmPersonal', 'true')
       const res = await fetch('/api/tenant-profile/credit-check', { method: 'POST', body: fd })
-      const data = await res.json().catch(() => ({}))
+      const data = (await res.json().catch(() => ({}))) as {
+        message?: string
+        status?: string
+        detail?: string
+      }
       if (!res.ok) {
         setPhase('idle')
         setError(typeof data.message === 'string' ? data.message : 'Upload fehlgeschlagen')
@@ -76,6 +80,7 @@ export function BetreibungsregisterClient() {
 
       const status = data.status as string | undefined
       const message = typeof data.message === 'string' ? data.message : ''
+      const detail = typeof data.detail === 'string' ? data.detail : ''
 
       if (status === 'APPROVED') {
         toast.success('Betreibungsregisterauszug erfolgreich verifiziert ✅')
@@ -92,7 +97,10 @@ export function BetreibungsregisterClient() {
       if (status === 'REJECTED') {
         setPhase('idle')
         wohnenToast.creditInvalid()
-        setError(message || 'Dokument ungültig oder zu alt. Bitte erneut versuchen.')
+        setError(
+          [message, detail].filter(Boolean).join(' ') ||
+            'Dokument ungültig oder zu alt. Bitte erneut versuchen.'
+        )
         return
       }
 
@@ -112,7 +120,8 @@ export function BetreibungsregisterClient() {
       </Link>
       <h1 className="mt-4 text-2xl font-bold text-slate-900">Betreibungsregisterauszug hochladen</h1>
       <p className="mt-2 text-sm text-slate-600">
-        Lade einen gültigen Schweizer Betreibungsregisterauszug (PDF, max. 3 Monate alt) hoch.
+        Lade einen gültigen Schweizer Betreibungsregisterauszug (PDF, max. 5 MB, max. 3 Monate alt) hoch. Muster- oder
+        Beispiel-PDFs werden in der Regel nicht akzeptiert — es braucht einen echten Auszug vom Betreibungsamt.
       </p>
 
       <div className="mt-6 rounded-xl bg-teal-50 px-4 py-3 text-xs leading-relaxed text-teal-900">

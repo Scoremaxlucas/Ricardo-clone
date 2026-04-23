@@ -109,7 +109,8 @@ export function applicationStatusFromCreditParse(outcome: ParseOutcome): RentalA
 /** Status für TenantProfile nach Anthropic-Auswertung (Miet-Bewerbungen nutzen weiter `applicationStatusFromCreditParse`). */
 export function tenantCreditCheckStatusFromParse(outcome: ParseOutcome): CreditCheckStatus {
   if (!outcome.ok) {
-    return outcome.error === 'api' ? 'PENDING_MANUAL_REVIEW' : 'REJECTED'
+    // API-Fehler, unleserliche Antwort oder Schema-Mismatch → manuelle Prüfung statt harter Ablehnung
+    return 'PENDING_MANUAL_REVIEW'
   }
   if (!outcome.result.isValid || !outcome.result.isRecent) {
     return 'REJECTED'
