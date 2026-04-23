@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'Objekte importieren',
-  description: 'Matching-Objekte per URL, CSV oder Excel importieren.',
+  description: 'Matching-Objekte per bestehendem Inserat-Link importieren.',
 }
 
 const LOGIN_CALLBACK_PATH = '/matching/properties/import'

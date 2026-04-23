@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'Objekte importieren',
-  description: 'Matching-Objekte per CSV oder Excel importieren.',
+  description: 'Matching-Objekte per bestehendem Inserat-Link importieren.',
 }
 
 export default async function MatchingMatchObjekteImportPage() {
