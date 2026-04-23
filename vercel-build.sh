@@ -22,6 +22,10 @@ export PRISMA_MIGRATE_ADVISORY_LOCK_TIMEOUT="${PRISMA_MIGRATE_ADVISORY_LOCK_TIME
 # Nach P3018 (fehlgeschlagene Migration): Eintrag zurücksetzen, damit korrigierte SQL erneut laufen darf
 npx prisma migrate resolve --rolled-back "$MATCH_PHASE2" 2>/dev/null || true
 
+# P3009: fehlgeschlagene Migration 20260424120000 (FK zeigte fälschlich auf "User" statt "users") — einmalig zurücksetzen
+INVITE_MIGRATION="20260424120000_rental_listing_invite"
+npx prisma migrate resolve --rolled-back "$INVITE_MIGRATION" 2>/dev/null || true
+
 DEPLOY_CODE=1
 DEPLOY_OUT=""
 for attempt in 1 2 3 4; do
