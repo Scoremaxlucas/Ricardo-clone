@@ -28,8 +28,6 @@ const INCOME: IncomeCategory[] = [
   'ABOVE_90000',
 ]
 
-const PETS: HouseholdPets[] = ['UNSPECIFIED', 'NONE', 'HAS_PETS']
-
 const APPLICATION_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function isValidContactPhone(raw: string): boolean {
@@ -52,6 +50,8 @@ export type TenantProfilePayload = {
   employedSinceYear?: number | null
   employedSinceMonth?: number | null
   monthlyIncomeCategory: IncomeCategory
+  householdTotalPersons: number
+  householdChildrenCount: number
   declaresNonSmoker: boolean | null
   householdPets: HouseholdPets
   referenceName?: string | null
@@ -133,10 +133,36 @@ export function validateTenantProfilePayload(
   const declaresNonSmoker =
     b.declaresNonSmoker === true || b.declaresNonSmoker === 'true' ? true : null
 
-  const hpRaw = b.householdPets != null && b.householdPets !== '' ? String(b.householdPets).trim() : 'UNSPECIFIED'
-  const householdPets = hpRaw as HouseholdPets
-  if (!PETS.includes(householdPets)) {
+  const hpRaw = b.householdPets != null && b.householdPets !== '' ? String(b.householdPets).trim() : 'NONE'
+  let householdPets = hpRaw as HouseholdPets
+  if (householdPets === 'UNSPECIFIED') householdPets = 'NONE'
+  if (householdPets !== 'NONE' && householdPets !== 'HAS_PETS') {
     return { ok: false, message: 'Angabe zu Haustieren ungültig', field: 'householdPets' }
+  }
+
+  const htpNum = Number(b.householdTotalPersons)
+  if (!Number.isFinite(htpNum) || !Number.isInteger(htpNum) || htpNum < 1 || htpNum > 20) {
+    return { ok: false, message: 'Anzahl Personen im Haushalt: bitte eine Zahl von 1 bis 20', field: 'householdTotalPersons' }
+  }
+  const householdTotalPersons = htpNum
+  const hccNum = Number(b.householdChildrenCount)
+  if (!Number.isFinite(hccNum) || !Number.isInteger(hccNum) || hccNum < 0 || hccNum > 20) {
+    return { ok: false, message: 'Anzahl Kinder: bitte eine Zahl von 0 bis 20', field: 'householdChildrenCount' }
+  }
+  if (hccNum > householdTotalPersons) {
+    return {
+      ok: false,
+      message: 'Kinder können nicht mehr sein als Personen im Haushalt',
+      field: 'householdChildrenCount',
+    }
+  }
+  const householdChildrenCount = hccNum
+  if (householdTotalPersons === 1 && householdChildrenCount > 0) {
+    return {
+      ok: false,
+      message: 'Bei einer Person im Haushalt sind 0 Kinder möglich',
+      field: 'householdChildrenCount',
+    }
   }
 
   if (!firstName) return { ok: false, message: 'Vorname fehlt', field: 'firstName' }
@@ -282,6 +308,8 @@ export function validateTenantProfilePayload(
       employedSinceYear,
       employedSinceMonth,
       monthlyIncomeCategory,
+      householdTotalPersons,
+      householdChildrenCount,
       declaresNonSmoker,
       householdPets,
       referenceName: b.referenceName != null ? String(b.referenceName).trim() || null : null,

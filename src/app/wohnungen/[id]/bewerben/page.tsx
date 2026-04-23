@@ -90,6 +90,8 @@ export default async function WohnungBewerbenPage({ params }: PageProps) {
     jobTitle: tenantProfile.jobTitle,
     employedSince: tenantProfile.employedSince?.toISOString() ?? null,
     monthlyIncomeCategory: tenantProfile.monthlyIncomeCategory,
+    householdTotalPersons: tenantProfile.householdTotalPersons,
+    householdChildrenCount: tenantProfile.householdChildrenCount,
     referenceName: tenantProfile.referenceName,
     referenceRelation: tenantProfile.referenceRelation,
     creditCheckStatus: tenantProfile.creditCheckStatus,

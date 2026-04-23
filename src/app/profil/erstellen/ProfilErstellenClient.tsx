@@ -34,8 +34,7 @@ const INCOME_OPTIONS: { value: IncomeCategory; label: string }[] = [
 ]
 
 const PETS_OPTIONS: { value: HouseholdPets; label: string }[] = [
-  { value: 'UNSPECIFIED', label: 'Keine Angabe' },
-  { value: 'NONE', label: 'Keine Haustiere im Haushalt' },
+  { value: 'NONE', label: 'Keine Haustiere' },
   { value: 'HAS_PETS', label: 'Mit Haustieren' },
 ]
 
@@ -115,10 +114,9 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accoun
     else if (!contactPhoneDigitsOk(form.contactPhone)) {
       e.contactPhone = 'Bitte eine gültige Nummer (mind. 10 Ziffern, z. B. mit +41)'
     }
-    const altMail = form.applicationEmail.trim()
-    if (altMail && !OPTIONAL_EMAIL_RE.test(altMail)) {
-      e.applicationEmail = 'Ungültige E-Mail-Adresse'
-    }
+    const mail = form.applicationEmail.trim()
+    if (!mail) e.applicationEmail = 'E-Mail ist erforderlich'
+    else if (!OPTIONAL_EMAIL_RE.test(mail)) e.applicationEmail = 'Ungültige E-Mail-Adresse'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -132,6 +130,18 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accoun
       if (!form.employedSinceYear || !form.employedSinceMonth) {
         e.employedSinceMonth = 'Bitte Monat und Jahr angeben'
       }
+    }
+    const total = Number(form.householdTotalPersons.replace(/\D/g, '')) || 0
+    const children = Number(String(form.householdChildrenCount).replace(/\D/g, '')) || 0
+    if (!Number.isFinite(total) || total < 1 || total > 20) {
+      e.householdTotalPersons = 'Bitte eine Zahl von 1 bis 20 (Personen inkl. dir)'
+    }
+    if (!Number.isFinite(children) || children < 0 || children > 20) {
+      e.householdChildrenCount = 'Bitte eine Zahl von 0 bis 20'
+    } else if (total >= 1 && children > total) {
+      e.householdChildrenCount = 'Kinder können nicht mehr sein als Personen im Haushalt'
+    } else if (total === 1 && children > 0) {
+      e.householdChildrenCount = 'Bei einer Person sind 0 Kinder möglich'
     }
     setErrors(e)
     return Object.keys(e).length === 0
@@ -169,13 +179,18 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accoun
         currentZip: form.currentZip.trim(),
         currentCity: form.currentCity.trim(),
         contactPhone: form.contactPhone.trim(),
-        applicationEmail: form.applicationEmail.trim() || null,
+        applicationEmail:
+          form.applicationEmail.trim().toLowerCase() === accountEmail.trim().toLowerCase() ?
+            null
+          : form.applicationEmail.trim(),
         employmentStatus: form.employmentStatus,
         employer: needsEmployer ? form.employer.trim() : null,
         jobTitle: form.jobTitle.trim() || null,
         employedSinceYear: form.employedSinceYear ? Number(form.employedSinceYear) : null,
         employedSinceMonth: form.employedSinceMonth ? Number(form.employedSinceMonth) : null,
         monthlyIncomeCategory: form.monthlyIncomeCategory,
+        householdTotalPersons: Number(form.householdTotalPersons.replace(/\D/g, '')) || 1,
+        householdChildrenCount: Number(String(form.householdChildrenCount).replace(/\D/g, '')) || 0,
         declaresNonSmoker: form.declaresNonSmoker ? true : null,
         householdPets: form.householdPets,
         referenceName: form.referenceName.trim() || null,
@@ -222,7 +237,14 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accoun
       })
       .join(', ')
   }, [form.preferredCantonCodes])
-  const summaryPetsLabel = PETS_OPTIONS.find(o => o.value === form.householdPets)?.label ?? ''
+  const summaryPetsLabel = PETS_OPTIONS.find(o => o.value === form.householdPets)?.label ?? 'Haustiere'
+  const summaryTp = Number(form.householdTotalPersons)
+  const summaryHouseholdPeople =
+    Number.isFinite(summaryTp) && summaryTp >= 1 ?
+      `${summaryTp} Person${summaryTp === 1 ? '' : 'en'}`
+    : '—'
+  const summaryTc = Number(String(form.householdChildrenCount).replace(/\D/g, ''))
+  const summaryHouseholdChildren = `${Number.isFinite(summaryTc) ? summaryTc : 0} Kinder`
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:py-10">
@@ -322,23 +344,13 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accoun
             <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
               <h3 className="text-sm font-bold text-slate-900">Erreichbarkeit für Vermieter</h3>
               <p className="mt-1 text-xs text-slate-600">
-                Login-E-Mail aus deinem Konto (nicht änderbar hier). Optional kannst du für Bewerbungen eine andere
-                Adresse angeben.
+                Standardmässig deine Login-E-Mail — du kannst sie bei Bedarf für Bewerbungen anpassen.
               </p>
               <div className="mt-3">
-                <span className="text-[14px] font-medium text-slate-700">Konto-E-Mail</span>
-                <p className="mt-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800">
-                  {accountEmail || '—'}
-                </p>
-              </div>
-              <div className="mt-3">
-                <label className="mb-1.5 block text-[14px] font-medium text-slate-700">
-                  Bewerbungs-E-Mail <span className="font-normal text-slate-500">(optional)</span>
-                </label>
+                <label className="mb-1.5 block text-[14px] font-medium text-slate-700">E-Mail *</label>
                 <input
                   type="email"
                   autoComplete="email"
-                  placeholder="Leer lassen = Konto-E-Mail"
                   className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
                   value={form.applicationEmail}
                   onChange={e => setField('applicationEmail', e.target.value)}
@@ -451,9 +463,13 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accoun
             ) : null}
 
             <div>
-              <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Monatliches Nettoeinkommen *</label>
+              <label className="mb-1.5 block text-[14px] font-medium text-slate-700">
+                Monatliches Nettoeinkommen des gesamten Haushalts *
+              </label>
               <p className="mt-0 text-xs text-slate-500">
-                Bitte realistisch inkl. regelmässiger Zulagen wählen (13. Monatslohn anteilig mitgedacht).
+                Bitte die Summe aller regelmässigen Nettoeinkommen im Haushalt wählen (alle berufstätigen oder
+                anderweitig einkommensbezogenen Personen zusammengezählt), realistisch inkl. Zulagen; 13.
+                Monatslohn anteilig mitdenken.
               </p>
               <select
                 className="mt-2 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
@@ -468,23 +484,62 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accoun
               </select>
             </div>
 
+            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+              <h3 className="text-sm font-bold text-slate-900">Haushalt</h3>
+              <p className="mt-1 text-xs text-slate-600">
+                «1 Person» bedeutet: du lebst allein. Kinder zählen als eigene Personen im Haushalt.
+              </p>
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">
+                    Personen im Haushalt (inkl. dir) *
+                  </label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={20}
+                    className="mt-0 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
+                    value={form.householdTotalPersons}
+                    onChange={e => setField('householdTotalPersons', e.target.value.replace(/[^\d]/g, '').slice(0, 2))}
+                  />
+                  {errors.householdTotalPersons ? (
+                    <p className="mt-1 text-[13px] text-red-600">{errors.householdTotalPersons}</p>
+                  ) : null}
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-[14px] font-medium text-slate-700">Kinder im Haushalt *</label>
+                  <p className="text-xs text-slate-500">Anzahl minderjähriger Kinder, die mit bei dir wohnen (0 wenn keine).</p>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={20}
+                    className="mt-2 min-h-[48px] w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:min-h-0 md:text-sm"
+                    value={form.householdChildrenCount}
+                    onChange={e => setField('householdChildrenCount', e.target.value.replace(/[^\d]/g, '').slice(0, 2))}
+                  />
+                  {errors.householdChildrenCount ? (
+                    <p className="mt-1 text-[13px] text-red-600">{errors.householdChildrenCount}</p>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
             <div className="rounded-xl bg-teal-50 px-3 py-3 text-xs leading-relaxed text-teal-900">
               🔒 Dein genaues Einkommen wird nie angezeigt — Vermieter sehen nur die Kategorie.
             </div>
 
             <fieldset className="rounded-xl border border-slate-200 p-4">
-              <legend className="px-1 text-[14px] font-medium text-slate-700">Haushalt (optional)</legend>
-              <p className="text-xs text-slate-500">
-                Hilft Vermieterinnen und Vermieter bei der Passung — freiwillig, ohne negatives «Raucher»-Feld.
-              </p>
-              <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm text-slate-800">
+              <legend className="px-1 text-[14px] font-medium text-slate-700">Rauchen &amp; Haustiere (optional)</legend>
+              <label className="mt-1 flex cursor-pointer items-start gap-2 text-sm text-slate-800">
                 <input
                   type="checkbox"
                   checked={form.declaresNonSmoker}
                   onChange={e => setField('declaresNonSmoker', e.target.checked)}
                   className="mt-1"
                 />
-                <span>Ich rauche nicht in der Wohnung (freiwillige Angabe)</span>
+                <span>Ich rauche nicht in der Wohnung</span>
               </label>
               <div className="mt-4">
                 <span className="text-[14px] font-medium text-slate-700">Haustiere</span>
@@ -686,8 +741,7 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accoun
                   <dd className="text-right">
                     <span className="text-slate-600">Tel.</span> {form.contactPhone}
                     <br />
-                    <span className="text-slate-600">E-Mail</span>{' '}
-                    {form.applicationEmail.trim() || accountEmail}
+                    <span className="text-slate-600">E-Mail</span> {form.applicationEmail.trim()}
                     <button type="button" className="ml-2 text-teal-800 underline" onClick={() => setStep(1)}>
                       Bearbeiten
                     </button>
@@ -699,7 +753,7 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accoun
                     {employmentLabelDe(form.employmentStatus)}
                     {needsEmployer && form.employer ? ` · ${form.employer}` : ''}
                     <br />
-                    {summaryIncome}
+                    <span className="text-slate-600">Haushalt (Kategorie):</span> {summaryIncome}
                     <button type="button" className="ml-2 text-teal-800 underline" onClick={() => setStep(2)}>
                       Bearbeiten
                     </button>
@@ -708,7 +762,9 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accoun
                 <div className="flex justify-between gap-4">
                   <dt>Haushalt</dt>
                   <dd className="text-right">
-                    {form.declaresNonSmoker ? <span>Raucht nicht in der Wohnung (freiwillig)</span> : null}
+                    {summaryHouseholdPeople}, {summaryHouseholdChildren}
+                    <br />
+                    {form.declaresNonSmoker ? <span>Raucht nicht in der Wohnung</span> : null}
                     {form.declaresNonSmoker ? <br /> : null}
                     <span>{summaryPetsLabel}</span>
                     <button type="button" className="ml-2 text-teal-800 underline" onClick={() => setStep(2)}>

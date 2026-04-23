@@ -30,6 +30,8 @@ export type BewerbenTenantPreview = {
   jobTitle: string | null
   employedSince: string | null
   monthlyIncomeCategory: import('@prisma/client').IncomeCategory
+  householdTotalPersons: number
+  householdChildrenCount: number
   referenceName: string | null
   referenceRelation: string | null
   creditCheckStatus: import('@prisma/client').CreditCheckStatus
@@ -180,7 +182,12 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
                 <span className="font-medium text-slate-500">Beruf:</span> {empText}
               </p>
               <p>
-                <span className="font-medium text-slate-500">Einkommen:</span> {incomeText}
+                <span className="font-medium text-slate-500">Haushaltsnettoeinkommen (Kategorie):</span> {incomeText}
+              </p>
+              <p>
+                <span className="font-medium text-slate-500">Haushalt:</span> {tenant.householdTotalPersons}{' '}
+                {tenant.householdTotalPersons === 1 ? 'Person (allein)' : 'Personen'}, {tenant.householdChildrenCount}{' '}
+                Kinder
               </p>
               {requiresCreditCheck && tenant.creditCheckStatus === 'APPROVED' && creditResult ? (
                 <div className="pt-2">

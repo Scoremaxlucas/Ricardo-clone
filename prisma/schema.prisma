@@ -1860,6 +1860,11 @@ model TenantProfile {
 
   monthlyIncomeCategory IncomeCategory
 
+  /** Anzahl Personen im Haushalt inkl. Bewerber/in (mind. 1). */
+  householdTotalPersons Int @default(1)
+  /** Anzahl im Haushalt lebender Kinder (0 wenn keine). */
+  householdChildrenCount Int @default(0)
+
   /** Erreichbarkeit für Vermieter (Pflicht im Mieterprofil). */
   contactPhone          String             @default("")
   /** Optional: abweichende E-Mail für Bewerbungen; leer = Konto-E-Mail. */
@@ -1867,7 +1872,7 @@ model TenantProfile {
 
   /** Freiwillig: Nutzer bestätigt Nichtraucher(in) in der Wohnung (kein negatives Gegenfeld). */
   declaresNonSmoker Boolean?
-  householdPets       HouseholdPets @default(UNSPECIFIED)
+  householdPets       HouseholdPets @default(NONE)
 
   referenceName         String?
   referencePhone        String?

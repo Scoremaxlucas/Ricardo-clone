@@ -140,17 +140,8 @@ export default async function ProfilPage() {
             </div>
             <dl className="mt-4 space-y-2 text-sm text-slate-700">
               <div>
-                <dt className="text-slate-500">Konto-E-Mail (Login)</dt>
-                <dd className="font-medium">{accountEmail || '—'}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">E-Mail für Rückmeldungen</dt>
-                <dd className="font-medium">
-                  {contactEmailEffective}
-                  {profile.applicationEmail?.trim() ?
-                    <span className="ml-2 text-xs font-normal text-slate-500">(abweichend vom Konto)</span>
-                  : null}
-                </dd>
+                <dt className="text-slate-500">E-Mail</dt>
+                <dd className="font-medium">{contactEmailEffective || '—'}</dd>
               </div>
               <div>
                 <dt className="text-slate-500">Telefon</dt>
@@ -170,7 +161,7 @@ export default async function ProfilPage() {
               </Link>
             </div>
             <p className="mt-4 text-sm text-slate-800">{empText}</p>
-            <p className="mt-2 text-sm text-slate-600">Einkommen (Kategorie): {incomeText}</p>
+            <p className="mt-2 text-sm text-slate-600">Haushaltsnettoeinkommen (Kategorie): {incomeText}</p>
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -185,11 +176,21 @@ export default async function ProfilPage() {
             </div>
             <dl className="mt-4 space-y-2 text-sm text-slate-700">
               <div>
+                <dt className="text-slate-500">Personen im Haushalt</dt>
+                <dd className="font-medium">
+                  {profile.householdTotalPersons}{' '}
+                  {profile.householdTotalPersons === 1 ? 'Person' : 'Personen'}
+                  {profile.householdTotalPersons === 1 ? ' (allein)' : ''}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Kinder im Haushalt</dt>
+                <dd className="font-medium">{profile.householdChildrenCount}</dd>
+              </div>
+              <div>
                 <dt className="text-slate-500">Rauchen in der Wohnung</dt>
                 <dd className="font-medium">
-                  {profile.declaresNonSmoker === true
-                    ? 'Raucht nicht in der Wohnung (freiwillige Angabe)'
-                    : 'Keine Angabe'}
+                  {profile.declaresNonSmoker === true ? 'Raucht nicht in der Wohnung' : 'Keine Angabe'}
                 </dd>
               </div>
               <div>

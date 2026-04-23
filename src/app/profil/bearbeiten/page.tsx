@@ -32,6 +32,7 @@ export default async function ProfilBearbeitenPage() {
   const safeIso = (d: Date) => (Number.isNaN(d.getTime()) ? '' : d.toISOString())
   const phoneFromProfile = row.contactPhone?.trim() ?? ''
   const phoneFromUser = user?.phone?.trim() ?? ''
+  const accountEmail = user?.email?.trim() ?? ''
 
   const initial = buildInitialFromApi({
     firstName: row.firstName,
@@ -41,12 +42,14 @@ export default async function ProfilBearbeitenPage() {
     currentZip: row.currentZip,
     currentCity: row.currentCity,
     contactPhone: phoneFromProfile || phoneFromUser,
-    applicationEmail: row.applicationEmail ?? '',
+    applicationEmail: row.applicationEmail?.trim() || accountEmail,
     employmentStatus: row.employmentStatus,
     employer: row.employer,
     jobTitle: row.jobTitle,
     employedSince: row.employedSince && !Number.isNaN(row.employedSince.getTime()) ? row.employedSince.toISOString() : null,
     monthlyIncomeCategory: row.monthlyIncomeCategory,
+    householdTotalPersons: row.householdTotalPersons,
+    householdChildrenCount: row.householdChildrenCount,
     declaresNonSmoker: row.declaresNonSmoker,
     householdPets: row.householdPets,
     referenceName: row.referenceName,
@@ -61,8 +64,6 @@ export default async function ProfilBearbeitenPage() {
     preferredMoveInEarliest: row.preferredMoveInEarliest ? row.preferredMoveInEarliest.toISOString() : null,
     preferredMoveInLatest: row.preferredMoveInLatest ? row.preferredMoveInLatest.toISOString() : null,
   })
-
-  const accountEmail = user?.email?.trim() ?? ''
 
   return (
     <ProfilErstellenClient mode="edit" initial={initial} redirectAfterSave="/profil" accountEmail={accountEmail} />

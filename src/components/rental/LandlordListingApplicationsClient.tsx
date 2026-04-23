@@ -31,6 +31,8 @@ export type LandlordApplicationRow = {
     jobTitle: string | null
     employedSince: string | null
     monthlyIncomeCategory: IncomeCategory
+    householdTotalPersons: number
+    householdChildrenCount: number
     declaresNonSmoker: boolean | null
     householdPets: HouseholdPets
     referenceName: string | null
@@ -132,12 +134,13 @@ function LandlordApplicationCard({
         t.employedSince ? new Date(t.employedSince) : null
       )
     : '—'
-  const income = t ? `${incomeCategoryLabelDe(t.monthlyIncomeCategory)} / Monat` : '—'
+  const income = t ? `${incomeCategoryLabelDe(t.monthlyIncomeCategory)} (Haushalt / Monat)` : '—'
   const householdLine =
     t ?
       [
-        t.declaresNonSmoker === true ? 'Raucht nicht in der Wohnung (freiwillig)' : null,
-        t.householdPets !== 'UNSPECIFIED' ? householdPetsLabelDe(t.householdPets) : null,
+        `${t.householdTotalPersons} Pers. · ${t.householdChildrenCount} Kinder`,
+        t.declaresNonSmoker === true ? 'Nichtraucher in der Wohnung' : null,
+        householdPetsLabelDe(t.householdPets),
       ]
         .filter(Boolean)
         .join(' · ') || null

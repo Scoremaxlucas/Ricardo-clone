@@ -40,12 +40,12 @@ export default async function ProfilErstellenPage({
   const next = Array.isArray(nextRaw) ? nextRaw[0] : nextRaw
   const redirectAfterSave = next && next.startsWith('/') ? next : '/profil'
 
+  const accountEmail = user?.email?.trim() ?? ''
   const initial = {
     ...buildInitialFromApi(null),
     contactPhone: user?.phone?.trim() ?? '',
+    applicationEmail: accountEmail,
   }
-  const accountEmail = user?.email?.trim() ?? ''
-
   return (
     <ProfilErstellenClient
       mode="create"

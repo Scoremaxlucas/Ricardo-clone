@@ -66,7 +66,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
 <h3>BEWERBER</h3>
 <p>Name: ${applicantName}<br/>Geburtsdatum: ${formatDate(app.tenantProfile.dateOfBirth)}<br/>Adresse: ${app.tenantProfile.currentAddress}</p>
 <h3>BESCHÄFTIGUNG & EINKOMMEN</h3>
-<p>Status: ${app.tenantProfile.employmentStatus}<br/>Arbeitgeber: ${app.tenantProfile.employer || '—'}<br/>Berufsbezeichnung: ${app.tenantProfile.jobTitle || '—'}<br/>Monatliches Einkommen: ${incomeCategoryLabelDe(app.tenantProfile.monthlyIncomeCategory)}</p>
+<p>Status: ${app.tenantProfile.employmentStatus}<br/>Arbeitgeber: ${app.tenantProfile.employer || '—'}<br/>Berufsbezeichnung: ${app.tenantProfile.jobTitle || '—'}<br/>Monatliches Haushaltsnettoeinkommen (Kategorie): ${incomeCategoryLabelDe(app.tenantProfile.monthlyIncomeCategory)}<br/>Haushalt: ${app.tenantProfile.householdTotalPersons} Person(en), ${app.tenantProfile.householdChildrenCount} Kinder</p>
 <h3>BETREIBUNGSREGISTER</h3>
 <p>Status: ${app.tenantProfile.creditCheckStatus}<br/>Ausgestellt: ${app.tenantProfile.creditCheckUploadedAt ? formatDate(app.tenantProfile.creditCheckUploadedAt) : '—'}<br/>Gültig bis: ${app.tenantProfile.creditCheckExpiresAt ? formatDate(app.tenantProfile.creditCheckExpiresAt) : '—'}</p>
 <h3>REFERENZ</h3>

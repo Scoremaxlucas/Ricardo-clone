@@ -85,7 +85,15 @@ export default async function AdminApplicationDossierPage({ params }: { params: 
           <p>Status: {app.tenantProfile.employmentStatus}</p>
           <p>Arbeitgeber: {app.tenantProfile.employer || '—'}</p>
           <p>Berufsbezeichnung: {app.tenantProfile.jobTitle || '—'}</p>
-          <p>Monatliches Nettoeinkommen: {incomeCategoryLabelDe(app.tenantProfile.monthlyIncomeCategory)}</p>
+          <p>
+            Monatliches Haushaltsnettoeinkommen (Kategorie):{' '}
+            {incomeCategoryLabelDe(app.tenantProfile.monthlyIncomeCategory)}
+          </p>
+          <p>
+            Haushalt: {app.tenantProfile.householdTotalPersons}{' '}
+            {app.tenantProfile.householdTotalPersons === 1 ? 'Person' : 'Personen'}, {app.tenantProfile.householdChildrenCount}{' '}
+            Kinder
+          </p>
           <p>Einkommens-Regel (3x Miete): {q.reasons.some(i => i.code === 'INCOME_TOO_LOW') ? '❌ Nicht erfüllt' : '✅ Erfüllt'}</p>
         </section>
         <section className="section">

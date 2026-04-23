@@ -68,6 +68,8 @@ export default async function LandlordListingApplicationsPage({ params }: PagePr
           jobTitle: a.tenantProfile.jobTitle,
           employedSince: a.tenantProfile.employedSince?.toISOString() ?? null,
           monthlyIncomeCategory: a.tenantProfile.monthlyIncomeCategory,
+          householdTotalPersons: a.tenantProfile.householdTotalPersons,
+          householdChildrenCount: a.tenantProfile.householdChildrenCount,
           declaresNonSmoker: a.tenantProfile.declaresNonSmoker,
           householdPets: a.tenantProfile.householdPets,
           referenceName: a.tenantProfile.referenceName,

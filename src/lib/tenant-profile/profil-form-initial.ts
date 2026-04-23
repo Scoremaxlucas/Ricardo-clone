@@ -15,6 +15,8 @@ export type ProfilFormInitial = {
   employedSinceYear: string
   employedSinceMonth: string
   monthlyIncomeCategory: IncomeCategory
+  householdTotalPersons: string
+  householdChildrenCount: string
   declaresNonSmoker: boolean
   householdPets: HouseholdPets
   referenceName: string
@@ -46,8 +48,10 @@ function defaultForm(): ProfilFormInitial {
     employedSinceYear: '',
     employedSinceMonth: '',
     monthlyIncomeCategory: 'FROM_4000_TO_5500',
+    householdTotalPersons: '1',
+    householdChildrenCount: '0',
     declaresNonSmoker: false,
-    householdPets: 'UNSPECIFIED',
+    householdPets: 'NONE',
     referenceName: '',
     referencePhone: '',
     referenceRelation: '',
@@ -94,9 +98,20 @@ export function buildInitialFromApi(p: Record<string, unknown> | null | undefine
         .sort()
     : []
 
-  const hp = (p.householdPets as HouseholdPets | undefined) || 'UNSPECIFIED'
+  const hp = (p.householdPets as HouseholdPets | undefined) || 'NONE'
   const validPets: HouseholdPets[] = ['UNSPECIFIED', 'NONE', 'HAS_PETS']
-  const householdPets = validPets.includes(hp) ? hp : 'UNSPECIFIED'
+  const householdPetsRaw = validPets.includes(hp) ? hp : 'NONE'
+  const householdPets = householdPetsRaw === 'UNSPECIFIED' ? 'NONE' : householdPetsRaw
+
+  const htp =
+    p.householdTotalPersons != null && Number.isFinite(Number(p.householdTotalPersons)) ?
+      Math.min(20, Math.max(1, Math.round(Number(p.householdTotalPersons))))
+    : 1
+  const hccRaw =
+    p.householdChildrenCount != null && Number.isFinite(Number(p.householdChildrenCount)) ?
+      Math.round(Number(p.householdChildrenCount))
+    : 0
+  const householdChildrenCount = Math.min(htp, Math.max(0, hccRaw))
 
   const validIncome: IncomeCategory[] = [
     'UNDER_3000',
@@ -131,6 +146,8 @@ export function buildInitialFromApi(p: Record<string, unknown> | null | undefine
     employedSinceYear,
     employedSinceMonth,
     monthlyIncomeCategory,
+    householdTotalPersons: String(htp),
+    householdChildrenCount: String(householdChildrenCount),
     declaresNonSmoker: p.declaresNonSmoker === true,
     householdPets,
     referenceName: String(p.referenceName ?? ''),

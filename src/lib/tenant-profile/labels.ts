@@ -26,8 +26,8 @@ const INCOME: Record<IncomeCategory, string> = {
 }
 
 const PETS: Record<HouseholdPets, string> = {
-  UNSPECIFIED: 'Keine Angabe',
-  NONE: 'Keine Haustiere im Haushalt',
+  UNSPECIFIED: 'Keine Haustiere',
+  NONE: 'Keine Haustiere',
   HAS_PETS: 'Mit Haustieren',
 }
 
