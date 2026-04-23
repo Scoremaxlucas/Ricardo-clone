@@ -9,7 +9,7 @@ import { RentalListingLandlordForm } from '@/components/rental/RentalListingLand
 type Tab = 'manual' | 'url'
 
 export function RentalListingCreateFlow() {
-  const [tab, setTab] = useState<Tab>('manual')
+  const [tab, setTab] = useState<Tab | null>(null)
   const [url, setUrl] = useState('')
   const [analyzing, setAnalyzing] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -62,28 +62,40 @@ export function RentalListingCreateFlow() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-1">
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setTab('manual')}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold transition ${
-              tab === 'manual' ? 'bg-white text-teal-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            Manuell
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('url')}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold transition ${
-              tab === 'url' ? 'bg-white text-teal-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            URL scannen
-          </button>
+      {tab === null ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <h2 className="text-lg font-bold text-slate-900">Wie möchtest du dein Inserat erstellen?</h2>
+          <p className="mt-1 text-sm text-slate-600">Wähle eine Option, um zu starten.</p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setTab('url')}
+              className="rounded-xl border border-teal-200 bg-teal-50/40 p-4 text-left transition hover:border-teal-300 hover:bg-teal-50"
+            >
+              <p className="text-sm font-semibold text-teal-900">URL scannen</p>
+              <p className="mt-1 text-xs text-slate-700">URL scannen, falls du bereits ein Inserat irgendwo sonst hast.</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('manual')}
+              className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
+            >
+              <p className="text-sm font-semibold text-slate-900">Manuell</p>
+              <p className="mt-1 text-xs text-slate-700">Inserat Schritt für Schritt selbst erfassen.</p>
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
+
+      {tab !== null ? (
+        <button
+          type="button"
+          onClick={() => setTab(null)}
+          className="mb-4 text-sm font-medium text-teal-800 underline-offset-2 hover:underline"
+        >
+          ← Auswahl ändern
+        </button>
+      ) : null}
 
       {tab === 'url' ? (
         <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -116,8 +128,10 @@ export function RentalListingCreateFlow() {
         </div>
       ) : null}
 
-      <div className={tab === 'url' ? 'mt-5' : 'mt-2'}>
+      <div className={tab === 'url' ? 'mt-5' : 'mt-0'}>
+        {tab === 'manual' ?
         <RentalListingLandlordForm mode="create" initial={importedInitial ?? undefined} />
+        : null}
       </div>
     </div>
   )
