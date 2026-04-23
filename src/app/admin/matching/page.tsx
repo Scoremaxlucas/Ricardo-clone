@@ -69,8 +69,12 @@ export default async function AdminMatchingOpsEntryPage() {
         </li>
       </ul>
       <p className="mt-10 text-sm text-slate-500">
+        <a href={`${WOHNEN_SITE_ORIGIN}/admin/wohnen`} className="text-teal-800 hover:underline">
+          Admin Wohnungen
+        </a>
+        {' · '}
         <Link href="/admin/dashboard" className="text-teal-800 hover:underline">
-          Admin-Dashboard
+          Marktplatz-Admin
         </Link>
       </p>
     </main>

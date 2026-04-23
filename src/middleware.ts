@@ -65,6 +65,8 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/api/admin/rental-listings')) return true
   if (pathname.startsWith('/api/admin/ingest')) return true
   if (pathname.startsWith('/api/admin/stats')) return true
+  if (pathname.startsWith('/api/admin/credit-check')) return true
+  if (pathname.startsWith('/api/admin/applications')) return true
   if (pathname.startsWith('/api/rental-applications')) return true
   if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
   if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
@@ -74,7 +76,10 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname === '/') return true
   if (pathname === '/matching' || pathname.startsWith('/matching/')) return true
   if (pathname === '/admin/listings' || pathname.startsWith('/admin/listings/')) return true
+  if (pathname === '/admin/wohnen' || pathname.startsWith('/admin/wohnen/')) return true
   if (pathname.startsWith('/admin/dashboard')) return true
+  if (pathname.startsWith('/admin/matching')) return true
+  if (pathname === '/admin/applications' || pathname.startsWith('/admin/applications/')) return true
   if (
     pathname === '/login' ||
     pathname === '/register' ||
@@ -128,10 +133,15 @@ export async function middleware(request: NextRequest) {
 
   if (
     pathname.startsWith('/admin/listings') ||
+    pathname.startsWith('/admin/wohnen') ||
     pathname.startsWith('/admin/dashboard') ||
+    pathname.startsWith('/admin/matching') ||
+    pathname.startsWith('/admin/applications') ||
     pathname.startsWith('/api/admin/rental-listings') ||
     pathname.startsWith('/api/admin/ingest') ||
-    pathname.startsWith('/api/admin/stats')
+    pathname.startsWith('/api/admin/stats') ||
+    pathname.startsWith('/api/admin/credit-check') ||
+    pathname.startsWith('/api/admin/applications')
   ) {
     const secret = process.env.NEXTAUTH_SECRET
     if (!secret) {
@@ -161,6 +171,9 @@ export async function middleware(request: NextRequest) {
         status: 403,
         headers: { 'content-type': 'text/html; charset=utf-8' },
       })
+    }
+    if (isWohnenTenant(request) && pathname === '/admin/dashboard') {
+      return NextResponse.redirect(new URL('/admin/wohnen', request.url))
     }
     return NextResponse.next()
   }

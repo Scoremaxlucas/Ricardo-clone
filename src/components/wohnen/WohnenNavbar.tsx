@@ -1,6 +1,7 @@
 'use client'
 
 import { Logo } from '@/components/ui/Logo'
+import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 import { LogOut, Menu, User, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -267,13 +268,30 @@ export function WohnenNavbar() {
                 <>
                   <div className="my-1 border-t border-slate-100" />
                   <p className="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wide text-slate-500">⚙️ Admin</p>
-                  <Link href="/admin/listings" className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onClick={() => setMenuOpen(false)}>Inserate verwalten</Link>
-                  <Link href="/admin/users" className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onClick={() => setMenuOpen(false)}>User verwalten</Link>
-                  <Link href="/admin/applications" className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onClick={() => setMenuOpen(false)}>Alle Bewerbungen</Link>
-                  <Link href="/admin/users?filter=pending_review" className="flex items-center justify-between gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onClick={() => setMenuOpen(false)}>
-                    <span>⚠️ Manuelle Reviews</span>
-                    {pendingManualReviews > 0 ? <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{pendingManualReviews}</span> : null}
+                  <Link
+                    href="/admin/wohnen"
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-[#107a5a] hover:bg-[#e8f7f2]"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Admin Wohnungen
                   </Link>
+                  <Link href="/admin/listings" className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onClick={() => setMenuOpen(false)}>Inserate verwalten</Link>
+                  <a
+                    href={`${MAIN_SHOP_ORIGIN}/admin/users`}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    User verwalten (www)
+                  </a>
+                  <Link href="/admin/applications" className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onClick={() => setMenuOpen(false)}>Alle Bewerbungen</Link>
+                  <a
+                    href={`${MAIN_SHOP_ORIGIN}/admin/users?filter=pending_review`}
+                    className="flex items-center justify-between gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <span>⚠️ Manuelle Reviews (www)</span>
+                    {pendingManualReviews > 0 ? <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{pendingManualReviews}</span> : null}
+                  </a>
                 </>
               : null}
               <div className="my-1 border-t border-slate-100" />
@@ -418,27 +436,30 @@ export function WohnenNavbar() {
         {isAdminUser ?
           <>
             <p className="border-b border-[#e8f7f2] px-3 pb-2 pt-3 text-xs font-bold uppercase tracking-wide text-slate-500">⚙️ Admin</p>
+            <Link href="/admin/wohnen" className={`${mobileDrawerLink} font-semibold text-[#107a5a] hover:bg-[#e8f7f2]`} onClick={closeAll}>
+              Admin Wohnungen
+            </Link>
             <Link href="/admin/listings" className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`} onClick={closeAll}>
               Inserate verwalten
             </Link>
-            <Link href="/admin/users" className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`} onClick={closeAll}>
-              User verwalten
-            </Link>
+            <a href={`${MAIN_SHOP_ORIGIN}/admin/users`} className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`} onClick={closeAll}>
+              User verwalten (www)
+            </a>
             <Link href="/admin/applications" className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`} onClick={closeAll}>
               Alle Bewerbungen
             </Link>
-            <Link
-              href="/admin/users?filter=pending_review"
+            <a
+              href={`${MAIN_SHOP_ORIGIN}/admin/users?filter=pending_review`}
               className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`}
               onClick={closeAll}
             >
               <span className="flex w-full items-center justify-between gap-2">
-                <span>⚠️ Manuelle Reviews</span>
+                <span>⚠️ Manuelle Reviews (www)</span>
                 {pendingManualReviews > 0 ? (
                   <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{pendingManualReviews}</span>
                 ) : null}
               </span>
-            </Link>
+            </a>
           </>
         : null}
         <button

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
+import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -334,9 +335,9 @@ export default function AdminDashboard() {
             color="green"
           />
           <ActionCard
-            title="Matching Ops (wohnen)"
+            title="Helvenda Wohnen (Admin)"
             icon={Shield}
-            href="/admin/matching"
+            href={`${WOHNEN_SITE_ORIGIN}/admin/wohnen`}
             color="teal"
           />
         </div>
