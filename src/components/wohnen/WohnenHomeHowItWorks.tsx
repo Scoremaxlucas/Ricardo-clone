@@ -38,7 +38,7 @@ const TENANT_STEPS: Step[] = [
     n: 2,
     icon: <IconDocument className="h-6 w-6 text-[#18a87c]" />,
     title: 'Sofort ernst genommen werden',
-    text: 'Lade dein Betreibungsregister einmal hoch — es gilt für alle deine Bewerbungen und zeigt Vermietern nur: Einträge ja/nein.',
+    text: 'Vervollständige dein Mieterprofil in wenigen Minuten — einmal eingerichtet, für alle Bewerbungen nutzbar. So wirkt deine Bewerbung seriös, ohne bei jeder Wohnung von vorne zu beginnen.',
   },
   {
     n: 3,
@@ -95,7 +95,7 @@ function Column({ variant, steps, title, label }: { variant: 'landlord' | 'tenan
 }
 
 export function WohnenHomeHowItWorks() {
-  const [tab, setTab] = useState<'landlord' | 'tenant'>('landlord')
+  const [tab, setTab] = useState<'landlord' | 'tenant'>('tenant')
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -107,15 +107,6 @@ export function WohnenHomeHowItWorks() {
         <div className="flex border-b border-slate-200">
           <button
             type="button"
-            onClick={() => setTab('landlord')}
-            className={`flex min-h-[44px] flex-1 items-center justify-center pb-2 text-sm font-semibold transition-colors ${
-              tab === 'landlord' ? 'border-b-2 border-[#18a87c] text-[#18a87c]' : 'border-b-2 border-transparent text-slate-500'
-            }`}
-          >
-            Vermieter
-          </button>
-          <button
-            type="button"
             onClick={() => setTab('tenant')}
             className={`flex min-h-[44px] flex-1 items-center justify-center pb-2 text-sm font-semibold transition-colors ${
               tab === 'tenant' ? 'border-b-2 border-[#18a87c] text-[#18a87c]' : 'border-b-2 border-transparent text-slate-500'
@@ -123,17 +114,26 @@ export function WohnenHomeHowItWorks() {
           >
             Mietende
           </button>
+          <button
+            type="button"
+            onClick={() => setTab('landlord')}
+            className={`flex min-h-[44px] flex-1 items-center justify-center pb-2 text-sm font-semibold transition-colors ${
+              tab === 'landlord' ? 'border-b-2 border-[#18a87c] text-[#18a87c]' : 'border-b-2 border-transparent text-slate-500'
+            }`}
+          >
+            Vermieter
+          </button>
         </div>
         <div className="mt-6">
-          {tab === 'landlord' ?
-            <Column variant="landlord" label="FÜR VERMIETER" title="Weniger Aufwand. Bessere Mieter." steps={LANDLORD_STEPS} />
-          : <Column variant="tenant" label="FÜR MIETENDE" title="Einmal verifiziert. Überall beworben." steps={TENANT_STEPS} />}
+          {tab === 'tenant' ?
+            <Column variant="tenant" label="FÜR MIETENDE" title="Einmal verifiziert. Überall beworben." steps={TENANT_STEPS} />
+          : <Column variant="landlord" label="FÜR VERMIETER" title="Weniger Aufwand. Bessere Mieter." steps={LANDLORD_STEPS} />}
         </div>
       </div>
 
       <div className="mt-12 hidden gap-12 md:grid md:grid-cols-2 md:gap-10 lg:gap-16">
-        <Column variant="landlord" label="FÜR VERMIETER" title="Weniger Aufwand. Bessere Mieter." steps={LANDLORD_STEPS} />
         <Column variant="tenant" label="FÜR MIETENDE" title="Einmal verifiziert. Überall beworben." steps={TENANT_STEPS} />
+        <Column variant="landlord" label="FÜR VERMIETER" title="Weniger Aufwand. Bessere Mieter." steps={LANDLORD_STEPS} />
       </div>
     </div>
   )
