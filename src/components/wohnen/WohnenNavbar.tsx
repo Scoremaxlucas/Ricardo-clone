@@ -1,7 +1,6 @@
 'use client'
 
 import { Logo } from '@/components/ui/Logo'
-import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 import { LogOut, Menu, User, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -39,7 +38,6 @@ export function WohnenNavbar() {
   const [profile, setProfile] = useState<TenantProfileBrief | undefined>(undefined)
   const [hasListings, setHasListings] = useState(false)
   const [isAdminUser, setIsAdminUser] = useState(false)
-  const [pendingManualReviews, setPendingManualReviews] = useState(0)
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -92,22 +90,11 @@ export function WohnenNavbar() {
 
         const ownJson = (await ownRes.json().catch(() => ({}))) as { hasListings?: boolean }
         setHasListings(Boolean(ownJson.hasListings))
-
-        if (resolvedAdmin) {
-          const reviewRes = await fetch('/api/admin/credit-check/pending-count', {
-            credentials: 'same-origin',
-          })
-          const reviewJson = (await reviewRes.json().catch(() => ({}))) as { count?: number }
-          setPendingManualReviews(typeof reviewJson.count === 'number' ? reviewJson.count : 0)
-        } else {
-          setPendingManualReviews(0)
-        }
       } catch {
         if (!cancelled) {
           setHasListings(false)
           // Admin-Status nicht auf false zurücksetzen, falls nur Zusatz-Fetches fehlschlagen.
           setIsAdminUser(prev => prev || resolvedAdmin)
-          setPendingManualReviews(0)
         }
       } finally {
         if (!cancelled) setNavReady(true)
@@ -117,7 +104,7 @@ export function WohnenNavbar() {
     return () => {
       cancelled = true
     }
-  }, [status, user?.id, pathname])
+  }, [status, user?.id])
 
   useEffect(() => {
     if (mobileOpen) {
@@ -273,25 +260,11 @@ export function WohnenNavbar() {
                     className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-[#107a5a] hover:bg-[#e8f7f2]"
                     onClick={() => setMenuOpen(false)}
                   >
-                    Admin Wohnungen
+                    Admin-Dashboard
                   </Link>
-                  <Link href="/admin/listings" className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onClick={() => setMenuOpen(false)}>Inserate verwalten</Link>
-                  <a
-                    href={`${MAIN_SHOP_ORIGIN}/admin/users`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    User verwalten (www)
-                  </a>
-                  <Link href="/admin/applications" className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" onClick={() => setMenuOpen(false)}>Alle Bewerbungen</Link>
-                  <a
-                    href={`${MAIN_SHOP_ORIGIN}/admin/users?filter=pending_review`}
-                    className="flex items-center justify-between gap-2 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <span>⚠️ Manuelle Reviews (www)</span>
-                    {pendingManualReviews > 0 ? <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{pendingManualReviews}</span> : null}
-                  </a>
+                  <p className="px-3 pb-2 pt-0 text-[11px] leading-snug text-slate-500">
+                    Inserate, Bewerbungen, Reviews und www-Links erreichst du dort.
+                  </p>
                 </>
               : null}
               <div className="my-1 border-t border-slate-100" />
@@ -437,29 +410,11 @@ export function WohnenNavbar() {
           <>
             <p className="border-b border-[#e8f7f2] px-3 pb-2 pt-3 text-xs font-bold uppercase tracking-wide text-slate-500">⚙️ Admin</p>
             <Link href="/admin/wohnen" className={`${mobileDrawerLink} font-semibold text-[#107a5a] hover:bg-[#e8f7f2]`} onClick={closeAll}>
-              Admin Wohnungen
+              Admin-Dashboard
             </Link>
-            <Link href="/admin/listings" className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`} onClick={closeAll}>
-              Inserate verwalten
-            </Link>
-            <a href={`${MAIN_SHOP_ORIGIN}/admin/users`} className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`} onClick={closeAll}>
-              User verwalten (www)
-            </a>
-            <Link href="/admin/applications" className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`} onClick={closeAll}>
-              Alle Bewerbungen
-            </Link>
-            <a
-              href={`${MAIN_SHOP_ORIGIN}/admin/users?filter=pending_review`}
-              className={`${mobileDrawerLink} font-semibold text-red-700 hover:bg-red-50`}
-              onClick={closeAll}
-            >
-              <span className="flex w-full items-center justify-between gap-2">
-                <span>⚠️ Manuelle Reviews (www)</span>
-                {pendingManualReviews > 0 ? (
-                  <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{pendingManualReviews}</span>
-                ) : null}
-              </span>
-            </a>
+            <p className="border-b border-[#e8f7f2] px-3 py-2 text-[11px] leading-snug text-slate-500">
+              Inserate, Bewerbungen, Reviews und www-Links erreichst du dort.
+            </p>
           </>
         : null}
         <button

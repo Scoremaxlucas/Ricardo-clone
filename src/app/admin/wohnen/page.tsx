@@ -82,8 +82,8 @@ export default async function AdminWohnenDashboardPage() {
     },
     {
       href: `${MAIN_SHOP_ORIGIN}/admin/users?filter=pending_review`,
-      title: 'Betreibungsregister',
-      desc: 'Manuelle Prüfungen (Marktplatz-Admin)',
+      title: 'Manuelle Reviews',
+      desc: 'Betreibungsregisterauszüge — Marktplatz-Admin (www)',
       icon: Shield,
       stat: creditPendingManual,
       statLabel: 'offen',
