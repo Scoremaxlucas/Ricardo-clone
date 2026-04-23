@@ -92,11 +92,6 @@ export function RentalListingCard({ listing: l, imagePriority = false, matchScor
             </span>
           ) : null}
         </div>
-        {l.requiresCreditCheck ?
-          <span className="pointer-events-none absolute right-2 top-2 rounded-full border border-teal-200 bg-white/95 px-2 py-0.5 text-[11px] font-medium text-teal-800 shadow-sm">
-            📄 Betreibungsregister
-          </span>
-        : null}
       </div>
       <div className="flex flex-1 flex-col p-4">
         <h3 className="line-clamp-2 font-bold leading-snug text-slate-900 group-hover:text-teal-800">
