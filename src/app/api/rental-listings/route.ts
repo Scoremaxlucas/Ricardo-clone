@@ -74,7 +74,6 @@ function buildPublicListingQuery(sp: URLSearchParams): {
   const availableFrom = sp.get('availableFrom')?.trim() || sp.get('verfuegbar')?.trim() || ''
   const minAreaRaw = sp.get('minArea') ?? sp.get('minflaeche') ?? ''
   const q = (sp.get('q') || sp.get('ort') || '').trim().slice(0, 100)
-  const auszug = (sp.get('auszug') || '').trim().toLowerCase()
   const sort = (sp.get('sort') || 'neueste').trim().toLowerCase()
 
   const andParts: Prisma.RentalListingWhereInput[] = [{ status: 'active' }]
@@ -121,12 +120,6 @@ function buildPublicListingQuery(sp: URLSearchParams): {
         { title: { contains: q, mode: 'insensitive' } },
       ],
     })
-  }
-
-  if (auszug === 'pflicht') {
-    andParts.push({ requiresCreditCheck: true })
-  } else if (auszug === 'freiwillig' || auszug === 'optional') {
-    andParts.push({ requiresCreditCheck: false })
   }
 
   let orderBy: Prisma.RentalListingOrderByWithRelationInput[] = [{ createdAt: 'desc' }]

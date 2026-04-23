@@ -19,12 +19,6 @@ const SORT_OPTS = [
   { value: 'flaeche_desc', label: 'Grösste Fläche' },
 ] as const
 
-const AUSZUG_OPTS = [
-  { value: '', label: 'Alle Inserate' },
-  { value: 'pflicht', label: 'Nur mit Betreibungsauszug-Pflicht' },
-  { value: 'freiwillig', label: 'Nur ohne Auszug-Pflicht' },
-] as const
-
 function labelZimmer(v: string) {
   return v === '5plus' ? '5+' : v
 }
@@ -45,7 +39,6 @@ export function WohnungenSearchFilters() {
   const minflaeche = sp.get('minflaeche') ?? ''
   const verfuegbar = sp.get('verfuegbar') ?? ''
   const q = sp.get('q') ?? ''
-  const auszug = sp.get('auszug') ?? ''
   const sort = sp.get('sort') || 'neueste'
 
   const current = useMemo(
@@ -58,10 +51,9 @@ export function WohnungenSearchFilters() {
       minflaeche,
       verfuegbar,
       q,
-      auszug,
       sort,
     }),
-    [kanton, zimmer, maxzimmer, maxmiete, minmiete, minflaeche, verfuegbar, q, auszug, sort]
+    [kanton, zimmer, maxzimmer, maxmiete, minmiete, minflaeche, verfuegbar, q, sort]
   )
 
   const update = useCallback(
@@ -76,7 +68,6 @@ export function WohnungenSearchFilters() {
       if (merged.minflaeche) p.set('minflaeche', merged.minflaeche)
       if (merged.verfuegbar) p.set('verfuegbar', merged.verfuegbar)
       if (merged.q.trim()) p.set('q', merged.q.trim())
-      if (merged.auszug) p.set('auszug', merged.auszug)
       if (merged.sort && merged.sort !== 'neueste') p.set('sort', merged.sort)
       const qs = p.toString()
       router.push(qs ? `/wohnungen?${qs}` : '/wohnungen')
@@ -135,25 +126,12 @@ export function WohnungenSearchFilters() {
         clear: () => update({ verfuegbar: '' }),
       })
     }
-    if (auszug === 'pflicht') {
-      chips.push({
-        key: 'auszug',
-        label: 'Mit Auszug-Pflicht',
-        clear: () => update({ auszug: '' }),
-      })
-    } else if (auszug === 'freiwillig') {
-      chips.push({
-        key: 'auszug',
-        label: 'Ohne Auszug-Pflicht',
-        clear: () => update({ auszug: '' }),
-      })
-    }
     if (sort && sort !== 'neueste') {
       const lab = SORT_OPTS.find(o => o.value === sort)?.label ?? sort
       chips.push({ key: 'sort', label: lab, clear: () => update({ sort: 'neueste' }) })
     }
     return chips
-  }, [q, kanton, zimmer, maxzimmer, maxmiete, minmiete, minflaeche, verfuegbar, auszug, sort, update])
+  }, [q, kanton, zimmer, maxzimmer, maxmiete, minmiete, minflaeche, verfuegbar, sort, update])
 
   const hasFilters = activeChips.length > 0
 
@@ -327,21 +305,6 @@ export function WohnungenSearchFilters() {
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-semibold text-slate-600">Betreibungsauszug</span>
-          <select
-            className="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 md:min-h-0"
-            value={auszug}
-            onChange={e => update({ auszug: e.target.value })}
-          >
-            {AUSZUG_OPTS.map(o => (
-              <option key={o.value || 'alle'} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1.5">
           <span className="text-xs font-semibold text-slate-600">Sortierung</span>
           <select
             className="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 md:min-h-0"
@@ -359,8 +322,7 @@ export function WohnungenSearchFilters() {
 
       <p className="mt-4 text-[11px] leading-relaxed text-slate-500 sm:text-xs">
         Homegate &amp; Co. bieten oft noch Möblierung, Haustiere, Balkon usw. — dafür bräuchten wir zusätzliche Felder
-        pro Inserat. Heute filterst du nach Standort, Grösse, Budget, Zimmer und Auszug-Regel; persönliche Passung
-        bleibt bei{' '}
+        pro Inserat. Heute filterst du nach Standort, Grösse, Budget, Zimmer und Einzug; persönliche Passung bleibt bei{' '}
         <Link href="/meine-matches" className="font-semibold text-teal-700 underline-offset-2 hover:underline">
           Meine Matches
         </Link>
