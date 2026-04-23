@@ -1,4 +1,4 @@
-import { RentalListingLandlordForm } from '@/components/rental/RentalListingLandlordForm'
+import { RentalListingCreateFlow } from '@/components/rental/RentalListingCreateFlow'
 import { authOptions } from '@/lib/auth'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
@@ -18,5 +18,5 @@ export default async function NewLandlordRentalPropertyPage() {
     redirect('/login?callbackUrl=' + encodeURIComponent('/matching/properties/new'))
   }
 
-  return <RentalListingLandlordForm mode="create" />
+  return <RentalListingCreateFlow />
 }
