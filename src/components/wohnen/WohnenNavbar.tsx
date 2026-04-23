@@ -3,6 +3,7 @@
 import { Logo } from '@/components/ui/Logo'
 import { LogOut, Menu, User, X } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -28,6 +29,7 @@ const mobileDrawerLinkTeal =
 const WOHNEN_LOGIN_HREF = '/login?callbackUrl=%2Fmeine-matches'
 
 export function WohnenNavbar() {
+  const pathname = usePathname()
   const { data: session, status } = useSession()
   const user = session?.user as { id?: string; name?: string | null; email?: string | null; image?: string | null } | undefined
   const signedIn = status === 'authenticated' && Boolean(user?.id)
@@ -114,7 +116,7 @@ export function WohnenNavbar() {
     return () => {
       cancelled = true
     }
-  }, [status, user?.id])
+  }, [status, user?.id, pathname])
 
   useEffect(() => {
     if (mobileOpen) {
@@ -139,7 +141,13 @@ export function WohnenNavbar() {
     signedIn && navReady && !hasListings && profile?.isComplete && (okGreen || creditPending)
   )
 
-  const showIncompleteNav = Boolean(signedIn && navReady && !hasListings && (!profile || !profile.isComplete))
+  /** Kein tenant_profiles-Datensatz — wirklich neu anlegen. */
+  const needsNewProfile = Boolean(signedIn && navReady && !hasListings && profile === null)
+  /** Datensatz da, aber Flag noch nicht „vollständig“ (soll nach PATCH/Backfill nicht mehr vorkommen). */
+  const needsProfileCompletion = Boolean(
+    signedIn && navReady && !hasListings && profile != null && !profile.isComplete
+  )
+  const showIncompleteTenantNav = needsNewProfile || needsProfileCompletion
 
   const renderDesktopCenterLinks = () => {
     if (!signedIn || !navReady) return null
@@ -205,13 +213,22 @@ export function WohnenNavbar() {
               >
                 Wohnungen suchen
               </Link>
-              {showIncompleteNav ? (
+              {needsNewProfile ? (
                 <Link
                   href="/profil/erstellen"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-50"
                   onClick={() => setMenuOpen(false)}
                 >
                   Profil erstellen
+                </Link>
+              ) : null}
+              {needsProfileCompletion ? (
+                <Link
+                  href="/profil/bearbeiten"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-50"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Profil vervollständigen
                 </Link>
               ) : null}
               {showMatchesNav ? (
@@ -319,7 +336,7 @@ export function WohnenNavbar() {
             </Link>
           </>
         : null}
-        {showIncompleteNav ?
+        {needsNewProfile ?
           <>
             <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
               Wohnungen suchen
@@ -330,6 +347,20 @@ export function WohnenNavbar() {
               onClick={closeAll}
             >
               ⚠️ Profil erstellen
+            </Link>
+          </>
+        : null}
+        {needsProfileCompletion ?
+          <>
+            <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
+              Wohnungen suchen
+            </Link>
+            <Link
+              href="/profil/bearbeiten"
+              className={`${mobileDrawerLink} bg-amber-50 font-semibold text-amber-950 hover:bg-amber-100`}
+              onClick={closeAll}
+            >
+              ⚠️ Profil vervollständigen
             </Link>
           </>
         : null}
@@ -360,7 +391,7 @@ export function WohnenNavbar() {
             </Link>
           </>
         : null}
-        {!showLandlordNav && !showIncompleteNav && !showCreditRenew && !showTenantCompleteNav ?
+        {!showLandlordNav && !showIncompleteTenantNav && !showCreditRenew && !showTenantCompleteNav ?
           <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
             Wohnungen suchen
           </Link>
@@ -461,7 +492,7 @@ export function WohnenNavbar() {
                 {renderDesktopCenterLinks()}
                 {renderAuthButtons()}
               </>
-            ) : (
+            ) : profile === null ? (
               <>
                 <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-slate-900">
                   Wohnungen suchen
@@ -471,6 +502,19 @@ export function WohnenNavbar() {
                   className="rounded-md bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-200"
                 >
                   Profil erstellen
+                </Link>
+                {renderAuthButtons()}
+              </>
+            ) : (
+              <>
+                <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-slate-900">
+                  Wohnungen suchen
+                </Link>
+                <Link
+                  href="/profil/bearbeiten"
+                  className="rounded-md bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-200"
+                >
+                  Profil vervollständigen
                 </Link>
                 {renderAuthButtons()}
               </>

@@ -253,7 +253,8 @@ export async function PATCH(request: NextRequest) {
       ...(body as Record<string, unknown>),
     }
 
-    return upsertProfileData(userId, merged, existing.isComplete)
+    // Nach jedem erfolgreichen PATCH Profil als vollständig markieren (vorher blieb isComplete bei false hängen).
+    return upsertProfileData(userId, merged, true)
   } catch (e: unknown) {
     console.error('[tenant-profile PATCH]', e)
     return NextResponse.json({ message: e instanceof Error ? e.message : 'Fehler' }, { status: 500 })
