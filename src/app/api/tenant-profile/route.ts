@@ -125,9 +125,15 @@ export async function GET() {
       include: { user: { select: { email: true } } },
     })
     if (!row) {
-      return NextResponse.json({ profile: null })
+      return NextResponse.json(
+        { profile: null },
+        { headers: { 'Cache-Control': 'private, no-store, max-age=0' } }
+      )
     }
-    return NextResponse.json({ profile: serializeTenantProfile(row) })
+    return NextResponse.json(
+      { profile: serializeTenantProfile(row) },
+      { headers: { 'Cache-Control': 'private, no-store, max-age=0' } }
+    )
   } catch (e: unknown) {
     console.error('[tenant-profile GET]', e)
     return NextResponse.json({ message: e instanceof Error ? e.message : 'Fehler' }, { status: 500 })

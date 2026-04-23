@@ -83,10 +83,11 @@ export function WohnenNavbar() {
 
         if (tpRes.status === 401) {
           setProfile(null)
-        } else {
-          const tpJson = (await tpRes.json().catch(() => ({}))) as { profile?: TenantProfileBrief }
+        } else if (tpRes.ok) {
+          const tpJson = (await tpRes.json().catch(() => ({}))) as { profile?: TenantProfileBrief | null }
           setProfile(tpJson.profile ?? null)
         }
+        // Bei 5xx/Netzwerk: Profil-State nicht auf null setzen — sonst fälschlich «Profil erstellen».
 
         const ownJson = (await ownRes.json().catch(() => ({}))) as { hasListings?: boolean }
         setHasListings(Boolean(ownJson.hasListings))
@@ -102,7 +103,6 @@ export function WohnenNavbar() {
         }
       } catch {
         if (!cancelled) {
-          setProfile(null)
           setHasListings(false)
           // Admin-Status nicht auf false zurücksetzen, falls nur Zusatz-Fetches fehlschlagen.
           setIsAdminUser(prev => prev || resolvedAdmin)
@@ -490,6 +490,13 @@ export function WohnenNavbar() {
             : profile?.isComplete ? (
               <>
                 {renderDesktopCenterLinks()}
+                {renderAuthButtons()}
+              </>
+            ) : profile === undefined ? (
+              <>
+                <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-slate-900">
+                  Wohnungen suchen
+                </Link>
                 {renderAuthButtons()}
               </>
             ) : profile === null ? (
