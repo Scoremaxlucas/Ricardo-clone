@@ -3,6 +3,7 @@ import { evaluateMatch, parsePostalCodesList } from '@/lib/matching/evaluate-mat
 import { prisma } from '@/lib/prisma'
 import { trackRentalMatchMetricsEvent } from '@/lib/rental/match-metrics'
 import { decideRentalMatchRollout } from '@/lib/rental/match-rollout'
+import type { Prisma } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -40,6 +41,102 @@ function hasAnyPreferences(profile: {
   )
 }
 
+function parseZimmerParam(raw: string | null, kind: 'min' | 'max'): number | null {
+  if (raw == null || raw === '') return null
+  if (raw === '5plus') return kind === 'min' ? 5 : null
+  const v = parseFloat(String(raw).replace(',', '.'))
+  return Number.isFinite(v) ? v : null
+}
+
+function parseMaxMieteParam(raw: string | null): number | null {
+  if (raw == null || raw === '') return null
+  if (raw === '5000plus') return null
+  const v = parseInt(String(raw), 10)
+  return Number.isFinite(v) ? v : null
+}
+
+function parsePositiveInt(raw: string | null): number | null {
+  if (raw == null || raw === '') return null
+  const v = parseInt(String(raw), 10)
+  return Number.isFinite(v) && v > 0 ? v : null
+}
+
+/** Filter + Sortierung für öffentliche Wohnungsliste (GET ohne mode=match). */
+function buildPublicListingQuery(sp: URLSearchParams): {
+  where: Prisma.RentalListingWhereInput
+  orderBy: Prisma.RentalListingOrderByWithRelationInput[]
+} {
+  const canton = sp.get('canton')?.trim() || sp.get('kanton')?.trim() || ''
+  const minRoomsRaw = sp.get('minRooms') ?? sp.get('zimmer') ?? ''
+  const maxRoomsRaw = sp.get('maxzimmer') ?? sp.get('maxRooms') ?? ''
+  const maxRentRaw = sp.get('maxRent') ?? sp.get('maxmiete') ?? ''
+  const minRentRaw = sp.get('minRent') ?? sp.get('minmiete') ?? ''
+  const availableFrom = sp.get('availableFrom')?.trim() || sp.get('verfuegbar')?.trim() || ''
+  const minAreaRaw = sp.get('minArea') ?? sp.get('minflaeche') ?? ''
+  const q = (sp.get('q') || sp.get('ort') || '').trim().slice(0, 100)
+  const auszug = (sp.get('auszug') || '').trim().toLowerCase()
+  const sort = (sp.get('sort') || 'neueste').trim().toLowerCase()
+
+  const andParts: Prisma.RentalListingWhereInput[] = [{ status: 'active' }]
+
+  if (canton) {
+    andParts.push({ canton })
+  }
+
+  const rMin = parseZimmerParam(minRoomsRaw, 'min')
+  const rMax = parseZimmerParam(maxRoomsRaw, 'max')
+  const roomFilter: Prisma.FloatFilter = {}
+  if (rMin != null) roomFilter.gte = rMin
+  if (rMax != null) roomFilter.lte = rMax
+  if (Object.keys(roomFilter).length > 0) {
+    andParts.push({ rooms: roomFilter })
+  }
+
+  const maxRent = parseMaxMieteParam(maxRentRaw)
+  if (maxRent != null) {
+    andParts.push({ rentPerMonth: { lte: maxRent } })
+  }
+  const minRent = parsePositiveInt(minRentRaw)
+  if (minRent != null) {
+    andParts.push({ rentPerMonth: { gte: minRent } })
+  }
+
+  if (availableFrom) {
+    const d = new Date(availableFrom)
+    if (!Number.isNaN(d.getTime())) {
+      andParts.push({ availableFrom: { gte: d } })
+    }
+  }
+
+  const minArea = parsePositiveInt(minAreaRaw)
+  if (minArea != null) {
+    andParts.push({ areaSqm: { gte: minArea } })
+  }
+
+  if (q.length >= 2) {
+    andParts.push({
+      OR: [
+        { city: { contains: q, mode: 'insensitive' } },
+        { zip: { contains: q, mode: 'insensitive' } },
+        { title: { contains: q, mode: 'insensitive' } },
+      ],
+    })
+  }
+
+  if (auszug === 'pflicht') {
+    andParts.push({ requiresCreditCheck: true })
+  } else if (auszug === 'freiwillig' || auszug === 'optional') {
+    andParts.push({ requiresCreditCheck: false })
+  }
+
+  let orderBy: Prisma.RentalListingOrderByWithRelationInput[] = [{ createdAt: 'desc' }]
+  if (sort === 'miete_asc') orderBy = [{ rentPerMonth: 'asc' }, { createdAt: 'desc' }]
+  else if (sort === 'miete_desc') orderBy = [{ rentPerMonth: 'desc' }, { createdAt: 'desc' }]
+  else if (sort === 'flaeche_desc') orderBy = [{ areaSqm: 'desc' }, { createdAt: 'desc' }]
+
+  return { where: { AND: andParts }, orderBy }
+}
+
 /** GET: nur aktive Inserate, öffentlich — oder `?own=true` für eingeloggten Vermieter (Navbar). */
 export async function GET(request: NextRequest) {
   try {
@@ -56,40 +153,11 @@ export async function GET(request: NextRequest) {
     }
 
     const mode = searchParams.get('mode') === 'match' ? 'match' : 'all'
-    const canton = searchParams.get('canton')?.trim() || searchParams.get('kanton')?.trim() || ''
-    const minRooms = searchParams.get('minRooms') ?? searchParams.get('zimmer')
-    const maxRent = searchParams.get('maxRent') ?? searchParams.get('maxmiete')
-    const availableFrom = searchParams.get('availableFrom')?.trim() || searchParams.get('verfuegbar')?.trim() || ''
-
-    const where: Record<string, unknown> = {
-      status: 'active',
-    }
-
-    if (canton) {
-      where.canton = canton
-    }
-    if (minRooms != null && minRooms !== '') {
-      const v = parseFloat(minRooms)
-      if (!Number.isNaN(v)) {
-        where.rooms = { gte: v }
-      }
-    }
-    if (maxRent != null && maxRent !== '') {
-      const v = parseInt(maxRent, 10)
-      if (!Number.isNaN(v)) {
-        where.rentPerMonth = { lte: v }
-      }
-    }
-    if (availableFrom) {
-      const d = new Date(availableFrom)
-      if (!Number.isNaN(d.getTime())) {
-        where.availableFrom = { gte: d }
-      }
-    }
+    const { where, orderBy } = buildPublicListingQuery(searchParams)
 
     const listings = await prisma.rentalListing.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       take: 100,
       select: {
         id: true,

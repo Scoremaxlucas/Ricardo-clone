@@ -3,6 +3,7 @@
 import { RentalListingCard, type RentalListingCardData } from '@/components/rental/RentalListingCard'
 import { WohnenEmptyState } from '@/components/wohnen/WohnenEmptyState'
 import { Building2, Search } from 'lucide-react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -120,10 +121,15 @@ export function WohnungenListingsFeed({ activeCount }: Props) {
   const filteredEmpty = !isLoading && listings.length === 0 && activeCount > 0
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Mietwohnungen in der Schweiz</h1>
-      <p className="mt-2 text-sm text-slate-600 sm:text-base">
-        Alle aktiven Inserate — filtern nach Kanton, Zimmerzahl, Budget und Einzugsdatum.
+    <section className="pt-2 sm:pt-4">
+      <h1 className="text-[28px] font-extrabold leading-tight text-[#0d2b1f] sm:text-[32px]">Mietwohnungen in der Schweiz</h1>
+      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-[17px]">
+        Alle aktiven Inserate durchsuchen — mit Suche, Budget, Fläche, Zimmerzahl, Einzugsdatum und Sortierung. Für
+        deine gespeicherten Kriterien und Score nutze{' '}
+        <Link href="/meine-matches" className="font-semibold text-teal-700 underline-offset-2 hover:underline">
+          Meine Matches
+        </Link>
+        .
       </p>
 
       {isLoading ? (
