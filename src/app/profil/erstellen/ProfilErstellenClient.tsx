@@ -539,7 +539,7 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accoun
                   onChange={e => setField('declaresNonSmoker', e.target.checked)}
                   className="mt-1"
                 />
-                <span>Ich rauche nicht in der Wohnung</span>
+                <span>Ich rauche nicht</span>
               </label>
               <div className="mt-4">
                 <span className="text-[14px] font-medium text-slate-700">Haustiere</span>
@@ -764,7 +764,7 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave, accoun
                   <dd className="text-right">
                     {summaryHouseholdPeople}, {summaryHouseholdChildren}
                     <br />
-                    {form.declaresNonSmoker ? <span>Raucht nicht in der Wohnung</span> : null}
+                    {form.declaresNonSmoker ? <span>Nichtraucher</span> : null}
                     {form.declaresNonSmoker ? <br /> : null}
                     <span>{summaryPetsLabel}</span>
                     <button type="button" className="ml-2 text-teal-800 underline" onClick={() => setStep(2)}>

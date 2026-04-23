@@ -159,8 +159,8 @@ export function WohnungBewerbungsBox({
 
             {requiresCreditCheck ?
               <div className="mt-4 rounded-xl bg-teal-50 px-3 py-3 text-xs leading-relaxed text-teal-900">
-                📄 Dieser Vermieter verlangt einen Betreibungsregisterauszug. Lade ihn einmalig in deinem Profil hoch — er
-                gilt für alle deine Bewerbungen.
+                📄 Im Profil fehlt noch der Betreibungsregisterauszug. Lade ihn dort einmalig hoch — er gilt für alle
+                deine Bewerbungen.
               </div>
             : null}
 

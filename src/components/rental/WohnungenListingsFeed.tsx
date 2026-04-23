@@ -121,7 +121,7 @@ export function WohnungenListingsFeed({ activeCount }: Props) {
   const filteredEmpty = !isLoading && listings.length === 0 && activeCount > 0
 
   return (
-    <section className="pt-2 sm:pt-4">
+    <section className="pt-2 sm:pt-4" id="wohnungen-ergebnisse">
       <h1 className="text-[28px] font-extrabold leading-tight text-[#0d2b1f] sm:text-[32px]">Mietwohnungen in der Schweiz</h1>
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-[17px]">
         Alle aktiven Inserate durchsuchen — mit Suche, Budget, Fläche, Zimmerzahl, Einzugsdatum und Sortierung. Für

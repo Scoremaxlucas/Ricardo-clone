@@ -188,9 +188,9 @@ export default async function ProfilPage() {
                 <dd className="font-medium">{profile.householdChildrenCount}</dd>
               </div>
               <div>
-                <dt className="text-slate-500">Rauchen in der Wohnung</dt>
+                <dt className="text-slate-500">Rauchen</dt>
                 <dd className="font-medium">
-                  {profile.declaresNonSmoker === true ? 'Raucht nicht in der Wohnung' : 'Keine Angabe'}
+                  {profile.declaresNonSmoker === true ? 'Raucht nicht' : 'Keine Angabe'}
                 </dd>
               </div>
               <div>
