@@ -34,7 +34,7 @@ CREATE INDEX "rental_listing_invites_email_idx" ON "rental_listing_invites"("ema
 CREATE INDEX "rental_listing_invites_status_idx" ON "rental_listing_invites"("status");
 
 -- AddForeignKey
-ALTER TABLE "rental_listing_invites" ADD CONSTRAINT "rental_listing_invites_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "rental_listing_invites" ADD CONSTRAINT "rental_listing_invites_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "rental_listing_invites" ADD CONSTRAINT "rental_listing_invites_rentalListingId_fkey" FOREIGN KEY ("rentalListingId") REFERENCES "rental_listings"("id") ON DELETE SET NULL ON UPDATE CASCADE;
