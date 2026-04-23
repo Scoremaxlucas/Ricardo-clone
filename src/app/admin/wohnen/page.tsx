@@ -7,7 +7,7 @@ import { CreditCheckStatus, RentalApplicationStatus, RentalListingStatus } from 
 import { getServerSession } from 'next-auth/next'
 import type { Metadata } from 'next'
 import type { LucideIcon } from 'lucide-react'
-import { ArrowUpRight, Building2, ClipboardList, LayoutDashboard, Shield, Upload, Users } from 'lucide-react'
+import { ArrowUpRight, Building2, ClipboardList, LayoutDashboard, Mail, Shield, Upload, Users } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
@@ -64,6 +64,12 @@ export default async function AdminWohnenDashboardPage() {
       title: 'URL-Ingest',
       desc: 'Inserate per Link importieren',
       icon: Upload,
+    },
+    {
+      href: '/admin/wohnen/einladungen',
+      title: 'E-Mail-Einladung',
+      desc: 'Externe Person reicht Inserat-URL per Mail ein',
+      icon: Mail,
     },
     {
       href: '/admin/applications',

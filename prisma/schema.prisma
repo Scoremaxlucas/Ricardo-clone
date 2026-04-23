@@ -165,6 +165,7 @@ model User {
   outagesExtended               SystemOutage[]        @relation("OutageExtender")
   marketingContacts             MarketingContact[]
   rentalListings                RentalListing[]
+  rentalListingInvitesCreated   RentalListingInvite[]
   rentalApplicationsAsApplicant RentalApplication[]   @relation("RentalApplicationApplicant")
   tenantProfile                 TenantProfile?
 
@@ -1719,6 +1720,14 @@ enum DeactivationReason {
   MANUAL_ADMIN
 }
 
+/** Admin: E-Mail mit Link — externe Person reicht Inserat-URL ein; automatischer Import oder Entwurf. */
+enum RentalListingInviteStatus {
+  SENT
+  URL_SUBMITTED
+  LISTING_CREATED
+  NEEDS_ADMIN
+}
+
 model RentalListing {
   id                  String               @id @default(cuid())
   createdAt           DateTime             @default(now())
@@ -1756,6 +1765,7 @@ model RentalListing {
 
   user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications  RentalApplication[]
+  sourceInvites RentalListingInvite[]
 
   @@index([userId])
   @@index([canton, status])
@@ -1764,6 +1774,31 @@ model RentalListing {
   @@index([importSource])
   @@index([status, lastCheckedAt])
   @@map("rental_listings")
+}
+
+model RentalListingInvite {
+  id                String                    @id @default(cuid())
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  token             String                    @unique
+  email             String
+  createdByUserId   String
+  createdBy         User                      @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  status            RentalListingInviteStatus @default(SENT)
+  expiresAt         DateTime
+  sentAt            DateTime                  @default(now())
+  sourceUrl         String?
+  urlSubmittedAt    DateTime?
+  /// Rohdaten Ingest (JSON) + photos[] + warnings/errors — für Admin-Finalisierung bei NEEDS_ADMIN
+  draftPayload      Json?
+  lastError         String?                   @db.Text
+  rentalListingId   String?
+  rentalListing     RentalListing?            @relation(fields: [rentalListingId], references: [id], onDelete: SetNull)
+
+  @@index([createdByUserId])
+  @@index([email])
+  @@index([status])
+  @@map("rental_listing_invites")
 }
 
 model RentalApplication {

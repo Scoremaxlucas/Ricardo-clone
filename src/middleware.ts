@@ -48,6 +48,7 @@ function tenantPathsRedirectToWohnen(pathname: string): boolean {
   if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
   if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
   if (pathname === '/matching' || pathname.startsWith('/matching/')) return true
+  if (pathname === '/einladung-inserat' || pathname.startsWith('/einladung-inserat/')) return true
   return false
 }
 
@@ -67,6 +68,8 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/api/admin/stats')) return true
   if (pathname.startsWith('/api/admin/credit-check')) return true
   if (pathname.startsWith('/api/admin/applications')) return true
+  if (pathname.startsWith('/api/admin/rental-listing-invites')) return true
+  if (pathname.startsWith('/api/public/rental-listing-invite')) return true
   if (pathname.startsWith('/api/rental-applications')) return true
   if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
   if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
@@ -80,6 +83,7 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/admin/dashboard')) return true
   if (pathname.startsWith('/admin/matching')) return true
   if (pathname === '/admin/applications' || pathname.startsWith('/admin/applications/')) return true
+  if (pathname === '/einladung-inserat' || pathname.startsWith('/einladung-inserat/')) return true
   if (
     pathname === '/login' ||
     pathname === '/register' ||
@@ -141,7 +145,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/admin/ingest') ||
     pathname.startsWith('/api/admin/stats') ||
     pathname.startsWith('/api/admin/credit-check') ||
-    pathname.startsWith('/api/admin/applications')
+    pathname.startsWith('/api/admin/applications') ||
+    pathname.startsWith('/api/admin/rental-listing-invites')
   ) {
     const secret = process.env.NEXTAUTH_SECRET
     if (!secret) {
