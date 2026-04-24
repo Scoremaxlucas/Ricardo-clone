@@ -17,6 +17,8 @@ export function CustomDropdown<T extends string>({ value, options, onChange, pla
   const genId = useId()
   const listId = `${id ?? genId}-list`
   const innerRef = useRef<HTMLButtonElement | null>(null)
+  /** Wraps trigger + list so outside-click detection does not treat option clicks as “outside”. */
+  const containerRef = useRef<HTMLDivElement | null>(null)
   const [open, setOpen] = useState(false)
   const [activeIdx, setActiveIdx] = useState(0)
 
@@ -43,7 +45,9 @@ export function CustomDropdown<T extends string>({ value, options, onChange, pla
   useEffect(() => {
     if (!open) return
     const onDoc = (e: MouseEvent) => {
-      if (innerRef.current && !innerRef.current.contains(e.target as Node)) close()
+      const t = e.target as Node | null
+      if (t && containerRef.current?.contains(t)) return
+      close()
     }
     document.addEventListener('mousedown', onDoc)
     return () => document.removeEventListener('mousedown', onDoc)
@@ -79,7 +83,7 @@ export function CustomDropdown<T extends string>({ value, options, onChange, pla
   }
 
   return (
-    <div className="relative w-full">
+    <div ref={containerRef} className="relative w-full">
       <button
         ref={setRefs}
         type="button"
