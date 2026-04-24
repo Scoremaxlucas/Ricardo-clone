@@ -75,7 +75,7 @@ export function RentalListingCard({ listing: l, imagePriority = false, matchScor
             alt=""
             fill
             className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+            sizes="(max-width: 640px) 92vw, (max-width: 768px) 85vw, (max-width: 1280px) 50vw, 33vw"
             priority={imagePriority}
             unoptimized={!isVercelBlobImageUrl(main)}
           />

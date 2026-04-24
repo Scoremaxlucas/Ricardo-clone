@@ -204,7 +204,8 @@ export function SucheForm() {
 
   return (
     <div className="min-h-dvh bg-white text-[#0d2b1f]">
-      <header className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center border-b border-[#f0f0f0] bg-white px-4 sm:px-6">
+      <header className="fixed left-0 right-0 top-0 z-50 flex min-h-16 flex-col border-b border-[#f0f0f0] bg-white pt-[env(safe-area-inset-top,0px)]">
+        <div className="flex h-16 items-center pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:px-6">
         <button
           type="button"
           onClick={() => router.push('/profil')}
@@ -221,25 +222,25 @@ export function SucheForm() {
             />
           </svg>
         </button>
+        </div>
       </header>
-      <main
-        className="mx-auto max-w-[520px] px-6 pb-[80px] pt-24"
-        style={{ paddingTop: 'calc(5rem + env(safe-area-inset-top, 0px))' }}
-      >
-        <h1 className="text-[26px] font-extrabold leading-tight sm:text-[32px]">Deine Suche</h1>
+      <main className="mx-auto max-w-[520px] pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[calc(4rem+env(safe-area-inset-top,0px))] sm:px-6">
+        <h1 className="text-[1.5rem] font-extrabold leading-tight sm:text-[1.75rem] md:text-[2rem]">Deine Suche</h1>
         <p className="mt-3 text-[15px] leading-relaxed text-[#8aa89e]">
           Diese Angaben verwenden wir für deine Matches. Alles optional.
         </p>
 
         <section className="mt-12">
-          <h2 className="text-[26px] font-extrabold leading-tight sm:text-[32px]">In welchen Kantonen suchst du?</h2>
+          <h2 className="text-[1.375rem] font-extrabold leading-snug sm:text-[1.625rem] md:text-[2rem]">
+            In welchen Kantonen suchst du?
+          </h2>
           <div className="mt-10">
             <KantonChips selected={cantonCodes} onToggle={toggleCanton} />
           </div>
         </section>
 
         <section className="mt-16">
-          <h2 className="text-[26px] font-extrabold leading-tight sm:text-[32px]">Was ist dein Budget?</h2>
+          <h2 className="text-[1.375rem] font-extrabold leading-snug sm:text-[1.625rem] md:text-[2rem]">Was ist dein Budget?</h2>
           <div className="mt-10 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
             <CustomDropdown value={budgetMin} options={budgetOpts()} onChange={setBudgetMin} placeholder="Min" />
             <CustomDropdown value={budgetMax} options={budgetOpts()} onChange={setBudgetMax} placeholder="Max" />
@@ -247,7 +248,9 @@ export function SucheForm() {
         </section>
 
         <section className="mt-16">
-          <h2 className="text-[26px] font-extrabold leading-tight sm:text-[32px]">Wie viele Zimmer brauchst du?</h2>
+          <h2 className="text-[1.375rem] font-extrabold leading-snug sm:text-[1.625rem] md:text-[2rem]">
+            Wie viele Zimmer brauchst du?
+          </h2>
           <div className="mt-10 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
             <CustomDropdown value={roomsMin} options={roomOpts()} onChange={setRoomsMin} placeholder="Min" />
             <CustomDropdown value={roomsMax} options={roomOpts()} onChange={setRoomsMax} placeholder="Max" />
@@ -255,7 +258,9 @@ export function SucheForm() {
         </section>
 
         <section className="mt-16">
-          <h2 className="text-[26px] font-extrabold leading-tight sm:text-[32px]">Wann möchtest du einziehen?</h2>
+          <h2 className="text-[1.375rem] font-extrabold leading-snug sm:text-[1.625rem] md:text-[2rem]">
+            Wann möchtest du einziehen?
+          </h2>
           <div className="mt-10 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
             <input
               className={INPUT_CLASS}
@@ -273,10 +278,7 @@ export function SucheForm() {
         </section>
       </main>
 
-      <footer
-        className="fixed bottom-0 left-0 right-0 z-50 flex h-[72px] items-center border-t border-[#f0f0f0] bg-white px-6"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-      >
+      <footer className="fixed bottom-0 left-0 right-0 z-50 flex min-h-[72px] items-center border-t border-[#f0f0f0] bg-white pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-[env(safe-area-inset-bottom,0px)] sm:px-6">
         <button
           type="button"
           disabled={saving}

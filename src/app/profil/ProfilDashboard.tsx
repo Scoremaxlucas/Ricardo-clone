@@ -50,7 +50,7 @@ export function ProfilDashboard({
   return (
     <>
       {showOnboardingComplete ? <OnboardingCompleteOverlay /> : null}
-      <main className="mx-auto max-w-4xl px-6 py-12 sm:py-16">
+      <main className="mx-auto max-w-4xl py-12 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:px-6 sm:py-16">
         <header className="flex flex-col gap-8 border-b border-[#f0f0f0] pb-10 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-5">
             <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-[#18a87c] text-xl font-extrabold text-white">

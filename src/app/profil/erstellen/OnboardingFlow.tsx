@@ -415,10 +415,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
       />
       <StepperBar current={step} total={totalSteps} onBack={onBack} disableBack={false} />
 
-      <main
-        className="flex min-h-dvh flex-col px-6 pb-[88px] pt-20"
-        style={{ paddingTop: 'calc(4rem + env(safe-area-inset-top, 0px))' }}
-      >
+      <main className="flex min-h-dvh flex-col pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[calc(4rem+env(safe-area-inset-top,0px))] sm:px-6">
         <div className="flex flex-1 flex-col items-center justify-center">
           <div key={step} className={`w-full max-w-[520px] ${slideClass}`}>
             {step === 1 ?
@@ -768,8 +765,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
       </main>
 
       <footer
-        className="fixed bottom-0 left-0 right-0 z-50 flex h-[72px] items-center justify-between border-t border-[#f0f0f0] bg-white px-6"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        className="fixed bottom-0 left-0 right-0 z-50 flex min-h-[72px] items-center justify-between border-t border-[#f0f0f0] bg-white pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-[env(safe-area-inset-bottom,0px)] pt-0 sm:px-6"
       >
         {optionalStep ?
           <button

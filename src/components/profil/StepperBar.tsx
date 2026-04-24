@@ -11,10 +11,8 @@ export function StepperBar({ current, total, onBack, disableBack }: Props) {
   const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0
 
   return (
-    <header
-      className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center gap-3 border-b border-[#f0f0f0] bg-white px-4 sm:px-6"
-      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
-    >
+    <header className="fixed left-0 right-0 top-0 z-50 border-b border-[#f0f0f0] bg-white pt-[env(safe-area-inset-top,0px)]">
+      <div className="flex h-16 items-center gap-2 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:gap-3 sm:px-6">
       <button
         type="button"
         onClick={onBack}
@@ -43,6 +41,7 @@ export function StepperBar({ current, total, onBack, disableBack }: Props) {
       <p className="shrink-0 text-[13px] font-medium tabular-nums text-[#8aa89e]">
         Schritt {current} / {total}
       </p>
+      </div>
     </header>
   )
 }

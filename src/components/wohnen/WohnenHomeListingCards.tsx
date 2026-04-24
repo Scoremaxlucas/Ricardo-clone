@@ -27,13 +27,13 @@ export function WohnenHomeListingCards({ listings }: Props) {
   return (
     <>
       <div
-        className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-3 scroll-smooth snap-x snap-mandatory sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none lg:grid-cols-3"
+        className="flex gap-4 overflow-x-auto overflow-y-hidden pb-3 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] scroll-smooth scroll-pl-4 scroll-pr-4 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:pl-0 sm:pr-0 sm:snap-none lg:grid-cols-3 [&::-webkit-scrollbar]:hidden"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {listings.map((l, idx) => (
           <div
             key={l.id}
-            className="min-w-[74vw] max-w-[300px] shrink-0 snap-start transition-[transform,box-shadow] duration-[250ms] ease-in-out hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)] sm:min-w-0 sm:max-w-none"
+            className="w-[min(100%,calc(100vw-2.5rem-env(safe-area-inset-left)-env(safe-area-inset-right)))] max-w-[320px] shrink-0 snap-start transition-[transform,box-shadow] duration-[250ms] ease-in-out hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)] sm:w-auto sm:min-w-0 sm:max-w-none"
           >
             <RentalListingCard
               imagePriority={idx === 0}

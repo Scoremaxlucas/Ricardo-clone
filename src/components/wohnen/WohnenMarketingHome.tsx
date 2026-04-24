@@ -41,13 +41,13 @@ function HelvendaCell({ children }: { children: ReactNode }) {
 function StaticListingPlaceholders() {
   return (
     <div
-      className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-3 scroll-smooth snap-x snap-mandatory md:mx-0 md:grid md:grid-cols-2 md:gap-5 md:overflow-visible md:px-0 md:snap-none lg:grid-cols-3"
+      className="flex gap-4 overflow-x-auto overflow-y-hidden pb-3 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] scroll-smooth scroll-pl-4 scroll-pr-4 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 sm:pl-0 sm:pr-0 sm:snap-none lg:grid-cols-3 [&::-webkit-scrollbar]:hidden"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       {[1, 2, 3].map(i => (
         <div
           key={i}
-          className="flex min-h-[220px] min-w-[85vw] shrink-0 snap-start flex-col justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/90 px-6 py-10 text-center md:min-w-0"
+          className="flex min-h-[220px] w-[min(100%,calc(100vw-2.5rem-env(safe-area-inset-left)-env(safe-area-inset-right)))] max-w-[320px] shrink-0 snap-start flex-col justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/90 px-5 py-10 text-center sm:min-w-0 sm:w-auto sm:max-w-none"
         >
           <p className="text-[15px] font-normal leading-relaxed text-[#5a7a6e]">
             Hier erscheinen bald echte Inserate. Schau später wieder vorbei — oder inseriere die erste Wohnung.
@@ -107,7 +107,7 @@ export async function WohnenMarketingHome({
 
       {/* 1. Hero */}
       <section
-        className="relative flex min-h-[85vh] flex-col justify-center bg-white px-5 pt-12 pb-16 sm:px-6 sm:pt-20 sm:pb-20 md:px-8 md:pt-20"
+        className="relative flex min-h-[min(100dvh,920px)] flex-col justify-center bg-white px-4 pb-16 pt-[max(5.5rem,calc(3.5rem+env(safe-area-inset-top,0px)+1.25rem))] sm:px-6 sm:pb-20 sm:pt-[max(6rem,calc(3.5rem+env(safe-area-inset-top,0px)+2rem))] md:min-h-[85vh] md:px-8 md:pt-24"
         style={{ backgroundImage: 'linear-gradient(180deg, #e8f7f2 0%, #ffffff 40%)' }}
       >
         <div className="mx-auto max-w-4xl text-center">
@@ -115,7 +115,7 @@ export async function WohnenMarketingHome({
             🇨🇭 DER FAIRE SCHWEIZER MIETMARKT
           </p>
 
-          <h1 className="mx-auto mt-5 max-w-[22ch] text-[36px] font-black leading-[1.05] tracking-[-0.02em] text-slate-900 sm:max-w-none md:mt-6 md:max-w-[18ch] md:text-[72px] md:leading-none">
+          <h1 className="mx-auto mt-5 max-w-none text-[clamp(1.875rem,7vw,2.25rem)] font-black leading-[1.08] tracking-[-0.02em] text-slate-900 sm:text-[2.35rem] md:mt-6 md:max-w-[18ch] md:text-[clamp(2.75rem,8vw,4.5rem)] md:leading-none lg:text-[72px]">
             <span className="block text-slate-900">Wohnung finden.</span>
             <span className="mt-2 block text-[#18a87c] md:mt-3">
               Ohne Abo.
@@ -123,7 +123,7 @@ export async function WohnenMarketingHome({
             </span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-[600px] text-base font-normal leading-relaxed text-[#5a7a6e] md:mt-8 md:text-[22px] md:leading-[1.6]">
+          <p className="mx-auto mt-6 max-w-[600px] text-[1rem] font-normal leading-relaxed text-[#5a7a6e] sm:text-[1.0625rem] md:mt-8 md:text-[22px] md:leading-[1.6]">
             Wohnungssuche in der Schweiz ist stressig genug.
             <br />
             Bei Helvenda bewirbst du dich einmal — und wirst überall sofort ernst genommen.
@@ -164,9 +164,9 @@ export async function WohnenMarketingHome({
       </section>
 
       {/* 2. Listings */}
-      <section className="whome-anim whome-d0 border-t border-slate-100 px-4 py-16 sm:px-6 lg:px-8">
+      <section className="whome-anim whome-d0 border-t border-slate-100 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-center text-[28px] font-extrabold tracking-[-0.04em] text-slate-900 sm:text-[36px] sm:tracking-[-0.06em]">
+          <h2 className="text-center text-[1.375rem] font-extrabold leading-tight tracking-[-0.03em] text-slate-900 sm:text-[1.75rem] sm:tracking-[-0.04em] md:text-[2.25rem] md:tracking-[-0.06em]">
             Aktuelle Wohnungen
           </h2>
           <div className="mt-10">
@@ -187,14 +187,40 @@ export async function WohnenMarketingHome({
       </section>
 
       {/* 4. Vergleich */}
-      <section className="whome-anim whome-d2 border-t border-slate-100 px-4 py-16 sm:px-6 lg:px-8">
+      <section className="whome-anim whome-d2 border-t border-slate-100 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <div className="mx-auto max-w-5xl">
-          <h2 className="text-center text-[28px] font-extrabold tracking-[-0.04em] text-slate-900 sm:text-[36px] sm:tracking-[-0.06em]">
+          <h2 className="text-center text-[1.25rem] font-extrabold leading-snug tracking-[-0.03em] text-slate-900 sm:text-[1.5rem] md:text-[2.25rem] md:tracking-[-0.06em]">
             Warum Helvenda — und nicht Homegate?
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-base font-normal text-[#5a7a6e]">Die Antwort in Zahlen.</p>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-[0.9375rem] font-normal leading-relaxed text-[#5a7a6e] sm:text-base">
+            Die Antwort in Zahlen.
+          </p>
+
+          <div className="mt-8 space-y-3 md:hidden">
+            {comparisonRows.map(row => (
+              <article
+                key={row.tema}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <h3 className="text-[0.8125rem] font-semibold uppercase tracking-wide text-slate-500">{row.tema}</h3>
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <p className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-slate-400">
+                      Homegate / ImmoScout
+                    </p>
+                    <HomegateCell>{row.hg}</HomegateCell>
+                  </div>
+                  <div className="rounded-xl bg-[#e8f7f2] p-3">
+                    <p className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-teal-900">Helvenda</p>
+                    <HelvendaCell>{row.hv}</HelvendaCell>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
           <div
-            className="table-wrapper mt-10 rounded-2xl border border-slate-200 shadow-sm [-webkit-overflow-scrolling:touch]"
+            className="table-wrapper mt-10 hidden max-w-full overflow-x-auto rounded-2xl border border-slate-200 shadow-sm md:block [-webkit-overflow-scrolling:touch]"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <table className="w-full min-w-[640px] border-collapse text-left">
@@ -231,12 +257,12 @@ export async function WohnenMarketingHome({
       </section>
 
       {/* 5. Footer CTA */}
-      <section className="whome-anim whome-d3 bg-[#18a87c] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+      <section className="whome-anim whome-d3 bg-[#18a87c] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <div className="mx-auto max-w-6xl text-white">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-8">
             <div className="pr-0 md:pr-8">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white">FÜR MIETENDE</p>
-              <h2 className="mt-3 text-[28px] font-extrabold leading-[1.2] tracking-[-0.03em] text-white sm:text-[34px]">
+              <h2 className="mt-3 text-[1.375rem] font-extrabold leading-[1.2] tracking-[-0.03em] text-white sm:text-[1.75rem] md:text-[2.125rem]">
                 Einmal verifiziert.
                 <br />
                 Überall sofort bewerben.
@@ -258,7 +284,7 @@ export async function WohnenMarketingHome({
 
             <div className="border-t border-white/20 pt-8 md:border-l md:border-t-0 md:pl-8 md:pt-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white">FÜR VERMIETER</p>
-              <h2 className="mt-3 text-[28px] font-extrabold leading-[1.2] tracking-[-0.03em] text-white sm:text-[34px]">
+              <h2 className="mt-3 text-[1.375rem] font-extrabold leading-[1.2] tracking-[-0.03em] text-white sm:text-[1.75rem] md:text-[2.125rem]">
                 Schluss mit 80 unqualifizierten
                 <br />
                 Anfragen.

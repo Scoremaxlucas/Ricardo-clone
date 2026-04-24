@@ -86,7 +86,9 @@ function Column({ variant, steps, title, label }: { variant: 'landlord' | 'tenan
   return (
     <div className="space-y-4">
       <p className={labelClass}>{label}</p>
-      <h3 className="text-[24px] font-extrabold tracking-tight text-slate-900 md:text-[28px] md:leading-tight">{title}</h3>
+      <h3 className="text-[1.25rem] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[1.375rem] md:text-[28px] md:leading-tight">
+        {title}
+      </h3>
       <div className="mt-6">
         <Timeline steps={steps} />
       </div>
@@ -99,7 +101,7 @@ export function WohnenHomeHowItWorks() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <h2 className="text-center text-[28px] font-extrabold tracking-[-0.02em] text-slate-900 sm:text-[36px] sm:tracking-[-0.04em]">
+      <h2 className="text-center text-[1.25rem] font-extrabold leading-snug tracking-[-0.02em] text-slate-900 sm:text-[1.65rem] md:text-[2.25rem] md:tracking-[-0.04em]">
         So einfach war Wohnungssuche noch nie.
       </h2>
 
