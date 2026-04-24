@@ -26,6 +26,15 @@ const INCOME: IncomeCategory[] = [
   'FROM_45000_TO_65000',
   'FROM_65000_TO_90000',
   'ABOVE_90000',
+  'UNDER_2000',
+  'FROM_2000_TO_3000',
+  'FROM_4000_TO_5000',
+  'FROM_5000_TO_7000',
+  'FROM_12000_TO_15000',
+  'FROM_15000_TO_20000',
+  'FROM_20000_TO_30000',
+  'FROM_30000_TO_50000',
+  'ABOVE_50000',
 ]
 
 const APPLICATION_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -149,21 +158,7 @@ export function validateTenantProfilePayload(
   if (!Number.isFinite(hccNum) || !Number.isInteger(hccNum) || hccNum < 0 || hccNum > 20) {
     return { ok: false, message: 'Anzahl Kinder: bitte eine Zahl von 0 bis 20', field: 'householdChildrenCount' }
   }
-  if (hccNum > householdTotalPersons) {
-    return {
-      ok: false,
-      message: 'Kinder können nicht mehr sein als Personen im Haushalt',
-      field: 'householdChildrenCount',
-    }
-  }
   const householdChildrenCount = hccNum
-  if (householdTotalPersons === 1 && householdChildrenCount > 0) {
-    return {
-      ok: false,
-      message: 'Bei einer Person im Haushalt sind 0 Kinder möglich',
-      field: 'householdChildrenCount',
-    }
-  }
 
   if (!firstName) return { ok: false, message: 'Vorname fehlt', field: 'firstName' }
   if (!lastName) return { ok: false, message: 'Nachname fehlt', field: 'lastName' }

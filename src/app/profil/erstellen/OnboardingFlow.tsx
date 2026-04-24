@@ -26,14 +26,38 @@ const EMPLOYMENT: { status: EmploymentStatus; label: string }[] = [
 ]
 
 const INCOME_CHOICES: { id: string; label: string; category: IncomeCategory }[] = [
-  { id: 'i1', label: "Unter CHF 2'000", category: 'UNDER_3000' },
-  { id: 'i2', label: "CHF 2'000 – 3'000", category: 'FROM_3000_TO_4000' },
+  { id: 'i1', label: "Unter CHF 2'000", category: 'UNDER_2000' },
+  { id: 'i2', label: "CHF 2'000 – 3'000", category: 'FROM_2000_TO_3000' },
   { id: 'i3', label: "CHF 3'000 – 4'000", category: 'FROM_3000_TO_4000' },
-  { id: 'i4', label: "CHF 4'000 – 5'000", category: 'FROM_4000_TO_5500' },
-  { id: 'i5', label: "CHF 5'000 – 7'000", category: 'FROM_5500_TO_7000' },
+  { id: 'i4', label: "CHF 4'000 – 5'000", category: 'FROM_4000_TO_5000' },
+  { id: 'i5', label: "CHF 5'000 – 7'000", category: 'FROM_5000_TO_7000' },
   { id: 'i6', label: "CHF 7'000 – 9'000", category: 'FROM_7000_TO_9000' },
-  { id: 'i7', label: "Über CHF 9'000", category: 'FROM_9000_TO_12000' },
+  { id: 'i7', label: "CHF 9'000 – 12'000", category: 'FROM_9000_TO_12000' },
+  { id: 'i8', label: "CHF 12'000 – 15'000", category: 'FROM_12000_TO_15000' },
+  { id: 'i9', label: "CHF 15'000 – 20'000", category: 'FROM_15000_TO_20000' },
+  { id: 'i10', label: "CHF 20'000 – 30'000", category: 'FROM_20000_TO_30000' },
+  { id: 'i11', label: "CHF 30'000 – 50'000", category: 'FROM_30000_TO_50000' },
+  { id: 'i12', label: "Über CHF 50'000", category: 'ABOVE_50000' },
 ]
+
+/** Legacy DB-Werte auf die neue Onboarding-Auswahl abbilden. */
+function incomeChoiceIdFromStoredCategory(cat: IncomeCategory): string {
+  const direct = INCOME_CHOICES.find(c => c.category === cat)?.id
+  if (direct) return direct
+  const legacy: Partial<Record<IncomeCategory, string>> = {
+    UNDER_3000: 'i1',
+    FROM_4000_TO_5500: 'i4',
+    FROM_5500_TO_7000: 'i5',
+    FROM_12000_TO_16000: 'i8',
+    FROM_16000_TO_22000: 'i9',
+    FROM_22000_TO_30000: 'i10',
+    FROM_30000_TO_45000: 'i11',
+    FROM_45000_TO_65000: 'i11',
+    FROM_65000_TO_90000: 'i12',
+    ABOVE_90000: 'i12',
+  }
+  return legacy[cat] ?? 'i4'
+}
 
 const MONTH_OPTS: DropdownOption<string>[] = Array.from({ length: 12 }, (_, i) => ({
   value: String(i + 1),
@@ -128,7 +152,7 @@ type FormState = {
 function initialFromProfil(p: ProfilFormInitial, accountEmail: string): FormState {
   const dob =
     p.dateOfBirth && /^\d{4}-\d{2}-\d{2}$/.test(p.dateOfBirth) ? isoYmdToDisplay(p.dateOfBirth) : ''
-  const inc = INCOME_CHOICES.find(c => c.category === p.monthlyIncomeCategory)?.id ?? 'i4'
+  const inc = incomeChoiceIdFromStoredCategory(p.monthlyIncomeCategory as IncomeCategory)
   return {
     firstName: p.firstName,
     lastName: p.lastName,
@@ -183,7 +207,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
 
   const incomeCategory = useMemo(() => {
     const hit = INCOME_CHOICES.find(i => i.id === form.incomeChoiceId)
-    return hit?.category ?? ('FROM_4000_TO_5500' as IncomeCategory)
+    return hit?.category ?? ('FROM_4000_TO_5000' as IncomeCategory)
   }, [form.incomeChoiceId])
 
   const needsEmployer = form.employmentStatus === 'EMPLOYED' || form.employmentStatus === 'SELF_EMPLOYED'
@@ -200,14 +224,6 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
     }, 180)
     return () => window.clearTimeout(t)
   }, [step, needsEmployer])
-
-  useEffect(() => {
-    setForm(f =>
-      f.householdTotalPersons === 1 && f.householdChildrenCount > 0 ?
-        { ...f, householdChildrenCount: 0 }
-      : f
-    )
-  }, [form.householdTotalPersons])
 
   const stepValid = useMemo(() => {
     switch (step) {
@@ -230,7 +246,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
       case 6:
         return Boolean(form.incomeChoiceId)
       case 7:
-        return form.householdTotalPersons >= 1 && form.householdChildrenCount <= form.householdTotalPersons
+        return form.householdTotalPersons >= 1 && form.householdTotalPersons <= 20 && form.householdChildrenCount >= 0 && form.householdChildrenCount <= 20
       case 8:
         return true
       case 9:
@@ -355,8 +371,13 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
       `${employmentLabelDe(form.employmentStatus)}${needsEmployer && form.employer.trim() ? ` · ${form.employer.trim()}` : ''}`
     : '—'
     const inc = incomeLabelByCategory(incomeCategory)
-    const hh = `${form.householdTotalPersons} Person${form.householdTotalPersons === 1 ? '' : 'en'} · ${form.householdChildrenCount} Kinder`
-    const habits = `${form.smokes ? 'Raucher/in' : 'Nichtraucher/in'} · ${form.hasPets ? 'Mit Haustieren' : 'Keine Haustiere'}`
+    const pc = form.householdTotalPersons
+    const kc = form.householdChildrenCount
+    const personText = pc === 1 ? '1 Person' : `${pc} Personen`
+    const kinderText = kc === 0 ? 'keine Kinder' : kc === 1 ? '1 Kind' : `${kc} Kinder`
+    const rauchText = form.smokes ? 'Raucher/in' : 'Nichtraucher/in'
+    const tierText = form.hasPets ? 'mit Haustieren' : 'keine Haustiere'
+    const hh = `${personText} · ${kinderText} · ${rauchText} · ${tierText}`
     const ref =
       form.referenceName.trim() || form.referencePhone.trim() || form.referenceRelation.trim() ?
         `${form.referenceName.trim() || '—'}`
@@ -368,7 +389,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
       { key: 4, label: 'Kontakt', value: `${mail}\n${tel}`.trim() },
       { key: 5, label: 'Beschäftigung', value: emp },
       { key: 6, label: 'Einkommen', value: inc },
-      { key: 7, label: 'Haushalt', value: `${hh}\n${habits}` },
+      { key: 7, label: 'Haushalt', value: hh },
       { key: 8, label: 'Referenz', value: ref },
     ]
   }, [form, incomeCategory, needsEmployer])
@@ -638,19 +659,13 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                     value={form.householdTotalPersons}
                     min={1}
                     max={20}
-                    onChange={n =>
-                      setForm(f => ({
-                        ...f,
-                        householdTotalPersons: n,
-                        householdChildrenCount: Math.min(f.householdChildrenCount, n === 1 ? 0 : n),
-                      }))
-                    }
+                    onChange={n => setForm(f => ({ ...f, householdTotalPersons: n }))}
                   />
                   <StepperInput
                     label="Kinder"
                     value={form.householdChildrenCount}
                     min={0}
-                    max={Math.min(20, form.householdTotalPersons === 1 ? 0 : form.householdTotalPersons)}
+                    max={20}
                     onChange={n => setForm(f => ({ ...f, householdChildrenCount: n }))}
                   />
                 </div>

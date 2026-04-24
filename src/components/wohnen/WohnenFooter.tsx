@@ -1,9 +1,15 @@
+'use client'
+
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 const footerBg = '#0d2b1f'
 
 export function WohnenFooter() {
+  const pathname = usePathname()
+  if (pathname === '/profil/suche') return null
+
   return (
     <footer className="mt-auto text-white" style={{ backgroundColor: footerBg }}>
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">

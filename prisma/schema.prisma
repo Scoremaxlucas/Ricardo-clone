@@ -1883,6 +1883,16 @@ enum IncomeCategory {
   FROM_45000_TO_65000
   FROM_65000_TO_90000
   ABOVE_90000
+  /// Erweiterte UI-Bänder (Onboarding); bestehende Enum-Werte bleiben für Legacy-Daten.
+  UNDER_2000
+  FROM_2000_TO_3000
+  FROM_4000_TO_5000
+  FROM_5000_TO_7000
+  FROM_12000_TO_15000
+  FROM_15000_TO_20000
+  FROM_20000_TO_30000
+  FROM_30000_TO_50000
+  ABOVE_50000
 }
 
 enum HouseholdPets {

@@ -6,7 +6,8 @@ import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'Suchpräferenzen | Helvenda Wohnungen',
-  description: 'Kantone, Budget und Zimmer für deine Wohnungssuche.',
+  description:
+    'Kantone, Budget, Zimmer und Einzugstermin. Haushaltsnetto-Einkommen (Kategorien) legst du unter «Profil bearbeiten» fest.',
   robots: { index: false, follow: false },
 }
 

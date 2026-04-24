@@ -1,10 +1,10 @@
 'use client'
 
-import { ProfilCreditPanel } from '@/components/wohnen/ProfilCreditPanel'
+import { OnboardingCompleteOverlay } from '@/app/profil/OnboardingCompleteOverlay'
 import type { CreditCheckResult } from '@/lib/rental/types'
+import { formatDate } from '@/lib/utils/formatDate'
 import type { CreditCheckStatus } from '@prisma/client'
 import Link from 'next/link'
-import { OnboardingCompleteOverlay } from '@/app/profil/OnboardingCompleteOverlay'
 
 export type ProfilDashboardProps = {
   showOnboardingComplete: boolean
@@ -15,9 +15,14 @@ export type ProfilDashboardProps = {
   creditCheckResult: CreditCheckResult | null
   creditCheckExpiresAt: string | null
   isComplete: boolean
-  preferredCantonShort: string | null
   personalRows: { key: string; label: string; value: string }[]
   preferenceRows: { key: string; label: string; value: string }[]
+}
+
+function creditApprovedValid(status: CreditCheckStatus, expiresAt: string | null): boolean {
+  if (status !== 'APPROVED') return false
+  if (!expiresAt) return false
+  return new Date(expiresAt).getTime() > Date.now()
 }
 
 export function ProfilDashboard({
@@ -29,12 +34,18 @@ export function ProfilDashboard({
   creditCheckResult,
   creditCheckExpiresAt,
   isComplete,
-  preferredCantonShort,
   personalRows,
   preferenceRows,
 }: ProfilDashboardProps) {
   const initials = `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase() || '?'
-  const creditMissing = creditCheckStatus === 'NONE' || creditCheckStatus === 'EXPIRED'
+  const approvedValid = creditApprovedValid(creditCheckStatus, creditCheckExpiresAt)
+  const needsRegisterUpload =
+    creditCheckStatus === 'NONE' ||
+    creditCheckStatus === 'EXPIRED' ||
+    creditCheckStatus === 'REJECTED' ||
+    (creditCheckStatus === 'APPROVED' && !approvedValid)
+  const pendingReview =
+    creditCheckStatus === 'PENDING' || creditCheckStatus === 'PENDING_MANUAL_REVIEW'
 
   return (
     <>
@@ -69,28 +80,29 @@ export function ProfilDashboard({
         </header>
 
         <div className="mt-8 flex flex-wrap gap-2">
-          <span
-            className={`rounded-full px-[14px] py-1.5 text-xs font-semibold ${
-              isComplete ? 'bg-[#e8f7f2] text-[#107a5a]' : 'bg-slate-100 text-slate-600'
-            }`}
-          >
-            {isComplete ? 'Profil vollständig' : 'Profil unvollständig'}
-          </span>
-          {creditMissing ?
+          {isComplete ?
+            <span className="rounded-full bg-[#e8f7f2] px-[14px] py-1.5 text-xs font-semibold text-[#107a5a]">
+              ✓ Profil vollständig
+            </span>
+          : null}
+          {approvedValid ?
+            <span className="rounded-full bg-[#e8f7f2] px-[14px] py-1.5 text-xs font-semibold text-[#107a5a]">
+              ✓ Betreibungsregister gültig
+            </span>
+          : null}
+          {needsRegisterUpload ?
             <Link
               href="/profil/betreibungsregister"
               className="rounded-full bg-orange-50 px-[14px] py-1.5 text-xs font-semibold text-orange-900 hover:bg-orange-100"
             >
-              Betreibungsregister fehlt
+              ⚠️ Betreibungsregister hochladen
             </Link>
-          : (
-            <span className="rounded-full bg-[#e8f7f2] px-[14px] py-1.5 text-xs font-semibold text-[#107a5a]">
-              Betreibungsregister vorhanden
+          : null}
+          {pendingReview ?
+            <span className="rounded-full bg-slate-100 px-[14px] py-1.5 text-xs font-semibold text-slate-600">
+              Wird geprüft…
             </span>
-          )}
-          <span className="rounded-full bg-slate-100 px-[14px] py-1.5 text-xs font-semibold text-slate-600">
-            {preferredCantonShort ? `Kanton ${preferredCantonShort}` : 'Kanton offen'}
-          </span>
+          : null}
         </div>
 
         <div className="mt-14 grid gap-14 min-[900px]:grid-cols-2">
@@ -100,7 +112,7 @@ export function ProfilDashboard({
               {personalRows.map(row => (
                 <div key={row.key}>
                   <p className="text-xs font-semibold uppercase tracking-wide text-[#8aa89e]">{row.label}</p>
-                  <p className="mt-1 text-[15px] font-medium text-[#0d2b1f]">{row.value}</p>
+                  <p className="mt-1 whitespace-pre-line text-[15px] font-medium text-[#0d2b1f]">{row.value}</p>
                 </div>
               ))}
             </div>
@@ -115,17 +127,60 @@ export function ProfilDashboard({
                     <p className="mt-1 text-[15px] font-medium text-[#0d2b1f]">{row.value}</p>
                   </div>
                 ))
-              : <p className="text-[15px] text-[#8aa89e]">Noch keine Suchpräferenzen — in «Suche anpassen» festlegen.</p>}
+              : (
+                <div className="rounded-xl border-[1.5px] border-[#b2e8d8] bg-[#f5fdfb] p-5">
+                  <p className="text-[15px] font-medium leading-relaxed text-[#0d2b1f]">
+                    Deine Suche ist noch nicht eingerichtet.
+                  </p>
+                  <Link
+                    href="/profil/suche"
+                    className="mt-4 inline-flex min-h-[44px] items-center text-[15px] font-semibold text-[#18a87c] hover:underline"
+                  >
+                    Suche einrichten →
+                  </Link>
+                </div>
+              )}
             </div>
           </section>
         </div>
 
-        <div className="mt-16">
-          <ProfilCreditPanel
-            creditCheckStatus={creditCheckStatus}
-            creditCheckResult={creditCheckResult}
-            creditCheckExpiresAt={creditCheckExpiresAt ? new Date(creditCheckExpiresAt) : null}
-          />
+        <div className="mt-14">
+          <h2 className="text-sm font-semibold text-[#0d2b1f]">Betreibungsregister</h2>
+          {approvedValid && creditCheckResult ?
+            <div className="mt-3 rounded-xl border-l-[3px] border-l-[#18a87c] bg-[#f5fdfb] px-5 py-4">
+              <p className="text-[15px] font-medium text-[#0d2b1f]">
+                Verifiziert — gültig bis {creditCheckExpiresAt ? formatDate(new Date(creditCheckExpiresAt)) : '—'}
+              </p>
+              <Link
+                href="/profil/betreibungsregister"
+                className="mt-3 inline-flex min-h-[44px] text-[13px] font-semibold text-[#107a5a] hover:underline"
+              >
+                Neuen Auszug hochladen →
+              </Link>
+            </div>
+          : null}
+          {needsRegisterUpload ?
+            <div className="mt-3 rounded-xl border-l-[3px] border-l-orange-400 bg-[#fffbeb] px-5 py-4">
+              <p className="text-[15px] font-medium leading-relaxed text-[#0d2b1f]">
+                {creditCheckStatus === 'REJECTED' ?
+                  'Der Auszug konnte nicht akzeptiert werden — bitte lade einen gültigen Schweizer Betreibungsregisterauszug hoch.'
+                : creditCheckStatus === 'NONE' ?
+                  'Noch nicht hochgeladen — viele Vermieter setzen ihn voraus.'
+                : 'Dein Betreibungsregister ist nicht mehr gültig — bitte lade einen aktuellen Auszug hoch.'}
+              </p>
+              <Link
+                href="/profil/betreibungsregister"
+                className="mt-3 inline-flex min-h-[44px] text-[14px] font-semibold text-[#c2410c] hover:underline"
+              >
+                Jetzt hochladen →
+              </Link>
+            </div>
+          : null}
+          {pendingReview && !approvedValid ?
+            <div className="mt-3 rounded-xl border-l-[3px] border-l-slate-300 bg-slate-50 px-5 py-4">
+              <p className="text-[15px] font-medium text-[#0d2b1f]">Wird geprüft — wir melden uns kurz.</p>
+            </div>
+          : null}
         </div>
       </main>
     </>

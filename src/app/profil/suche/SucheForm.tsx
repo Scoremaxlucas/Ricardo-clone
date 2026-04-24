@@ -223,7 +223,7 @@ export function SucheForm() {
         </button>
       </header>
       <main
-        className="mx-auto max-w-[520px] px-6 pb-28 pt-24"
+        className="mx-auto max-w-[520px] px-6 pb-[80px] pt-24"
         style={{ paddingTop: 'calc(5rem + env(safe-area-inset-top, 0px))' }}
       >
         <h1 className="text-[26px] font-extrabold leading-tight sm:text-[32px]">Deine Suche</h1>
@@ -274,14 +274,14 @@ export function SucheForm() {
       </main>
 
       <footer
-        className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#f0f0f0] bg-white px-6 py-4"
+        className="fixed bottom-0 left-0 right-0 z-50 flex h-[72px] items-center border-t border-[#f0f0f0] bg-white px-6"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <button
           type="button"
           disabled={saving}
           onClick={() => void save()}
-          className="flex h-12 min-h-[48px] w-full items-center justify-center rounded-xl bg-[#18a87c] text-[15px] font-bold text-white transition disabled:opacity-60"
+          className="flex h-12 min-h-[48px] w-full items-center justify-center rounded-xl bg-[#18a87c] text-[15px] font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? 'Wird gespeichert…' : 'Suche speichern →'}
         </button>

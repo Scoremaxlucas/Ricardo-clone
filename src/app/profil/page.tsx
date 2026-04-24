@@ -2,10 +2,11 @@ import { ProfilDashboard } from '@/app/profil/ProfilDashboard'
 import { authOptions } from '@/lib/auth'
 import { parsePostalCodesList } from '@/lib/matching/evaluate-match'
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
-import { employmentSummaryDe, householdPetsLabelDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
+import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { prisma } from '@/lib/prisma'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { isCreditCheckResult } from '@/lib/rental/types'
+import type { HouseholdPets } from '@prisma/client'
 import { formatCHF } from '@/lib/utils/formatCurrency'
 import { formatDate } from '@/lib/utils/formatDate'
 import type { Metadata } from 'next'
@@ -20,6 +21,25 @@ export const metadata: Metadata = {
 function creditResult(row: unknown): CreditCheckResult | null {
   if (!row || typeof row !== 'object') return null
   return isCreditCheckResult(row) ? row : null
+}
+
+function formatHouseholdOverview(p: {
+  householdTotalPersons: number
+  householdChildrenCount: number
+  declaresNonSmoker: boolean | null
+  householdPets: HouseholdPets
+}): string {
+  const personCount = p.householdTotalPersons
+  const kinderCount = p.householdChildrenCount
+  const personText = personCount === 1 ? '1 Person' : `${personCount} Personen`
+  const kinderText = kinderCount === 0 ? 'keine Kinder' : kinderCount === 1 ? '1 Kind' : `${kinderCount} Kinder`
+  const rauchText =
+    p.declaresNonSmoker === true ? 'Nichtraucher/in'
+    : p.declaresNonSmoker === false ? 'Raucher/in'
+    : 'Rauchen nicht bestätigt'
+  const haustiere = p.householdPets === 'HAS_PETS'
+  const tierText = haustiere ? 'mit Haustieren' : 'keine Haustiere'
+  return `${personText} · ${kinderText} · ${rauchText} · ${tierText}`
 }
 
 function preferenceRows(profile: {
@@ -93,8 +113,6 @@ export default async function ProfilPage({
 
   const creditJson = creditResult(profile.creditCheckResult)
   const prefs = preferenceRows(profile)
-  const cantonFirst =
-    profile.preferredCanton?.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)[0] ?? null
 
   const personalRows = [
     { key: 'name', label: 'Name', value: `${profile.firstName} ${profile.lastName}` },
@@ -112,8 +130,13 @@ export default async function ProfilPage({
     { key: 'inc', label: 'Einkommen (Kategorie)', value: incomeCategoryLabelDe(profile.monthlyIncomeCategory) },
     {
       key: 'hh',
-      label: 'Haushalt',
-      value: `${profile.householdTotalPersons} Person(en), ${profile.householdChildrenCount} Kinder\n${profile.declaresNonSmoker === true ? 'Nichtraucher/in' : 'Rauchen nicht bestätigt'} · ${householdPetsLabelDe(profile.householdPets)}`,
+      label: 'Haushalt & Lebensstil',
+      value: formatHouseholdOverview({
+        householdTotalPersons: profile.householdTotalPersons,
+        householdChildrenCount: profile.householdChildrenCount,
+        declaresNonSmoker: profile.declaresNonSmoker,
+        householdPets: profile.householdPets,
+      }),
     },
     {
       key: 'ref',
@@ -135,7 +158,6 @@ export default async function ProfilPage({
       creditCheckResult={creditJson}
       creditCheckExpiresAt={profile.creditCheckExpiresAt?.toISOString() ?? null}
       isComplete={profile.isComplete}
-      preferredCantonShort={cantonFirst}
       personalRows={personalRows}
       preferenceRows={prefs}
     />

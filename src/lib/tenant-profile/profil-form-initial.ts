@@ -47,7 +47,7 @@ function defaultForm(): ProfilFormInitial {
     jobTitle: '',
     employedSinceYear: '',
     employedSinceMonth: '',
-    monthlyIncomeCategory: 'FROM_4000_TO_5500',
+    monthlyIncomeCategory: 'FROM_4000_TO_5000',
     householdTotalPersons: '1',
     householdChildrenCount: '0',
     declaresNonSmoker: false,
@@ -111,7 +111,7 @@ export function buildInitialFromApi(p: Record<string, unknown> | null | undefine
     p.householdChildrenCount != null && Number.isFinite(Number(p.householdChildrenCount)) ?
       Math.round(Number(p.householdChildrenCount))
     : 0
-  const householdChildrenCount = Math.min(htp, Math.max(0, hccRaw))
+  const householdChildrenCount = Math.min(20, Math.max(0, hccRaw))
 
   const validIncome: IncomeCategory[] = [
     'UNDER_3000',
@@ -127,9 +127,18 @@ export function buildInitialFromApi(p: Record<string, unknown> | null | undefine
     'FROM_45000_TO_65000',
     'FROM_65000_TO_90000',
     'ABOVE_90000',
+    'UNDER_2000',
+    'FROM_2000_TO_3000',
+    'FROM_4000_TO_5000',
+    'FROM_5000_TO_7000',
+    'FROM_12000_TO_15000',
+    'FROM_15000_TO_20000',
+    'FROM_20000_TO_30000',
+    'FROM_30000_TO_50000',
+    'ABOVE_50000',
   ]
   const mic = p.monthlyIncomeCategory as IncomeCategory | undefined
-  const monthlyIncomeCategory = mic && validIncome.includes(mic) ? mic : 'FROM_4000_TO_5500'
+  const monthlyIncomeCategory = mic && validIncome.includes(mic) ? mic : 'FROM_4000_TO_5000'
 
   return {
     firstName: String(p.firstName ?? ''),
