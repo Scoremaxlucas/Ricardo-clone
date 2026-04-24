@@ -1,4 +1,4 @@
-import { ProfilErstellenClient } from '../erstellen/ProfilErstellenClient'
+import { OnboardingFlow } from '@/app/profil/erstellen/OnboardingFlow'
 import { buildInitialFromApi } from '@/lib/tenant-profile/profil-form-initial'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -65,7 +65,5 @@ export default async function ProfilBearbeitenPage() {
     preferredMoveInLatest: row.preferredMoveInLatest ? row.preferredMoveInLatest.toISOString() : null,
   })
 
-  return (
-    <ProfilErstellenClient mode="edit" initial={initial} redirectAfterSave="/profil" accountEmail={accountEmail} />
-  )
+  return <OnboardingFlow mode="edit" accountEmail={accountEmail} redirectAfterSave="/profil" initial={initial} />
 }
