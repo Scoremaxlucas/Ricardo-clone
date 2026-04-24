@@ -54,9 +54,13 @@ function matchBadge(score: number): { label: string; cls: string } {
 
 export function RentalListingCard({ listing: l, imagePriority = false, matchScore }: Props) {
   const main = firstPhoto(l.photos)
-  const now = Date.now()
-  const created = validDate(l.createdAt)
-  const isNew = created != null && now - created.getTime() < 48 * 3600000
+  const rawCreated = l.createdAt
+  const createdMs =
+    rawCreated instanceof Date
+      ? rawCreated.getTime()
+      : new Date(rawCreated as string | number).getTime()
+  const isNew =
+    Number.isFinite(createdMs) && Date.now() - createdMs < 48 * 60 * 60 * 1000
   const available = validDate(l.availableFrom ?? null)
 
   return (

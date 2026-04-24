@@ -1,4 +1,3 @@
-import { Logo } from '@/components/ui/Logo'
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 import Link from 'next/link'
 
@@ -11,7 +10,18 @@ export function WohnenFooter() {
         <div className="grid grid-cols-1 gap-0 md:grid-cols-[2fr_1fr_1fr_1fr] md:gap-8">
           <div className="mb-6 md:mb-0">
             <div className="flex items-center gap-2">
-              <Logo size="sm" />
+              <div className="h-6 w-6 shrink-0" aria-hidden>
+                <svg viewBox="0 0 40 40" className="h-full w-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="40" height="40" rx="8" fill="#18a87c" />
+                  <path
+                    d="M12 12 L12 28 M12 20 L28 20 M28 12 L28 28"
+                    stroke="white"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
               <span className="text-lg font-bold tracking-tight text-white">Helvenda Wohnungen</span>
             </div>
             <p className="mt-4 text-[14px] leading-relaxed text-white/85">

@@ -444,7 +444,7 @@ export function WohnenNavbar() {
             <div className="h-8 w-24 animate-pulse rounded-lg bg-slate-200" />
           </div>
         : (
-          <nav className="hidden flex-1 items-center justify-end gap-3 md:flex md:gap-4">
+          <nav className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex md:gap-4">
             {!signedIn ?
               <>
                 <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-slate-900">
@@ -460,7 +460,7 @@ export function WohnenNavbar() {
                   href="/register"
                   className="rounded-xl bg-[#18a87c] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
                 >
-                  Registrieren
+                  Kostenlos registrieren
                 </Link>
               </>
             : profile?.isComplete ? (
@@ -532,8 +532,7 @@ export function WohnenNavbar() {
             mobileOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <span className="text-sm font-bold text-slate-900">Menü</span>
+          <div className="flex items-center justify-end border-b border-slate-100 px-4 py-3">
             <button
               type="button"
               className="inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
