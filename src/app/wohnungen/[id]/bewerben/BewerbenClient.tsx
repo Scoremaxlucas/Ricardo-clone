@@ -4,7 +4,7 @@ import { CreditCheckBadge } from '@/components/rental/CreditCheckBadge'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { isCreditCheckResult } from '@/lib/rental/types'
 import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
-import { CheckCircle2 } from 'lucide-react'
+import { Building2, CheckCircle2, Lock, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { wohnenToast } from '@/lib/wohnen-toast'
 import { useRouter } from 'next/navigation'
@@ -108,10 +108,10 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
 
   if (done) {
     return (
-      <main className="mx-auto max-w-lg px-4 py-16 text-center">
-        <div className="mx-auto flex max-w-md flex-col items-center rounded-2xl border border-emerald-200 bg-emerald-50/90 px-6 py-12 shadow-sm">
+      <main className="mx-auto max-w-lg py-16 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[max(3rem,calc(2rem+env(safe-area-inset-top,0px)))] text-center sm:pl-[max(1.5rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.5rem,env(safe-area-inset-right,0px))]">
+        <div className="mx-auto flex max-w-md flex-col items-center rounded-2xl border border-emerald-200 bg-emerald-50/90 px-5 py-10 shadow-sm sm:px-6 sm:py-12">
           <CheckCircle2 className="h-16 w-16 text-emerald-600" aria-hidden />
-          <h1 className="mt-6 text-2xl font-bold text-emerald-950">Bewerbung erfolgreich abgeschickt! ✅</h1>
+          <h1 className="mt-6 text-xl font-bold leading-tight text-emerald-950 sm:text-2xl">Bewerbung erfolgreich abgeschickt</h1>
           <p className="mt-4 text-sm leading-relaxed text-emerald-900">
             Der Vermieter wurde benachrichtigt und wird sich bei dir melden. Du kannst deine Bewerbungen jederzeit unter
             &quot;Meine Bewerbungen&quot; einsehen.
@@ -136,7 +136,7 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+    <main className="mx-auto max-w-6xl py-8 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:py-10 sm:pl-6 sm:pr-6">
       <Link href={`/wohnungen/${listing.id}`} className="text-sm font-medium text-teal-800 underline-offset-2 hover:underline">
         ← Zurück zum Inserat
       </Link>
@@ -152,8 +152,8 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={listing.firstPhotoUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-2xl text-slate-300" aria-hidden>
-                    🏠
+                  <div className="flex h-full items-center justify-center text-slate-300" aria-hidden>
+                    <Building2 className="h-8 w-8 opacity-40" />
                   </div>
                 )}
               </div>
@@ -212,7 +212,7 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
             <h2 className="text-lg font-bold text-slate-900">Bewerbung abschicken</h2>
             <label className="mt-4 block text-sm font-medium text-slate-700">Nachricht an den Vermieter (optional)</label>
             <textarea
-              className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+              className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-base sm:text-sm"
               rows={4}
               maxLength={500}
               placeholder="Stell dich kurz vor — warum interessiert dich diese Wohnung?"
@@ -223,8 +223,9 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
 
             {requiresCreditCheck ? (
               <>
-                <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-900">
-                  ✅ Dein Betreibungsregisterauszug wird automatisch mitgeschickt.
+                <div className="mt-4 flex gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-900">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" aria-hidden />
+                  <span>Dein Betreibungsregisterauszug wird automatisch mitgeschickt.</span>
                 </div>
                 <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm text-slate-800">
                   <input
@@ -251,7 +252,10 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
             >
               {submitting ? 'Wird gesendet…' : 'Bewerbung absenden'}
             </button>
-            <p className="mt-3 text-center text-[11px] text-slate-500">🔒 Deine Bewerbung wird sicher übertragen.</p>
+            <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-500">
+              <Lock className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+              <span>Deine Bewerbung wird sicher übertragen.</span>
+            </p>
           </div>
         </aside>
       </div>

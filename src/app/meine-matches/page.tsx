@@ -58,7 +58,7 @@ function IconShieldCheck({ colorClass }: { colorClass: string }) {
 
 function EmptyStateCard() {
   return (
-    <div className="mx-auto mt-8 max-w-[500px] rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+    <div className="mx-auto mt-8 max-w-[500px] rounded-2xl border border-slate-200 bg-white px-5 py-8 text-center shadow-sm sm:p-8">
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-teal-700">
         <svg aria-hidden viewBox="0 0 24 24" className="h-7 w-7">
           <path fill="currentColor" d="m21.7 20.3-5-5a7 7 0 1 0-1.4 1.4l5 5a1 1 0 0 0 1.4-1.4ZM5 10a5 5 0 1 1 10 0A5 5 0 0 1 5 10Z" />
@@ -107,9 +107,11 @@ export default async function MeineMatchesPage() {
 
   return (
     <main className="min-h-screen bg-[#f8fdfb]">
-      <div className="mx-auto max-w-6xl px-4 pb-10 pt-12">
+      <div className="mx-auto max-w-6xl pb-10 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[max(2.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))] sm:pl-[max(1.5rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.5rem,env(safe-area-inset-right,0px))] sm:pt-12">
         <section className="pb-8">
-          <h1 className="text-[32px] font-extrabold text-[#0d2b1f]">Guten {greeting}, {profile.firstName}.</h1>
+          <h1 className="text-[1.5rem] font-extrabold leading-tight text-[#0d2b1f] sm:text-[1.875rem] md:text-[2rem]">
+            Guten {greeting}, {profile.firstName}.
+          </h1>
           {accountEmail ? (
             <p className="mt-2 text-sm text-slate-600">
               <span className="text-slate-500">Angemeldet als</span>{' '}
@@ -117,18 +119,18 @@ export default async function MeineMatchesPage() {
             </p>
           ) : null}
           {matches.length > 0 ? (
-            <p className="mt-3 text-[17px] text-slate-700">
+            <p className="mt-3 text-base leading-relaxed text-slate-700 sm:text-[17px]">
               Wir haben <span className="font-extrabold text-teal-700">{matches.length}</span> Wohnungen gefunden die zu dir passen.
             </p>
           ) : (
-            <p className="mt-3 text-[17px] text-slate-500">
+            <p className="mt-3 text-base leading-relaxed text-slate-500 sm:text-[17px]">
               Noch keine Wohnungen die genau zu dir passen — wir suchen täglich weiter.
             </p>
           )}
         </section>
 
-        <section className="mb-8 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-5">
-          <div className="-mx-1 flex flex-nowrap gap-2 overflow-x-auto px-1 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <section className="mb-8 rounded-2xl border border-slate-200 bg-white px-3 py-4 shadow-sm sm:px-5">
+          <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 pl-0.5 pr-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] scroll-pl-1 scroll-pr-1 sm:scroll-pl-0 [&::-webkit-scrollbar]:hidden">
             {profile.preferredCanton ? (
               <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
                 <IconPin /> Kanton {profile.preferredCanton}

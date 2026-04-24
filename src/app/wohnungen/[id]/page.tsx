@@ -103,7 +103,7 @@ export default async function WohnungDetailPage({ params }: PageProps) {
     <main className="pb-[5.5rem] lg:pb-16">
       <RentalListingDetailGallery imageUrls={photos} />
 
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-6xl py-6 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:pl-6 sm:pr-6">
         <Link href="/wohnungen" className="text-sm font-medium text-teal-800 underline-offset-2 hover:underline">
           ← Alle Wohnungen
         </Link>
@@ -138,7 +138,7 @@ export default async function WohnungDetailPage({ params }: PageProps) {
 
             <hr className="my-8 border-slate-200" />
 
-            <p className="text-3xl font-bold text-[#18a87c] sm:text-4xl">
+            <p className="text-[1.625rem] font-bold leading-tight text-[#18a87c] sm:text-3xl md:text-4xl">
               {formatCHF(listing.rentPerMonth)}{' '}
               <span className="text-lg font-semibold text-slate-600 sm:text-xl">/ Monat</span>
             </p>
@@ -177,9 +177,12 @@ export default async function WohnungDetailPage({ params }: PageProps) {
             <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
               Weitere Wohnungen in {cantonLabel(listing.canton)}
             </h2>
-            <div className="mt-8 flex gap-4 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch] lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible">
+            <div className="mt-8 flex gap-4 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch] scroll-pl-1 scroll-pr-1 lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:scroll-pl-0 lg:scroll-pr-0">
               {similar.map(row => (
-                <div key={row.id} className="w-[min(85vw,320px)] shrink-0 lg:w-auto lg:min-w-0">
+                <div
+                  key={row.id}
+                  className="w-[min(320px,calc(100vw-env(safe-area-inset-left,0px)-env(safe-area-inset-right,0px)-2rem))] shrink-0 lg:w-auto lg:min-w-0"
+                >
                   <RentalListingCard listing={rentalListingRowToCardData(row)} />
                 </div>
               ))}
@@ -190,7 +193,7 @@ export default async function WohnungDetailPage({ params }: PageProps) {
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 lg:hidden">
         <div
-          className="pointer-events-auto border-t border-[#e8f7f2] bg-white px-5 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]"
+          className="pointer-events-auto border-t border-[#e8f7f2] bg-white py-3 pl-[max(1.25rem,env(safe-area-inset-left,0px))] pr-[max(1.25rem,env(safe-area-inset-right,0px))] shadow-[0_-4px_16px_rgba(0,0,0,0.08)]"
           style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
         >
           <div className="mx-auto max-w-6xl">

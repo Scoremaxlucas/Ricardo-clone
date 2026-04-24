@@ -184,7 +184,7 @@ export function WohnungenSearchFilters() {
 
   return (
     <section className="mb-8 rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-100">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 py-3 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:pl-5 sm:pr-5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-[#e8f7f2] px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[#107a5a]">
             Nur Miete
@@ -205,7 +205,7 @@ export function WohnungenSearchFilters() {
         </div>
       </div>
 
-      <div className="px-4 py-4 sm:px-5 sm:py-5">
+      <div className="py-4 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:py-5 sm:pl-5 sm:pr-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:gap-3">
           <div className="min-w-0 flex-1">
             <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-600">Ort, PLZ oder Titel</span>
@@ -215,7 +215,7 @@ export function WohnungenSearchFilters() {
                 type="search"
                 enterKeyHint="search"
                 placeholder="z. B. Zürich, 8001, Wollishofen…"
-                className="h-12 w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                className="h-12 w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-3 text-base text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 sm:text-sm"
                 value={q}
                 onChange={e => update({ q: e.target.value })}
                 onKeyDown={e => {
@@ -271,7 +271,7 @@ export function WohnungenSearchFilters() {
         </div>
 
         {hasFilters ? (
-          <div className="-mx-1 mt-4 flex flex-nowrap gap-2 overflow-x-auto px-1 pb-1 pt-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mt-4 flex flex-nowrap gap-2 overflow-x-auto pb-1 pl-0.5 pr-0.5 pt-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] scroll-pl-1 scroll-pr-1 sm:scroll-pl-0 [&::-webkit-scrollbar]:hidden">
             {activeChips.map(c => (
               <button
                 key={c.key + c.label}
@@ -289,7 +289,7 @@ export function WohnungenSearchFilters() {
 
       {moreOpen ? (
         <div
-          className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-black/45 p-4 pt-10 sm:pt-16"
+          className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-black/45 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[max(2.5rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:pt-16"
           role="presentation"
           onClick={e => {
             if (e.target === e.currentTarget) setMoreOpen(false)

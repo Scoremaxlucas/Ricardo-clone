@@ -63,7 +63,7 @@ export default async function MeineBewerbungenPage() {
   ).length
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 sm:py-10">
+    <main className="mx-auto max-w-4xl py-8 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:py-10 sm:pl-6 sm:pr-6">
       <Suspense fallback={null}>
         <MeineBewerbungenAlreadyToast />
       </Suspense>

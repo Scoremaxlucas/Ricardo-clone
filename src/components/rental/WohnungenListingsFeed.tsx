@@ -122,8 +122,10 @@ export function WohnungenListingsFeed({ activeCount }: Props) {
 
   return (
     <section className="pt-2 sm:pt-4" id="wohnungen-ergebnisse">
-      <h1 className="text-[28px] font-extrabold leading-tight text-[#0d2b1f] sm:text-[32px]">Mietwohnungen in der Schweiz</h1>
-      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-[17px]">
+      <h1 className="text-[1.375rem] font-extrabold leading-tight text-[#0d2b1f] sm:text-[1.75rem] md:text-[2rem]">
+        Mietwohnungen in der Schweiz
+      </h1>
+      <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600 sm:mt-2 sm:text-[17px]">
         Alle aktiven Inserate durchsuchen — mit Suche, Budget, Fläche, Zimmerzahl, Einzugsdatum und Sortierung. Für
         deine gespeicherten Kriterien und Score nutze{' '}
         <Link href="/meine-matches" className="font-semibold text-teal-700 underline-offset-2 hover:underline">

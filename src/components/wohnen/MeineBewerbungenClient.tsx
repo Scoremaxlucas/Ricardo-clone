@@ -2,7 +2,7 @@
 
 import { WohnenEmptyState } from '@/components/wohnen/WohnenEmptyState'
 import type { RentalApplicationStatus } from '@prisma/client'
-import { ChevronDown, ChevronUp, Inbox } from 'lucide-react'
+import { Building2, ChevronDown, ChevronUp, Inbox } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -92,7 +92,7 @@ function BewerbungCard({ app }: { app: MeineBewerbungRow }) {
         toast.error((data as { message?: string }).message || 'Melden fehlgeschlagen')
         return
       }
-      toast.success('Danke für deine Meldung — wir prüfen das Inserat. ✓')
+      toast.success('Danke für deine Meldung — wir prüfen das Inserat.')
       setStaleOpen(false)
       setStaleNote('')
       router.refresh()
@@ -109,7 +109,9 @@ function BewerbungCard({ app }: { app: MeineBewerbungRow }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={app.listing.firstPhotoUrl} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full items-center justify-center text-xl text-slate-300">🏠</div>
+            <div className="flex h-full items-center justify-center text-slate-300">
+              <Building2 className="h-7 w-7 opacity-40" aria-hidden />
+            </div>
           )}
         </div>
         <div className="min-w-0">

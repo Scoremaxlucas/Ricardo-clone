@@ -1,5 +1,6 @@
 'use client'
 
+import { Check, FileText, Lock } from 'lucide-react'
 import Link from 'next/link'
 import type { QualificationIssue } from '@/lib/rental/qualifyTenant'
 import { useRouter } from 'next/navigation'
@@ -107,7 +108,7 @@ export function WohnungBewerbungsBox({
 
   const label = (() => {
     if (!userId) return 'Anmelden zum Bewerben'
-    if (alreadyApplied) return 'Bereits beworben ✓'
+    if (alreadyApplied) return 'Bereits beworben'
     if (notQualified) return 'Anforderungen prüfen'
     return 'Jetzt bewerben'
   })()
@@ -158,9 +159,12 @@ export function WohnungBewerbungsBox({
             </p>
 
             {requiresCreditCheck ?
-              <div className="mt-4 rounded-xl bg-teal-50 px-3 py-3 text-xs leading-relaxed text-teal-900">
-                📄 Im Profil fehlt noch der Betreibungsregisterauszug. Lade ihn dort einmalig hoch — er gilt für alle
-                deine Bewerbungen.
+              <div className="mt-4 flex gap-2 rounded-xl bg-teal-50 px-3 py-3 text-xs leading-relaxed text-teal-900">
+                <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-800" aria-hidden />
+                <span>
+                  Im Profil fehlt noch der Betreibungsregisterauszug. Lade ihn dort einmalig hoch — er gilt für alle
+                  deine Bewerbungen.
+                </span>
               </div>
             : null}
 
@@ -175,11 +179,17 @@ export function WohnungBewerbungsBox({
           </p>
         ) : null}
         {!compact && userId && !alreadyApplied && isQualifiedNow ? (
-          <p className="mt-2 text-center text-xs font-medium text-emerald-700">✓ Du erfüllst alle Anforderungen</p>
+          <p className="mt-2 flex items-center justify-center gap-1 text-center text-xs font-medium text-emerald-700">
+            <Check className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>Du erfüllst alle Anforderungen</span>
+          </p>
         ) : null}
 
         {!compact ?
-          <p className="mt-4 text-center text-[11px] text-slate-500">🔒 Deine Daten werden verschlüsselt übertragen</p>
+          <p className="mt-4 flex items-center justify-center gap-1 text-center text-[11px] text-slate-500">
+            <Lock className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+            <span>Deine Daten werden verschlüsselt übertragen</span>
+          </p>
         : null}
       </div>
 

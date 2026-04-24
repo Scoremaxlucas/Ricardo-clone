@@ -1,6 +1,7 @@
 'use client'
 
 import { isVercelBlobImageUrl } from '@/lib/rental/remote-image'
+import { Building2 } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 
@@ -38,9 +39,7 @@ export function RentalListingDetailGallery({ imageUrls }: Props) {
     return (
       <div className="border-b border-slate-200 bg-slate-100">
         <div className="mx-auto flex aspect-[21/9] max-h-[320px] max-w-6xl items-center justify-center text-slate-400">
-          <span className="text-5xl" aria-hidden>
-            🏠
-          </span>
+          <Building2 className="h-14 w-14 opacity-50" aria-hidden />
         </div>
       </div>
     )
@@ -52,13 +51,13 @@ export function RentalListingDetailGallery({ imageUrls }: Props) {
         <div className="relative mx-auto max-w-6xl lg:px-4">
           <div
             ref={scrollerRef}
-            className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pb-3 pt-3 [-webkit-overflow-scrolling:touch] lg:hidden"
+            className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth scroll-pl-[env(safe-area-inset-left,0px)] scroll-pr-[env(safe-area-inset-right,0px)] pb-3 pt-3 [-webkit-overflow-scrolling:touch] lg:hidden"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             {urls.map((src, i) => (
               <div
                 key={i}
-                className="relative aspect-[4/3] w-screen max-w-[100vw] shrink-0 snap-start overflow-hidden bg-slate-200 sm:rounded-xl"
+                className="relative aspect-[4/3] w-[calc(100vw-env(safe-area-inset-left,0px)-env(safe-area-inset-right,0px))] max-w-full shrink-0 snap-start overflow-hidden bg-slate-200 sm:rounded-xl"
               >
                 <Image
                   src={src}
@@ -74,7 +73,7 @@ export function RentalListingDetailGallery({ imageUrls }: Props) {
           </div>
           {urls.length > 1 ? (
             <div
-              className="pointer-events-none absolute bottom-5 right-3 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white lg:hidden"
+              className="pointer-events-none absolute bottom-5 right-[max(0.75rem,env(safe-area-inset-right,0px))] rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white lg:hidden"
               aria-live="polite"
             >
               {activeIdx + 1} / {urls.length}
@@ -124,7 +123,7 @@ export function RentalListingDetailGallery({ imageUrls }: Props) {
 
       {lightbox ?
         <div
-          className="fixed inset-0 z-[100] flex flex-col bg-black/80 p-4"
+          className="fixed inset-0 z-[100] flex flex-col bg-black/80 p-4 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))]"
           role="dialog"
           aria-modal="true"
           aria-label="Fotogalerie"
