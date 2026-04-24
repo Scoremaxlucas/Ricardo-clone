@@ -262,9 +262,6 @@ export function WohnenNavbar() {
                   >
                     Admin-Dashboard
                   </Link>
-                  <p className="px-3 pb-2 pt-0 text-[11px] leading-snug text-slate-500">
-                    Inserate, Bewerbungen, Reviews und www-Links erreichst du dort.
-                  </p>
                 </>
               : null}
               <div className="my-1 border-t border-slate-100" />
@@ -412,9 +409,6 @@ export function WohnenNavbar() {
             <Link href="/admin/wohnen" className={`${mobileDrawerLink} font-semibold text-[#107a5a] hover:bg-[#e8f7f2]`} onClick={closeAll}>
               Admin-Dashboard
             </Link>
-            <p className="border-b border-[#e8f7f2] px-3 py-2 text-[11px] leading-snug text-slate-500">
-              Inserate, Bewerbungen, Reviews und www-Links erreichst du dort.
-            </p>
           </>
         : null}
         <button
