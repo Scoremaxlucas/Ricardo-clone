@@ -5,9 +5,10 @@ import { ingestOptionalText } from '@/lib/rental/ingest-optional-text'
 import { mapAiImportToRentalLandlordInitial } from '@/lib/rental/listing-ai-to-rental-initial'
 import type { ImportListingAiResult } from '@/lib/rental/listing-url-import-types'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { useCallback, useEffect, useMemo, useState, type ClipboardEvent } from 'react'
+import { parseIngestDraftPayload } from '@/lib/rental/rental-listing-ingest-draft-types'
+import { useCallback, useEffect, useMemo, useRef, useState, type ClipboardEvent } from 'react'
 import toast from 'react-hot-toast'
 
 const ROOM_OPTIONS = ['1', '1.5', '2', '2.5', '3', '3.5', '4', '4.5', '5+'] as const
@@ -121,6 +122,8 @@ function manualFallbackDescription(): string {
 
 export function IngestClient() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const draftParam = searchParams.get('draftId')
   const { data: session } = useSession()
   const userId = (session?.user as { id?: string } | undefined)?.id
 
@@ -165,6 +168,10 @@ export function IngestClient() {
   const [internalNote, setInternalNote] = useState('')
   const [publishNow, setPublishNow] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null)
+  const [draftHydrating, setDraftHydrating] = useState(false)
+  const lastLoadedDraftRef = useRef<string | null>(null)
 
   const [dragIdx, setDragIdx] = useState<number | null>(null)
   const [postAnalyzeWarnings, setPostAnalyzeWarnings] = useState<string[]>([])
@@ -354,6 +361,83 @@ export function IngestClient() {
     setIngestSourceHint(null)
     setScreenshotFiles([])
   }, [])
+
+  useEffect(() => {
+    if (!draftParam || !userId) return
+    if (lastLoadedDraftRef.current === draftParam) return
+
+    let cancelled = false
+
+    const run = async () => {
+      setDraftHydrating(true)
+      try {
+        const res = await fetch(`/api/admin/rental-ingest/drafts/${encodeURIComponent(draftParam)}`)
+        const body = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          toast.error((body as { message?: string }).message || 'Entwurf konnte nicht geladen werden')
+          return
+        }
+        if (cancelled) return
+        const draft = (body as { draft?: { draftPayload: unknown } }).draft
+        if (!draft) {
+          toast.error('Entwurf nicht gefunden')
+          return
+        }
+        const payload = parseIngestDraftPayload(draft.draftPayload)
+        if (!payload) {
+          toast.error('Entwurf-Daten ungültig')
+          return
+        }
+
+        if (payload.kind === 'orchestrator') {
+          const dataForForm: IngestApiResult = {
+            listing: payload.orchestrator.listing as IngestListingRow,
+            photos: payload.orchestrator.photos,
+            sourceUrl: payload.sourceUrl,
+            imageDownloadFailures: payload.orchestrator.imageDownloadFailures,
+            warnings: payload.orchestrator.warnings,
+            errors: payload.orchestrator.errors,
+          }
+          applyAnalyzeToForm(dataForForm)
+          setDescriptionWasRewritten(false)
+          setUrlInput(payload.sourceUrl)
+          const errMsgs = (dataForForm.errors || []).map(e => ERROR_MESSAGES[e] || e).filter(Boolean)
+          const extra: string[] = [...(dataForForm.warnings || [])]
+          if (typeof dataForForm.imageDownloadFailures === 'number' && dataForForm.imageDownloadFailures > 0) {
+            extra.push(`${dataForForm.imageDownloadFailures} Bild(er) konnten nicht geladen werden`)
+          }
+          setPostAnalyzeWarnings([...extra, ...errMsgs.map(e => String(e))])
+          for (const code of dataForForm.errors || []) {
+            const m = ERROR_MESSAGES[code]
+            if (m) toast.error(m)
+          }
+        } else {
+          applyEmptyFallback()
+          setUrlInput(payload.sourceUrl)
+          setSourceUrlMeta(payload.sourceUrl)
+          setRecognizedSource(payload.sourceUrl)
+          setIngestBasis(
+            payload.sourceUrl.toLowerCase().includes('tutti') ? 'tutti_public' : 'public_authority_url'
+          )
+          setPostAnalyzeWarnings([payload.message])
+        }
+
+        setCard('url')
+        setStep(3)
+        setActiveDraftId(draftParam)
+        lastLoadedDraftRef.current = draftParam
+        toast.success('Entwurf geladen')
+        router.replace('/admin/listings/ingest', { scroll: false })
+      } finally {
+        if (!cancelled) setDraftHydrating(false)
+      }
+    }
+
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [draftParam, userId, router, applyAnalyzeToForm, applyEmptyFallback])
 
   const addScreenshotFiles = (files: FileList | readonly File[] | null) => {
     if (!files?.length) return
@@ -710,6 +794,14 @@ export function IngestClient() {
         toast.error((data as { message?: string }).message || 'Speichern fehlgeschlagen')
         return
       }
+      const listingId = (data as { id?: string }).id
+      if (activeDraftId && listingId) {
+        await fetch(`/api/admin/rental-ingest/drafts/${encodeURIComponent(activeDraftId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'RESOLVED', resolvedListingId: listingId }),
+        }).catch(() => {})
+      }
       toast.success('Inserat erfolgreich erstellt ✅')
       router.push('/admin/listings')
       router.refresh()
@@ -734,6 +826,11 @@ export function IngestClient() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
+      {draftHydrating ?
+        <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
+          Entwurf wird geladen…
+        </div>
+      : null}
       <div className="mb-4">
         <Link href="/admin/listings" className="text-sm font-medium text-teal-800 hover:underline">
           ← Zurück zur Verwaltung
@@ -968,6 +1065,28 @@ export function IngestClient() {
       {step === 3 ?
         <form onSubmit={handleSubmit} className="mt-10 space-y-8">
           <p className="text-sm font-semibold text-slate-800">Schritt 3 — Review + Bestätigung</p>
+
+          {activeDraftId ?
+            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
+              <p className="font-semibold text-sky-900">Import-Entwurf (manuell fertigstellen)</p>
+              <p className="mt-2 break-all">
+                <span className="text-sky-900">Original-URL: </span>
+                {urlInput.trim() || sourceUrlMeta ?
+                  <a
+                    href={(urlInput.trim() || sourceUrlMeta) as string}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-xs text-teal-800 underline"
+                  >
+                    {urlInput.trim() || sourceUrlMeta}
+                  </a>
+                : <span className="text-slate-500">(keine URL)</span>}
+              </p>
+              <p className="mt-2 text-xs text-sky-800">
+                Nach erfolgreichem Erstellen wird dieser Entwurf automatisch als erledigt markiert.
+              </p>
+            </div>
+          : null}
 
           {ingestSourceHint ?
             <div className="rounded-xl border border-teal-200 bg-teal-50/90 p-4 text-sm text-teal-950">

@@ -69,6 +69,7 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/api/admin/credit-check')) return true
   if (pathname.startsWith('/api/admin/applications')) return true
   if (pathname.startsWith('/api/admin/rental-listing-invites')) return true
+  if (pathname.startsWith('/api/admin/rental-ingest')) return true
   if (pathname.startsWith('/api/public/rental-listing-invite')) return true
   if (pathname.startsWith('/api/rental-applications')) return true
   if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
@@ -146,7 +147,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/admin/stats') ||
     pathname.startsWith('/api/admin/credit-check') ||
     pathname.startsWith('/api/admin/applications') ||
-    pathname.startsWith('/api/admin/rental-listing-invites')
+    pathname.startsWith('/api/admin/rental-listing-invites') ||
+    pathname.startsWith('/api/admin/rental-ingest')
   ) {
     const secret = process.env.NEXTAUTH_SECRET
     if (!secret) {

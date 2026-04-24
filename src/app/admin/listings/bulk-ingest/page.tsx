@@ -1,31 +1,26 @@
 import { authOptions } from '@/lib/auth'
-import { isAdmin } from '@/lib/auth/isAdmin'
 import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
+import { isAdmin } from '@/lib/auth/isAdmin'
 import { getServerSession } from 'next-auth/next'
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { Suspense } from 'react'
-import { IngestClient } from './IngestClient'
+import { BulkIngestClient } from './BulkIngestClient'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Neues Inserat — Automatischer Import',
+  title: 'Bulk-URL-Import — Mietinserate',
   robots: { index: false, follow: false },
 }
 
-export default async function AdminListingIngestPage() {
+export default async function AdminBulkIngestPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
-    redirect('/login?callbackUrl=' + encodeURIComponent('/admin/listings/ingest'))
+    redirect('/login?callbackUrl=' + encodeURIComponent('/admin/listings/bulk-ingest'))
   }
   if (!(await isAdmin(session))) {
     throwAdminForbidden()
   }
 
-  return (
-    <Suspense fallback={<div className="mx-auto max-w-3xl px-4 py-10 text-sm text-slate-600">Laden…</div>}>
-      <IngestClient />
-    </Suspense>
-  )
+  return <BulkIngestClient />
 }

@@ -165,7 +165,8 @@ model User {
   outagesExtended               SystemOutage[]        @relation("OutageExtender")
   marketingContacts             MarketingContact[]
   rentalListings                RentalListing[]
-  rentalListingInvitesCreated   RentalListingInvite[]
+  rentalListingInvitesCreated       RentalListingInvite[]
+  rentalListingIngestDraftsCreated  RentalListingIngestDraft[]
   rentalApplicationsAsApplicant RentalApplication[]   @relation("RentalApplicationApplicant")
   tenantProfile                 TenantProfile?
 
@@ -1728,6 +1729,13 @@ enum RentalListingInviteStatus {
   NEEDS_ADMIN
 }
 
+/** Admin: Bulk-URL-Import — fehlgeschlagene / unvollständige Einträge zur manuellen Fertigstellung. */
+enum RentalListingIngestDraftStatus {
+  PENDING
+  RESOLVED
+  DISCARDED
+}
+
 model RentalListing {
   id                  String               @id @default(cuid())
   createdAt           DateTime             @default(now())
@@ -1799,6 +1807,24 @@ model RentalListingInvite {
   @@index([email])
   @@index([status])
   @@map("rental_listing_invites")
+}
+
+model RentalListingIngestDraft {
+  id                String                         @id @default(cuid())
+  createdAt         DateTime                       @default(now())
+  updatedAt         DateTime                       @updatedAt
+  createdByUserId   String
+  createdBy         User                           @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  sourceUrl         String                         @db.Text
+  status            RentalListingIngestDraftStatus @default(PENDING)
+  lastError         String?                        @db.Text
+  /// Rohdaten Ingest (JSON) — gleiches Schema wie Bulk-API / Einladungs-Entwurf
+  draftPayload      Json?
+  resolvedListingId String?
+
+  @@index([createdByUserId])
+  @@index([status])
+  @@map("rental_listing_ingest_drafts")
 }
 
 model RentalApplication {
