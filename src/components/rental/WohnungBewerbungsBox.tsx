@@ -195,12 +195,12 @@ export function WohnungBewerbungsBox({
 
       {modal ? (
         <div
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 pt-[max(0px,env(safe-area-inset-top,0px))] pl-[max(0px,env(safe-area-inset-left,0px))] pr-[max(0px,env(safe-area-inset-right,0px))] sm:items-center sm:p-4 sm:pl-[max(1rem,env(safe-area-inset-left,0px))] sm:pr-[max(1rem,env(safe-area-inset-right,0px))] sm:pt-[max(1rem,env(safe-area-inset-top,0px))] sm:pb-[max(1rem,env(safe-area-inset-bottom,0px))]"
           role="dialog"
           aria-modal="true"
           aria-labelledby="wohnung-login-title"
         >
-          <div className="wohnen-bottom-sheet-panel max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-[20px] bg-white px-5 pb-6 pt-2 shadow-xl sm:rounded-2xl sm:px-6 sm:pt-6">
+          <div className="wohnen-bottom-sheet-panel max-h-[min(90vh,calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-0.5rem))] w-full max-w-md overflow-y-auto rounded-t-[20px] bg-white pt-2 pl-[max(1.25rem,env(safe-area-inset-left,0px))] pr-[max(1.25rem,env(safe-area-inset-right,0px))] pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] shadow-xl sm:max-h-[min(90vh,calc(100dvh-2rem))] sm:rounded-2xl sm:pt-6 sm:pl-[max(1.5rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.5rem,env(safe-area-inset-right,0px))] sm:pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]">
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#e0e0e0] sm:hidden" aria-hidden />
             <h2 id="wohnung-login-title" className="text-lg font-bold text-slate-900">
               Melde dich an oder registriere dich um dich zu bewerben
