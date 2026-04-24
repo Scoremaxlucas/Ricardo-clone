@@ -83,7 +83,7 @@ function ListingQualificationBadge({ listingId }: { listingId: string }) {
 
   if (!qualified) return null
   return (
-    <span className="inline-block w-fit max-w-[33%] truncate rounded-[20px] bg-emerald-600 px-2 py-[3px] text-[11px] font-semibold text-white shadow-sm">
+    <span className="shrink-0 whitespace-nowrap rounded-[20px] bg-emerald-600 px-2 py-[3px] text-[11px] font-semibold text-white shadow-sm">
       ✓ Passt zu dir
     </span>
   )
@@ -103,38 +103,42 @@ export function RentalListingCard({ listing: l, imagePriority = false, matchScor
   return (
     <Link
       href={`/wohnungen/${l.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.07)] transition-[box-shadow,transform] duration-200 ease-in-out hover:-translate-y-[3px] hover:cursor-pointer hover:shadow-[0_8px_28px_rgba(0,0,0,0.12)]"
+      className="group relative flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.07)] transition-[box-shadow,transform] duration-200 ease-in-out hover:-translate-y-[3px] hover:cursor-pointer hover:shadow-[0_8px_28px_rgba(0,0,0,0.12)]"
     >
-      <div className="relative aspect-video bg-slate-100 md:aspect-[4/3]">
-        {main ?
-          <Image
-            src={main}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="(max-width: 640px) 92vw, (max-width: 768px) 85vw, (max-width: 1280px) 50vw, 33vw"
-            priority={imagePriority}
-            unoptimized={!isVercelBlobImageUrl(main)}
-          />
-        : <div className="flex h-full w-full items-center justify-center text-slate-400">
-            <Building2 className="h-14 w-14" aria-hidden />
-          </div>
-        }
-        <div className="pointer-events-none absolute left-2 top-2 flex max-w-full flex-wrap gap-1.5">
+      <div className="relative aspect-video w-full shrink-0 bg-slate-100 md:aspect-[4/3]">
+        <div className="absolute inset-0 overflow-hidden rounded-t-2xl">
+          {main ?
+            <Image
+              src={main}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 92vw, (max-width: 768px) 85vw, (max-width: 1280px) 50vw, 33vw"
+              priority={imagePriority}
+              unoptimized={!isVercelBlobImageUrl(main)}
+            />
+          : <div className="flex h-full w-full items-center justify-center text-slate-400">
+              <Building2 className="h-14 w-14" aria-hidden />
+            </div>
+          }
+        </div>
+        <div className="pointer-events-none absolute left-2 top-2 z-10 flex max-w-[calc(100%-1rem)] flex-wrap items-start gap-1.5">
           {isNew ?
-            <span className="rounded-full bg-teal-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
+            <span className="shrink-0 rounded-full bg-teal-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
               Neu
             </span>
           : null}
           <ListingQualificationBadge listingId={l.id} />
           {typeof matchScore === 'number' ? (
-            <span className={`w-fit max-w-[33%] truncate rounded-full px-2 py-[3px] text-[11px] font-bold shadow-sm ${matchBadge(matchScore).cls}`}>
+            <span
+              className={`shrink-0 max-w-[min(33.333%,10rem)] truncate whitespace-nowrap rounded-full px-2 py-[3px] text-[11px] font-bold shadow-sm ${matchBadge(matchScore).cls}`}
+            >
               {matchBadge(matchScore).label}
             </span>
           ) : null}
         </div>
       </div>
-      <div className="flex flex-1 flex-col p-4">
+      <div className="flex flex-1 flex-col rounded-b-2xl p-4">
         <h3 className="line-clamp-2 min-h-[calc(17px*1.4*2)] overflow-hidden text-[17px] font-bold leading-[1.4] text-[#0d2b1f] group-hover:text-teal-800">
           {l.title}
         </h3>
