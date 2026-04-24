@@ -99,7 +99,35 @@ export default async function Home() {
       }
     }
 
-    return <WohnenMarketingHome primaryHref={primaryHref} primaryLabel={primaryLabel} />
+    return (
+      <div className="whome-homepage-listings-tune">
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              .whome-homepage-listings-tune > div.bg-white.text-slate-900 > section:nth-of-type(1) {
+                padding-bottom: 16px !important;
+              }
+              @media (min-width: 640px) {
+                .whome-homepage-listings-tune > div.bg-white.text-slate-900 > section:nth-of-type(1) {
+                  padding-bottom: 20px !important;
+                }
+              }
+              .whome-homepage-listings-tune > div.bg-white.text-slate-900 > section:nth-of-type(2) {
+                padding-top: 16px !important;
+              }
+              .whome-homepage-listings-tune > div.bg-white.text-slate-900 > section:nth-of-type(2) > div > h2 {
+                font-size: 22px !important;
+                font-weight: 700 !important;
+                color: #0d2b1f !important;
+                letter-spacing: -0.02em;
+                line-height: 1.25;
+              }
+            `,
+          }}
+        />
+        <WohnenMarketingHome primaryHref={primaryHref} primaryLabel={primaryLabel} />
+      </div>
+    )
   }
 
   const featuredProducts = await getFeaturedProducts(10)

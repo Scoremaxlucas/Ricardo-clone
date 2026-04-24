@@ -1,10 +1,13 @@
+'use client'
+
 import { isVercelBlobImageUrl } from '@/lib/rental/remote-image'
 import { formatCHF } from '@/lib/utils/formatCurrency'
 import { formatDate } from '@/lib/utils/formatDate'
 import { Building2, Calendar, MapPin } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { RentalQualificationBadge } from '@/components/rental/RentalQualificationBadge'
+import { useSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
 
 export type RentalListingCardData = {
   id: string
@@ -52,6 +55,40 @@ function matchBadge(score: number): { label: string; cls: string } {
   return { label: '~ Passabel', cls: 'bg-slate-200 text-slate-700' }
 }
 
+function ListingQualificationBadge({ listingId }: { listingId: string }) {
+  const { status } = useSession()
+  const [qualified, setQualified] = useState(false)
+
+  useEffect(() => {
+    if (status !== 'authenticated') {
+      setQualified(false)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/rental-applications/qualify?listingId=${encodeURIComponent(listingId)}`, {
+          credentials: 'same-origin',
+        })
+        const data = (await res.json().catch(() => ({}))) as { qualified?: boolean }
+        if (!cancelled) setQualified(data.qualified === true)
+      } catch {
+        if (!cancelled) setQualified(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [listingId, status])
+
+  if (!qualified) return null
+  return (
+    <span className="inline-block w-fit max-w-[33%] truncate rounded-[20px] bg-emerald-600 px-2 py-[3px] text-[11px] font-semibold text-white shadow-sm">
+      ✓ Passt zu dir
+    </span>
+  )
+}
+
 export function RentalListingCard({ listing: l, imagePriority = false, matchScore }: Props) {
   const main = firstPhoto(l.photos)
   const rawCreated = l.createdAt
@@ -66,7 +103,7 @@ export function RentalListingCard({ listing: l, imagePriority = false, matchScor
   return (
     <Link
       href={`/wohnungen/${l.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:cursor-pointer hover:border-teal-300 hover:shadow-md"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.07)] transition-[box-shadow,transform] duration-200 ease-in-out hover:-translate-y-[3px] hover:cursor-pointer hover:shadow-[0_8px_28px_rgba(0,0,0,0.12)]"
     >
       <div className="relative aspect-video bg-slate-100 md:aspect-[4/3]">
         {main ?
@@ -83,22 +120,22 @@ export function RentalListingCard({ listing: l, imagePriority = false, matchScor
             <Building2 className="h-14 w-14" aria-hidden />
           </div>
         }
-        <div className="pointer-events-none absolute left-2 top-2 flex flex-wrap gap-1.5">
+        <div className="pointer-events-none absolute left-2 top-2 flex max-w-full flex-wrap gap-1.5">
           {isNew ?
             <span className="rounded-full bg-teal-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
               Neu
             </span>
           : null}
-          <RentalQualificationBadge listingId={l.id} />
+          <ListingQualificationBadge listingId={l.id} />
           {typeof matchScore === 'number' ? (
-            <span className={`rounded-full px-[10px] py-1 text-[11px] font-bold shadow-sm ${matchBadge(matchScore).cls}`}>
+            <span className={`w-fit max-w-[33%] truncate rounded-full px-2 py-[3px] text-[11px] font-bold shadow-sm ${matchBadge(matchScore).cls}`}>
               {matchBadge(matchScore).label}
             </span>
           ) : null}
         </div>
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-2 font-bold leading-snug text-slate-900 group-hover:text-teal-800">
+        <h3 className="line-clamp-2 min-h-[calc(17px*1.4*2)] overflow-hidden text-[17px] font-bold leading-[1.4] text-[#0d2b1f] group-hover:text-teal-800">
           {l.title}
         </h3>
         <p className="mt-1 text-sm text-slate-600">
