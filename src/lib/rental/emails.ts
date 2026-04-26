@@ -16,6 +16,7 @@ import {
   templateAdminRentalApplicationManualReview,
   templateLandlordNewApplication,
   templateTenantApplicationSubmitted,
+  templateTenantCertificateExpired,
   templateTenantCreditExpiryReminder,
   templateTenantCreditManualReview,
   templateTenantCreditRejected,
@@ -23,6 +24,7 @@ import {
   templateTenantViewingRequested,
 } from '@/lib/rental/emailTemplates'
 import type { CreditCheckResult } from '@/lib/rental/types'
+import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 
 const WOHNEN_FROM = 'Helvenda Wohnungen <noreply@helvenda.ch>'
 
@@ -354,6 +356,25 @@ export async function sendTenantCreditExpiryReminderEmail(opts: {
   const p = templateTenantCreditExpiryReminder({
     tenantFirstName: firstName(opts.tenantFirst),
     expiresOn: opts.expiresOn,
+  })
+  await sendWohnenEmail({
+    to: opts.tenantEmail,
+    subject: p.subject,
+    html: p.html,
+    text: p.text,
+    userId: opts.tenantUserId,
+  })
+}
+
+export async function sendTenantCertificateExpiredEmail(opts: {
+  tenantEmail: string
+  tenantUserId: string
+  tenantFirst: { firstName?: string | null; name?: string | null }
+}): Promise<void> {
+  const renewLink = `${WOHNEN_SITE_ORIGIN.replace(/\/$/, '')}/profil/betreibungsregister`
+  const p = templateTenantCertificateExpired({
+    tenantFirstName: firstName(opts.tenantFirst),
+    renewLink,
   })
   await sendWohnenEmail({
     to: opts.tenantEmail,

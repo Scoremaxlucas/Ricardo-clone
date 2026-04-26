@@ -1,5 +1,6 @@
 'use client'
 
+import { CertificateProfilSection } from '@/app/profil/CertificateProfilSection'
 import { OnboardingCompleteOverlay } from '@/app/profil/OnboardingCompleteOverlay'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { formatDate } from '@/lib/utils/formatDate'
@@ -17,6 +18,11 @@ export type ProfilDashboardProps = {
   isComplete: boolean
   personalRows: { key: string; label: string; value: string }[]
   preferenceRows: { key: string; label: string; value: string }[]
+  certificate: {
+    active: { certificateCode: string; expiresAt: string } | null
+    eligible: boolean
+    checklist: { profileComplete: boolean; creditOk: boolean }
+  }
 }
 
 function creditApprovedValid(status: CreditCheckStatus, expiresAt: string | null): boolean {
@@ -36,6 +42,7 @@ export function ProfilDashboard({
   isComplete,
   personalRows,
   preferenceRows,
+  certificate,
 }: ProfilDashboardProps) {
   const initials = `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase() || '?'
   const approvedValid = creditApprovedValid(creditCheckStatus, creditCheckExpiresAt)
@@ -78,6 +85,13 @@ export function ProfilDashboard({
             </Link>
           </div>
         </header>
+
+        <CertificateProfilSection
+          activeCertificate={certificate.active}
+          eligible={certificate.eligible}
+          checklist={certificate.checklist}
+          firstName={firstName}
+        />
 
         <div className="mt-8 flex flex-wrap gap-2">
           {isComplete ?

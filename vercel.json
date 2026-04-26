@@ -77,6 +77,10 @@
       "schedule": "0 8 * * *"
     },
     {
+      "path": "/api/cron/expire-certificates",
+      "schedule": "0 7 * * *"
+    },
+    {
       "path": "/api/cron/check-listing-urls",
       "schedule": "0 6 * * *"
     }

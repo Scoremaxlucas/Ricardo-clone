@@ -1540,3 +1540,18 @@ div.min-h-screen > footer {
   margin: 0 !important;
   padding: 0 !important;
 }
+
+/* Helvenda Qualitätsnachweis — Zertifikat-Erfolgsanimation */
+@keyframes helvenda-cert-check {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.animate-helvenda-cert-check {
+  animation: helvenda-cert-check 0.4s ease-out forwards;
+}

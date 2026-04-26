@@ -169,6 +169,7 @@ model User {
   rentalListingIngestDraftsCreated  RentalListingIngestDraft[]
   rentalApplicationsAsApplicant RentalApplication[]   @relation("RentalApplicationApplicant")
   tenantProfile                 TenantProfile?
+  certificates                  HelvendaCertificate[]
 
   // === HELVENDA MATCHING (eigenes Datenmodell, nicht RentalListing) ===
   landlordMemberships              LandlordMembership[]
@@ -1970,9 +1971,57 @@ model TenantProfile {
   isComplete            Boolean            @default(false)
 
   applications RentalApplication[]
+  certificates         HelvendaCertificate[]
 
   @@index([userId])
   @@map("tenant_profiles")
+}
+
+enum CertificateStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+  SUPERSEDED
+}
+
+model HelvendaCertificate {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantProfileId String
+  tenantProfile   TenantProfile @relation(fields: [tenantProfileId], references: [id], onDelete: Cascade)
+
+  certificateCode String @unique
+  version         Int    @default(1)
+
+  verifiedFirstName         String
+  verifiedLastName          String
+  verifiedAddress           String
+  verifiedCity              String
+  verifiedZip               String
+  verifiedEmploymentStatus  String
+  verifiedEmployer          String?
+  verifiedIncomeCategory    String
+  verifiedCreditCheckStatus String
+  verifiedCreditCheckDate   DateTime
+  verifiedCreditCheckCanton String
+  verifiedCreditEntryCount  Int
+  incomeQualifiesUpTo       Int
+
+  issuedAt  DateTime          @default(now())
+  expiresAt DateTime
+  status    CertificateStatus @default(ACTIVE)
+
+  verificationCount Int       @default(0)
+  lastVerifiedAt    DateTime?
+
+  @@index([certificateCode])
+  @@index([userId])
+  @@index([tenantProfileId])
+  @@map("helvenda_certificates")
 }
 
 // ============================================

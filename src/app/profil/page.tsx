@@ -1,4 +1,5 @@
 import { ProfilDashboard } from '@/app/profil/ProfilDashboard'
+import { checkCertificateEligibility } from '@/lib/certificate/issueCertificate'
 import { authOptions } from '@/lib/auth'
 import { parsePostalCodesList } from '@/lib/matching/evaluate-match'
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
@@ -93,6 +94,15 @@ export default async function ProfilPage({
     where: { userId },
     include: { user: { select: { email: true } } },
   })
+  const now = new Date()
+  const activeCertificate = await prisma.helvendaCertificate.findFirst({
+    where: { userId, status: 'ACTIVE', expiresAt: { gt: now } },
+    orderBy: { issuedAt: 'desc' },
+    select: { certificateCode: true, expiresAt: true },
+  })
+  const elig = profile ? checkCertificateEligibility(profile) : { eligible: false }
+  const creditOk =
+    Boolean(profile?.creditCheckStatus === 'APPROVED' && profile.creditCheckExpiresAt && profile.creditCheckExpiresAt > now)
   if (!profile) {
     redirect('/profil/erstellen')
   }
@@ -160,6 +170,13 @@ export default async function ProfilPage({
       isComplete={profile.isComplete}
       personalRows={personalRows}
       preferenceRows={prefs}
+      certificate={{
+        active: activeCertificate
+          ? { certificateCode: activeCertificate.certificateCode, expiresAt: activeCertificate.expiresAt.toISOString() }
+          : null,
+        eligible: elig.eligible,
+        checklist: { profileComplete: profile.isComplete, creditOk },
+      }}
     />
   )
 }

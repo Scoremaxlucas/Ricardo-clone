@@ -32,7 +32,7 @@ export default async function ProfilErstellenPage({ searchParams }: { searchPara
   const sp = await Promise.resolve(searchParams)
   const nextRaw = sp.next
   const next = Array.isArray(nextRaw) ? nextRaw[0] : nextRaw
-  const redirectAfterSave = next && next.startsWith('/') ? next : '/profil'
+  const redirectAfterSave = next && next.startsWith('/') ? next : '/zertifikat'
 
   const accountEmail = user?.email?.trim() ?? ''
   const initial = {

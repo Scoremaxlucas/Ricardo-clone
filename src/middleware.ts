@@ -45,6 +45,8 @@ function isMainHelvendaMarketplaceHost(host: string): boolean {
 function tenantPathsRedirectToWohnen(pathname: string): boolean {
   if (pathname === '/meine-matches') return true
   if (pathname === '/meine-bewerbungen') return true
+  if (pathname === '/verify' || pathname.startsWith('/verify/')) return true
+  if (pathname === '/zertifikat') return true
   if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
   if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
   if (pathname === '/matching' || pathname.startsWith('/matching/')) return true
@@ -75,6 +77,7 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
   if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
   if (pathname.startsWith('/api/tenant-profile')) return true
+  if (pathname.startsWith('/api/certificate')) return true
   if (pathname === '/meine-bewerbungen') return true
   if (pathname === '/meine-matches') return true
   if (pathname === '/') return true
@@ -95,6 +98,8 @@ function isAllowedOnWohnen(pathname: string): boolean {
   ) {
     return true
   }
+  if (pathname === '/verify' || pathname.startsWith('/verify/')) return true
+  if (pathname === '/zertifikat') return true
   return false
 }
 

@@ -36,6 +36,8 @@ export function WohnenNavbar() {
 
   const [navReady, setNavReady] = useState(false)
   const [profile, setProfile] = useState<TenantProfileBrief | undefined>(undefined)
+  const [mineCertificateCode, setMineCertificateCode] = useState<string | null>(null)
+  const [mineCertificateFetched, setMineCertificateFetched] = useState(false)
   const [hasListings, setHasListings] = useState(false)
   const [isAdminUser, setIsAdminUser] = useState(false)
 
@@ -55,6 +57,8 @@ export function WohnenNavbar() {
     if (status === 'unauthenticated') {
       setNavReady(true)
       setProfile(null)
+      setMineCertificateCode(null)
+      setMineCertificateFetched(false)
       setHasListings(false)
       setIsAdminUser(false)
       return
@@ -66,6 +70,7 @@ export function WohnenNavbar() {
 
     let cancelled = false
     setNavReady(false)
+    setMineCertificateFetched(false)
     ;(async () => {
       let resolvedAdmin = false
       try {
@@ -82,9 +87,30 @@ export function WohnenNavbar() {
 
         if (tpRes.status === 401) {
           setProfile(null)
+          setMineCertificateCode(null)
+          setMineCertificateFetched(true)
         } else if (tpRes.ok) {
           const tpJson = (await tpRes.json().catch(() => ({}))) as { profile?: TenantProfileBrief | null }
-          setProfile(tpJson.profile ?? null)
+          const p = tpJson.profile ?? null
+          setProfile(p)
+          if (p?.isComplete) {
+            const mineRes = await fetch('/api/certificate/mine', { credentials: 'same-origin' })
+            if (cancelled) return
+            if (mineRes.ok) {
+              const mineJson = (await mineRes.json().catch(() => ({}))) as {
+                certificate?: { certificateCode: string } | null
+              }
+              setMineCertificateCode(mineJson.certificate?.certificateCode ?? null)
+            } else {
+              setMineCertificateCode(null)
+            }
+          } else {
+            setMineCertificateCode(null)
+          }
+          if (!cancelled) setMineCertificateFetched(true)
+        } else if (!cancelled) {
+          setMineCertificateCode(null)
+          setMineCertificateFetched(true)
         }
         // Bei 5xx/Netzwerk: Profil-State nicht auf null setzen — sonst fälschlich «Profil erstellen».
 
@@ -93,6 +119,7 @@ export function WohnenNavbar() {
       } catch {
         if (!cancelled) {
           setHasListings(false)
+          setMineCertificateFetched(true)
           // Admin-Status nicht auf false zurücksetzen, falls nur Zusatz-Fetches fehlschlagen.
           setIsAdminUser(prev => prev || resolvedAdmin)
         }
@@ -125,6 +152,9 @@ export function WohnenNavbar() {
 
   const showLandlordNav = Boolean(signedIn && navReady && hasListings)
   const showMatchesNav = Boolean(signedIn && navReady && profile?.isComplete)
+  const showCertNeuBadge = Boolean(
+    signedIn && navReady && profile?.isComplete && creditValid(profile ?? null) && mineCertificateFetched && !mineCertificateCode
+  )
   const showTenantCompleteNav = Boolean(
     signedIn && navReady && !hasListings && profile?.isComplete && (okGreen || creditPending)
   )
@@ -235,6 +265,20 @@ export function WohnenNavbar() {
               >
                 Mein Profil
               </Link>
+              {profile?.isComplete ?
+                <Link
+                  href="/zertifikat"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span>Mein Zertifikat</span>
+                  {showCertNeuBadge ?
+                    <span className="rounded-full bg-[#e8f7f2] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#107a5a]">
+                      Neu
+                    </span>
+                  : null}
+                </Link>
+              : null}
               <Link
                 href="/meine-bewerbungen"
                 className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
@@ -395,6 +439,18 @@ export function WohnenNavbar() {
         <Link href="/profil" className={mobileDrawerLink} onClick={closeAll}>
           Mein Profil
         </Link>
+        {profile?.isComplete ?
+          <Link href="/zertifikat" className={mobileDrawerLink} onClick={closeAll}>
+            <span className="flex w-full items-center justify-between gap-2">
+              <span>Mein Zertifikat</span>
+              {showCertNeuBadge ?
+                <span className="rounded-full bg-[#e8f7f2] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#107a5a]">
+                  Neu
+                </span>
+              : null}
+            </span>
+          </Link>
+        : null}
         <Link href="/meine-bewerbungen" className={mobileDrawerLink} onClick={closeAll}>
           Meine Bewerbungen
         </Link>

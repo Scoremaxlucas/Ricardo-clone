@@ -592,3 +592,25 @@ ${buttonRow(adminLink, 'Inserat prüfen')}
   ].join('\n')
   return { subject, html: layout(inner), text }
 }
+
+export function templateTenantCertificateExpired(input: {
+  tenantFirstName: string
+  renewLink: string
+}): WohnenEmailPayload {
+  const inner = `
+<p style="margin:0 0 14px 0;">Hallo ${escapeHtml(input.tenantFirstName)},</p>
+<p style="margin:0 0 14px 0;">dein <strong>Helvenda Qualitätsnachweis</strong> ist abgelaufen.</p>
+<p style="margin:0 0 14px 0;">Wenn du deinen Betreibungsregisterauszug erneuerst und erneut von uns geprüft wird, kannst du ein neues Zertifikat ausstellen lassen — ideal für Bewerbungen ausserhalb von Helvenda.</p>
+${buttonRow(input.renewLink, 'Betreibungsregister erneuern')}
+<p style="margin:20px 0 0 0;font-size:13px;color:#6b7280;">Hinweis: Der Verifikations-Link auf deinem alten PDF ist nicht mehr gültig.</p>
+`
+  const subject = 'Dein Helvenda Qualitätsnachweis ist abgelaufen'
+  const text = [
+    `Hallo ${input.tenantFirstName},`,
+    '',
+    'Dein Helvenda Qualitätsnachweis ist abgelaufen.',
+    'Erneuere deinen Betreibungsregisterauszug, um ein neues Zertifikat auszustellen.',
+    input.renewLink,
+  ].join('\n')
+  return { subject, html: layout(inner), text }
+}
