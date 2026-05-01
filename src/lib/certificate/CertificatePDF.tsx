@@ -126,8 +126,8 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginLeft: PAGE_PAD_X,
     marginRight: PAGE_PAD_X,
-    height: 0.75,
-    backgroundColor: INK,
+    height: 1,
+    backgroundColor: '#1a1a1a',
   },
   certNr: {
     marginTop: 10,
@@ -144,22 +144,23 @@ const styles = StyleSheet.create({
   heroKicker: {
     fontFamily: HF,
     fontSize: 7,
-    color: LABEL,
+    color: '#9e9e9e',
     letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
   heroName: {
     fontFamily: HFB,
-    fontSize: 36,
-    color: INK,
-    lineHeight: 1.1,
+    fontSize: 40,
+    color: '#1a1a1a',
+    lineHeight: 1.05,
+    marginTop: 10,
   },
   heroSub: {
     fontFamily: HF,
-    fontSize: 11,
-    color: MUTED,
-    marginTop: 6,
+    fontSize: 12,
+    color: '#5a5a5a',
+    marginTop: 8,
   },
   heroSep: {
     marginTop: 24,
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
   },
   factsRow: {
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   factsColLeft: {
     width: 180,
@@ -221,14 +222,14 @@ const styles = StyleSheet.create({
     lineHeight: 1.2,
   },
   preQrSep: {
-    marginTop: 28,
+    marginTop: 18,
     marginLeft: PAGE_PAD_X,
     marginRight: PAGE_PAD_X,
     height: 0.5,
     backgroundColor: LINE_LIGHT,
   },
   qrSection: {
-    marginTop: 20,
+    marginTop: 18,
     paddingLeft: PAGE_PAD_X,
     paddingRight: PAGE_PAD_X,
     flexDirection: 'row',
@@ -295,6 +296,54 @@ const styles = StyleSheet.create({
     color: DISCLAIMER,
     lineHeight: 1.5,
   },
+  decBottomSep: {
+    height: 0.5,
+    backgroundColor: '#e0e0e0',
+    marginTop: 20,
+    marginBottom: 20,
+    marginLeft: PAGE_PAD_X,
+    marginRight: PAGE_PAD_X,
+  },
+  decStrip: {
+    flexDirection: 'row',
+    paddingLeft: PAGE_PAD_X,
+    paddingRight: PAGE_PAD_X,
+    marginBottom: 24,
+  },
+  decCol: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 8,
+  },
+  decLab: {
+    fontFamily: HF,
+    fontSize: 6,
+    color: '#c0c0c0',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  decVal: {
+    fontFamily: HFB,
+    fontSize: 9,
+    color: '#9e9e9e',
+  },
+  decSub: {
+    fontFamily: HF,
+    fontSize: 7.5,
+    color: '#b0b0b0',
+    marginTop: 2,
+  },
+  decDiamondLine: {
+    fontFamily: HF,
+    fontSize: 6,
+    color: '#d0d0d0',
+    letterSpacing: 3,
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingLeft: PAGE_PAD_X,
+    paddingRight: PAGE_PAD_X,
+  },
   bottomBand: {
     position: 'absolute',
     bottom: 0,
@@ -322,17 +371,17 @@ const styles = StyleSheet.create({
   },
   sealAbs: {
     position: 'absolute',
-    top: 340,
+    top: 20,
     right: PAGE_PAD_X,
-    width: 120,
-    height: 120,
+    width: 110,
+    height: 110,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sealOuter: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     borderWidth: 2,
     borderColor: INK,
     borderStyle: 'solid',
@@ -340,9 +389,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sealInner: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
     borderWidth: 0.75,
     borderColor: '#d0d0d0',
     borderStyle: 'solid',
@@ -396,8 +445,8 @@ export type CertificatePdfProps = {
   creditCheckDate: Date
   verifiedCreditCheckCanton: string
   creditCheckResultJson: unknown | null
-  /** Server-aufgelöster Kanton; keine Zeile wenn null. */
-  canton?: string | null
+  /** Server-aufgelöster Kanton; kein Kanton-Suffix wenn null. */
+  canton: string | null
   verifyUrl: string
   qrDataUrl: string
   year: number
@@ -428,11 +477,7 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
 
   const holderLine = `${firstName} ${lastName}`.trim()
   const statusClear = creditStatus === 'CLEAR'
-  const brSubParts = [`Ausgestellt ${formatDate(creditCheckDate)}`]
-  if (canton) {
-    brSubParts.push(`Kanton ${canton}`)
-  }
-  const brSub = brSubParts.join(' · ')
+  const brSub = `Ausgestellt ${formatDate(creditCheckDate)}${canton ? ` · Kanton ${canton}` : ''}`
 
   const expiry = expiryPresentation(expiresAt)
   const verifyPathDisplay = displayVerifyHostPath(verifyUrl)
@@ -512,6 +557,17 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
                 </Text>
               </View>
             </View>
+
+            <View style={styles.sealAbs}>
+              <View style={styles.sealOuter}>
+                <View style={styles.sealInner}>
+                  <Text style={styles.sealLine1}>HELVENDA</Text>
+                  <Text style={styles.sealOrn}>◆</Text>
+                  <Text style={styles.sealLine3}>VERIFIZIERT</Text>
+                  <Text style={styles.sealYear}>{String(year)}</Text>
+                </View>
+              </View>
+            </View>
           </View>
 
           <View style={styles.preQrSep} />
@@ -533,17 +589,31 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
               Helvenda haftet nicht für nachträgliche Änderungen.
             </Text>
           </View>
-        </View>
 
-        <View style={styles.sealAbs}>
-          <View style={styles.sealOuter}>
-            <View style={styles.sealInner}>
-              <Text style={styles.sealLine1}>HELVENDA</Text>
-              <Text style={styles.sealOrn}>◆</Text>
-              <Text style={styles.sealLine3}>VERIFIZIERT</Text>
-              <Text style={styles.sealYear}>{String(year)}</Text>
+          <View style={styles.decBottomSep} />
+
+          <View style={styles.decStrip}>
+            <View style={styles.decCol}>
+              <Text style={styles.decLab}>AUSGESTELLT DURCH</Text>
+              <Text style={styles.decVal}>Helvenda Wohnungen</Text>
+              <Text style={styles.decSub}>wohnen.helvenda.ch</Text>
+            </View>
+            <View style={styles.decCol}>
+              <Text style={styles.decLab}>GÜLTIGKEITSDAUER</Text>
+              <Text style={styles.decVal}>90 Tage</Text>
+              <Text style={styles.decSub}>Ab Ausstellungsdatum</Text>
+            </View>
+            <View style={[styles.decCol, { paddingRight: 0 }]}>
+              <Text style={styles.decLab}>VERIFIKATION</Text>
+              <Text style={styles.decVal}>Online prüfbar</Text>
+              <Text style={styles.decSub}>wohnen.helvenda.ch</Text>
+              <Text style={styles.decSub}>/verify</Text>
             </View>
           </View>
+
+          <Text style={styles.decDiamondLine}>
+            {`◆  HELVENDA WOHNUNGEN  ◆  QUALITÄTSNACHWEIS  ◆  ${year}  ◆`}
+          </Text>
         </View>
 
         <View style={styles.bottomBand} fixed>

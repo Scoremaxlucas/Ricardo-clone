@@ -59,14 +59,23 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
   )
   const incomeLabel = incomeCategoryLabelDe(row.verifiedIncomeCategory as IncomeCategory)
 
-  const canton = (() => {
-    const v = (row.verifiedCreditCheckCanton || '').trim()
-    if (v && v !== 'CH' && v.length <= 3) {
-      return v
+  const resolvedCanton = (() => {
+    const stored = (row.verifiedCreditCheckCanton || '').trim()
+    if (
+      stored &&
+      stored !== 'CH' &&
+      stored !== '' &&
+      stored !== '—' &&
+      stored.length <= 3
+    ) {
+      return stored
     }
-    const result = row.tenantProfile?.creditCheckResult as { canton?: string } | null | undefined
-    if (result?.canton && String(result.canton).trim() !== 'CH') {
-      return String(result.canton).trim()
+    const result = row.tenantProfile?.creditCheckResult as Record<string, unknown> | null
+    if (result?.canton != null) {
+      const c = String(result.canton).trim()
+      if (c && c !== 'CH' && c !== '—' && c.length <= 3) {
+        return c
+      }
     }
     return null
   })()
@@ -88,7 +97,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       creditCheckDate={row.verifiedCreditCheckDate}
       verifiedCreditCheckCanton={row.verifiedCreditCheckCanton}
       creditCheckResultJson={row.tenantProfile?.creditCheckResult ?? null}
-      canton={canton}
+      canton={resolvedCanton}
       verifyUrl={verifyUrl}
       qrDataUrl={qrDataUrl}
       year={new Date().getFullYear()}
