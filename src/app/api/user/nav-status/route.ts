@@ -50,7 +50,7 @@ export async function GET() {
       prisma.rentalApplication.count({
         where: {
           applicantUserId: userId,
-          status: { in: ['approved', 'pending_credit_check'] },
+          status: { in: ['approved', 'pending_credit_check', 'pending_manual_review'] },
         },
       }),
       prisma.rentalApplication.count({

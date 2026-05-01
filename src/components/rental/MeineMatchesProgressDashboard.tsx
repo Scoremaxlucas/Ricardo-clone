@@ -5,7 +5,6 @@ export type UserCompletionState =
   | 'INCOMPLETE_PROFILE'
   | 'NO_CREDIT_CHECK'
   | 'PENDING_CREDIT_CHECK'
-  | 'NO_CERTIFICATE'
   | 'READY'
 
 export type ProgressStep = {

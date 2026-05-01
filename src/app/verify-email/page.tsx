@@ -1,16 +1,26 @@
 'use client'
 
 import { Logo } from '@/components/ui/Logo'
+import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
+
+function normalizeOrigin(origin: string) {
+  return origin.replace(/\/$/, '')
+}
+
+function isWohnenTenantHost(): boolean {
+  if (typeof window === 'undefined') return false
+  return normalizeOrigin(window.location.origin) === normalizeOrigin(WOHNEN_SITE_ORIGIN)
+}
 
 function VerifyEmailPageContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
+  const [wohnenFlow, setWohnenFlow] = useState(false)
 
   useEffect(() => {
     const token = searchParams.get('token')
@@ -30,6 +40,7 @@ function VerifyEmailPageContent() {
         const data = await response.json()
 
         if (response.ok) {
+          setWohnenFlow(isWohnenTenantHost())
           setStatus('success')
           setMessage(data.message || 'Ihre E-Mail-Adresse wurde erfolgreich bestätigt!')
         } else {
@@ -43,7 +54,7 @@ function VerifyEmailPageContent() {
     }
 
     verifyEmail()
-  }, [searchParams, router])
+  }, [searchParams])
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-50 px-4 sm:px-6 lg:px-8">
@@ -113,32 +124,58 @@ function VerifyEmailPageContent() {
                 <h1 className="mb-4 text-3xl font-semibold text-gray-900">Konto bestätigt!</h1>
                 <p className="mb-6 text-lg text-gray-600">{message}</p>
 
-                {/* Next step indicator */}
-                <div className="mb-6 rounded-xl border border-primary-100 bg-primary-50 p-4 text-left">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary-600">Nächster Schritt</p>
-                  <p className="text-sm text-gray-700">
-                    Um auf Helvenda <strong>verkaufen</strong> zu können, verifizieren Sie Ihre Identität. Dies dauert nur wenige Minuten.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <Link
-                    href="/verification"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary-600 px-6 py-3 font-medium text-white transition-all duration-200 hover:bg-primary-700 hover:shadow-md"
-                  >
-                    Identität verifizieren →
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="inline-flex w-full items-center justify-center rounded-2xl border border-gray-200 bg-white px-6 py-3 font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50"
-                  >
-                    Erst einmal stöbern
-                  </Link>
-                </div>
-
-                <p className="mt-4 text-xs text-gray-400">
-                  Sie können die Identitätsverifizierung auch später unter &quot;Meine Angebote&quot; nachholen.
-                </p>
+                {wohnenFlow ?
+                  <>
+                    <div className="mb-6 rounded-xl border border-primary-100 bg-primary-50 p-4 text-left">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary-600">Nächster Schritt</p>
+                      <p className="text-sm text-gray-700">
+                        Melden Sie sich an und vervollständigen Sie Ihr Suchprofil. Bei Bedarf können Sie einen Betreibungsregisterauszug hochladen — viele Vermieter erwarten das bei Bewerbungen.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      <Link
+                        href="/login?callbackUrl=%2Fmeine-matches"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary-600 px-6 py-3 font-medium text-white transition-all duration-200 hover:bg-primary-700 hover:shadow-md"
+                      >
+                        Anmelden und weiter →
+                      </Link>
+                      <Link
+                        href="/wohnungen"
+                        className="inline-flex w-full items-center justify-center rounded-2xl border border-gray-200 bg-white px-6 py-3 font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50"
+                      >
+                        Wohnungen ansehen
+                      </Link>
+                    </div>
+                    <p className="mt-4 text-xs text-gray-400">
+                      Profil und Dokumente können Sie jederzeit unter «Mein Profil» ergänzen.
+                    </p>
+                  </>
+                : <>
+                    <div className="mb-6 rounded-xl border border-primary-100 bg-primary-50 p-4 text-left">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary-600">Nächster Schritt</p>
+                      <p className="text-sm text-gray-700">
+                        Um auf Helvenda <strong>verkaufen</strong> zu können, verifizieren Sie Ihre Identität. Dies dauert nur wenige Minuten.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      <Link
+                        href="/verification"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary-600 px-6 py-3 font-medium text-white transition-all duration-200 hover:bg-primary-700 hover:shadow-md"
+                      >
+                        Identität verifizieren →
+                      </Link>
+                      <Link
+                        href="/login"
+                        className="inline-flex w-full items-center justify-center rounded-2xl border border-gray-200 bg-white px-6 py-3 font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50"
+                      >
+                        Erst einmal stöbern
+                      </Link>
+                    </div>
+                    <p className="mt-4 text-xs text-gray-400">
+                      Sie können die Identitätsverifizierung auch später unter «Meine Angebote» nachholen.
+                    </p>
+                  </>
+                }
               </>
             )}
 

@@ -29,9 +29,7 @@ export default async function MeineBewerbungenPage() {
   }
 
   const profile = await prisma.tenantProfile.findUnique({ where: { userId } })
-  if (!profile?.isComplete) {
-    redirect('/profil/erstellen?next=' + encodeURIComponent('/meine-bewerbungen'))
-  }
+  const profileComplete = Boolean(profile?.isComplete)
 
   const apps = await prisma.rentalApplication.findMany({
     where: { applicantUserId: userId },
@@ -72,7 +70,7 @@ export default async function MeineBewerbungenPage() {
         {activeCount} laufende Bewerbung{activeCount === 1 ? '' : 'en'}
       </p>
       <div className="mt-8">
-        <MeineBewerbungenClient applications={rows} />
+        <MeineBewerbungenClient applications={rows} profileComplete={profileComplete} />
       </div>
     </main>
   )

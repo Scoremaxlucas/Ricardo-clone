@@ -69,17 +69,13 @@ function creditApprovedValid(profile: TenantProfile | null): boolean {
   return Boolean(exp && exp.getTime() > Date.now())
 }
 
-function deriveCompletionState(
-  profile: TenantProfile | null,
-  hasActiveCertificate: boolean
-): UserCompletionState {
+function deriveCompletionState(profile: TenantProfile | null): UserCompletionState {
   if (!profile) return 'NO_PROFILE'
   if (!profile.isComplete) return 'INCOMPLETE_PROFILE'
   if (profile.creditCheckStatus === 'PENDING' || profile.creditCheckStatus === 'PENDING_MANUAL_REVIEW') {
     return 'PENDING_CREDIT_CHECK'
   }
   if (!creditApprovedValid(profile)) return 'NO_CREDIT_CHECK'
-  if (!hasActiveCertificate) return 'NO_CERTIFICATE'
   return 'READY'
 }
 
@@ -197,7 +193,7 @@ export default async function MeineMatchesPage() {
   const firstName =
     profile?.firstName?.trim() || account?.firstName?.trim() || account?.lastName?.trim() || 'dich'
 
-  const completionState = deriveCompletionState(profile, Boolean(activeCert))
+  const completionState = deriveCompletionState(profile)
   const steps = buildProgressSteps(profile, applicationCount > 0)
   const showDashboard = completionState !== 'READY'
 
@@ -217,7 +213,7 @@ export default async function MeineMatchesPage() {
     completionState === 'NO_CREDIT_CHECK' || completionState === 'PENDING_CREDIT_CHECK'
   const showProfileHint =
     completionState === 'NO_PROFILE' || completionState === 'INCOMPLETE_PROFILE'
-  const showCertBanner = completionState === 'NO_CERTIFICATE'
+  const showCertBanner = Boolean(creditApprovedValid(profile) && !activeCert)
 
   const greeting = dayGreeting(now)
 

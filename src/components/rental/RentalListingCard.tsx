@@ -107,11 +107,11 @@ export function RentalListingCard({
     Number.isFinite(createdMs) && Date.now() - createdMs < 48 * 60 * 60 * 1000
   const available = validDate(l.availableFrom ?? null)
 
-  const card = (
-    <Link
-      href={`/wohnungen/${l.id}`}
-      className="group relative flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.07)] transition-[box-shadow,transform] duration-200 ease-in-out hover:-translate-y-[3px] hover:cursor-pointer hover:shadow-[0_8px_28px_rgba(0,0,0,0.12)]"
-    >
+  const linkClass =
+    'group relative flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.07)] transition-[box-shadow,transform] duration-200 ease-in-out hover:-translate-y-[3px] hover:cursor-pointer hover:shadow-[0_8px_28px_rgba(0,0,0,0.12)]'
+
+  const inner = (
+    <>
       <div className="relative aspect-video w-full shrink-0 bg-slate-100 md:aspect-[4/3]">
         <div className="absolute inset-0 overflow-hidden rounded-t-2xl">
           {main ?
@@ -173,21 +173,26 @@ export function RentalListingCard({
           </p>
         ) : null}
       </div>
-    </Link>
+    </>
   )
 
   if (!creditCheckOverlay) {
-    return card
+    return (
+      <Link href={`/wohnungen/${l.id}`} className={linkClass}>
+        {inner}
+      </Link>
+    )
   }
 
   return (
     <div className="relative h-full min-h-0">
-      {card}
-      <div className="pointer-events-none absolute inset-0 z-20 flex items-end justify-center rounded-2xl bg-slate-900/50 pb-6">
+      <Link href={`/wohnungen/${l.id}`} className={`${linkClass} pointer-events-none`} tabIndex={-1}>
+        {inner}
+      </Link>
+      <div className="absolute inset-0 z-20 flex items-end justify-center rounded-2xl bg-slate-900/50 pb-6">
         <Link
           href="/profil/betreibungsregister"
-          className="pointer-events-auto rounded-full bg-white px-4 py-2.5 text-center text-xs font-bold text-[#0d2b1f] shadow-lg ring-2 ring-[#18a87c] hover:bg-[#f5fdfb]"
-          onClick={e => e.stopPropagation()}
+          className="rounded-full bg-white px-4 py-2.5 text-center text-xs font-bold text-[#0d2b1f] shadow-lg ring-2 ring-[#18a87c] hover:bg-[#f5fdfb]"
         >
           Betreibungsregister erforderlich
         </Link>

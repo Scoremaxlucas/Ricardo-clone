@@ -207,24 +207,51 @@ function BewerbungCard({ app }: { app: MeineBewerbungRow }) {
   )
 }
 
-export function MeineBewerbungenClient({ applications }: { applications: MeineBewerbungRow[] }) {
+export function MeineBewerbungenClient({
+  applications,
+  profileComplete,
+}: {
+  applications: MeineBewerbungRow[]
+  profileComplete: boolean
+}) {
+  const incompleteBanner = !profileComplete ?
+    <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950 shadow-sm">
+      <p className="font-semibold">Profil vervollständigen</p>
+      <p className="mt-1 text-amber-900/90">
+        Ohne vollständiges Profil können Sie keine neuen Bewerbungen absenden. Sie sehen hier trotzdem Ihre bisherigen Bewerbungen.
+      </p>
+      <Link
+        href={'/profil/erstellen?next=' + encodeURIComponent('/meine-bewerbungen')}
+        className="mt-3 inline-flex rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+      >
+        Zum Profil
+      </Link>
+    </div>
+  : null
+
   if (applications.length === 0) {
     return (
-      <WohnenEmptyState
-        icon={Inbox}
-        title="Noch keine Bewerbungen"
-        description="Bewirb dich auf passende Inserate — der Vermieter wird automatisch informiert."
-        actionHref="/wohnungen"
-        actionLabel="Wohnungen suchen"
-      />
+      <>
+        {incompleteBanner}
+        <WohnenEmptyState
+          icon={Inbox}
+          title="Noch keine Bewerbungen"
+          description="Bewirb dich auf passende Inserate — der Vermieter wird automatisch informiert."
+          actionHref="/wohnungen"
+          actionLabel="Wohnungen suchen"
+        />
+      </>
     )
   }
 
   return (
-    <div className="space-y-4">
-      {applications.map(app => (
-        <BewerbungCard key={app.id} app={app} />
-      ))}
-    </div>
+    <>
+      {incompleteBanner}
+      <div className="space-y-4">
+        {applications.map(app => (
+          <BewerbungCard key={app.id} app={app} />
+        ))}
+      </div>
+    </>
   )
 }
