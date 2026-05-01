@@ -62,6 +62,14 @@ export async function POST() {
     expiresAt,
   })
 
+  const cantonFromResult = creditResult?.canton?.trim().toUpperCase()
+  const verifiedCreditCheckCanton =
+    snap.verifiedCreditCheckCanton === 'CH' || !snap.verifiedCreditCheckCanton?.trim()
+      ? cantonFromResult && cantonFromResult !== 'CH'
+        ? cantonFromResult.slice(0, 8)
+        : '—'
+      : snap.verifiedCreditCheckCanton
+
   try {
     const created = await prisma.$transaction(async tx => {
       await tx.helvendaCertificate.updateMany({
@@ -85,7 +93,7 @@ export async function POST() {
           verifiedIncomeCategory: snap.verifiedIncomeCategory,
           verifiedCreditCheckStatus: snap.verifiedCreditCheckStatus,
           verifiedCreditCheckDate: snap.verifiedCreditCheckDate,
-          verifiedCreditCheckCanton: snap.verifiedCreditCheckCanton,
+          verifiedCreditCheckCanton,
           verifiedCreditEntryCount: snap.verifiedCreditEntryCount,
           incomeQualifiesUpTo: snap.incomeQualifiesUpTo,
           expiresAt: snap.expiresAt,

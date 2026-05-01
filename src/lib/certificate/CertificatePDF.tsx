@@ -1,6 +1,6 @@
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { CreditCertificateDisplayStatus } from '@/lib/certificate/issueCertificate'
-import { formatCHF } from '@/lib/utils/formatCurrency'
+import { isCreditCheckResult } from '@/lib/rental/types'
 import { formatDate } from '@/lib/utils/formatDate'
 
 /** Standard PDF sans-serif (Helvetica family). */
@@ -16,6 +16,31 @@ const mintLine = '#e8f7f2'
 const mintBorder = '#b2e8d8'
 const orangeWarn = '#f59e0b'
 const footerBand = '#0d2b1f'
+const sealRingOuterHex = '#d4f0e6'
+const sealRingInnerHex = '#e8f7f2'
+const sealTextHex = '#b2e8d8'
+const explainBg = '#f5fdfb'
+
+function formatMaxRentPdfLine(maxRent: number): string {
+  const part =
+    maxRent >= 10000
+      ? `CHF ${(maxRent / 1000).toFixed(1)}k`
+      : `CHF ${maxRent.toLocaleString('de-CH')}`
+  return `bis ${part} / Mo.`
+}
+
+/** Raw snapshot + JSON optional; otherwise use server-resolved `creditCanton`. */
+function pdfCantonLine(resolved: string, raw?: string | null, json?: unknown | null): string {
+  const hasExplicit = raw != null || (json !== undefined && json !== null)
+  if (!hasExplicit) return resolved
+  const r = (raw ?? '').trim().toUpperCase()
+  if (r && r !== 'CH') return (raw ?? '').trim()
+  const parsed = isCreditCheckResult(json) ? json : null
+  const jc = (parsed?.canton ?? '').trim().toUpperCase()
+  if (jc && jc !== 'CH') return jc.slice(0, 8)
+  if (r === 'CH' || (raw ?? '').trim() === '' || raw == null) return '—'
+  return resolved
+}
 
 const styles = StyleSheet.create({
   page: {
@@ -38,7 +63,7 @@ const styles = StyleSheet.create({
   },
   body: {
     paddingTop: 8,
-    paddingBottom: 44,
+    paddingBottom: 52,
   },
   headerBar: {
     paddingTop: 24,
@@ -131,26 +156,27 @@ const styles = StyleSheet.create({
     color: muted,
     lineHeight: 1.6,
   },
-  gridSection: {
-    marginTop: 28,
+  gridOuterRow: {
+    marginTop: 16,
     marginHorizontal: 40,
     flexDirection: 'row',
     alignItems: 'stretch',
   },
-  gridLeftCluster: {
-    flexDirection: 'row',
+  gridRelative: {
+    position: 'relative',
     flex: 1,
     minWidth: 0,
   },
-  gridAccent: {
+  gridTealBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
     width: 3,
     backgroundColor: teal,
-    alignSelf: 'stretch',
   },
-  gridInner: {
-    flex: 1,
+  gridPadded: {
     paddingLeft: 16,
-    paddingBottom: 4,
   },
   gridCols: {
     flexDirection: 'row',
@@ -184,38 +210,38 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   sealCol: {
-    width: 88,
+    width: 112,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingLeft: 4,
+    paddingLeft: 6,
   },
   sealOuter: {
-    width: 80,
-    height: 80,
+    width: 100,
+    height: 100,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
   sealRingOuter: {
     position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     borderWidth: 1.5,
-    borderColor: 'rgba(24, 168, 124, 0.12)',
+    borderColor: sealRingOuterHex,
   },
   sealRingInner: {
     position: 'absolute',
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 86,
+    height: 86,
+    borderRadius: 43,
     borderWidth: 0.5,
-    borderColor: 'rgba(24, 168, 124, 0.12)',
+    borderColor: sealRingInnerHex,
   },
   sealText: {
     fontSize: 7,
     fontFamily: HFB,
-    color: 'rgba(24, 168, 124, 0.2)',
+    color: sealTextHex,
     letterSpacing: 2,
     textTransform: 'uppercase',
   },
@@ -276,6 +302,73 @@ const styles = StyleSheet.create({
     fontFamily: HF,
     color: mutedLabel,
   },
+  postQrSep: {
+    height: 0.5,
+    backgroundColor: mintLine,
+    marginTop: 24,
+    marginHorizontal: 40,
+  },
+  explainTitle: {
+    marginHorizontal: 40,
+    marginTop: 0,
+    fontSize: 7,
+    fontFamily: HFB,
+    color: teal,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  explainRow: {
+    marginTop: 12,
+    marginHorizontal: 40,
+    flexDirection: 'row',
+  },
+  explainCol: {
+    width: 160,
+    paddingRight: 12,
+  },
+  explainColTitle: {
+    fontSize: 8.5,
+    fontFamily: HFB,
+    color: ink,
+    lineHeight: 1.35,
+  },
+  explainColBody: {
+    marginTop: 4,
+    fontSize: 8,
+    fontFamily: HF,
+    color: muted,
+    lineHeight: 1.5,
+  },
+  postExplainSep: {
+    height: 0.5,
+    backgroundColor: mintLine,
+    marginTop: 20,
+    marginHorizontal: 40,
+  },
+  landlordBox: {
+    marginTop: 16,
+    marginHorizontal: 40,
+    backgroundColor: explainBg,
+    borderWidth: 0.5,
+    borderColor: mintBorder,
+    borderRadius: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  landlordTitle: {
+    fontSize: 7,
+    fontFamily: HFB,
+    color: teal,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  landlordBody: {
+    marginTop: 8,
+    fontSize: 8,
+    fontFamily: HF,
+    color: muted,
+    lineHeight: 1.5,
+  },
   bottomBand: {
     position: 'absolute',
     bottom: 0,
@@ -318,6 +411,9 @@ export type CertificatePdfProps = {
   creditStatus: CreditCertificateDisplayStatus
   creditCheckDate: Date
   creditCanton: string
+  /** Optional DB snapshot; with `creditCheckResultJson` enables Kanton-Fallback wie in der Spezifikation. */
+  verifiedCreditCheckCantonSnapshot?: string | null
+  creditCheckResultJson?: unknown | null
   verifyUrl: string
   qrDataUrl: string
   year: number
@@ -339,14 +435,17 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
     creditStatus,
     creditCheckDate,
     creditCanton,
+    verifiedCreditCheckCantonSnapshot,
+    creditCheckResultJson,
     verifyUrl,
     qrDataUrl,
     year,
   } = props
 
+  const cantonLine = pdfCantonLine(creditCanton, verifiedCreditCheckCantonSnapshot, creditCheckResultJson)
   const holderLine = `${firstName} ${lastName}`.trim()
   const addressBlock = `${address}\n${zip} ${city}`.trim()
-  const qualifyLine = `Qualifiziert bis ${formatCHF(incomeQualifiesUpTo)} / Monat`
+  const qualifyLine = formatMaxRentPdfLine(incomeQualifiesUpTo)
   const statusPositive = creditStatus === 'CLEAR'
   const statusPhrase = statusPositive ? 'Keine Einträge' : 'Einträge vorhanden'
   const statusColor = statusPositive ? tealDark : orangeWarn
@@ -387,10 +486,10 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
             diese durch Helvenda verifiziert wurden.
           </Text>
 
-          <View style={styles.gridSection}>
-            <View style={styles.gridLeftCluster}>
-              <View style={styles.gridAccent} />
-              <View style={styles.gridInner}>
+          <View style={styles.gridOuterRow}>
+            <View style={styles.gridRelative}>
+              <View style={styles.gridTealBar} />
+              <View style={styles.gridPadded}>
                 <View style={styles.gridCols}>
                   <View style={styles.col}>
                     <View style={styles.cellBlock}>
@@ -409,7 +508,7 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
                       <Text style={styles.cellLabel}>Betreibungsregister</Text>
                       <Text style={[styles.cellValue, { color: statusColor }]}>{statusPhrase}</Text>
                       <Text style={styles.cellSub}>Ausstellungsdatum: {formatDate(creditCheckDate)}</Text>
-                      <Text style={styles.cellSub}>Kanton: {creditCanton}</Text>
+                      <Text style={styles.cellSub}>Kanton: {cantonLine}</Text>
                     </View>
                     <View style={styles.cellBlock}>
                       <Text style={styles.cellLabel}>Ausgestellt am</Text>
@@ -419,8 +518,9 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
 
                   <View style={styles.col}>
                     <View style={styles.cellBlock}>
-                      <Text style={styles.cellLabel}>Zertifikat</Text>
-                      <Text style={styles.cellValue}>Helvenda Qualitätsnachweis</Text>
+                      <Text style={styles.cellLabel}>Ausgestellt von</Text>
+                      <Text style={styles.cellValue}>Helvenda Wohnungen</Text>
+                      <Text style={styles.cellSub}>Qualitätsnachweis</Text>
                     </View>
                     <View style={styles.cellBlock}>
                       <Text style={styles.cellLabel}>Gültig bis</Text>
@@ -451,6 +551,45 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
                 <Text style={styles.qrFoot}>Dieser Code ist einmalig und fälschungssicher.</Text>
               </View>
             </View>
+          </View>
+
+          <View style={styles.postQrSep} />
+
+          <Text style={styles.explainTitle}>WAS BEDEUTET DIESES ZERTIFIKAT?</Text>
+
+          <View style={styles.explainRow}>
+            <View style={styles.explainCol}>
+              <Text style={styles.explainColTitle}>Betreibungsregister geprüft</Text>
+              <Text style={styles.explainColBody}>
+                Helvenda hat den offiziellen Schweizer Betreibungsregisterauszug der Person verifiziert und archiviert.
+              </Text>
+            </View>
+            <View style={styles.explainCol}>
+              <Text style={styles.explainColTitle}>Einkommen kategorisiert</Text>
+              <Text style={styles.explainColBody}>
+                Das angegebene Haushaltseinkommen wurde einer Kategorie zugeordnet. Vermieter sehen die Kategorie, nicht
+                den genauen Betrag.
+              </Text>
+            </View>
+            <View style={styles.explainCol}>
+              <Text style={styles.explainColTitle}>Einzigartiger Verifikations-Code</Text>
+              <Text style={styles.explainColBody}>
+                Jedes Zertifikat hat einen einmaligen Code. Vermieter können die Echtheit unter wohnen.helvenda.ch/verify
+                jederzeit prüfen.
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.postExplainSep} />
+
+          <View style={styles.landlordBox}>
+            <Text style={styles.landlordTitle}>HINWEIS FÜR VERMIETER</Text>
+            <Text style={styles.landlordBody}>
+              Dieses Zertifikat wurde automatisch durch Helvenda Wohnungen ausgestellt. Die Angaben basieren auf
+              selbstdeklarierten und durch Helvenda verifizierten Informationen zum Zeitpunkt der Ausstellung. Für eine
+              vollständige Bonitätsprüfung empfehlen wir zusätzlich den Originalbeleg des Betreibungsregisters
+              einzufordern.
+            </Text>
           </View>
         </View>
 
