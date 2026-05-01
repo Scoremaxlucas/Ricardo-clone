@@ -5,19 +5,26 @@ import { LogOut, Menu, User, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
+import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
+import { formatDate } from '@/lib/utils/formatDate'
 
-type TenantProfileBrief = {
-  isComplete: boolean
+const WOHNEN_LOGIN_HREF = '/login?callbackUrl=%2Fmeine-matches'
+
+type NavStatus = {
+  profileComplete: boolean
   creditCheckStatus: string
   creditCheckExpiresAt: string | null
-} | null
-
-function creditValid(p: TenantProfileBrief): boolean {
-  if (!p?.isComplete) return false
-  if (p.creditCheckStatus !== 'APPROVED') return false
-  if (!p.creditCheckExpiresAt) return false
-  return new Date(p.creditCheckExpiresAt).getTime() > Date.now()
+  creditApprovedAndValid: boolean
+  creditPendingReview: boolean
+  hasActiveCertificate: boolean
+  certificateCode: string | null
+  certificateExpiresAt: string | null
+  hasListings: boolean
+  openApplicationsCount: number
+  newInquiriesCount: number
+  isAdmin: boolean
 }
 
 const mobileDrawerLink =
@@ -25,28 +32,106 @@ const mobileDrawerLink =
 const mobileDrawerLinkTeal =
   'flex min-h-[52px] items-center border-b border-[#e8f7f2] bg-[#e8f7f2] px-3 text-sm font-semibold text-[#107a5a] hover:bg-[#dff5eb]'
 
-/** Nach Login: Matches zuerst (unvollständiges Profil wird von /meine-matches weitergeleitet). */
-const WOHNEN_LOGIN_HREF = '/login?callbackUrl=%2Fmeine-matches'
+function navLinkClass(active?: boolean) {
+  return active ?
+      'rounded-full bg-[#18a87c] px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:opacity-95'
+    : 'rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-slate-900'
+}
+
+function HlvMiniPanel({
+  open,
+  anchorRef,
+  onClose,
+  certificateCode,
+  certificateExpiresAt,
+}: {
+  open: boolean
+  anchorRef: React.RefObject<HTMLButtonElement | null>
+  onClose: () => void
+  certificateCode: string
+  certificateExpiresAt: string | null
+}) {
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (panelRef.current?.contains(t)) return
+      if (anchorRef.current?.contains(t)) return
+      onClose()
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [open, onClose, anchorRef])
+
+  if (!open) return null
+
+  const verifyUrl = `${WOHNEN_SITE_ORIGIN.replace(/\/$/, '')}/verify/${certificateCode}`
+
+  return (
+    <div
+      ref={panelRef}
+      className="absolute right-0 top-full z-[60] mt-2 w-[min(100vw-2rem,20rem)] rounded-xl border border-slate-200 bg-white p-4 shadow-xl"
+      role="dialog"
+      aria-label="Zertifikat"
+    >
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Dein Helvenda Zertifikat</p>
+      <p className="mt-1 font-mono text-sm font-bold text-slate-900">{certificateCode}</p>
+      <p className="mt-1 text-xs text-slate-600">
+        Gueltig bis{' '}
+        {certificateExpiresAt ? formatDate(certificateExpiresAt) : '—'}
+      </p>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <Link
+          href={`/api/certificate/${encodeURIComponent(certificateCode)}/pdf?t=${Date.now()}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-1 items-center justify-center rounded-lg bg-[#18a87c] px-3 py-2 text-center text-xs font-bold text-white hover:opacity-95"
+          onClick={onClose}
+        >
+          PDF herunterladen
+        </Link>
+        <button
+          type="button"
+          className="flex flex-1 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(verifyUrl)
+              toast.success('Link kopiert')
+              onClose()
+            } catch {
+              toast.error('Kopieren fehlgeschlagen')
+            }
+          }}
+        >
+          Link kopieren
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export function WohnenNavbar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
-  const user = session?.user as { id?: string; name?: string | null; email?: string | null; image?: string | null } | undefined
+  const user = session?.user as
+    | { id?: string; name?: string | null; email?: string | null; image?: string | null }
+    | undefined
   const signedIn = status === 'authenticated' && Boolean(user?.id)
 
   const [navReady, setNavReady] = useState(false)
-  const [profile, setProfile] = useState<TenantProfileBrief | undefined>(undefined)
-  const [mineCertificateCode, setMineCertificateCode] = useState<string | null>(null)
-  const [mineCertificateFetched, setMineCertificateFetched] = useState(false)
-  const [hasListings, setHasListings] = useState(false)
-  const [isAdminUser, setIsAdminUser] = useState(false)
+  const [nav, setNav] = useState<NavStatus | null>(null)
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [hlvOpen, setHlvOpen] = useState(false)
+  const hlvBtnRef = useRef<HTMLButtonElement>(null)
 
   const closeAll = useCallback(() => {
     setMenuOpen(false)
     setMobileOpen(false)
+    setHlvOpen(false)
   }, [])
 
   useEffect(() => {
@@ -55,12 +140,8 @@ export function WohnenNavbar() {
       return
     }
     if (status === 'unauthenticated') {
+      setNav(null)
       setNavReady(true)
-      setProfile(null)
-      setMineCertificateCode(null)
-      setMineCertificateFetched(false)
-      setHasListings(false)
-      setIsAdminUser(false)
       return
     }
     if (!user?.id) {
@@ -70,58 +151,51 @@ export function WohnenNavbar() {
 
     let cancelled = false
     setNavReady(false)
-    setMineCertificateFetched(false)
+
     ;(async () => {
-      let resolvedAdmin = false
+      const t0 = Date.now()
       try {
-        const adminRes = await fetch('/api/user/admin-status', { credentials: 'same-origin' })
-        const adminJson = (await adminRes.json().catch(() => ({}))) as { isAdmin?: boolean }
-        resolvedAdmin = adminJson.isAdmin === true
-        if (!cancelled) setIsAdminUser(resolvedAdmin)
-
-        const [tpRes, ownRes] = await Promise.all([
-          fetch('/api/tenant-profile', { credentials: 'same-origin' }),
-          fetch('/api/rental-listings?own=true', { credentials: 'same-origin' }),
-        ])
-        if (cancelled) return
-
-        if (tpRes.status === 401) {
-          setProfile(null)
-          setMineCertificateCode(null)
-          setMineCertificateFetched(true)
-        } else if (tpRes.ok) {
-          const tpJson = (await tpRes.json().catch(() => ({}))) as { profile?: TenantProfileBrief | null }
-          const p = tpJson.profile ?? null
-          setProfile(p)
-          if (p?.isComplete) {
-            const mineRes = await fetch('/api/certificate/mine', { credentials: 'same-origin' })
-            if (cancelled) return
-            if (mineRes.ok) {
-              const mineJson = (await mineRes.json().catch(() => ({}))) as {
-                certificate?: { certificateCode: string } | null
-              }
-              setMineCertificateCode(mineJson.certificate?.certificateCode ?? null)
-            } else {
-              setMineCertificateCode(null)
-            }
-          } else {
-            setMineCertificateCode(null)
-          }
-          if (!cancelled) setMineCertificateFetched(true)
-        } else if (!cancelled) {
-          setMineCertificateCode(null)
-          setMineCertificateFetched(true)
+        const res = await fetch('/api/user/nav-status', { credentials: 'same-origin' })
+        const json = (await res.json().catch(() => null)) as NavStatus | { message?: string } | null
+        const elapsed = Date.now() - t0
+        if (elapsed < 200) {
+          await new Promise<void>(r => setTimeout(r, 200 - elapsed))
         }
-        // Bei 5xx/Netzwerk: Profil-State nicht auf null setzen — sonst fälschlich «Profil erstellen».
-
-        const ownJson = (await ownRes.json().catch(() => ({}))) as { hasListings?: boolean }
-        setHasListings(Boolean(ownJson.hasListings))
+        if (cancelled) return
+        if (res.ok && json && 'profileComplete' in json) {
+          setNav(json)
+        } else {
+          setNav({
+            profileComplete: false,
+            creditCheckStatus: 'NONE',
+            creditCheckExpiresAt: null,
+            creditApprovedAndValid: false,
+            creditPendingReview: false,
+            hasActiveCertificate: false,
+            certificateCode: null,
+            certificateExpiresAt: null,
+            hasListings: false,
+            openApplicationsCount: 0,
+            newInquiriesCount: 0,
+            isAdmin: false,
+          })
+        }
       } catch {
         if (!cancelled) {
-          setHasListings(false)
-          setMineCertificateFetched(true)
-          // Admin-Status nicht auf false zurücksetzen, falls nur Zusatz-Fetches fehlschlagen.
-          setIsAdminUser(prev => prev || resolvedAdmin)
+          setNav({
+            profileComplete: false,
+            creditCheckStatus: 'NONE',
+            creditCheckExpiresAt: null,
+            creditApprovedAndValid: false,
+            creditPendingReview: false,
+            hasActiveCertificate: false,
+            certificateCode: null,
+            certificateExpiresAt: null,
+            hasListings: false,
+            openApplicationsCount: 0,
+            newInquiriesCount: 0,
+            isAdmin: false,
+          })
         }
       } finally {
         if (!cancelled) setNavReady(true)
@@ -144,67 +218,178 @@ export function WohnenNavbar() {
     return
   }, [mobileOpen])
 
-  const okGreen = creditValid(profile ?? null)
-  const creditPending =
-    profile?.creditCheckStatus === 'PENDING' || profile?.creditCheckStatus === 'PENDING_MANUAL_REVIEW'
-  const showCreditRenew =
-    Boolean(signedIn && navReady && profile?.isComplete) && !okGreen && !creditPending
-
-  const showLandlordNav = Boolean(signedIn && navReady && hasListings)
-  const showMatchesNav = Boolean(signedIn && navReady && profile?.isComplete)
-  const showCertNeuBadge = Boolean(
-    signedIn && navReady && profile?.isComplete && creditValid(profile ?? null) && mineCertificateFetched && !mineCertificateCode
+  const n = nav
+  const isLandlord = Boolean(n?.hasListings)
+  const tenantVerified = Boolean(n?.profileComplete && n?.creditApprovedAndValid)
+  const showIncompleteProfile = Boolean(signedIn && n && !n.profileComplete)
+  const showAuszugPill = Boolean(
+    n?.profileComplete && !n.creditApprovedAndValid && !n.creditPendingReview
   )
-  const showTenantCompleteNav = Boolean(
-    signedIn && navReady && !hasListings && profile?.isComplete && (okGreen || creditPending)
-  )
+  const showMatchesForTenant = Boolean(n?.profileComplete && !isLandlord)
+  const showBewerbungenBadge = Boolean(n && n.openApplicationsCount > 0)
+  const showHlvBadge = Boolean(n?.hasActiveCertificate && n?.certificateCode)
 
-  /** Kein tenant_profiles-Datensatz — wirklich neu anlegen. */
-  const needsNewProfile = Boolean(signedIn && navReady && !hasListings && profile === null)
-  /** Datensatz da, aber Flag noch nicht „vollständig“ (soll nach PATCH/Backfill nicht mehr vorkommen). */
-  const needsProfileCompletion = Boolean(
-    signedIn && navReady && !hasListings && profile != null && !profile.isComplete
-  )
-  const showIncompleteTenantNav = needsNewProfile || needsProfileCompletion
+  type DropdownKind = 'A' | 'B' | 'C' | 'D' | 'P'
+  const dropdownKind: DropdownKind = (() => {
+    if (!n) return 'A'
+    if (!n.profileComplete) return 'A'
+    if (n.creditPendingReview) return 'P'
+    if (!n.creditApprovedAndValid) return 'B'
+    if (n.hasActiveCertificate) return 'D'
+    return 'C'
+  })()
 
-  const renderDesktopCenterLinks = () => {
-    if (!signedIn || !navReady) return null
-    if (profile?.isComplete) {
+  const showZertifikatInMenu = Boolean(n?.hasActiveCertificate)
+
+  const renderDesktopNav = () => {
+    if (!signedIn || !navReady || !n) return null
+
+    if (isLandlord) {
       return (
-        <>
+        <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-2 md:flex md:gap-3">
+          <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
+            Wohnungen suchen
+          </Link>
+          <Link href="/matching/properties" className={navLinkClass(pathname.startsWith('/matching/properties'))}>
+            Meine Inserate
+          </Link>
           <Link
-            href="/meine-matches"
-            className="rounded-md bg-teal-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-teal-800"
+            href="/matching/properties"
+            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100"
           >
+            Neue Anfragen
+            {n.newInquiriesCount > 0 ?
+              <span className="rounded-full bg-[#18a87c] px-2 py-0.5 text-[11px] font-bold text-white">
+                {n.newInquiriesCount}
+              </span>
+            : null}
+          </Link>
+        </nav>
+      )
+    }
+
+    if (showIncompleteProfile) {
+      return (
+        <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-2 md:flex md:gap-3">
+          <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
+            Wohnungen suchen
+          </Link>
+          <Link
+            href="/profil/erstellen"
+            className="rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-orange-600"
+          >
+            Profil vervollstaendigen
+          </Link>
+        </nav>
+      )
+    }
+
+    if (showAuszugPill) {
+      return (
+        <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-2 md:flex md:gap-3">
+          <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
+            Wohnungen suchen
+          </Link>
+          <Link href="/meine-matches" className={navLinkClass(pathname === '/meine-matches')}>
             Meine Matches
           </Link>
           <Link
-            href="/wohnungen"
-            className="rounded-md px-2 py-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/profil/betreibungsregister"
+            className="rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-orange-600"
           >
-            Alle Wohnungen
+            Auszug hochladen
           </Link>
-        </>
+        </nav>
       )
     }
-    return null
+
+    if (tenantVerified) {
+      return (
+        <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-2 md:flex md:gap-3">
+          <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
+            Wohnungen suchen
+          </Link>
+          <Link href="/meine-matches" className={navLinkClass(pathname === '/meine-matches')}>
+            Meine Matches
+          </Link>
+          <Link
+            href="/meine-bewerbungen"
+            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100"
+          >
+            Bewerbungen
+            {showBewerbungenBadge ?
+              <span className="rounded-full bg-[#18a87c] px-2 py-0.5 text-[11px] font-bold text-white">
+                {n.openApplicationsCount}
+              </span>
+            : null}
+          </Link>
+          {showHlvBadge ?
+            <div className="relative">
+              <button
+                ref={hlvBtnRef}
+                type="button"
+                onClick={() => setHlvOpen(o => !o)}
+                className="rounded-md border border-[#18a87c] bg-[#e8f7f2] px-2.5 py-1 text-xs font-bold tracking-wide text-[#107a5a] hover:bg-[#dff5eb]"
+                aria-expanded={hlvOpen ? 'true' : 'false'}
+              >
+                HLV
+              </button>
+              <HlvMiniPanel
+                open={hlvOpen}
+                anchorRef={hlvBtnRef}
+                onClose={() => setHlvOpen(false)}
+                certificateCode={n.certificateCode!}
+                certificateExpiresAt={n.certificateExpiresAt}
+              />
+            </div>
+          : null}
+        </nav>
+      )
+    }
+
+    if (n.profileComplete && n.creditPendingReview) {
+      return (
+        <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-2 md:flex md:gap-3">
+          <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
+            Wohnungen suchen
+          </Link>
+          <Link href="/meine-matches" className={navLinkClass(pathname === '/meine-matches')}>
+            Meine Matches
+          </Link>
+          <Link
+            href="/meine-bewerbungen"
+            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100"
+          >
+            Bewerbungen
+            {showBewerbungenBadge ?
+              <span className="rounded-full bg-[#18a87c] px-2 py-0.5 text-[11px] font-bold text-white">
+                {n.openApplicationsCount}
+              </span>
+            : null}
+          </Link>
+        </nav>
+      )
+    }
+
+    return (
+      <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-2 md:flex md:gap-3">
+        <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
+          Wohnungen suchen
+        </Link>
+      </nav>
+    )
   }
 
-  const renderAuthButtons = () => {
-    if (!signedIn) {
-      return null
-    }
+  const renderAvatarDropdown = () => {
+    if (!signedIn) return null
     return (
-      <div className="relative hidden items-center gap-2 md:flex">
-        {showTenantCompleteNav && okGreen ?
-          <span
-            className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm ring-2 ring-emerald-200"
-            title="Profil und Betreibungsregisterauszug gültig"
-          />
-        : null}
+      <div className="relative flex items-center gap-2">
         <button
           type="button"
-          onClick={() => setMenuOpen(m => !m)}
+          onClick={() => {
+            setHlvOpen(false)
+            setMenuOpen(m => !m)
+          }}
           className="flex items-center gap-2 rounded-full border border-slate-200 p-0.5 pl-0.5 hover:bg-slate-50"
           aria-haspopup="menu"
         >
@@ -219,45 +404,78 @@ export function WohnenNavbar() {
         {menuOpen ?
           <>
             <button type="button" className="fixed inset-0 z-40 cursor-default" aria-label="Menü schliessen" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
+            <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
               <div className="border-b border-slate-100 px-3 py-2">
-                <p className="truncate text-sm font-semibold text-slate-900">{user?.name || 'Benutzer/in'}</p>
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {user?.name || 'Benutzer/in'}
+                  {dropdownKind === 'D' ?
+                    <span className="ml-2 text-xs font-semibold text-emerald-600">Verifiziert</span>
+                  : null}
+                </p>
                 <p className="truncate text-xs text-slate-500">{user?.email || ''}</p>
               </div>
-              <Link
-                href="/wohnungen"
-                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
-                onClick={() => setMenuOpen(false)}
-              >
-                Wohnungen suchen
-              </Link>
-              {needsNewProfile ? (
-                <Link
-                  href="/profil/erstellen"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-50"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Profil erstellen
-                </Link>
-              ) : null}
-              {needsProfileCompletion ? (
-                <Link
-                  href="/profil/bearbeiten"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-50"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Profil vervollständigen
-                </Link>
-              ) : null}
-              {showMatchesNav ? (
-                <Link
-                  href="/meine-matches"
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Meine Matches
-                </Link>
-              ) : null}
+
+              {dropdownKind === 'A' ?
+                <div className="mx-2 my-2 rounded-lg border-l-[3px] border-amber-500 bg-[#fffbeb] px-3 py-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-amber-500">Naechster Schritt</p>
+                  <p className="mt-1 text-[13px] font-semibold text-[#1a1a1a]">Profil vervollstaendigen</p>
+                  <p className="mt-0.5 text-[11px] text-[#5a5a5a]">Ohne Profil keine Bewerbungen</p>
+                  <Link
+                    href="/profil/erstellen"
+                    className="mt-1.5 inline-block text-xs font-semibold text-amber-600 hover:underline"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Jetzt erstellen
+                  </Link>
+                </div>
+              : null}
+
+              {dropdownKind === 'B' ?
+                <div className="mx-2 my-2 rounded-lg border-l-[3px] border-amber-500 bg-[#fffbeb] px-3 py-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-amber-500">Naechster Schritt</p>
+                  <p className="mt-1 text-[13px] font-semibold text-[#1a1a1a]">Betreibungsregister hochladen</p>
+                  <p className="mt-0.5 text-[11px] text-[#5a5a5a]">Viele Vermieter setzen ihn voraus</p>
+                  <Link
+                    href="/profil/betreibungsregister"
+                    className="mt-1.5 inline-block text-xs font-semibold text-amber-600 hover:underline"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Jetzt hochladen
+                  </Link>
+                </div>
+              : null}
+
+              {dropdownKind === 'P' ?
+                <div className="mx-2 my-2 rounded-lg border-l-[3px] border-amber-500 bg-[#fffbeb] px-3 py-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-amber-500">Status</p>
+                  <p className="mt-1 text-[13px] font-semibold text-[#1a1a1a]">Betreibungsregister wird geprueft</p>
+                  <p className="mt-0.5 text-[11px] text-[#5a5a5a]">Du wirst per E-Mail informiert.</p>
+                  <Link
+                    href="/profil/betreibungsregister"
+                    className="mt-1.5 inline-block text-xs font-semibold text-amber-600 hover:underline"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Zur Uebersicht
+                  </Link>
+                </div>
+              : null}
+
+              {dropdownKind === 'C' ?
+                <div className="mx-2 my-2 rounded-lg border-l-[3px] border-[#18a87c] bg-[#e8f7f2] px-3 py-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-[#18a87c]">Neu fuer dich</p>
+                  <p className="mt-1 text-[13px] font-semibold text-[#1a1a1a]">Zertifikat ausstellen lassen</p>
+                  <p className="mt-0.5 text-[11px] text-[#5a5a5a]">Hebe dich von anderen ab</p>
+                  <Link
+                    href="/zertifikat"
+                    className="mt-1.5 inline-block text-xs font-semibold text-[#107a5a] hover:underline"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Jetzt ausstellen
+                  </Link>
+                </div>
+              : null}
+
+              <div className="my-1 border-t border-slate-100" />
               <Link
                 href="/profil"
                 className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
@@ -265,40 +483,19 @@ export function WohnenNavbar() {
               >
                 Mein Profil
               </Link>
-              {profile?.isComplete ?
+              {showZertifikatInMenu ?
                 <Link
                   href="/zertifikat"
                   className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <span>Mein Zertifikat</span>
-                  {showCertNeuBadge ?
-                    <span className="rounded-full bg-[#e8f7f2] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#107a5a]">
-                      Neu
-                    </span>
-                  : null}
+                  Mein Zertifikat
                 </Link>
               : null}
-              <Link
-                href="/meine-bewerbungen"
-                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
-                onClick={() => setMenuOpen(false)}
-              >
-                Meine Bewerbungen
-              </Link>
-              {hasListings ?
-                <Link
-                  href="/matching/properties"
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Meine Inserate
-                </Link>
-              : null}
-              {isAdminUser ?
+              {n?.isAdmin ?
                 <>
                   <div className="my-1 border-t border-slate-100" />
-                  <p className="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wide text-slate-500">⚙️ Admin</p>
+                  <p className="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wide text-slate-500">Admin</p>
                   <Link
                     href="/admin/wohnen"
                     className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-[#107a5a] hover:bg-[#e8f7f2]"
@@ -344,93 +541,96 @@ export function WohnenNavbar() {
         </>
       )
     }
-    if (!navReady) {
+    if (!navReady || !n) {
       return <div className="space-y-2 px-2 py-4 text-sm text-slate-500">Laden…</div>
     }
+
+    if (isLandlord) {
+      return (
+        <>
+          <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
+            Wohnungen suchen
+          </Link>
+          <Link href="/matching/properties" className={mobileDrawerLinkTeal} onClick={closeAll}>
+            Meine Inserate
+          </Link>
+          <Link href="/matching/properties" className={mobileDrawerLink} onClick={closeAll}>
+            Neue Anfragen{n.newInquiriesCount > 0 ? ` (${n.newInquiriesCount})` : ''}
+          </Link>
+          <div className="my-2 border-t border-slate-200" />
+          <div className="border-b border-[#e8f7f2] px-3 py-3">
+            <p className="text-xs font-semibold text-slate-500">Konto</p>
+            <p className="truncate text-sm font-semibold text-slate-900">{user?.name || 'Benutzer/in'}</p>
+            <p className="truncate text-xs text-slate-500">{user?.email || ''}</p>
+          </div>
+          <Link href="/profil" className={mobileDrawerLink} onClick={closeAll}>
+            Mein Profil
+          </Link>
+          {n.isAdmin ?
+            <Link href="/admin/wohnen" className={mobileDrawerLink} onClick={closeAll}>
+              Admin-Dashboard
+            </Link>
+          : null}
+          <button
+            type="button"
+            className="mt-1 flex min-h-[52px] w-full items-center border-b border-[#e8f7f2] px-3 text-left text-sm font-medium text-red-600 hover:bg-red-50"
+            onClick={() => void signOut({ callbackUrl: '/' })}
+          >
+            Abmelden
+          </button>
+        </>
+      )
+    }
+
     return (
       <>
-        {showMatchesNav ? (
-          <Link href="/meine-matches" className={mobileDrawerLinkTeal} onClick={closeAll}>
-            Meine Matches
+        <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
+          Wohnungen suchen
+        </Link>
+        {!n.profileComplete ?
+          <Link
+            href="/profil/erstellen"
+            className={`${mobileDrawerLink} bg-orange-50 font-semibold text-orange-950`}
+            onClick={closeAll}
+          >
+            Profil vervollstaendigen
           </Link>
-        ) : null}
-
-        {showLandlordNav ?
-          <>
-            <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
-              Wohnungen suchen
-            </Link>
-            <Link href="/matching/properties" className={mobileDrawerLink} onClick={closeAll}>
-              Meine Inserate
-            </Link>
-            <Link href="/matching/properties/new" className={mobileDrawerLink} onClick={closeAll}>
-              Neues Inserat
-            </Link>
-          </>
         : null}
-        {needsNewProfile ?
+        {n.profileComplete && !n.creditApprovedAndValid && !n.creditPendingReview ?
           <>
-            <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
-              Wohnungen suchen
-            </Link>
-            <Link
-              href="/profil/erstellen"
-              className={`${mobileDrawerLink} bg-amber-50 font-semibold text-amber-950 hover:bg-amber-100`}
-              onClick={closeAll}
-            >
-              ⚠️ Profil erstellen
-            </Link>
-          </>
-        : null}
-        {needsProfileCompletion ?
-          <>
-            <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
-              Wohnungen suchen
-            </Link>
-            <Link
-              href="/profil/bearbeiten"
-              className={`${mobileDrawerLink} bg-amber-50 font-semibold text-amber-950 hover:bg-amber-100`}
-              onClick={closeAll}
-            >
-              ⚠️ Profil vervollständigen
-            </Link>
-          </>
-        : null}
-        {showCreditRenew && !showLandlordNav ?
-          <>
-            <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
-              Wohnungen suchen
+            <Link href="/meine-matches" className={mobileDrawerLinkTeal} onClick={closeAll}>
+              Meine Matches
             </Link>
             <Link
               href="/profil/betreibungsregister"
-              className={`${mobileDrawerLink} bg-orange-50 font-semibold text-orange-950 hover:bg-orange-100`}
+              className={`${mobileDrawerLink} bg-orange-50 font-semibold text-orange-950`}
               onClick={closeAll}
             >
-              ⚠️ Auszug erneuern
+              Auszug hochladen
             </Link>
           </>
         : null}
-        {showTenantCompleteNav ?
-          <>
-            <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
-              Wohnungen suchen
-            </Link>
-            <Link href="/meine-bewerbungen" className={mobileDrawerLink} onClick={closeAll}>
-              Meine Bewerbungen
-            </Link>
-            <Link href="/matching/properties/new" className={mobileDrawerLink} onClick={closeAll}>
-              Wohnung inserieren
-            </Link>
-          </>
+        {n.profileComplete && n.creditPendingReview ?
+          <Link href="/meine-matches" className={mobileDrawerLinkTeal} onClick={closeAll}>
+            Meine Matches
+          </Link>
         : null}
-        {!showLandlordNav && !showIncompleteTenantNav && !showCreditRenew && !showTenantCompleteNav ?
-          <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
-            Wohnungen suchen
+        {n.profileComplete && (n.creditApprovedAndValid || n.creditPendingReview) ?
+          <Link href="/meine-bewerbungen" className={mobileDrawerLink} onClick={closeAll}>
+            Bewerbungen{n.openApplicationsCount > 0 ? ` (${n.openApplicationsCount})` : ''}
+          </Link>
+        : null}
+        {n.hasActiveCertificate && n.certificateCode ?
+          <Link
+            href="/zertifikat"
+            className={`${mobileDrawerLink} font-semibold text-[#107a5a]`}
+            onClick={closeAll}
+          >
+            HLV / Zertifikat
           </Link>
         : null}
 
         <div className="my-2 border-t border-slate-200" />
-
         <div className="border-b border-[#e8f7f2] px-3 py-3">
           <p className="text-xs font-semibold text-slate-500">Konto</p>
           <p className="truncate text-sm font-semibold text-slate-900">{user?.name || 'Benutzer/in'}</p>
@@ -439,33 +639,15 @@ export function WohnenNavbar() {
         <Link href="/profil" className={mobileDrawerLink} onClick={closeAll}>
           Mein Profil
         </Link>
-        {profile?.isComplete ?
+        {showZertifikatInMenu ?
           <Link href="/zertifikat" className={mobileDrawerLink} onClick={closeAll}>
-            <span className="flex w-full items-center justify-between gap-2">
-              <span>Mein Zertifikat</span>
-              {showCertNeuBadge ?
-                <span className="rounded-full bg-[#e8f7f2] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#107a5a]">
-                  Neu
-                </span>
-              : null}
-            </span>
+            Mein Zertifikat
           </Link>
         : null}
-        <Link href="/meine-bewerbungen" className={mobileDrawerLink} onClick={closeAll}>
-          Meine Bewerbungen
-        </Link>
-        {hasListings ?
-          <Link href="/matching/properties" className={mobileDrawerLink} onClick={closeAll}>
-            Meine Inserate
+        {n.isAdmin ?
+          <Link href="/admin/wohnen" className={mobileDrawerLink} onClick={closeAll}>
+            Admin-Dashboard
           </Link>
-        : null}
-        {isAdminUser ?
-          <>
-            <p className="border-b border-[#e8f7f2] px-3 pb-2 pt-3 text-xs font-bold uppercase tracking-wide text-slate-500">⚙️ Admin</p>
-            <Link href="/admin/wohnen" className={`${mobileDrawerLink} font-semibold text-[#107a5a] hover:bg-[#e8f7f2]`} onClick={closeAll}>
-              Admin-Dashboard
-            </Link>
-          </>
         : null}
         <button
           type="button"
@@ -494,10 +676,10 @@ export function WohnenNavbar() {
             <div className="h-8 w-24 animate-pulse rounded-lg bg-slate-200" />
           </div>
         : (
-          <nav className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex md:gap-4">
+          <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
             {!signedIn ?
-              <>
-                <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-slate-900">
+              <nav className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+                <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
                   Wohnungen suchen
                 </Link>
                 <Link
@@ -512,47 +694,14 @@ export function WohnenNavbar() {
                 >
                   Kostenlos registrieren
                 </Link>
-              </>
-            : profile?.isComplete ? (
+              </nav>
+            : (
               <>
-                {renderDesktopCenterLinks()}
-                {renderAuthButtons()}
-              </>
-            ) : profile === undefined ? (
-              <>
-                <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-slate-900">
-                  Wohnungen suchen
-                </Link>
-                {renderAuthButtons()}
-              </>
-            ) : profile === null ? (
-              <>
-                <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-slate-900">
-                  Wohnungen suchen
-                </Link>
-                <Link
-                  href="/profil/erstellen"
-                  className="rounded-md bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-200"
-                >
-                  Profil erstellen
-                </Link>
-                {renderAuthButtons()}
-              </>
-            ) : (
-              <>
-                <Link href="/wohnungen" className="rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-slate-900">
-                  Wohnungen suchen
-                </Link>
-                <Link
-                  href="/profil/bearbeiten"
-                  className="rounded-md bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-200"
-                >
-                  Profil vervollständigen
-                </Link>
-                {renderAuthButtons()}
+                {renderDesktopNav()}
+                {renderAvatarDropdown()}
               </>
             )}
-          </nav>
+          </div>
         )}
 
         <div className="flex items-center gap-2 md:hidden">
@@ -567,7 +716,6 @@ export function WohnenNavbar() {
         </div>
       </div>
 
-      {/* Mobile slide-in */}
       <div className={`fixed inset-0 z-[60] md:hidden ${mobileOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
         <button
           type="button"

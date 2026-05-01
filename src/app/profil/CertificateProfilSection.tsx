@@ -59,7 +59,8 @@ export function CertificateProfilSection({
 
   const downloadPdf = useCallback(() => {
     if (!activeCertificate) return
-    const u = `/api/certificate/${encodeURIComponent(activeCertificate.certificateCode)}/pdf`
+    // Eindeutige URL: Browser/PDF-Viewer cachen GET /.../pdf sonst oft aggressiv
+    const u = `/api/certificate/${encodeURIComponent(activeCertificate.certificateCode)}/pdf?t=${Date.now()}`
     window.open(u, '_blank', 'noopener,noreferrer')
   }, [activeCertificate])
 

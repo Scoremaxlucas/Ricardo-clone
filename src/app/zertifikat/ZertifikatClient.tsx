@@ -89,7 +89,11 @@ export function ZertifikatClient({
 
   const downloadPdf = useCallback(() => {
     if (!code) return
-    window.open(`/api/certificate/${encodeURIComponent(code)}/pdf`, '_blank', 'noopener,noreferrer')
+    window.open(
+      `/api/certificate/${encodeURIComponent(code)}/pdf?t=${Date.now()}`,
+      '_blank',
+      'noopener,noreferrer'
+    )
   }, [code])
 
   const validUntil =

@@ -1,10 +1,16 @@
 import { MatchPreferencesInlineEditor } from '@/components/rental/MatchPreferencesInlineEditor'
+import {
+  MeineMatchesProgressDashboard,
+  type ProgressStep,
+  type UserCompletionState,
+} from '@/components/rental/MeineMatchesProgressDashboard'
 import { RentalListingCard } from '@/components/rental/RentalListingCard'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { matchListings } from '@/lib/rental/matchListings'
 import { rentalListingRowToCardData } from '@/lib/rental/rental-listings-public'
 import { formatCHF } from '@/lib/utils/formatCurrency'
+import type { TenantProfile } from '@prisma/client'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
@@ -56,6 +62,63 @@ function IconShieldCheck({ colorClass }: { colorClass: string }) {
   )
 }
 
+function creditApprovedValid(profile: TenantProfile | null): boolean {
+  if (!profile) return false
+  if (profile.creditCheckStatus !== 'APPROVED') return false
+  const exp = profile.creditCheckExpiresAt
+  return Boolean(exp && exp.getTime() > Date.now())
+}
+
+function deriveCompletionState(
+  profile: TenantProfile | null,
+  hasActiveCertificate: boolean
+): UserCompletionState {
+  if (!profile) return 'NO_PROFILE'
+  if (!profile.isComplete) return 'INCOMPLETE_PROFILE'
+  if (profile.creditCheckStatus === 'PENDING' || profile.creditCheckStatus === 'PENDING_MANUAL_REVIEW') {
+    return 'PENDING_CREDIT_CHECK'
+  }
+  if (!creditApprovedValid(profile)) return 'NO_CREDIT_CHECK'
+  if (!hasActiveCertificate) return 'NO_CERTIFICATE'
+  return 'READY'
+}
+
+function buildProgressSteps(profile: TenantProfile | null, firstApplication: boolean): ProgressStep[] {
+  const profileHref = !profile ? '/profil/erstellen' : '/profil/bearbeiten'
+  const profileCta = !profile ? 'Profil jetzt erstellen' : 'Profil vervollstaendigen'
+  const creditDone = creditApprovedValid(profile)
+  const creditPending = Boolean(
+    profile?.creditCheckStatus === 'PENDING' || profile?.creditCheckStatus === 'PENDING_MANUAL_REVIEW'
+  )
+
+  return [
+    { id: 'account', label: 'Konto erstellt', done: true, ctaLabel: '', ctaHref: '/' },
+    {
+      id: 'profile',
+      label: 'Profil vervollstaendigen',
+      done: profile?.isComplete === true,
+      ctaLabel: profileCta,
+      ctaHref: profileHref,
+    },
+    {
+      id: 'credit_check',
+      label: 'Betreibungsregister hochladen',
+      done: creditDone,
+      pending: creditPending,
+      pendingLabel: 'Wird geprueft...',
+      ctaLabel: creditPending ? 'Zum Betreibungsregister' : 'Jetzt hochladen',
+      ctaHref: '/profil/betreibungsregister',
+    },
+    {
+      id: 'apply',
+      label: 'Erste Bewerbung absenden',
+      done: firstApplication,
+      ctaLabel: 'Wohnungen ansehen',
+      ctaHref: '/wohnungen',
+    },
+  ]
+}
+
 function EmptyStateCard() {
   return (
     <div className="mx-auto mt-8 max-w-[500px] rounded-2xl border border-slate-200 bg-white px-5 py-8 text-center shadow-sm sm:p-8">
@@ -80,6 +143,30 @@ function EmptyStateCard() {
   )
 }
 
+function ProfileIncompleteHint() {
+  return (
+    <div className="mx-auto mt-6 max-w-xl rounded-xl border border-slate-200 bg-white px-5 py-6 text-center text-sm text-slate-600 shadow-sm">
+      Vervollstaendige dein Profil um Wohnungen zu sehen die zu dir passen.
+    </div>
+  )
+}
+
+function ZertifikatTeaserBanner() {
+  return (
+    <div className="mx-auto mb-6 flex max-w-4xl flex-col gap-3 rounded-xl border border-[#18a87c]/40 bg-[#e8f7f2] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <p className="text-sm font-semibold text-[#0d2b1f]">
+        Du kannst jetzt dein Helvenda-Zertifikat ausstellen — hebe dich von anderen Bewerbern ab.
+      </p>
+      <Link
+        href="/zertifikat"
+        className="shrink-0 rounded-lg bg-[#18a87c] px-4 py-2 text-center text-sm font-bold text-white hover:opacity-95"
+      >
+        Jetzt ausstellen
+      </Link>
+    </div>
+  )
+}
+
 export default async function MeineMatchesPage() {
   const session = await getServerSession(authOptions)
   const userId = session?.user?.id
@@ -87,105 +174,154 @@ export default async function MeineMatchesPage() {
 
   const sessionEmail = (session?.user as { email?: string | null } | undefined)?.email?.trim() || null
 
-  const [profile, account] = await Promise.all([
+  const now = new Date()
+
+  const [profile, account, listings, activeCert, applicationCount] = await Promise.all([
     prisma.tenantProfile.findUnique({ where: { userId } }),
-    prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, firstName: true, lastName: true },
+    }),
+    prisma.rentalListing.findMany({
+      where: { status: 'active' },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.helvendaCertificate.findFirst({
+      where: { userId, status: 'ACTIVE', expiresAt: { gt: now } },
+      select: { id: true },
+    }),
+    prisma.rentalApplication.count({ where: { applicantUserId: userId } }),
   ])
-  if (!profile) redirect('/profil/erstellen?next=/meine-matches')
-  if (!profile.isComplete) redirect('/profil/erstellen?next=/meine-matches')
 
   const accountEmail = account?.email?.trim() || sessionEmail
+  const firstName =
+    profile?.firstName?.trim() || account?.firstName?.trim() || account?.lastName?.trim() || 'dich'
 
-  const listings = await prisma.rentalListing.findMany({
-    where: { status: 'active' },
-    orderBy: { createdAt: 'desc' },
-  })
+  const completionState = deriveCompletionState(profile, Boolean(activeCert))
+  const steps = buildProgressSteps(profile, applicationCount > 0)
+  const showDashboard = completionState !== 'READY'
 
-  const { matches, emptyReason } = matchListings(profile, listings)
-  const now = new Date()
+  const relaxCredit =
+    completionState === 'NO_CREDIT_CHECK' || completionState === 'PENDING_CREDIT_CHECK'
+
+  let matches: ReturnType<typeof matchListings>['matches'] = []
+  let emptyReason: ReturnType<typeof matchListings>['emptyReason'] = null
+  if (profile?.isComplete) {
+    const r = matchListings(profile, listings, { displayDespiteMissingCredit: relaxCredit })
+    matches = r.matches
+    emptyReason = r.emptyReason
+  }
+
+  const showPreferencesBlock = Boolean(profile?.isComplete)
+  const showCreditOverlay =
+    completionState === 'NO_CREDIT_CHECK' || completionState === 'PENDING_CREDIT_CHECK'
+  const showProfileHint =
+    completionState === 'NO_PROFILE' || completionState === 'INCOMPLETE_PROFILE'
+  const showCertBanner = completionState === 'NO_CERTIFICATE'
+
   const greeting = dayGreeting(now)
 
   return (
     <main className="min-h-screen bg-[#f8fdfb]">
       <div className="mx-auto max-w-6xl pb-10 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[max(2.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))] sm:pl-[max(1.5rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.5rem,env(safe-area-inset-right,0px))] sm:pt-12">
+        {showDashboard ?
+          <MeineMatchesProgressDashboard firstName={firstName} steps={steps} />
+        : null}
+
+        {showCertBanner ? <ZertifikatTeaserBanner /> : null}
+
         <section className="pb-8">
           <h1 className="text-[1.5rem] font-extrabold leading-tight text-[#0d2b1f] sm:text-[1.875rem] md:text-[2rem]">
-            Guten {greeting}, {profile.firstName}.
+            Guten {greeting}, {firstName}.
           </h1>
-          {accountEmail ? (
+          {accountEmail ?
             <p className="mt-2 text-sm text-slate-600">
               <span className="text-slate-500">Angemeldet als</span>{' '}
               <span className="font-semibold text-slate-800">{accountEmail}</span>
             </p>
-          ) : null}
-          {matches.length > 0 ? (
+          : null}
+          {!showProfileHint && matches.length > 0 ?
             <p className="mt-3 text-base leading-relaxed text-slate-700 sm:text-[17px]">
               Wir haben <span className="font-extrabold text-teal-700">{matches.length}</span> Wohnungen gefunden die zu dir passen.
             </p>
-          ) : (
+          : null}
+          {!showProfileHint && matches.length === 0 && profile?.isComplete ?
             <p className="mt-3 text-base leading-relaxed text-slate-500 sm:text-[17px]">
               Noch keine Wohnungen die genau zu dir passen — wir suchen täglich weiter.
             </p>
-          )}
+          : null}
         </section>
 
-        <section className="mb-8 rounded-2xl border border-slate-200 bg-white px-3 py-4 shadow-sm sm:px-5">
-          <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 pl-0.5 pr-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] scroll-pl-1 scroll-pr-1 sm:scroll-pl-0 [&::-webkit-scrollbar]:hidden">
-            {profile.preferredCanton ? (
-              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
-                <IconPin /> Kanton {profile.preferredCanton}
-              </span>
-            ) : null}
-            {profile.preferredMinRooms != null ? (
-              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
-                <IconBed /> ab {profile.preferredMinRooms} Zi.
-              </span>
-            ) : null}
-            {profile.preferredBudgetMax != null ? (
-              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
-                <IconChf /> bis {formatCHF(profile.preferredBudgetMax)}/Mo
-              </span>
-            ) : null}
-            {profile.creditCheckStatus === 'APPROVED' ? (
-              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
-                <IconShieldCheck colorClass="text-emerald-600" /> Verifiziert
-              </span>
-            ) : (
-              <Link
-                href="/profil/betreibungsregister"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-orange-100 px-3 py-[5px] text-xs font-semibold text-orange-800 ring-1 ring-orange-200 hover:bg-orange-200"
-              >
-                <IconShieldCheck colorClass="text-orange-600" /> Betreibungsregisterauszug hochladen
-              </Link>
-            )}
-          </div>
-
-          <MatchPreferencesInlineEditor
-            initial={{
-              preferredCanton: profile.preferredCanton,
-              preferredMinRooms: profile.preferredMinRooms,
-              preferredBudgetMax: profile.preferredBudgetMax,
-              preferredMoveInEarliest: profile.preferredMoveInEarliest?.toISOString() ?? null,
-            }}
-          />
-        </section>
-
-        <section className="mt-6">
-          {emptyReason || matches.length === 0 ? (
-            <EmptyStateCard />
-          ) : (
-            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {matches.map(m => {
-                const card = rentalListingRowToCardData({
-                  ...m.listing,
-                  __matchScore: m.score,
-                  __matchHighlights: m.highlights,
-                })
-                return <RentalListingCard key={m.listing.id} listing={card} matchScore={m.score} />
-              })}
+        {showProfileHint ?
+          <ProfileIncompleteHint />
+        : showPreferencesBlock ?
+          <section className="mb-8 rounded-2xl border border-slate-200 bg-white px-3 py-4 shadow-sm sm:px-5">
+            <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 pl-0.5 pr-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] scroll-pl-1 scroll-pr-1 sm:scroll-pl-0 [&::-webkit-scrollbar]:hidden">
+              {profile!.preferredCanton ?
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
+                  <IconPin /> Kanton {profile!.preferredCanton}
+                </span>
+              : null}
+              {profile!.preferredMinRooms != null ?
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
+                  <IconBed /> ab {profile!.preferredMinRooms} Zi.
+                </span>
+              : null}
+              {profile!.preferredBudgetMax != null ?
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
+                  <IconChf /> bis {formatCHF(profile!.preferredBudgetMax)}/Mo
+                </span>
+              : null}
+              {creditApprovedValid(profile) ?
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
+                  <IconShieldCheck colorClass="text-emerald-600" /> Verifiziert
+                </span>
+              : (
+                <Link
+                  href="/profil/betreibungsregister"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-orange-100 px-3 py-[5px] text-xs font-semibold text-orange-800 ring-1 ring-orange-200 hover:bg-orange-200"
+                >
+                  <IconShieldCheck colorClass="text-orange-600" /> Betreibungsregisterauszug hochladen
+                </Link>
+              )}
             </div>
-          )}
-        </section>
+
+            <MatchPreferencesInlineEditor
+              initial={{
+                preferredCanton: profile!.preferredCanton,
+                preferredMinRooms: profile!.preferredMinRooms,
+                preferredBudgetMax: profile!.preferredBudgetMax,
+                preferredMoveInEarliest: profile!.preferredMoveInEarliest?.toISOString() ?? null,
+              }}
+            />
+          </section>
+        : null}
+
+        {!showProfileHint ?
+          <section className="mt-6">
+            {emptyReason || matches.length === 0 ?
+              <EmptyStateCard />
+            : (
+              <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {matches.map(m => {
+                  const card = rentalListingRowToCardData({
+                    ...m.listing,
+                    __matchScore: m.score,
+                    __matchHighlights: m.highlights,
+                  })
+                  return (
+                    <RentalListingCard
+                      key={m.listing.id}
+                      listing={card}
+                      matchScore={m.score}
+                      creditCheckOverlay={showCreditOverlay}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        : null}
       </div>
     </main>
   )

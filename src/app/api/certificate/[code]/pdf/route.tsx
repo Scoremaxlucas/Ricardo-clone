@@ -108,7 +108,9 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${filename}"`,
-        'Cache-Control': 'private, no-store',
+        'Cache-Control': 'private, no-store, max-age=0, must-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
       },
     })
   } catch (e) {

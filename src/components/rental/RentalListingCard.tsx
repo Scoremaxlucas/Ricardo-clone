@@ -33,6 +33,8 @@ type Props = {
   /** LCP: erstes Bild auf der Seite priorisieren */
   imagePriority?: boolean
   matchScore?: number
+  /** Hinweis auf Karten (z. B. /meine-matches ohne gueltigen Betreibungsregisterauszug) */
+  creditCheckOverlay?: boolean
 }
 
 function firstPhoto(urls: string[]): string | null {
@@ -89,7 +91,12 @@ function ListingQualificationBadge({ listingId }: { listingId: string }) {
   )
 }
 
-export function RentalListingCard({ listing: l, imagePriority = false, matchScore }: Props) {
+export function RentalListingCard({
+  listing: l,
+  imagePriority = false,
+  matchScore,
+  creditCheckOverlay = false,
+}: Props) {
   const main = firstPhoto(l.photos)
   const rawCreated = l.createdAt
   const createdMs =
@@ -100,7 +107,7 @@ export function RentalListingCard({ listing: l, imagePriority = false, matchScor
     Number.isFinite(createdMs) && Date.now() - createdMs < 48 * 60 * 60 * 1000
   const available = validDate(l.availableFrom ?? null)
 
-  return (
+  const card = (
     <Link
       href={`/wohnungen/${l.id}`}
       className="group relative flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.07)] transition-[box-shadow,transform] duration-200 ease-in-out hover:-translate-y-[3px] hover:cursor-pointer hover:shadow-[0_8px_28px_rgba(0,0,0,0.12)]"
@@ -167,5 +174,24 @@ export function RentalListingCard({ listing: l, imagePriority = false, matchScor
         ) : null}
       </div>
     </Link>
+  )
+
+  if (!creditCheckOverlay) {
+    return card
+  }
+
+  return (
+    <div className="relative h-full min-h-0">
+      {card}
+      <div className="pointer-events-none absolute inset-0 z-20 flex items-end justify-center rounded-2xl bg-slate-900/50 pb-6">
+        <Link
+          href="/profil/betreibungsregister"
+          className="pointer-events-auto rounded-full bg-white px-4 py-2.5 text-center text-xs font-bold text-[#0d2b1f] shadow-lg ring-2 ring-[#18a87c] hover:bg-[#f5fdfb]"
+          onClick={e => e.stopPropagation()}
+        >
+          Betreibungsregister erforderlich
+        </Link>
+      </div>
+    </div>
   )
 }

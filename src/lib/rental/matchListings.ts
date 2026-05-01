@@ -88,7 +88,16 @@ function scoreListing(profile: TenantProfile, listing: RentalListing): MatchResu
   }
 }
 
-export function matchListings(profile: TenantProfile, listings: RentalListing[]): MatchListingsResult {
+export type MatchListingsOptions = {
+  /** Zeigt passende Inserate trotz fehlendem Betreibungsregister (z. B. /meine-matches mit Hinweis-Overlay). */
+  displayDespiteMissingCredit?: boolean
+}
+
+export function matchListings(
+  profile: TenantProfile,
+  listings: RentalListing[],
+  opts?: MatchListingsOptions
+): MatchListingsResult {
   const active = listings.filter(l => l.status === 'active')
 
   const incomeBlocked = active.filter(l =>
@@ -100,16 +109,27 @@ export function matchListings(profile: TenantProfile, listings: RentalListing[])
     return { matches: [], emptyReason: 'INCOME_BLOCKED' }
   }
 
+  const creditOk = (listing: RentalListing) =>
+    Boolean(
+      opts?.displayDespiteMissingCredit ||
+        !listing.requiresCreditCheck ||
+        profile.creditCheckStatus === 'APPROVED'
+    )
+
   const hardFiltered = active.filter(listing => {
     const q = qualifyTenant(profile, { rentPerMonth: listing.rentPerMonth, utilitiesPerMonth: listing.utilitiesPerMonth })
     const incomeQualified = !q.reasons.some(r => r.code === 'INCOME_TOO_LOW')
-    const creditCheckOk = !listing.requiresCreditCheck || profile.creditCheckStatus === 'APPROVED'
+    const creditCheckOk = creditOk(listing)
     const kantonMatch = !profile.preferredCanton || listing.canton === profile.preferredCanton
     return incomeQualified && creditCheckOk && kantonMatch
   })
 
   if (hardFiltered.length === 0) {
-    if (profile.creditCheckStatus !== 'APPROVED' && active.some(l => l.requiresCreditCheck)) {
+    if (
+      !opts?.displayDespiteMissingCredit &&
+      profile.creditCheckStatus !== 'APPROVED' &&
+      active.some(l => l.requiresCreditCheck)
+    ) {
       return { matches: [], emptyReason: 'CREDIT_CHECK_REQUIRED' }
     }
     if (profile.preferredCanton) {
