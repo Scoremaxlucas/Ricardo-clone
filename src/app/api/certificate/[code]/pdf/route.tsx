@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { CertificatePdfDocument } from '@/lib/certificate/CertificatePDF'
+import { resolveCantonForPdf } from '@/lib/certificate/displayCanton'
 import { certificateVerifyQrDataUrl } from '@/lib/certificate/qrDataUrl'
 import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
@@ -30,6 +31,9 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
 
   const row = await prisma.helvendaCertificate.findUnique({
     where: { certificateCode },
+    include: {
+      tenantProfile: { select: { creditCheckResult: true } },
+    },
   })
 
   if (!row || row.userId !== userId) {
@@ -55,6 +59,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
     null
   )
   const incomeLabel = incomeCategoryLabelDe(row.verifiedIncomeCategory as IncomeCategory)
+  const creditCanton = resolveCantonForPdf(
+    row.verifiedCreditCheckCanton,
+    row.tenantProfile?.creditCheckResult ?? null
+  )
 
   const doc = (
     <CertificatePdfDocument
@@ -71,7 +79,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       incomeQualifiesUpTo={row.incomeQualifiesUpTo}
       creditStatus={row.verifiedCreditCheckStatus as 'CLEAR' | 'ENTRIES_PRESENT'}
       creditCheckDate={row.verifiedCreditCheckDate}
-      creditCanton={row.verifiedCreditCheckCanton}
+      creditCanton={creditCanton}
       verifyUrl={verifyUrl}
       qrDataUrl={qrDataUrl}
       year={new Date().getFullYear()}
