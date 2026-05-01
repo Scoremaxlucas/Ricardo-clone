@@ -1,6 +1,5 @@
 import { authOptions } from '@/lib/auth'
 import { CertificatePdfDocument } from '@/lib/certificate/CertificatePDF'
-import { resolveCantonForPdf } from '@/lib/certificate/displayCanton'
 import { certificateVerifyQrDataUrl } from '@/lib/certificate/qrDataUrl'
 import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
@@ -59,10 +58,6 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
     null
   )
   const incomeLabel = incomeCategoryLabelDe(row.verifiedIncomeCategory as IncomeCategory)
-  const creditCanton = resolveCantonForPdf(
-    row.verifiedCreditCheckCanton,
-    row.tenantProfile?.creditCheckResult ?? null
-  )
 
   const doc = (
     <CertificatePdfDocument
@@ -79,7 +74,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       incomeQualifiesUpTo={row.incomeQualifiesUpTo}
       creditStatus={row.verifiedCreditCheckStatus as 'CLEAR' | 'ENTRIES_PRESENT'}
       creditCheckDate={row.verifiedCreditCheckDate}
-      creditCanton={creditCanton}
+      verifiedCreditCheckCanton={row.verifiedCreditCheckCanton}
+      creditCheckResultJson={row.tenantProfile?.creditCheckResult ?? null}
       verifyUrl={verifyUrl}
       qrDataUrl={qrDataUrl}
       year={new Date().getFullYear()}
