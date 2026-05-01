@@ -1,4 +1,5 @@
 import type { QualificationIssue } from '@/lib/rental/qualifyTenant'
+import { ClipboardList } from 'lucide-react'
 import Link from 'next/link'
 
 type GateListing = {
@@ -17,8 +18,8 @@ export function QualificationGate({ issues, listing }: Props) {
   return (
     <div className="mx-auto max-w-lg px-4 py-12">
       <div className="mb-8 text-center">
-        <div className="mb-4 text-4xl" aria-hidden>
-          📋
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-100 text-teal-800" aria-hidden>
+          <ClipboardList className="h-7 w-7" strokeWidth={1.75} />
         </div>
         <h1 className="mb-2 text-2xl font-bold text-gray-900">Fast geschafft</h1>
         <p className="text-gray-500">

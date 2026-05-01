@@ -10,6 +10,7 @@ import {
   parseRentalListingPhotosJson,
   rentalListingRowToCardData,
 } from '@/lib/rental/rental-listings-public'
+import { qualifyTenant } from '@/lib/rental/qualifyTenant'
 import { formatCHF } from '@/lib/utils/formatCurrency'
 import { formatDate } from '@/lib/utils/formatDate'
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
@@ -77,8 +78,9 @@ export default async function WohnungDetailPage({ params }: PageProps) {
       tenantProfile.creditCheckExpiresAt &&
       tenantProfile.creditCheckExpiresAt.getTime() > Date.now()
   )
-  const tenantApplyReady =
-    profileComplete && (!listing.requiresCreditCheck || creditCheckOk)
+  const tenantApplyReady = Boolean(
+    tenantProfile && qualifyTenant(tenantProfile, listing).qualified
+  )
 
   const existingApplication = userId
     ? await prisma.rentalApplication.findFirst({

@@ -101,9 +101,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
       data.availableFrom = avail
     }
-    if (typeof body.requiresCreditCheck === 'boolean') {
-      data.requiresCreditCheck = body.requiresCreditCheck
-    }
     if (body.photos !== undefined) {
       const photoArr = Array.isArray(body.photos) ? body.photos.filter((u): u is string => typeof u === 'string') : []
       if (photoArr.length > 10) {

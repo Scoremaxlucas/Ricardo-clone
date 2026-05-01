@@ -1,0 +1,81 @@
+---
+description: Produkt- und Strategiekontext für wohnen.helvenda.ch (Mietwohnungen) vs. Marktplatz — verbindlich für alle Arbeiten in diesem Repo.
+alwaysApply: true
+---
+
+# Wohnen Helvenda — Projektkontext (verbindlich)
+
+## Was ist wohnen.helvenda.ch?
+
+- **Eigenständige Subdomain** von helvenda.ch: **Mietwohnungen Schweiz**, nicht der C2C-Marktplatz (Ricardo-ähnlich auf helvenda.ch).
+- **Gleiches Vercel-Deployment**, **gemeinsamer Auth** (NextAuth): ein Helvenda-Konto gilt für beides.
+- **Bewusste Trennung der UX:** Nutzer von helvenda.ch sollen nicht auf Wohnungsinserate laufen; Mieter auf Wohnen nicht in den generischen Marktplatz hineingeraten.
+
+## Kernproblem (Markt)
+
+- **Vermieter:** teure Portale (z. B. CHF 14–28/Tag), sehr viele **unqualifizierte** Anfragen, kein verlässlicher Vorab-Check (Betreibungsregister, Bonität).
+- **Mieter:** extrem wettbewerbsintensiver Markt, Formulare auf vielen Portalen, bezahlte Modelle (z. B. Sofort-Kontakt-Abo), geringe Ernsthaftigkeit ohne Nachweise.
+
+## Positionierung: kein Listing-Portal, sondern Qualitäts-Matching
+
+| Dimension | Klassische Portale | Wohnen Helvenda |
+|-----------|-------------------|-----------------|
+| Modell | Sichtbarkeit verkaufen (CHF/Tag) | **Qualifizierte Leads** |
+| Vermieter | Inseratsgebühr, viele schwache Anfragen | **Kostenlos**, nur **verifizierte** Bewerber |
+| Mieter | oft Abo für Sofort-Kontakt | **Kostenlos**; **kein Pflicht-Abo für Mieter** (Anti–Homegate-Versprechen) |
+| Betreibungsregister | oft pro Portal neu | **Einmal hochladen**, gültig über Helvenda |
+| Einkommen | oft Selbstdeklaration | **Kategorie verifiziert**, **3x-Regel** wo vorgesehen |
+
+**Versprechen Vermieter:** Anfragen von Personen mit geprüftem Betreibungsregister und Einkommenskategorie gemäss 3x-Regel — weniger Filterarbeit.
+
+**Versprechen Mieter:** Einmal verifiziertes Profil — **schnellere, ernsthaftere** Bewerbungen (ein Klick wo die Plattform es unterstützt).
+
+## Helvenda Qualitätsnachweis (HLV-Zertifikat)
+
+- **Strategisch zentral:** PDF mit eindeutigem Code (Format `HLV-YYYY-XXXXXXXX`), Verifikation unter `wohnen.helvenda.ch/verify/...`.
+- Zeigt u. a. Name, Betreibungsregister-Status, Einkommenskategorie, Qualifikation (3x-Regel), Gültigkeit.
+- **Nutzen ausserhalb Helvenda:** Bewerber legen das Zertifikat auch bei Homegate/E-Mail/direkt beim Vermieter bei — **virales B2B-Marketing** und **Cold-Start-Lösung** für Mieter (Grund zu registrieren auch bei wenigen Listings).
+- **Umsetzung:** muss **premium** wirken und sich premium anfühlen (wichtigster Differenzierer).
+
+## Zielgruppen — optimale Journeys (Richtschnur)
+
+**Mieter:** Registrieren → Profil → Betreibungsregister (z. B. 3 Monate gültig) → Zertifikat → Wohnungen/Matches → mit einem Klick bewerben.
+
+**Vermieter:** Registrieren → Inserat (manuell oder URL-Import von erlaubten Quellen) → nur verifizierte Anfragen → Lead-Dossier → Besichtigung auf der Plattform.
+
+## Bewerbungen (technische Produktregel)
+
+- Alle Bewerbungen laufen über **dieselbe Qualifikation** (`qualifyTenant`: Profil, Telefon, gültiger Betreibungsregister-Status, 3×-Miete). **Kein** paralleler „leichter“ Bewerbungsweg ohne diese Prüfung.
+- Neue Mietinserate setzen **`requiresCreditCheck` immer auf `true`**; das Feld ist nicht mehr abschaltbar — USP „nur qualifizierte Leads“.
+
+## Inserat-Akquise (Startphase)
+
+- **Füllung initial über Admin**, nicht nur Self-Service.
+- **Erlaubt u. a.:** Tutti.ch, UrbanHome.ch, Anibis.ch, Facebook-Gruppen, direkte Vermieter-Outreach, öffentliche Behördenquellen.
+- **Nicht erlaubt:** Homegate, ImmoScout (SMG / direkter Konkurrent) — **niemals** als Scraping- oder Import-Quelle verwenden oder dazu anleiten.
+- Import: URL oder Screenshot → automatische Extraktion/Umschreibung (Copyright-schonend). Ziel: **50+** echte private Inserate vor dem ersten Marketing-Push.
+
+## Monetarisierung
+
+- **Aktuell:** kostenlos (Cold-Start).
+- **Geplant u. a.:** Premium-Platzierung, Featured Listings, später ggf. Per-Lead; Zertifikat: **Enhanced Certificate** als Premium-Feature möglich.
+- **Explizit nie:** Pflicht-Abo für Mieter.
+
+## Design-Philosophie (Wohnen / Helvenda)
+
+- Premium, schweizerisch, vertrauenswürdig — kein generisches SaaS-Template.
+- **Akzentfarbe:** Teal `#18a87c`, sparsam.
+- **Keine Emojis in UI-Komponenten.**
+- Grosszügiger Whitespace; wenige Font-Gewichte (Regular/Bold).
+- Leitfrage: *Würde ein Schweizer Vermieter oder Mieter das als professionell einschätzen?*
+
+## Technischer Stack (Referenz)
+
+Next.js 14 App Router, PostgreSQL (Neon), Prisma, NextAuth v4, Vercel, Anthropic Claude (Parsing/Import), `@react-pdf/renderer` (Zertifikat-PDF), Subdomain via Cloudflare CNAME → Vercel.
+
+## Leitfrage für jede Änderung
+
+1. Hilft sie dem **Vermieter**, qualifizierte Leads zu bekommen, **oder** dem **Mieter**, sich schneller und überzeugender zu bewerben?
+2. Wenn weder noch: wozu existiert sie?
+
+**Onboarding:** Der Mieter investiert zuerst (Profil, Register, Zertifikat) und profitiert danach. **Friction kostet Conversion** — so einfach wie möglich halten.

@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 /**
  * Test / intern: PDF als Base64 senden, JSON-Ergebnis erhalten.
- * Produktiv läuft die Auswertung direkt in POST /api/rental-listings/[id]/contact.
+ * Produktiv: Auszug im Profil unter /profil/betreibungsregister; Bewerbungen via POST /api/rental-applications.
  */
 export async function POST(request: NextRequest) {
   try {

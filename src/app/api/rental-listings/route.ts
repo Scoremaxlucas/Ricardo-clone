@@ -387,7 +387,6 @@ export async function POST(request: NextRequest) {
       utilitiesPerMonth,
       depositAmount,
       availableFrom,
-      requiresCreditCheck,
       photos,
     } = body
 
@@ -452,7 +451,7 @@ export async function POST(request: NextRequest) {
         utilitiesPerMonth: utilN,
         depositAmount: depN,
         availableFrom: avail,
-        requiresCreditCheck: Boolean(requiresCreditCheck),
+        requiresCreditCheck: true,
         photos: JSON.stringify(photoArr),
         status: 'active',
       },

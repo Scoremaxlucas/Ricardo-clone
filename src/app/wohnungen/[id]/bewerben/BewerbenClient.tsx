@@ -73,7 +73,7 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
 
   const submit = async () => {
     setError(null)
-    if (requiresCreditCheck && !confirm) {
+    if (!confirm) {
       setError('Bitte bestätige die Checkbox.')
       return
     }
@@ -221,32 +221,32 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
             />
             <p className="mt-1 text-right text-xs text-slate-500">{message.length} / 500</p>
 
-            {requiresCreditCheck ? (
-              <>
-                <div className="mt-4 flex gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-900">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" aria-hidden />
-                  <span>Dein Betreibungsregisterauszug wird automatisch mitgeschickt.</span>
-                </div>
-                <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm text-slate-800">
-                  <input
-                    type="checkbox"
-                    checked={confirm}
-                    onChange={e => {
-                      setConfirm(e.target.checked)
-                      setError(null)
-                    }}
-                    className="mt-1"
-                  />
-                  <span>Ich bestätige, dass alle Angaben in meinem Profil korrekt und aktuell sind.</span>
-                </label>
-              </>
-            ) : null}
+            <div className="mt-4 flex gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-900">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" aria-hidden />
+              <span>
+                {requiresCreditCheck ?
+                  'Dein geprüfter Betreibungsregisterauszug aus dem Profil wird dem Vermieter mitgeteilt.'
+                : 'Deine Profilangaben werden dem Vermieter mitgeteilt.'}
+              </span>
+            </div>
+            <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm text-slate-800">
+              <input
+                type="checkbox"
+                checked={confirm}
+                onChange={e => {
+                  setConfirm(e.target.checked)
+                  setError(null)
+                }}
+                className="mt-1"
+              />
+              <span>Ich bestätige, dass alle Angaben in meinem Profil korrekt und aktuell sind.</span>
+            </label>
 
             {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
 
             <button
               type="button"
-              disabled={submitting || (requiresCreditCheck && !confirm)}
+              disabled={submitting || !confirm}
               onClick={submit}
               className="mt-5 w-full rounded-xl bg-[#18a87c] py-3.5 text-sm font-bold text-white shadow-md hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
             >

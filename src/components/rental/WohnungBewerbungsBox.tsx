@@ -158,12 +158,18 @@ export function WohnungBewerbungsBox({
               <span className="text-base font-semibold text-slate-600">/ Monat</span>
             </p>
 
-            {requiresCreditCheck ?
+            {userId && !alreadyApplied && notQualified ?
               <div className="mt-4 flex gap-2 rounded-xl bg-teal-50 px-3 py-3 text-xs leading-relaxed text-teal-900">
                 <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-800" aria-hidden />
                 <span>
-                  Im Profil fehlt noch der Betreibungsregisterauszug. Lade ihn dort einmalig hoch — er gilt für alle
-                  deine Bewerbungen.
+                  {issues.find(i => i.code.startsWith('CREDIT')) || (!creditCheckOk && requiresCreditCheck) ?
+                    'Betreibungsregister: Bitte im Profil hochladen lassen — einmal gültig für alle Bewerbungen auf Helvenda.'
+                  : issues.find(i => i.code === 'INCOME_TOO_LOW') ?
+                    'Einkommen: Für diese Miete braucht es eine höhere Einkommenskategorie oder eine günstigere Wohnung (3×-Regel).'
+                  : issues.find(i => i.code === 'CONTACT_PHONE_MISSING') ?
+                    'Bitte Telefonnummer im Mieterprofil hinterlegen — Vermieter erreichen dich so zuverlässig.'
+                  : issues[0]?.message ??
+                    'Profil oder Unterlagen vervollständigen — dann kannst du dich mit einem Klick bewerben.'}
                 </span>
               </div>
             : null}
