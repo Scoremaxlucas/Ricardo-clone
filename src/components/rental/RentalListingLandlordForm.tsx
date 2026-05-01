@@ -3,7 +3,6 @@
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
 import type { RentalListingLandlordInitial } from '@/lib/rental/rental-landlord-initial'
 import type { RentalListingStatus } from '@prisma/client'
-import { HelpCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
@@ -73,7 +72,6 @@ export function RentalListingLandlordForm({
   const [availableFrom, setAvailableFrom] = useState('')
   const [depositAmount, setDepositAmount] = useState('')
   const [description, setDescription] = useState('')
-  const [requiresCreditCheck, setRequiresCreditCheck] = useState(true)
   const [imageUrls, setImageUrls] = useState<string[]>([])
   const [listingStatus, setListingStatus] = useState<RentalListingStatus>('active')
   const [uploading, setUploading] = useState(false)
@@ -102,7 +100,6 @@ export function RentalListingLandlordForm({
     setDepositAmount(initial.depositAmount != null ? String(initial.depositAmount) : '')
     setAvailableFrom(initial.availableFrom.slice(0, 10))
     setDescription(initial.description)
-    setRequiresCreditCheck(initial.requiresCreditCheck)
     setImageUrls(initial.photos)
     if (mode === 'edit') {
       setListingStatus(initial.status)
@@ -237,7 +234,7 @@ export function RentalListingLandlordForm({
         depositAmount: depositAmount.trim() === '' ? null : depositAmount,
         availableFrom,
         description,
-        requiresCreditCheck,
+        requiresCreditCheck: true,
         photos: imageUrls,
         ...(mode === 'edit' ? { status: listingStatus } : {}),
       }
@@ -655,20 +652,11 @@ export function RentalListingLandlordForm({
             className="w-full rounded-lg border border-slate-300 px-3 py-2"
           />
         </div>
-        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-teal-100 bg-teal-50/40 p-3">
-          <input
-            type="checkbox"
-            checked={requiresCreditCheck}
-            onChange={e => setRequiresCreditCheck(e.target.checked)}
-            className="mt-1"
-          />
-          <span className="flex flex-1 items-start gap-2 text-sm text-slate-700">
-            <span>Betreibungsregisterauszug von Interessenten erforderlich (empfohlen)</span>
-            <span className="inline-flex shrink-0 text-teal-700" title="Schützt dich vor ungeeigneten Anfragen.">
-              <HelpCircle className="h-4 w-4" aria-hidden />
-            </span>
-          </span>
-        </label>
+        <div className="rounded-lg border border-teal-100 bg-teal-50/40 p-3 text-sm leading-relaxed text-slate-700">
+          <span className="font-semibold text-slate-900">Qualifizierte Bewerbungen: </span>
+          Interessenten benötigen ein vollständiges Mieterprofil, einen von Helvenda geprüften Betreibungsregisterauszug
+          und die 3×-Mietregel — das gilt für alle Inserate und ist nicht abschaltbar.
+        </div>
 
         <button
           type="submit"

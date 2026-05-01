@@ -157,7 +157,6 @@ export function IngestClient() {
   const [availableFrom, setAvailableFrom] = useState('')
   const [description, setDescription] = useState('')
   const [descriptionWasRewritten, setDescriptionWasRewritten] = useState(false)
-  const [requiresCreditCheck, setRequiresCreditCheck] = useState(true)
   const [imageUrls, setImageUrls] = useState<string[]>([])
 
   const [recognizedSource, setRecognizedSource] = useState('')
@@ -315,7 +314,6 @@ export function IngestClient() {
     setAvailableFrom(mapped.availableFrom.slice(0, 10))
     setDescription(mapped.description)
     setDescriptionWasRewritten(false)
-    setRequiresCreditCheck(mapped.requiresCreditCheck)
     setImageUrls(data.photos)
     setAiConfidence(row.confidence || 'low')
     setSourceUrlMeta(data.sourceUrl)
@@ -634,7 +632,6 @@ export function IngestClient() {
         setDepositAmount(dep != null && Number.isFinite(Number(dep)) ? String(Math.round(Number(dep))) : '')
         const avail = typeof d.availableFrom === 'string' ? d.availableFrom.trim() : ''
         setAvailableFrom(/^\d{4}-\d{2}-\d{2}$/.test(avail) ? avail : new Date().toISOString().slice(0, 10))
-        setRequiresCreditCheck(true)
         const imgs = rawPayload.images
         setImageUrls(Array.isArray(imgs) ? imgs.filter((u): u is string => typeof u === 'string') : [])
         const conf = d.confidence
@@ -774,7 +771,7 @@ export function IngestClient() {
         depositAmount: depositAmount.trim() === '' ? null : depositAmount,
         availableFrom,
         description,
-        requiresCreditCheck,
+        requiresCreditCheck: true,
         photos: imageUrls,
         importSource,
         importedFrom,
@@ -1376,15 +1373,11 @@ export function IngestClient() {
                 <p className="mt-1 text-xs text-amber-800">Bitte prüfen (mind. 50 Zeichen)</p>
               : null}
             </div>
-            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-teal-100 bg-teal-50/40 p-3">
-              <input
-                type="checkbox"
-                checked={requiresCreditCheck}
-                onChange={e => setRequiresCreditCheck(e.target.checked)}
-                className="mt-1"
-              />
-              <span className="text-sm text-slate-700">Betreibungsregisterauszug von Interessenten erforderlich</span>
-            </label>
+            <div className="rounded-lg border border-teal-100 bg-teal-50/40 p-3 text-sm leading-relaxed text-slate-700">
+              <span className="font-semibold text-slate-900">Qualifizierte Bewerbungen: </span>
+              Alle Inserate verlangen ein geprüftes Betreibungsregister im Mieterprofil sowie die 3×-Mietregel — nicht
+              abschaltbar (Helvenda-USP).
+            </div>
           </div>
 
           <div className="space-y-4 rounded-xl border border-rose-200 bg-rose-50/40 p-5">

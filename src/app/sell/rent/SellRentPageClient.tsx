@@ -8,7 +8,7 @@ import {
   SELL_RETURN_QUERY,
 } from '@/lib/sell-navigation'
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
-import { HelpCircle, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -39,7 +39,6 @@ export function SellRentPageClient() {
   const [availableFrom, setAvailableFrom] = useState('')
   const [depositAmount, setDepositAmount] = useState('')
   const [description, setDescription] = useState('')
-  const [requiresCreditCheck, setRequiresCreditCheck] = useState(true)
   const [imageUrls, setImageUrls] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -112,7 +111,7 @@ export function SellRentPageClient() {
           depositAmount: depositAmount.trim() === '' ? null : depositAmount,
           availableFrom,
           description,
-          requiresCreditCheck,
+          requiresCreditCheck: true,
           photos: imageUrls,
         }),
       })
@@ -346,25 +345,11 @@ export function SellRentPageClient() {
               className="w-full rounded-lg border border-gray-300 px-3 py-2"
             />
           </div>
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-teal-100 bg-teal-50/40 p-3">
-            <input
-              type="checkbox"
-              checked={requiresCreditCheck}
-              onChange={e => setRequiresCreditCheck(e.target.checked)}
-              className="mt-1"
-            />
-            <span className="flex flex-1 items-start gap-2 text-sm text-gray-700">
-              <span>
-                Betreibungsregisterauszug von Interessenten erforderlich (empfohlen)
-              </span>
-              <span
-                className="inline-flex shrink-0 text-teal-700"
-                title="Schützt dich vor ungeeigneten Anfragen. Interessenten müssen einen max. 3 Monate alten Auszug hochladen."
-              >
-                <HelpCircle className="h-4 w-4" aria-hidden />
-              </span>
-            </span>
-          </label>
+          <div className="rounded-lg border border-teal-100 bg-teal-50/40 p-3 text-sm leading-relaxed text-gray-700">
+            <span className="font-semibold text-gray-900">Qualifizierte Bewerbungen: </span>
+            Interessenten benötigen ein vollständiges Mieterprofil, einen von Helvenda geprüften Betreibungsregisterauszug
+            und die 3×-Mietregel — das gilt für alle Inserate und ist nicht abschaltbar.
+          </div>
 
           <button
             type="submit"
