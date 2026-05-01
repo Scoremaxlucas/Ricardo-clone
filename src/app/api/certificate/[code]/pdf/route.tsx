@@ -59,6 +59,18 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
   )
   const incomeLabel = incomeCategoryLabelDe(row.verifiedIncomeCategory as IncomeCategory)
 
+  const canton = (() => {
+    const v = (row.verifiedCreditCheckCanton || '').trim()
+    if (v && v !== 'CH' && v.length <= 3) {
+      return v
+    }
+    const result = row.tenantProfile?.creditCheckResult as { canton?: string } | null | undefined
+    if (result?.canton && String(result.canton).trim() !== 'CH') {
+      return String(result.canton).trim()
+    }
+    return null
+  })()
+
   const doc = (
     <CertificatePdfDocument
       certificateCode={row.certificateCode}
@@ -76,6 +88,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       creditCheckDate={row.verifiedCreditCheckDate}
       verifiedCreditCheckCanton={row.verifiedCreditCheckCanton}
       creditCheckResultJson={row.tenantProfile?.creditCheckResult ?? null}
+      canton={canton}
       verifyUrl={verifyUrl}
       qrDataUrl={qrDataUrl}
       year={new Date().getFullYear()}
