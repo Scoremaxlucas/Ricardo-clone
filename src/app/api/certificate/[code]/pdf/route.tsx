@@ -28,22 +28,24 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
   const { code: raw } = await ctx.params
   const certificateCode = normalizeCode(raw)
 
-  const row = await prisma.helvendaCertificate.findUnique({
+  const certificate = await prisma.helvendaCertificate.findUnique({
     where: { certificateCode },
     include: {
-      tenantProfile: { select: { creditCheckResult: true } },
+      tenantProfile: {
+        select: { creditCheckResult: true },
+      },
     },
   })
 
-  if (!row || row.userId !== userId) {
+  if (!certificate || certificate.userId !== userId) {
     return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 })
   }
 
-  if (row.status !== 'ACTIVE') {
+  if (certificate.status !== 'ACTIVE') {
     return NextResponse.json({ message: 'Zertifikat nicht aktiv' }, { status: 403 })
   }
 
-  const verifyUrl = `${WOHNEN_SITE_ORIGIN}/verify/${row.certificateCode}`
+  const verifyUrl = `${WOHNEN_SITE_ORIGIN}/verify/${certificate.certificateCode}`
   let qrDataUrl = ''
   try {
     qrDataUrl = await certificateVerifyQrDataUrl(verifyUrl)
@@ -52,51 +54,44 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
   }
 
   const employmentLine = employmentSummaryDe(
-    row.verifiedEmploymentStatus as EmploymentStatus,
-    row.verifiedEmployer,
+    certificate.verifiedEmploymentStatus as EmploymentStatus,
+    certificate.verifiedEmployer,
     null,
     null
   )
-  const incomeLabel = incomeCategoryLabelDe(row.verifiedIncomeCategory as IncomeCategory)
+  const incomeLabel = incomeCategoryLabelDe(certificate.verifiedIncomeCategory as IncomeCategory)
 
   const resolvedCanton = (() => {
-    const stored = (row.verifiedCreditCheckCanton || '').trim()
-    if (
-      stored &&
-      stored !== 'CH' &&
-      stored !== '' &&
-      stored !== '—' &&
-      stored.length <= 3
-    ) {
-      return stored
+    const stored = certificate.verifiedCreditCheckCanton
+    const storedTrim = (stored || '').trim()
+    if (storedTrim && storedTrim !== 'CH' && storedTrim !== '' && storedTrim.length === 2) {
+      return storedTrim
     }
-    const result = row.tenantProfile?.creditCheckResult as Record<string, unknown> | null
-    if (result?.canton != null) {
-      const c = String(result.canton).trim()
-      if (c && c !== 'CH' && c !== '—' && c.length <= 3) {
-        return c
-      }
+    const result = certificate.tenantProfile?.creditCheckResult as Record<string, string> | null
+    const fromProfile = result?.canton?.trim()
+    if (fromProfile && fromProfile !== 'CH' && fromProfile.length === 2) {
+      return fromProfile
     }
     return null
   })()
 
   const doc = (
     <CertificatePdfDocument
-      certificateCode={row.certificateCode}
-      issuedAt={row.issuedAt}
-      expiresAt={row.expiresAt}
-      firstName={row.verifiedFirstName}
-      lastName={row.verifiedLastName}
-      address={row.verifiedAddress}
-      zip={row.verifiedZip}
-      city={row.verifiedCity}
+      certificateCode={certificate.certificateCode}
+      issuedAt={certificate.issuedAt}
+      expiresAt={certificate.expiresAt}
+      firstName={certificate.verifiedFirstName}
+      lastName={certificate.verifiedLastName}
+      address={certificate.verifiedAddress}
+      zip={certificate.verifiedZip}
+      city={certificate.verifiedCity}
       employmentLine={employmentLine}
       incomeLabel={incomeLabel}
-      incomeQualifiesUpTo={row.incomeQualifiesUpTo}
-      creditStatus={row.verifiedCreditCheckStatus as 'CLEAR' | 'ENTRIES_PRESENT'}
-      creditCheckDate={row.verifiedCreditCheckDate}
-      verifiedCreditCheckCanton={row.verifiedCreditCheckCanton}
-      creditCheckResultJson={row.tenantProfile?.creditCheckResult ?? null}
+      incomeQualifiesUpTo={certificate.incomeQualifiesUpTo}
+      creditStatus={certificate.verifiedCreditCheckStatus as 'CLEAR' | 'ENTRIES_PRESENT'}
+      creditCheckDate={certificate.verifiedCreditCheckDate}
+      verifiedCreditCheckCanton={certificate.verifiedCreditCheckCanton}
+      creditCheckResultJson={certificate.tenantProfile?.creditCheckResult ?? null}
       canton={resolvedCanton}
       verifyUrl={verifyUrl}
       qrDataUrl={qrDataUrl}
@@ -106,8 +101,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
 
   try {
     const buffer = await renderToBuffer(doc)
-    const safeLast = row.verifiedLastName.replace(/[^\w\-äöüÄÖÜß]/gi, '_').slice(0, 40)
-    const filename = `Helvenda-Zertifikat-${safeLast}-${row.certificateCode}.pdf`
+    const safeLast = certificate.verifiedLastName.replace(/[^\w\-äöüÄÖÜß]/gi, '_').slice(0, 40)
+    const filename = `Helvenda-Zertifikat-${safeLast}-${certificate.certificateCode}.pdf`
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {

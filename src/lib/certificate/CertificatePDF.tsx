@@ -22,8 +22,13 @@ const FACTS_VALUE = 12
 const FACTS_SUB = 9
 const BR_STATUS = 14
 
+/** de-CH Tausenderzeichen (U+2019) → ASCII-Apostroph (U+0027) für zuverlässiges PDF-Rendering */
+function formatPdfNumberDeCh(n: number): string {
+  return n.toLocaleString('de-CH').replace(/\u2019/g, "'").replace(/\u2018/g, "'")
+}
+
 function formatQualifyMonthlyChf(maxRent: number): string {
-  const n = maxRent.toLocaleString('de-CH')
+  const n = formatPdfNumberDeCh(maxRent)
   return `Qualifiziert für Mieten bis CHF ${n} / Monat`
 }
 
@@ -170,7 +175,7 @@ const styles = StyleSheet.create({
     backgroundColor: LINE_LIGHT,
   },
   factsWrap: {
-    marginTop: 28,
+    marginTop: 20,
     paddingLeft: PAGE_PAD_X,
     paddingRight: PAGE_PAD_X,
     position: 'relative',
@@ -318,7 +323,7 @@ const styles = StyleSheet.create({
   decLab: {
     fontFamily: HF,
     fontSize: 6,
-    color: '#c0c0c0',
+    color: '#b0b0b0',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: 4,
@@ -326,12 +331,12 @@ const styles = StyleSheet.create({
   decVal: {
     fontFamily: HFB,
     fontSize: 9,
-    color: '#9e9e9e',
+    color: '#888888',
   },
   decSub: {
     fontFamily: HF,
     fontSize: 7.5,
-    color: '#b0b0b0',
+    color: '#a0a0a0',
     marginTop: 2,
   },
   decDiamondLine: {
@@ -405,27 +410,20 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     textAlign: 'center',
   },
-  sealOrn: {
-    fontFamily: HF,
-    fontSize: 6,
-    color: MUTED,
-    textAlign: 'center',
-    marginTop: 2,
-  },
-  sealLine3: {
+  sealLine2: {
     fontFamily: HFB,
     fontSize: 8,
     color: INK,
     letterSpacing: 2,
     textAlign: 'center',
-    marginTop: 2,
+    marginTop: 4,
   },
   sealYear: {
     fontFamily: HF,
     fontSize: 7,
     color: LABEL,
     textAlign: 'center',
-    marginTop: 3,
+    marginTop: 4,
   },
 })
 
@@ -477,7 +475,8 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
 
   const holderLine = `${firstName} ${lastName}`.trim()
   const statusClear = creditStatus === 'CLEAR'
-  const brSub = `Ausgestellt ${formatDate(creditCheckDate)}${canton ? ` · Kanton ${canton}` : ''}`
+  const kantonsText = canton ? ` · Kanton ${canton}` : ''
+  const brSub = `Ausgestellt ${formatDate(creditCheckDate)}${kantonsText}`
 
   const expiry = expiryPresentation(expiresAt)
   const verifyPathDisplay = displayVerifyHostPath(verifyUrl)
@@ -562,8 +561,7 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
               <View style={styles.sealOuter}>
                 <View style={styles.sealInner}>
                   <Text style={styles.sealLine1}>HELVENDA</Text>
-                  <Text style={styles.sealOrn}>◆</Text>
-                  <Text style={styles.sealLine3}>VERIFIZIERT</Text>
+                  <Text style={styles.sealLine2}>VERIFIZIERT</Text>
                   <Text style={styles.sealYear}>{String(year)}</Text>
                 </View>
               </View>
@@ -612,7 +610,7 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
           </View>
 
           <Text style={styles.decDiamondLine}>
-            {`◆  HELVENDA WOHNUNGEN  ◆  QUALITÄTSNACHWEIS  ◆  ${year}  ◆`}
+            {`\u00B7  HELVENDA WOHNUNGEN  \u00B7  QUALITÄTSNACHWEIS  \u00B7  ${year}  \u00B7`}
           </Text>
         </View>
 
