@@ -144,6 +144,20 @@ export function LandlordRentalListingsClient({ initialListings }: Props) {
                 Verfügbar ab{' '}
                 {formatDate(l.availableFrom)}
               </p>
+              {l.listingExpiresOn ?
+                <p className="mt-1 text-xs text-slate-600">
+                  Gültig bis{' '}
+                  <span className="font-medium text-slate-800">
+                    {formatDate(`${l.listingExpiresOn}T12:00:00`)}
+                  </span>
+                </p>
+              : l.hasMonitoringHttpUrl ?
+                <p className="mt-1 text-xs text-teal-800">
+                  Original-URL wird täglich geprüft — kein Kalender-Enddatum nötig.
+                </p>
+              : <p className="mt-1 text-xs text-amber-900">
+                  Kein Enddatum hinterlegt — bitte unter Bearbeiten ein «Gültig bis» setzen.
+                </p>}
             </div>
           </div>
 

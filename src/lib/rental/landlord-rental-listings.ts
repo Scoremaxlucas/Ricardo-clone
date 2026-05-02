@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { RentalApplicationStatus, RentalListingStatus } from '@prisma/client'
+import { rentalListingHasMonitoringHttpUrl } from '@/lib/rental/rental-listing-expiry-on'
 import { parseRentalListingPhotosJson } from '@/lib/rental/rental-listings-public'
 
 export type LandlordListingRowSerialized = {
@@ -12,6 +13,10 @@ export type LandlordListingRowSerialized = {
   areaSqm: number
   rentPerMonth: number
   availableFrom: string
+  /** YYYY-MM-DD oder null */
+  listingExpiresOn: string | null
+  /** true wenn `importedFrom` mit https:// — Enddatum dann optional */
+  hasMonitoringHttpUrl: boolean
   status: RentalListingStatus
   thumbUrl: string | null
   applicationCount: number
@@ -74,6 +79,8 @@ export async function loadLandlordRentalListingsDashboard(userId: string): Promi
       areaSqm: l.areaSqm,
       rentPerMonth: l.rentPerMonth,
       availableFrom: l.availableFrom.toISOString(),
+      listingExpiresOn: l.listingExpiresOn ?? null,
+      hasMonitoringHttpUrl: rentalListingHasMonitoringHttpUrl(l.importedFrom),
       status: l.status,
       thumbUrl: urls[0] ?? null,
       applicationCount: totalMap.get(l.id) ?? 0,
