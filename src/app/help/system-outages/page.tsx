@@ -1,7 +1,5 @@
 'use client'
 
-import { Footer } from '@/components/layout/Footer'
-import { Header } from '@/components/layout/Header'
 import { useLanguage } from '@/contexts/LanguageContext'
 import {
   AlertTriangle,
@@ -22,10 +20,7 @@ export default function SystemOutagesPage() {
   const { t } = useLanguage()
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <Header />
-
-      <main className="flex-1">
+    <main className="flex-1">
         <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
           {/* Back Button */}
           <Link
@@ -278,9 +273,6 @@ export default function SystemOutagesPage() {
             </section>
           </div>
         </div>
-      </main>
-
-      <Footer />
-    </div>
+    </main>
   )
 }

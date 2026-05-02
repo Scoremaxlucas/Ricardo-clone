@@ -19,6 +19,11 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
 }
 
+/** Kurzer EN-Hinweis für CH-Vierfeldrigkeit (transaktionale Mieter-Mails). */
+function wohnenEmailBilingualFooter(): string {
+  return `<p style="margin:20px 0 0 0;padding-top:14px;border-top:1px solid #e5e7eb;font-size:12px;line-height:1.55;color:#6b7280;"><strong>English:</strong> Automated message from Helvenda Wohnungen (Swiss rentals). For support, use the contact or help section on the website. Do not rely on replies to this sender address.</p>`
+}
+
 function wohnenOrigin(): string {
   return WOHNEN_SITE_ORIGIN.replace(/\/$/, '')
 }
@@ -419,6 +424,7 @@ ${buttonRow(link, 'Jetzt erneuern')}
 <p style="margin:20px 0 0 0;font-size:14px;color:#4b5563;"><strong>Wo bekommst du den Auszug?</strong><br>
 Bestelle ihn beim Betreibungsamt deines Wohnorts (ca. CHF 17.—).<br>
 Online: <a href="https://betreibungsaemter.ch" style="color:#18a87c;">betreibungsaemter.ch</a></p>
+${wohnenEmailBilingualFooter()}
 `
   const subject = 'Dein Betreibungsregisterauszug läuft in 3 Tagen ab ⚠️'
   const text = [
@@ -427,6 +433,8 @@ Online: <a href="https://betreibungsaemter.ch" style="color:#18a87c;">betreibung
     `Dein Auszug läuft am ${exp} ab.`,
     link,
     'betreibungsaemter.ch',
+    '',
+    'EN: Automated reminder from Helvenda Wohnungen — renew your debt collection register excerpt before it expires.',
   ].join('\n')
   return { subject, html: layout(inner), text }
 }
@@ -450,6 +458,7 @@ export function templateTenantCreditExpiryReminder14d(input: {
 ${buttonRow(link, 'Auszug vorbereiten')}
 <p style="margin:20px 0 0 0;font-size:14px;color:#4b5563;"><strong>Wo bestellen?</strong><br>
 Betreibungsamt deines Wohnorts oder online: <a href="https://betreibungsaemter.ch" style="color:#18a87c;">betreibungsaemter.ch</a></p>
+${wohnenEmailBilingualFooter()}
 `
   const subject = 'Erinnerung: Betreibungsregisterauszug läuft in ca. 14 Tagen ab'
   const text = [
@@ -458,6 +467,8 @@ Betreibungsamt deines Wohnorts oder online: <a href="https://betreibungsaemter.c
     `Dein Auszug läuft am ${exp} ab (ca. 14 Tage).`,
     link,
     'betreibungsaemter.ch',
+    '',
+    'EN: Early reminder from Helvenda Wohnungen — order a new register excerpt before the current one expires.',
   ].join('\n')
   return { subject, html: layout(inner), text }
 }
@@ -489,6 +500,7 @@ export function templateTenantCertificateExpirySoon(input: {
 <p style="margin:0 0 14px 0;">Nach Ablauf funktionieren PDF und Prüf-Link für Vermieter nicht mehr. Stelle bei Bedarf ein neues Zertifikat aus, sobald dein Betreibungsregister wieder gültig ist.</p>
 ${buttonRow(zertLink, 'Zum Qualitätsnachweis')}
 <p style="margin:16px 0 0 0;font-size:14px;color:#4b5563;">Register erneuern: <a href="${escapeHtml(registerLink)}" style="color:#18a87c;">${escapeHtml(registerLink)}</a></p>
+${wohnenEmailBilingualFooter()}
 `
   const subject =
     input.daysBefore === 14 ?
@@ -503,6 +515,8 @@ ${buttonRow(zertLink, 'Zum Qualitätsnachweis')}
     '',
     zertLink,
     registerLink,
+    '',
+    'EN: Your Helvenda tenant certificate is expiring soon — renew your register excerpt and re-issue if needed.',
   ].join('\n')
   return { subject, html: layout(inner), text }
 }
@@ -679,6 +693,7 @@ export function templateTenantCertificateExpired(input: {
 <p style="margin:0 0 14px 0;">Wenn du deinen Betreibungsregisterauszug erneuerst und erneut von uns geprüft wird, kannst du ein neues Zertifikat ausstellen lassen — ideal für Bewerbungen ausserhalb von Helvenda.</p>
 ${buttonRow(input.renewLink, 'Betreibungsregister erneuern')}
 <p style="margin:20px 0 0 0;font-size:13px;color:#6b7280;">Hinweis: Der Verifikations-Link auf deinem alten PDF ist nicht mehr gültig.</p>
+${wohnenEmailBilingualFooter()}
 `
   const subject = 'Dein Helvenda Qualitätsnachweis ist abgelaufen'
   const text = [
@@ -687,6 +702,8 @@ ${buttonRow(input.renewLink, 'Betreibungsregister erneuern')}
     'Dein Helvenda Qualitätsnachweis ist abgelaufen.',
     'Erneuere deinen Betreibungsregisterauszug, um ein neues Zertifikat auszustellen.',
     input.renewLink,
+    '',
+    'EN: Your Helvenda certificate has expired — upload a new register excerpt to issue a new certificate.',
   ].join('\n')
   return { subject, html: layout(inner), text }
 }

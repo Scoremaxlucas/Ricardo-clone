@@ -35,6 +35,7 @@ Dieses Dokument verbindet **Marktstrategie** (kostenloser Qualitätsnachweis →
 - [x] **Landlord one-pager** (Hilfe-Center): [`/help/wohnungen-qualitaetsnachweis-pruefen`](/help/wohnungen-qualitaetsnachweis-pruefen) — Checkliste für Vermieter (DE/EN/FR/IT in Übersetzungen).  
 - [x] **Analytics**: API `GET /api/certificate/verify/…` schreibt `analytics_events` mit `name: certificate_verify` und `metadata.outcome` (`VALID`, `EXPIRED`, `REVOKED`, `NOT_FOUND`, `SUPERSEDED`, `INVALID_CODE`), Bots per UA gefiltert.  
 - [x] **Erneuerung**: Cron **ca. 14 Tage** und **3 Tage** vor Ablauf — Betreibungsregister (`/api/cron/credit-check-expiry`) und Qualitätsnachweis (`/api/cron/certificate-expiry-reminders`, Vercel 08:15 UTC). Nach neuem Upload setzen die APIs die Reminder-Felder zurück.
+- [x] **Wohnen-Subdomain & Hilfe**: `/help`, `/contact`, `/faq` und `POST /api/contact` sind auf `wohnen.helvenda.ch` erlaubt; `DualHostDocumentShell` vermeidet doppeltes Marktplatz-Header/Footer-Chrome. Transaktionale Mieter-Mails: DE + kurzer EN-Block.
 
 ### P1 — Liquidität
 

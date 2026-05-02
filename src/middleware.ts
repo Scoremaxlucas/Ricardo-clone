@@ -74,6 +74,7 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/api/admin/rental-ingest')) return true
   if (pathname.startsWith('/api/public/rental-listing-invite')) return true
   if (pathname.startsWith('/api/rental-applications')) return true
+  if (pathname.startsWith('/api/contact')) return true
   if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
   if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
   if (pathname.startsWith('/api/tenant-profile')) return true
@@ -100,6 +101,9 @@ function isAllowedOnWohnen(pathname: string): boolean {
   }
   if (pathname === '/verify' || pathname.startsWith('/verify/')) return true
   if (pathname === '/zertifikat') return true
+  if (pathname === '/help' || pathname.startsWith('/help/')) return true
+  if (pathname === '/contact' || pathname.startsWith('/contact')) return true
+  if (pathname === '/faq' || pathname.startsWith('/faq')) return true
   return false
 }
 

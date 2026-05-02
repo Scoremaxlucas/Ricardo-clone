@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
 import { Mail, MessageCircle, Phone, Send, CheckCircle, AlertCircle } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -70,38 +68,32 @@ export default function ContactPage() {
 
   if (submitted) {
     return (
-      <div className="flex min-h-screen flex-col bg-gray-50">
-        <Header />
-        <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:py-12">
-          <div className="rounded-lg bg-white p-4 text-center shadow-md sm:p-8">
-            <CheckCircle className="mx-auto mb-3 h-12 w-12 text-green-600 sm:mb-4 sm:h-16 sm:w-16" />
-            <h2 className="mb-2 text-xl font-bold text-gray-900 sm:text-2xl">{t.contact.messageSent}</h2>
-            <p className="mb-4 text-sm text-gray-600 sm:mb-6 sm:text-base">{t.contact.messageSentDesc}</p>
-            <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
-              <Link
-                href="/"
-                className="rounded-lg bg-primary-600 px-5 py-2.5 text-sm text-white transition-colors hover:bg-primary-700 sm:px-6 sm:py-3 sm:text-base"
-              >
-                {t.contact.backToHome}
-              </Link>
-              <button
-                onClick={() => setSubmitted(false)}
-                className="rounded-lg border-2 border-primary-600 bg-white px-5 py-2.5 text-sm text-primary-600 transition-colors hover:bg-primary-50 sm:px-6 sm:py-3 sm:text-base"
-              >
-                {t.contact.sendAnother}
-              </button>
-            </div>
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:py-12">
+        <div className="rounded-lg bg-white p-4 text-center shadow-md sm:p-8">
+          <CheckCircle className="mx-auto mb-3 h-12 w-12 text-green-600 sm:mb-4 sm:h-16 sm:w-16" />
+          <h2 className="mb-2 text-xl font-bold text-gray-900 sm:text-2xl">{t.contact.messageSent}</h2>
+          <p className="mb-4 text-sm text-gray-600 sm:mb-6 sm:text-base">{t.contact.messageSentDesc}</p>
+          <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
+            <Link
+              href="/"
+              className="rounded-lg bg-primary-600 px-5 py-2.5 text-sm text-white transition-colors hover:bg-primary-700 sm:px-6 sm:py-3 sm:text-base"
+            >
+              {t.contact.backToHome}
+            </Link>
+            <button
+              onClick={() => setSubmitted(false)}
+              className="rounded-lg border-2 border-primary-600 bg-white px-5 py-2.5 text-sm text-primary-600 transition-colors hover:bg-primary-50 sm:px-6 sm:py-3 sm:text-base"
+            >
+              {t.contact.sendAnother}
+            </button>
           </div>
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </main>
     )
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <Header />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:py-12">
+    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:py-12">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:mb-4 sm:text-4xl">{t.contact.title}</h1>
@@ -273,8 +265,6 @@ export default function ContactPage() {
             </div>
           </div>
         </div>
-      </main>
-      <Footer />
-    </div>
+    </main>
   )
 }

@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
 import { Search, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 
@@ -84,9 +82,7 @@ export default function FAQPage() {
     .filter(category => category.questions.length > 0)
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <Header />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:py-12">
+    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:py-12">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:mb-4 sm:text-4xl">{t.faq.title}</h1>
@@ -210,8 +206,6 @@ export default function FAQPage() {
             {t.faq.contactUs}
           </Link>
         </div>
-      </main>
-      <Footer />
-    </div>
+    </main>
   )
 }

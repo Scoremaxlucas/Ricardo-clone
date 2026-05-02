@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
 import {
   Search,
   BookOpen,
@@ -128,9 +126,7 @@ export default function HelpPage() {
   })
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <Header />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:py-12 md:py-16">
+    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:py-12 md:py-16">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="mb-2 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl md:text-4xl">{t.help.title}</h1>
@@ -259,8 +255,6 @@ export default function HelpPage() {
             </Link>
           </div>
         </div>
-      </main>
-      <Footer />
-    </div>
+    </main>
   )
 }

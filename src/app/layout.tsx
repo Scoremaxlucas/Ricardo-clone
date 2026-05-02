@@ -94,9 +94,10 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const h = await headers()
   const isWohnenMatching = isWohnenMatchingHostFromHeaders(h)
+  const htmlLang = isWohnenMatching ? 'de-CH' : 'de'
 
   return (
-    <html lang="de" className="h-full">
+    <html lang={htmlLang} className="h-full">
       <head>
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
         <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />

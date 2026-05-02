@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
 import { ArrowLeft, BookOpen, CheckCircle, AlertCircle, Info } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 
@@ -16,32 +14,26 @@ export default function HelpArticlePage() {
 
   if (!article) {
     return (
-      <div className="flex min-h-screen flex-col bg-gray-50">
-        <Header />
-        <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12">
-          <div className="rounded-lg bg-white p-8 text-center shadow-md">
-            <AlertCircle className="mx-auto mb-4 h-16 w-16 text-gray-400" />
-            <h2 className="mb-2 text-2xl font-bold text-gray-900">
-              {t.helpArticle.articleNotFound}
-            </h2>
-            <p className="mb-6 text-gray-600">{t.helpArticle.articleNotFoundDesc}</p>
-            <Link
-              href="/help"
-              className="inline-block rounded-lg bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
-            >
-              {t.helpArticle.backToHelpCenter}
-            </Link>
-          </div>
-        </main>
-        <Footer />
-      </div>
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12">
+        <div className="rounded-lg bg-white p-8 text-center shadow-md">
+          <AlertCircle className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+          <h2 className="mb-2 text-2xl font-bold text-gray-900">
+            {t.helpArticle.articleNotFound}
+          </h2>
+          <p className="mb-6 text-gray-600">{t.helpArticle.articleNotFoundDesc}</p>
+          <Link
+            href="/help"
+            className="inline-block rounded-lg bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
+          >
+            {t.helpArticle.backToHelpCenter}
+          </Link>
+        </div>
+      </main>
     )
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <Header />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12">
+    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12">
         {/* Back Button */}
         <Link
           href="/help"
@@ -125,8 +117,6 @@ export default function HelpArticlePage() {
             </div>
           </div>
         </article>
-      </main>
-      <Footer />
-    </div>
+    </main>
   )
 }
