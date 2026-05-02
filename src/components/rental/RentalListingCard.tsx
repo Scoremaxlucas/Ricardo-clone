@@ -146,7 +146,7 @@ export function RentalListingCard({
           ) : null}
         </div>
       </div>
-      <div className="flex flex-1 flex-col rounded-b-2xl p-4">
+      <div className="flex min-h-0 flex-1 flex-col rounded-b-2xl p-4">
         <h3 className="line-clamp-2 min-h-[calc(17px*1.4*2)] overflow-hidden text-[17px] font-bold leading-[1.4] text-[#0d2b1f] group-hover:text-teal-800">
           {l.title}
         </h3>
@@ -154,25 +154,27 @@ export function RentalListingCard({
           {l.rooms} Zi. · {l.areaSqm} m²
           {l.floor != null && l.floor !== undefined ? ` · Etage ${l.floor}` : ''}
         </p>
-        <p className="mt-2 text-xl font-bold text-[#18a87c] md:text-[28px] md:leading-none">{formatCHF(l.rentPerMonth)} / Monat</p>
-        {l.utilitiesPerMonth != null ?
-          <p className="text-xs text-slate-500">+ NK {formatCHF(l.utilitiesPerMonth)}</p>
-        : null}
-        <p className="mt-2 flex items-center gap-1 text-xs text-slate-600">
-          <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
-          {l.city} · {l.canton}
-        </p>
-        {available ?
-          <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
-            <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            Verfügbar ab {formatDate(available)}
-          </p>
-        : null}
         {l.matchHighlights && l.matchHighlights.length > 0 ? (
           <p className="mt-2 text-xs font-medium text-emerald-700">
             {l.matchHighlights.slice(0, 2).join(' · ')}
           </p>
         ) : null}
+        {/* Füllt den Rest: Miete + Meta sitzen unten gleich hoch in Raster-Karten */}
+        <div className="min-h-[0.5rem] flex-1" aria-hidden />
+        <p className="text-xl font-bold text-[#18a87c] md:text-[28px] md:leading-none">{formatCHF(l.rentPerMonth)} / Monat</p>
+        {l.utilitiesPerMonth != null ?
+          <p className="text-xs text-slate-500">+ NK {formatCHF(l.utilitiesPerMonth)}</p>
+        : <div className="h-[1.125rem]" aria-hidden />}
+        <p className="mt-2 flex items-center gap-1 text-xs text-slate-600">
+          <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
+          {l.city} · {l.canton}
+        </p>
+        {available ?
+          <p className="mt-1 flex min-h-[1.125rem] items-center gap-1 text-xs text-slate-500">
+            <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            Verfügbar ab {formatDate(available)}
+          </p>
+        : <div className="mt-1 min-h-[1.125rem]" aria-hidden />}
       </div>
     </>
   )

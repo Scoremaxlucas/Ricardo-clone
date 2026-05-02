@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   },
   hero: {
     paddingHorizontal: PAD,
-    marginTop: 28,
+    marginTop: 22,
   },
   heroKicker: {
     fontSize: 7,
@@ -135,17 +135,11 @@ const styles = StyleSheet.create({
     color: INK,
     lineHeight: 1.05,
   },
-  heroSub: {
-    fontSize: 12,
-    fontFamily: HF,
-    color: MUTED,
-    marginTop: 8,
-  },
   sepLight: {
     height: 0.5,
     backgroundColor: LINE,
     marginHorizontal: PAD,
-    marginTop: 20,
+    marginTop: 16,
   },
   factsOuter: {
     paddingHorizontal: PAD,
@@ -443,7 +437,6 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
         <View style={styles.hero}>
           <Text style={styles.heroKicker}>AUSGESTELLT FUER</Text>
           <Text style={styles.heroName}>{holder}</Text>
-          <Text style={styles.heroSub}>{employmentLine}</Text>
         </View>
 
         <View style={styles.sepLight} />
@@ -523,9 +516,7 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
             <Text style={styles.qrHead}>ECHTHEIT PRUEFEN</Text>
             <Text style={styles.qrUrl}>{verifyPath}</Text>
             <Text style={styles.qrCode}>{certificateCode}</Text>
-            <Text style={styles.qrFoot}>
-              Dieser Code ist einmalig und faelschungssicher.
-            </Text>
+            <Text style={styles.qrFoot}>Code einmalig — Online gegen Referenz pruefbar.</Text>
           </View>
         </View>
 

@@ -123,77 +123,75 @@ export function ZertifikatClient({
     creditCheckExpiresAt ? formatDate(creditCheckExpiresAt) : '—'
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center bg-[#f5fdfb] px-5 py-12">
+    <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center bg-[#f5fdfb] px-5 pb-14 pt-20 sm:pt-24">
       <div className="w-full max-w-md text-center">
         {phase === 'success' && code ?
           <>
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#e8f7f2] text-[#107a5a]">
               <CheckCircle2 className="h-12 w-12 animate-helvenda-cert-check" strokeWidth={2} />
             </div>
-            <h1 className="mt-8 text-2xl font-extrabold text-[#0d2b1f]">Zertifikat ausgestellt ✓</h1>
-            <p className="mt-3 font-mono text-sm font-semibold tracking-[0.2em] text-[#8aa89e]">{code}</p>
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
+            <h1 className="mt-8 text-2xl font-extrabold text-[#0d2b1f]">Dein Qualitätsnachweis ist bereit</h1>
+            <p className="mt-2 text-sm text-[#5a7a6e]">Zertifikats-Code</p>
+            <p className="mt-1 font-mono text-sm font-semibold tracking-[0.18em] text-[#0d2b1f]">{code}</p>
+            <div className="mx-auto mt-10 w-full max-w-sm space-y-3">
               <button
                 type="button"
                 onClick={downloadPdf}
-                className="rounded-xl bg-[#18a87c] px-6 py-3 text-sm font-bold text-white shadow-md hover:opacity-95"
+                className="w-full rounded-xl bg-[#18a87c] px-6 py-3.5 text-sm font-bold text-white shadow-md hover:opacity-95"
               >
                 PDF herunterladen
               </button>
-              <button
-                type="button"
-                onClick={() => void copyVerifyLink()}
-                className="rounded-xl border-2 border-[#18a87c] bg-white px-6 py-3 text-sm font-bold text-[#107a5a] hover:bg-[#f5fdfb]"
-              >
-                Prüf-Link kopieren
-              </button>
-              <button
-                type="button"
-                onClick={() => void copyCertificateCode()}
-                className="rounded-xl border-2 border-[#18a87c] bg-white px-6 py-3 text-sm font-bold text-[#107a5a] hover:bg-[#f5fdfb]"
-              >
-                Code kopieren
-              </button>
-              <Link
-                href="/profil"
-                className="inline-flex items-center justify-center rounded-xl border-2 border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
-              >
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => void copyVerifyLink()}
+                  className="rounded-xl border-2 border-[#18a87c] bg-white px-3 py-3 text-xs font-bold text-[#107a5a] hover:bg-[#f5fdfb] sm:text-[13px]"
+                >
+                  Link kopieren
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void copyCertificateCode()}
+                  className="rounded-xl border-2 border-[#18a87c] bg-white px-3 py-3 text-xs font-bold text-[#107a5a] hover:bg-[#f5fdfb] sm:text-[13px]"
+                >
+                  Code kopieren
+                </button>
+              </div>
+              {verifyPageUrl ?
+                <a
+                  href={verifyPageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block text-center text-sm font-semibold text-[#107a5a] underline-offset-2 hover:underline"
+                >
+                  Prüfseite in neuem Tab öffnen
+                </a>
+              : null}
+              <Link href="/profil" className="block pt-1 text-center text-sm font-medium text-slate-500 hover:text-slate-700">
                 Zum Profil
               </Link>
             </div>
             <div className="mx-auto mt-10 max-w-lg rounded-2xl border border-[#d4eee4] bg-white px-5 py-5 text-left shadow-sm">
-              <p className="text-sm font-bold text-[#0d2b1f]">So nutzt du den Nachweis ausserhalb von Helvenda</p>
-              <ul className="mt-3 space-y-2 text-sm leading-relaxed text-[#5a7a6e]">
+              <p className="text-sm font-bold text-[#0d2b1f]">Für Bewerbungen ausserhalb Helvenda</p>
+              <ul className="mt-3 space-y-2.5 text-sm leading-relaxed text-[#5a7a6e]">
                 <li className="flex gap-2">
-                  <span className="shrink-0 text-[#107a5a]">1.</span>
+                  <span className="shrink-0 font-bold text-[#107a5a]">·</span>
                   <span>
-                    <strong className="text-[#0d2b1f]">PDF</strong> der Bewerbung beilegen — wie einen klassischen
-                    Bewerbungsnachweis.
+                    <strong className="text-[#0d2b1f]">PDF</strong> anhängen — wie ein klassischer Nachweis.
                   </span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="shrink-0 text-[#107a5a]">2.</span>
+                  <span className="shrink-0 font-bold text-[#107a5a]">·</span>
                   <span>
-                    <strong className="text-[#0d2b1f]">Prüf-Link</strong> in die E-Mail oder Signatur setzen, damit
-                    Vermieter den Stand selbst prüfen können.
-                  </span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="shrink-0 text-[#107a5a]">3.</span>
-                  <span>
-                    Auf Helvenda bewirbst du dich danach mit einem Klick auf passende Inserate — Profil und Nachweis
-                    sind bereits verbunden.
+                    <strong className="text-[#0d2b1f]">Link oder Code</strong> in die Mail setzen — Vermieter prüfen
+                    den Stand online.
                   </span>
                 </li>
               </ul>
-              {verifyPageUrl ?
-                <p className="mt-4 break-all text-left text-xs text-[#8aa89e]">
-                  Öffentliche Prüfseite:{' '}
-                  <a href={verifyPageUrl} className="font-mono font-semibold text-[#107a5a] underline" target="_blank" rel="noreferrer">
-                    {verifyPageUrl}
-                  </a>
-                </p>
-              : null}
+              <p className="mt-4 text-xs leading-relaxed text-[#8aa89e]">
+                Auf Helvenda bleibt dein Profil mit diesem Nachweis verknüpft; passende Inserate bewirbst du mit einem
+                Klick.
+              </p>
             </div>
           </>
         : phase === 'loading' ?
