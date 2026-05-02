@@ -1,7 +1,11 @@
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { CreditCertificateDisplayStatus } from '@/lib/certificate/issueCertificate'
 
-/** Helvenda Wohnungen — Qualitätsnachweis PDF (Flagship-Layout, druckfreundlich, nur Standard-PDF-Schriften) */
+/**
+ * Helvenda Wohnungen — Qualitätsnachweis PDF
+ * Flagship: symmetrische Faktenzeilen, klassische Titelschrift, Umbruch für lange Texte.
+ * Nur Standard-PDF-Schriften (Helvetica, Times, Courier).
+ */
 const TEAL = '#0d6b52'
 const TEAL_LIGHT = '#e8f4f0'
 const TEAL_ACCENT = '#18a87c'
@@ -18,11 +22,13 @@ const FOOTER_BG = '#0f1412'
 const ORANGE = '#c45c12'
 const RED = '#a82828'
 const DISCLAIMER = '#5c6560'
+const FACTS_BG = '#fafbf9'
 const PAD_OUTER = 22
 const PAD = 40
 const HF = 'Helvetica'
 const HFB = 'Helvetica-Bold'
 const CF = 'Courier'
+const TFB = 'Times-Bold'
 
 function formatNumber(n: number): string {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'")
@@ -73,7 +79,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.75,
     borderColor: SHEET_EDGE,
     position: 'relative',
-    paddingBottom: 36,
+    paddingBottom: 38,
   },
   topRuleTeal: {
     height: 3,
@@ -130,13 +136,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   docTitle: {
-    fontSize: 8,
-    fontFamily: HFB,
+    fontSize: 9,
+    fontFamily: TFB,
     color: INK,
-    letterSpacing: 2.8,
+    letterSpacing: 2.4,
   },
   docTitleRule: {
-    width: 112,
+    width: 120,
     height: 1.5,
     backgroundColor: TEAL_ACCENT,
     marginTop: 6,
@@ -145,40 +151,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: PAD,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     marginHorizontal: PAD,
     marginTop: 4,
     borderWidth: 0.75,
     borderColor: LINE,
-    backgroundColor: '#fafbf9',
+    backgroundColor: FACTS_BG,
   },
   registryLabel: {
     fontSize: 6.5,
     fontFamily: HFB,
     color: LABEL,
     letterSpacing: 1.4,
+    flexShrink: 0,
+    paddingRight: 8,
+  },
+  registryCodeWrap: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'flex-end',
   },
   registryCode: {
-    fontSize: 9,
+    fontSize: 8.5,
     fontFamily: CF,
     color: INK,
-    letterSpacing: 0.4,
+    letterSpacing: 0.35,
+    textAlign: 'right',
   },
   heroRow: {
     flexDirection: 'row',
     paddingHorizontal: PAD,
-    marginTop: 22,
-    alignItems: 'flex-end',
-    gap: 20,
+    marginTop: 20,
+    alignItems: 'flex-start',
   },
   heroCol: {
     flex: 1,
     minWidth: 0,
+    maxWidth: 398,
     borderLeftWidth: 3,
     borderLeftColor: TEAL_ACCENT,
     paddingLeft: 14,
     paddingVertical: 4,
+    paddingRight: 8,
   },
   heroKicker: {
     fontSize: 6.5,
@@ -188,19 +203,20 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   heroName: {
-    fontSize: 22,
+    fontSize: 21,
     fontFamily: HFB,
     color: INK,
-    lineHeight: 1.08,
-    letterSpacing: -0.2,
+    lineHeight: 1.12,
+    letterSpacing: -0.15,
+    width: '100%',
   },
   heroPromise: {
-    marginTop: 10,
-    fontSize: 8,
+    marginTop: 9,
+    fontSize: 7.5,
     fontFamily: HF,
     color: MUTED,
-    lineHeight: 1.45,
-    maxWidth: 340,
+    lineHeight: 1.48,
+    width: '100%',
   },
   sealOuter: {
     width: 100,
@@ -212,6 +228,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    marginTop: 2,
   },
   sealInner: {
     width: 82,
@@ -245,34 +262,36 @@ const styles = StyleSheet.create({
   },
   factsFrame: {
     marginHorizontal: PAD,
-    marginTop: 20,
+    marginTop: 18,
     borderWidth: 0.75,
     borderColor: LINE,
-    paddingTop: 14,
-    paddingBottom: 12,
-    paddingHorizontal: 14,
+    backgroundColor: FACTS_BG,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
   },
-  factsRow: {
+  factPairRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    minHeight: 56,
   },
-  colLeft: {
-    width: 228,
-    paddingRight: 12,
-  },
-  colDivider: {
-    width: 0.75,
-    minHeight: 168,
+  factPairHsep: {
+    height: 0.5,
     backgroundColor: LINE,
-    marginTop: 2,
+    marginHorizontal: 6,
   },
-  colRight: {
+  factPairCell: {
     flex: 1,
-    paddingLeft: 14,
     minWidth: 0,
+    paddingHorizontal: 8,
+    justifyContent: 'flex-start',
   },
-  factBlock: {
-    marginBottom: 11,
+  factPairVline: {
+    width: 0.75,
+    alignSelf: 'stretch',
+    backgroundColor: LINE,
+    flexShrink: 0,
   },
   factLabel: {
     fontSize: 6,
@@ -285,26 +304,29 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: HFB,
     color: INK,
-    lineHeight: 1.2,
+    lineHeight: 1.22,
+    width: '100%',
   },
   factValueSm: {
     fontSize: 12,
     fontFamily: HFB,
-    lineHeight: 1.15,
+    lineHeight: 1.18,
+    width: '100%',
   },
   factSub: {
-    fontSize: 8,
+    fontSize: 7.5,
     fontFamily: HF,
     color: MUTED,
-    marginTop: 2,
-    lineHeight: 1.35,
+    marginTop: 3,
+    lineHeight: 1.38,
+    width: '100%',
   },
   verifyPanel: {
     marginHorizontal: PAD,
-    marginTop: 18,
+    marginTop: 16,
     borderWidth: 0.75,
     borderColor: LINE,
-    backgroundColor: '#f6f8f6',
+    backgroundColor: '#f3f6f3',
     paddingVertical: 12,
     paddingHorizontal: 14,
     flexDirection: 'row',
@@ -319,6 +341,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: SHEET,
+    flexShrink: 0,
   },
   qrImg: {
     width: 64,
@@ -334,19 +357,21 @@ const styles = StyleSheet.create({
     fontFamily: HFB,
     color: INK,
     letterSpacing: 2,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   qrSub: {
     fontSize: 7,
     fontFamily: HF,
     color: LABEL,
-    marginBottom: 6,
+    marginBottom: 5,
+    width: '100%',
   },
   qrUrl: {
     fontSize: 7.5,
     fontFamily: CF,
     color: INK_SOFT,
-    lineHeight: 1.35,
+    lineHeight: 1.38,
+    width: '100%',
   },
   qrFoot: {
     fontSize: 7,
@@ -354,12 +379,13 @@ const styles = StyleSheet.create({
     color: LABEL,
     marginTop: 6,
     lineHeight: 1.45,
+    width: '100%',
   },
   disclaimerSep: {
     height: 0.75,
     backgroundColor: LINE,
     marginHorizontal: PAD,
-    marginTop: 18,
+    marginTop: 16,
     marginBottom: 10,
   },
   disclaimer: {
@@ -367,19 +393,23 @@ const styles = StyleSheet.create({
     fontFamily: HF,
     color: DISCLAIMER,
     paddingHorizontal: PAD,
-    lineHeight: 1.55,
+    lineHeight: 1.52,
+    width: '100%',
+    maxWidth: 515,
+    alignSelf: 'center',
   },
   decSep: {
     height: 0.75,
     backgroundColor: LINE,
     marginHorizontal: PAD,
-    marginTop: 16,
-    marginBottom: 12,
+    marginTop: 14,
+    marginBottom: 11,
   },
   decRow: {
     flexDirection: 'row',
     paddingHorizontal: PAD,
-    marginBottom: 12,
+    marginBottom: 11,
+    alignItems: 'flex-start',
   },
   decColFirst: {
     flex: 1,
@@ -387,6 +417,7 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     borderRightWidth: 0.75,
     borderRightColor: LINE,
+    minHeight: 44,
   },
   decColMid: {
     flex: 1,
@@ -394,11 +425,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRightWidth: 0.75,
     borderRightColor: LINE,
+    minHeight: 44,
   },
   decColLast: {
     flex: 1,
     minWidth: 0,
     paddingLeft: 12,
+    minHeight: 44,
   },
   decLab: {
     fontSize: 5.5,
@@ -411,18 +444,20 @@ const styles = StyleSheet.create({
     fontSize: 8.5,
     fontFamily: HFB,
     color: INK_SOFT,
+    width: '100%',
   },
   decSub: {
     fontSize: 7,
     fontFamily: HF,
     color: MUTED,
     marginTop: 2,
+    width: '100%',
   },
   decClose: {
     fontSize: 6,
-    fontFamily: HFB,
-    color: '#6a726e',
-    letterSpacing: 2.2,
+    fontFamily: TFB,
+    color: '#5a6560',
+    letterSpacing: 2,
     textAlign: 'center',
     marginBottom: 18,
     paddingHorizontal: PAD,
@@ -509,6 +544,8 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
   const expiryValueColor = daysRem > 30 ? INK : daysRem > 14 ? ORANGE : RED
   const verifyPath = verifyDisplayPath(verifyUrl)
 
+  const incomeSub = `Qualifiziert für Mieten bis CHF ${formatNumber(incomeQualifiesUpTo)} / Monat`
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -534,7 +571,9 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
 
           <View style={styles.registryRow}>
             <Text style={styles.registryLabel}>REGISTRIERNUMMER</Text>
-            <Text style={styles.registryCode}>{certificateCode}</Text>
+            <View style={styles.registryCodeWrap}>
+              <Text style={styles.registryCode}>{certificateCode}</Text>
+            </View>
           </View>
 
           <View style={styles.heroRow}>
@@ -542,8 +581,8 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
               <Text style={styles.heroKicker}>AUSGESTELLT FÜR</Text>
               <Text style={styles.heroName}>{holder}</Text>
               <Text style={styles.heroPromise}>
-                Dieses Dokument bestätigt die zum Zeitpunkt der Ausstellung geprüften Angaben. Es dient Mietenden und
-                Vermietenden als nachvollziehbarer Nachweis — ergänzend zu den üblichen Unterlagen.
+                Bestätigung der zum Ausstellungszeitpunkt geprüften Angaben. Nachweis für Mietende und Vermietende —
+                ergänzend zu den üblichen Unterlagen.
               </Text>
             </View>
             <View style={styles.sealOuter}>
@@ -556,56 +595,56 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
           </View>
 
           <View style={styles.factsFrame}>
-            <View style={styles.factsRow}>
-              <View style={styles.colLeft}>
-                <View style={styles.factBlock}>
-                  <Text style={styles.factLabel}>BETREIBUNGSREGISTER</Text>
-                  <Text
-                    style={[
-                      styles.factValueSm,
-                      { color: brClear ? TEAL_ACCENT : RED },
-                    ]}
-                  >
-                    {brClear ? 'Keine Einträge' : 'Einträge vorhanden'}
-                  </Text>
-                  <Text style={styles.factSub}>{brSub}</Text>
-                </View>
-                <View style={styles.factBlock}>
-                  <Text style={styles.factLabel}>AUSSTELLUNGSDATUM</Text>
-                  <Text style={styles.factValue}>{formatPdfDate(issuedAt)}</Text>
-                </View>
-                <View style={styles.factBlock}>
-                  <Text style={styles.factLabel}>BESCHÄFTIGUNG</Text>
-                  <Text style={styles.factValue}>{employmentLine}</Text>
-                </View>
+            <View style={styles.factPairRow}>
+              <View style={styles.factPairCell}>
+                <Text style={styles.factLabel}>BETREIBUNGSREGISTER</Text>
+                <Text
+                  style={[
+                    styles.factValueSm,
+                    { color: brClear ? TEAL_ACCENT : RED },
+                  ]}
+                >
+                  {brClear ? 'Keine Einträge' : 'Einträge vorhanden'}
+                </Text>
+                <Text style={styles.factSub}>{brSub}</Text>
               </View>
-              <View style={styles.colDivider} />
-              <View style={styles.colRight}>
-                <View style={styles.factBlock}>
-                  <Text style={styles.factLabel}>HAUSHALTSEINKOMMEN</Text>
-                  <Text style={styles.factValue}>{incomeLabel}</Text>
-                  <Text style={styles.factSub}>
-                    {`Qualifiziert für Mieten bis CHF ${formatNumber(incomeQualifiesUpTo)} / Monat`}
-                  </Text>
-                </View>
-                <View style={styles.factBlock}>
-                  <Text style={styles.factLabel}>GÜLTIG BIS</Text>
-                  <Text style={[styles.factValue, { color: expiryValueColor }]}>
-                    {formatPdfDate(expiresAt)}
-                  </Text>
-                  {daysRem <= 30 ?
-                    <Text style={[styles.factSub, { color: ORANGE }]}>
-                      {`${daysRem} Tage verbleibend`}
-                    </Text>
-                  : null}
-                </View>
-                <View style={styles.factBlock}>
-                  <Text style={styles.factLabel}>ADRESSE</Text>
-                  <Text style={styles.factValue}>{address}</Text>
-                  <Text style={styles.factSub}>
-                    {zip} {city}
-                  </Text>
-                </View>
+              <View style={styles.factPairVline} />
+              <View style={styles.factPairCell}>
+                <Text style={styles.factLabel}>HAUSHALTSEINKOMMEN</Text>
+                <Text style={styles.factValue}>{incomeLabel}</Text>
+                <Text style={styles.factSub}>{incomeSub}</Text>
+              </View>
+            </View>
+            <View style={styles.factPairHsep} />
+            <View style={styles.factPairRow}>
+              <View style={styles.factPairCell}>
+                <Text style={styles.factLabel}>AUSSTELLUNGSDATUM</Text>
+                <Text style={styles.factValue}>{formatPdfDate(issuedAt)}</Text>
+              </View>
+              <View style={styles.factPairVline} />
+              <View style={styles.factPairCell}>
+                <Text style={styles.factLabel}>GÜLTIG BIS</Text>
+                <Text style={[styles.factValue, { color: expiryValueColor }]}>
+                  {formatPdfDate(expiresAt)}
+                </Text>
+                {daysRem <= 30 ?
+                  <Text style={[styles.factSub, { color: ORANGE }]}>{`${daysRem} Tage verbleibend`}</Text>
+                : null}
+              </View>
+            </View>
+            <View style={styles.factPairHsep} />
+            <View style={[styles.factPairRow, { minHeight: 52 }]}>
+              <View style={styles.factPairCell}>
+                <Text style={styles.factLabel}>BESCHÄFTIGUNG</Text>
+                <Text style={styles.factValue}>{employmentLine}</Text>
+              </View>
+              <View style={styles.factPairVline} />
+              <View style={styles.factPairCell}>
+                <Text style={styles.factLabel}>ADRESSE</Text>
+                <Text style={styles.factValue}>{address}</Text>
+                <Text style={styles.factSub}>
+                  {zip} {city}
+                </Text>
               </View>
             </View>
           </View>
@@ -619,8 +658,7 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
               <Text style={styles.qrSub}>Echtheit und Gültigkeit online verifizieren</Text>
               <Text style={styles.qrUrl}>{verifyPath}</Text>
               <Text style={styles.qrFoot}>
-                QR-Code scannen oder Adresse eingeben. Der Zertifikats-Code ist in der URL enthalten und entspricht der
-                Registriernummer oben.
+                QR-Code scannen oder Adresse eingeben. Der Code in der URL entspricht der Registriernummer oben.
               </Text>
             </View>
           </View>
