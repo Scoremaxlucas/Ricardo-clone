@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer'
 import { Resend } from 'resend'
+import type { SignupIntent } from '@/lib/signup-intent'
+import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { getReviewNotificationEmail as getReviewNotificationEmailNew } from './email/templates/notifications'
 import { getInvoiceNotificationEmail as getInvoiceNotificationEmailNew } from './email/templates/purchase'
 import { getPaymentReceivedEmail as getPaymentReceivedEmailNew } from './email/templates/notifications'
@@ -65,8 +67,76 @@ interface SendEmailOptions {
 
 type EmailLocale = AppLanguage
 
-function getVerificationCopy(locale: EmailLocale) {
+function getVerificationCopy(locale: EmailLocale, signupIntent: SignupIntent = 'marketplace') {
   const lang = normalizeLanguage(locale)
+  if (signupIntent === 'wohnen') {
+    if (lang === 'fr') {
+      return {
+        subject: 'Helvenda Logements — Veuillez confirmer votre e-mail',
+        title: 'Veuillez confirmer votre adresse e-mail',
+        greeting: 'Bonjour',
+        intro:
+          'Bienvenue sur Helvenda Logements ! Vous vous êtes inscrit·e sur la plateforme de locations en Suisse — un compte partagé avec Helvenda.ch.',
+        body:
+          'Pour activer votre compte et utiliser votre profil locataire, voir les annonces pertinentes et postuler, veuillez confirmer votre adresse e-mail.',
+        button: "Confirmer l'e-mail",
+        note:
+          '<strong>Remarque :</strong> Ce lien est valable <strong>24 heures</strong>. Ensuite, demandez un nouveau lien sur la page de connexion.',
+        footer: 'Helvenda Logements — locations en Suisse',
+        headerTagline: 'Locations en Suisse',
+        footerTagline: 'Mises en relation qualifiées — compte partagé avec Helvenda.ch',
+      }
+    }
+    if (lang === 'it') {
+      return {
+        subject: 'Helvenda Abitare — Conferma la tua e-mail',
+        title: 'Conferma il tuo indirizzo e-mail',
+        greeting: 'Ciao',
+        intro:
+          'Benvenuto in Helvenda Abitare! Ti sei registrato sulla piattaforma per affitti in Svizzera — un account condiviso con Helvenda.ch.',
+        body:
+          'Per attivare il tuo account e usare il profilo inquilino, vedere gli annunci pertinenti e candidarti, conferma il tuo indirizzo e-mail.',
+        button: "Conferma l'e-mail",
+        note:
+          '<strong>Nota:</strong> Questo link è valido per <strong>24 ore</strong>. In seguito puoi richiederne uno nuovo dalla pagina di accesso.',
+        footer: 'Helvenda Abitare — affitti in Svizzera',
+        headerTagline: 'Affitti in Svizzera',
+        footerTagline: 'Annunci qualificati — stesso accesso di Helvenda.ch',
+      }
+    }
+    if (lang === 'en') {
+      return {
+        subject: 'Helvenda Rentals — Please verify your email',
+        title: 'Please verify your email address',
+        greeting: 'Hello',
+        intro:
+          'Welcome to Helvenda Rentals! You signed up on our Swiss rental homes platform — one account shared with Helvenda.ch.',
+        body:
+          'To activate your account and use your tenant profile, see relevant listings, and apply, please verify your email address.',
+        button: 'Verify email',
+        note:
+          '<strong>Note:</strong> This link is valid for <strong>24 hours</strong>. After that, request a new link from the login page.',
+        footer: 'Helvenda Rentals — homes for rent in Switzerland',
+        headerTagline: 'Rental homes in Switzerland',
+        footerTagline: 'Qualified listings — same sign-in as Helvenda.ch',
+      }
+    }
+    return {
+      subject: 'Helvenda Wohnungen — Bitte bestätigen Sie Ihre E-Mail',
+      title: 'Bitte bestätigen Sie Ihre E-Mail-Adresse',
+      greeting: 'Hallo',
+      intro:
+        'Willkommen bei Helvenda Wohnungen! Sie haben sich über unsere Plattform für Mietwohnungen in der Schweiz registriert — ein gemeinsames Konto mit Helvenda.ch.',
+      body:
+        'Um Ihr Konto zu aktivieren und z. B. Ihr Suchprofil zu nutzen, passende Inserate zu sehen und Bewerbungen zu senden, bestätigen Sie bitte Ihre E-Mail-Adresse.',
+      button: 'E-Mail bestätigen',
+      note:
+        '<strong>Hinweis:</strong> Dieser Link ist <strong>24 Stunden</strong> gültig. Danach können Sie auf der Anmeldeseite einen neuen Link anfordern.',
+      footer: 'Helvenda Wohnungen — Mietwohnungen in der Schweiz',
+      headerTagline: 'Mietwohnungen in der Schweiz',
+      footerTagline: 'Qualifizierte Inserate — gleiches Login wie Helvenda.ch',
+    }
+  }
   if (lang === 'fr') {
     return {
       subject: 'Bienvenue sur Helvenda - Veuillez confirmer votre e-mail',
@@ -80,6 +150,8 @@ function getVerificationCopy(locale: EmailLocale) {
       note:
         "<strong>Remarque :</strong> Ce lien de confirmation est valable <strong>48 heures</strong>. Ensuite, vous devrez vous inscrire à nouveau.",
       footer: 'Helvenda.ch - La place de marché sécurisée pour acheteurs et vendeurs en Suisse',
+      headerTagline: 'Votre place de marché en ligne suisse',
+      footerTagline: 'La place de marché sécurisée pour acheteurs et vendeurs en Suisse',
     }
   }
   if (lang === 'it') {
@@ -96,6 +168,8 @@ function getVerificationCopy(locale: EmailLocale) {
         "<strong>Nota:</strong> Questo link di conferma è valido per <strong>48 ore</strong>. Dopo dovrai registrarti di nuovo.",
       footer:
         'Helvenda.ch - Il marketplace sicuro per acquirenti e venditori in Svizzera',
+      headerTagline: 'Il tuo marketplace online svizzero',
+      footerTagline: 'Il marketplace sicuro per acquirenti e venditori in Svizzera',
     }
   }
   if (lang === 'en') {
@@ -111,6 +185,8 @@ function getVerificationCopy(locale: EmailLocale) {
       note:
         '<strong>Note:</strong> This verification link is valid for <strong>48 hours</strong>. After that, you need to register again.',
       footer: 'Helvenda.ch - The secure marketplace for buyers and sellers in Switzerland',
+      headerTagline: 'Your Swiss online marketplace',
+      footerTagline: 'The secure marketplace for buyers and sellers in Switzerland',
     }
   }
   return {
@@ -125,11 +201,81 @@ function getVerificationCopy(locale: EmailLocale) {
     note:
       '<strong>Hinweis:</strong> Dieser Bestätigungslink ist <strong>48 Stunden</strong> gültig. Danach müssen Sie sich erneut registrieren.',
     footer: 'Helvenda.ch - Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz',
+    headerTagline: 'Ihr Schweizer Online-Marktplatz',
+    footerTagline: 'Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz',
   }
 }
 
-function getVerificationApprovedCopy(locale: EmailLocale) {
+function getVerificationApprovedCopy(locale: EmailLocale, signupIntent: SignupIntent = 'marketplace') {
   const lang = normalizeLanguage(locale)
+  if (signupIntent === 'wohnen') {
+    if (lang === 'fr') {
+      return {
+        subject: 'E-mail confirmée — Helvenda Logements',
+        title: 'Votre adresse e-mail est confirmée !',
+        greeting: 'Bonjour',
+        body: 'Vous pouvez maintenant vous connecter et compléter votre profil locataire.',
+        features: [
+          'Définir vos critères de recherche',
+          'Voir des annonces et des correspondances',
+          'Postuler pour des locations',
+        ],
+        button: 'Ouvrir mon profil',
+        footer: 'Helvenda Logements — locations en Suisse',
+        headerTagline: 'Locations en Suisse',
+        footerTagline: 'Mises en relation qualifiées — compte partagé avec Helvenda.ch',
+      }
+    }
+    if (lang === 'it') {
+      return {
+        subject: 'E-mail confermata — Helvenda Abitare',
+        title: 'Il tuo indirizzo e-mail è confermato!',
+        greeting: 'Ciao',
+        body: 'Ora puoi accedere e completare il tuo profilo inquilino.',
+        features: [
+          'Impostare le preferenze di ricerca',
+          'Vedere annunci e corrispondenze',
+          'Candidarti per gli affitti',
+        ],
+        button: 'Apri il profilo',
+        footer: 'Helvenda Abitare — affitti in Svizzera',
+        headerTagline: 'Affitti in Svizzera',
+        footerTagline: 'Annunci qualificati — stesso accesso di Helvenda.ch',
+      }
+    }
+    if (lang === 'en') {
+      return {
+        subject: 'Email confirmed — Helvenda Rentals',
+        title: 'Your email address is confirmed!',
+        greeting: 'Hello',
+        body: 'You can now sign in and complete your tenant profile.',
+        features: [
+          'Set your search preferences',
+          'Browse listings and matches',
+          'Apply for rental homes',
+        ],
+        button: 'Go to your profile',
+        footer: 'Helvenda Rentals — homes for rent in Switzerland',
+        headerTagline: 'Rental homes in Switzerland',
+        footerTagline: 'Qualified listings — same sign-in as Helvenda.ch',
+      }
+    }
+    return {
+      subject: 'E-Mail bestätigt — Helvenda Wohnungen',
+      title: 'Ihre E-Mail-Adresse ist bestätigt!',
+      greeting: 'Hallo',
+      body: 'Sie können sich jetzt anmelden und Ihr Mieterprofil vervollständigen.',
+      features: [
+        'Suchprofil und Wohnungspräferenzen festlegen',
+        'Inserate und Treffer einsehen',
+        'Auf Mietwohnungen bewerben',
+      ],
+      button: 'Zu Ihrem Profil',
+      footer: 'Helvenda Wohnungen — Mietwohnungen in der Schweiz',
+      headerTagline: 'Mietwohnungen in der Schweiz',
+      footerTagline: 'Qualifizierte Inserate — gleiches Login wie Helvenda.ch',
+    }
+  }
   if (lang === 'fr') {
     return {
       subject: 'Votre compte a été vérifié - Helvenda',
@@ -139,6 +285,8 @@ function getVerificationApprovedCopy(locale: EmailLocale) {
       features: ['Publier des articles à vendre', 'Participer aux enchères', 'Effectuer des achats immédiats'],
       button: 'Vers votre profil',
       footer: 'Helvenda.ch - La place de marché sécurisée pour acheteurs et vendeurs en Suisse',
+      headerTagline: 'Votre place de marché en ligne suisse',
+      footerTagline: 'La place de marché sécurisée pour acheteurs et vendeurs en Suisse',
     }
   }
   if (lang === 'it') {
@@ -150,6 +298,8 @@ function getVerificationApprovedCopy(locale: EmailLocale) {
       features: ['Pubblicare articoli in vendita', 'Partecipare alle aste', 'Effettuare acquisti immediati'],
       button: 'Vai al tuo profilo',
       footer: 'Helvenda.ch - Il marketplace sicuro per acquirenti e venditori in Svizzera',
+      headerTagline: 'Il tuo marketplace online svizzero',
+      footerTagline: 'Il marketplace sicuro per acquirenti e venditori in Svizzera',
     }
   }
   if (lang === 'en') {
@@ -161,6 +311,8 @@ function getVerificationApprovedCopy(locale: EmailLocale) {
       features: ['List items for sale', 'Bid in auctions', 'Make instant purchases'],
       button: 'Go to your profile',
       footer: 'Helvenda.ch - The secure marketplace for buyers and sellers in Switzerland',
+      headerTagline: 'Your Swiss online marketplace',
+      footerTagline: 'The secure marketplace for buyers and sellers in Switzerland',
     }
   }
   return {
@@ -171,7 +323,24 @@ function getVerificationApprovedCopy(locale: EmailLocale) {
     features: ['Artikel zum Verkauf anbieten', 'Bei Auktionen mitbieten', 'Sofortkäufe tätigen'],
     button: 'Zu Ihrem Profil',
     footer: 'Helvenda.ch - Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz',
+    headerTagline: 'Ihr Schweizer Online-Marktplatz',
+    footerTagline: 'Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz',
   }
+}
+
+function langFeaturesIntro(locale: EmailLocale, signupIntent: SignupIntent): string {
+  const lang = normalizeLanguage(locale)
+  if (signupIntent === 'wohnen') {
+    if (lang === 'fr') return 'Voici des prochaines étapes :'
+    if (lang === 'it') return 'Prossimi passi:'
+    if (lang === 'en') return 'Here are some next steps:'
+    return 'So können Sie starten:'
+  }
+  if (lang === 'fr')
+    return 'Vous pouvez désormais utiliser toutes les fonctions de notre plateforme :'
+  if (lang === 'it') return 'Ora puoi usare tutte le funzioni della nostra piattaforma:'
+  if (lang === 'en') return 'You can now use all features of our platform:'
+  return 'Sie können nun alle Funktionen unserer Plattform nutzen:'
 }
 
 export async function sendEmail({ to, subject, html, text, useNoReply = false, userId }: SendEmailOptions) {
@@ -934,9 +1103,10 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 export function getEmailVerificationEmail(
   userName: string,
   verificationUrl: string,
-  locale: EmailLocale = 'de'
+  locale: EmailLocale = 'de',
+  signupIntent: SignupIntent = 'marketplace'
 ) {
-  const copy = getVerificationCopy(locale)
+  const copy = getVerificationCopy(locale, signupIntent)
   const subject = copy.subject
 
   const html = getHelvendaEmailTemplate(
@@ -954,8 +1124,9 @@ export function getEmailVerificationEmail(
     copy.button,
     verificationUrl,
     {
-      titleIcon: '📧',
       noteText: copy.note,
+      headerTagline: copy.headerTagline,
+      footerTagline: copy.footerTagline,
     }
   )
 
@@ -985,13 +1156,17 @@ ${copy.footer}
 export function getVerificationApprovalEmail(
   userName: string,
   userEmail: string,
-  locale: EmailLocale = 'de'
+  locale: EmailLocale = 'de',
+  signupIntent: SignupIntent = 'marketplace'
 ) {
-  const baseUrl = getEmailBaseUrl()
-  const profileUrl = `${baseUrl}/profile`
-  const copy = getVerificationApprovedCopy(locale)
+  const baseUrl = getEmailBaseUrl().replace(/\/$/, '')
+  const wohnenBase = WOHNEN_SITE_ORIGIN.replace(/\/$/, '')
+  const profileUrl = signupIntent === 'wohnen' ? `${wohnenBase}/profil` : `${baseUrl}/profile`
+  const copy = getVerificationApprovedCopy(locale, signupIntent)
 
   const subject = copy.subject
+
+  const featuresIntro = langFeaturesIntro(locale, signupIntent)
 
   const html = getHelvendaEmailTemplate(
     copy.title,
@@ -1003,7 +1178,7 @@ export function getVerificationApprovalEmail(
 
       <p style="margin: 0 0 20px 0; text-align: center;">${copy.body}</p>
 
-      <p style="margin: 0 0 12px 0;">Sie können nun alle Funktionen unserer Plattform nutzen:</p>
+      <p style="margin: 0 0 12px 0;">${featuresIntro}</p>
 
       <ul style="margin: 0 0 24px 20px; padding: 0; color: #4b5563;">
         <li style="margin-bottom: 8px;">${copy.features[0]}</li>
@@ -1013,7 +1188,12 @@ export function getVerificationApprovalEmail(
     `,
     copy.button,
     profileUrl,
-    { titleIcon: '✓', showNote: true }
+    {
+      titleIcon: '✓',
+      showNote: true,
+      headerTagline: copy.headerTagline,
+      footerTagline: copy.footerTagline,
+    }
   )
 
   const text = `
@@ -1025,7 +1205,7 @@ ${copy.greeting} ${userName},
 
 ${copy.body}
 
-Sie können nun alle Funktionen unserer Plattform nutzen:
+${featuresIntro}
 • ${copy.features[0]}
 • ${copy.features[1]}
 • ${copy.features[2]}
@@ -2498,11 +2678,17 @@ export function getHelvendaEmailTemplate(
     titleIcon?: string // Optional emoji/icon before title
     showNote?: boolean // Show note section at bottom
     noteText?: string // Custom note text
+    headerTagline?: string
+    footerTagline?: string
   }
 ): string {
   const baseUrl = getEmailBaseUrl()
   const currentYear = new Date().getFullYear()
   const safeButtonUrl = sanitizeEmailUrl(buttonUrl, `${baseUrl}/`)
+  const headerTagline =
+    options?.headerTagline ?? 'Ihr Schweizer Online-Marktplatz'
+  const footerTagline =
+    options?.footerTagline ?? 'Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz'
 
   return `
 <!DOCTYPE html>
@@ -2815,7 +3001,7 @@ export function getHelvendaEmailTemplate(
                       </tr>
                     </table>
                     <!-- Tagline -->
-                    <p style="font-size: 14px; color: #6b7280; margin: 8px 0 0 0; font-weight: 400;">Ihr Schweizer Online-Marktplatz</p>
+                    <p style="font-size: 14px; color: #6b7280; margin: 8px 0 0 0; font-weight: 400;">${headerTagline}</p>
                   </td>
                 </tr>
               </table>
@@ -2871,7 +3057,7 @@ export function getHelvendaEmailTemplate(
                 <span style="font-size: 20px; font-weight: 700; color: #ffffff;">Helvenda</span><span style="font-size: 20px; font-weight: 400; color: #0d9488;">.ch</span>
               </div>
               <!-- Footer Tagline -->
-              <p style="font-size: 13px; color: #9ca3af; margin: 8px 0 16px 0;">Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz</p>
+              <p style="font-size: 13px; color: #9ca3af; margin: 8px 0 16px 0;">${footerTagline}</p>
               <!-- Copyright -->
               <p style="font-size: 12px; color: #6b7280; margin: 0;">© ${currentYear} Helvenda.ch – Alle Rechte vorbehalten</p>
             </td>

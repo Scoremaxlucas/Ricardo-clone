@@ -1,5 +1,6 @@
 import { getVerificationApprovalEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
+import { parseSignupIntent } from '@/lib/signup-intent'
 import { getUserPreferredLanguage } from '@/lib/user-language'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -23,6 +24,7 @@ export async function GET(request: NextRequest) {
         firstName: true,
         nickname: true,
         emailVerificationTokenExpires: true,
+        signupIntent: true,
       },
     })
 
@@ -47,11 +49,18 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    const signupIntent = parseSignupIntent(user.signupIntent)
+
     // Send verification approval email (the preferred email template)
     const userName = user.firstName || user.nickname || 'Benutzer'
     try {
       const locale = await getUserPreferredLanguage(user.id)
-      const { subject, html, text } = getVerificationApprovalEmail(userName, user.email, locale)
+      const { subject, html, text } = getVerificationApprovalEmail(
+        userName,
+        user.email,
+        locale,
+        signupIntent
+      )
       await sendEmail({
         to: user.email,
         subject,

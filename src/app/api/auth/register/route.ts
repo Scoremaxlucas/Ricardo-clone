@@ -1,6 +1,8 @@
 import { getEmailVerificationEmail, sendEmail } from '@/lib/email'
 import { shouldShowDetailedErrors } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
+import { parseSignupIntent } from '@/lib/signup-intent'
+import { buildVerificationEmailLink } from '@/lib/verification-email-url'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { getUserPreferredLanguage, normalizeLanguage, setUserPreferredLanguage } from '@/lib/user-language'
 import bcrypt from 'bcryptjs'
@@ -45,7 +47,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { firstName, lastName, nickname, email, password, marketingConsent, language } = await request.json()
+    const {
+      firstName,
+      lastName,
+      nickname,
+      email,
+      password,
+      marketingConsent,
+      language,
+      signupIntent: rawSignupIntent,
+    } = await request.json()
+    const signupIntent = parseSignupIntent(rawSignupIntent)
 
     // Normalize and trim all input fields first
     const trimmedFirstName = firstName?.trim() || ''
@@ -176,6 +188,7 @@ export async function POST(request: NextRequest) {
         // Marketing consent (DSGVO compliant)
         marketingConsent: marketingConsent === true,
         marketingConsentAt: marketingConsent === true ? new Date() : null,
+        signupIntent,
       }
 
       try {
@@ -206,6 +219,7 @@ export async function POST(request: NextRequest) {
                     email: normalizedEmail,
                     password: hashedPassword,
                     nickname: trimmedNickname,
+                    signupIntent,
                   }
 
                   try {
@@ -219,6 +233,7 @@ export async function POST(request: NextRequest) {
                           firstName: trimmedFirstName,
                           lastName: trimmedLastName,
                           name: fullName || null,
+                          signupIntent,
                         },
                       })
                     } catch {
@@ -258,14 +273,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Send verification email
-    const { getEmailBaseUrl } = await import('@/lib/email')
-    const baseUrl = getEmailBaseUrl()
-    const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`
+    const verificationUrl = buildVerificationEmailLink(verificationToken, signupIntent)
     const userName = trimmedFirstName || trimmedNickname || 'Benutzer'
 
     try {
       const locale = await getUserPreferredLanguage(user.id)
-      const { subject, html, text } = getEmailVerificationEmail(userName, verificationUrl, locale)
+      const { subject, html, text } = getEmailVerificationEmail(
+        userName,
+        verificationUrl,
+        locale,
+        signupIntent
+      )
       await sendEmail({
         to: normalizedEmail,
         subject,

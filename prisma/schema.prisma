@@ -193,6 +193,9 @@ model User {
   marketingConsent   Boolean   @default(false)
   marketingConsentAt DateTime?
 
+  /** Registrierungs-Kontext: `marketplace` (Standard) oder `wohnen` (Helvenda Wohnungen) — Verifizierungs-E-Mail und Links. */
+  signupIntent String @default("marketplace")
+
   @@index([bexioContactId])
   @@index([deletionToken])
   @@map("users")

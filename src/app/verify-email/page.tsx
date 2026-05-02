@@ -31,6 +31,8 @@ function VerifyEmailPageContent() {
       return
     }
 
+    const intentWohnen = searchParams.get('intent') === 'wohnen'
+
     const verifyEmail = async () => {
       try {
         const response = await fetch(`/api/auth/verify-email?token=${token}`, {
@@ -40,7 +42,7 @@ function VerifyEmailPageContent() {
         const data = await response.json()
 
         if (response.ok) {
-          setWohnenFlow(isWohnenTenantHost())
+          setWohnenFlow(isWohnenTenantHost() || intentWohnen)
           setStatus('success')
           setMessage(data.message || 'Ihre E-Mail-Adresse wurde erfolgreich bestätigt!')
         } else {

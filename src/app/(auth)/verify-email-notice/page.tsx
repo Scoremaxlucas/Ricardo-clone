@@ -10,6 +10,7 @@ import { Suspense, useState } from 'react'
 function VerifyEmailNoticeContent() {
   const searchParams = useSearchParams()
   const email = searchParams.get('email') || ''
+  const intentWohnen = searchParams.get('intent') === 'wohnen'
   const [isResending, setIsResending] = useState(false)
   const [resendSuccess, setResendSuccess] = useState(false)
   const [resendError, setResendError] = useState('')
@@ -65,7 +66,9 @@ function VerifyEmailNoticeContent() {
           </p>
 
           <p className="mt-4 text-sm text-gray-500">
-            Klicken Sie auf den Bestätigungslink in der E-Mail, um Ihr Konto zu aktivieren.
+            {intentWohnen
+              ? 'Klicken Sie auf den Bestätigungslink in der E-Mail, um Ihr Konto für Helvenda Wohnungen zu aktivieren.'
+              : 'Klicken Sie auf den Bestätigungslink in der E-Mail, um Ihr Konto zu aktivieren.'}
           </p>
         </div>
 

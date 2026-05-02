@@ -3,11 +3,12 @@
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { CheckCircle2, Eye, EyeOff, XCircle } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function RegisterPage() {
   const { t } = useLanguage()
@@ -23,7 +24,31 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [signupIntent, setSignupIntent] = useState<'marketplace' | 'wohnen'>('marketplace')
   const router = useRouter()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const params = new URL(window.location.href).searchParams
+      if (params.get('intent') === 'wohnen') {
+        setSignupIntent('wohnen')
+        return
+      }
+      const wohnenHost = new URL(WOHNEN_SITE_ORIGIN).hostname
+      if (window.location.hostname === wohnenHost) {
+        setSignupIntent('wohnen')
+        return
+      }
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        if (document.cookie.split(';').some(c => c.trim().startsWith('helvenda-wohnen-preview='))) {
+          setSignupIntent('wohnen')
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   // Password validation state
   const passwordValidation = {
@@ -90,6 +115,7 @@ export default function RegisterPage() {
           email: formData.email.trim(),
           password: formData.password,
           language: (localStorage.getItem('language') || 'de').toLowerCase(),
+          signupIntent,
         }),
       })
 
@@ -97,7 +123,10 @@ export default function RegisterPage() {
         const data = await response.json()
 
         // Email verification enabled - redirect to verification notice page
-        router.push(`/verify-email-notice?email=${encodeURIComponent(formData.email.trim())}`)
+        const noticeQs =
+          `email=${encodeURIComponent(formData.email.trim())}` +
+          (signupIntent === 'wohnen' ? '&intent=wohnen' : '')
+        router.push(`/verify-email-notice?${noticeQs}`)
       } else {
         const data = await response.json()
         // Show detailed error including errorCode if available

@@ -1,5 +1,7 @@
 import { getEmailVerificationEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
+import { parseSignupIntent } from '@/lib/signup-intent'
+import { buildVerificationEmailLink } from '@/lib/verification-email-url'
 import { getUserPreferredLanguage } from '@/lib/user-language'
 import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
@@ -31,6 +33,7 @@ export async function POST(request: NextRequest) {
         emailVerified: true,
         emailVerificationToken: true,
         emailVerificationTokenExpires: true,
+        signupIntent: true,
       },
     })
 
@@ -75,15 +78,18 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Generiere Bestätigungslink
-    const { getEmailBaseUrl } = await import('@/lib/email')
-    const baseUrl = getEmailBaseUrl()
-    const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`
+    const signupIntent = parseSignupIntent(user.signupIntent)
+    const verificationUrl = buildVerificationEmailLink(verificationToken, signupIntent)
 
     // Versende E-Mail
     const userName = user.firstName || user.name || 'Benutzer'
     const locale = await getUserPreferredLanguage(user.id)
-    const { subject, html, text } = getEmailVerificationEmail(userName, verificationUrl, locale)
+    const { subject, html, text } = getEmailVerificationEmail(
+      userName,
+      verificationUrl,
+      locale,
+      signupIntent
+    )
 
     const emailResult = await sendEmail({
       to: user.email,
