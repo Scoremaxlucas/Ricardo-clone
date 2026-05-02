@@ -111,6 +111,8 @@ export async function createRentalListingFromIngestOrchestrator(params: {
         importedFrom,
         landlordContact,
         ingestPermissionBasis,
+        listingExpiresOn: null,
+        needsExpiryReview: false,
       },
     })
     revalidatePath('/admin/listings')

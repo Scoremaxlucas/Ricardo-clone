@@ -12,10 +12,12 @@ import {
   templateAdminListingDeactivatedStaleReports,
   templateAdminListingDeactivatedUrl404,
   templateAdminListingDeactivatedUrlRented,
+  templateAdminListingExpiredCalendar,
   templateAdminListingUrlUnreachableStreak,
   templateAdminRentalApplicationManualReview,
   templateLandlordNewApplication,
   templateTenantApplicationSubmitted,
+  templateLandlordListingExpiredCalendar,
   templateTenantCertificateExpired,
   templateTenantCertificateExpirySoon,
   templateTenantCreditExpiryReminder,
@@ -249,6 +251,58 @@ export async function sendAdminListingDeactivatedStaleReportsEmail(opts: {
     staleReportCount: opts.staleReportCount,
     lastReportAt: opts.lastReportAt,
     notes: opts.notes,
+  })
+  await sendWohnenEmail({
+    to: 'admin@helvenda.ch',
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+  })
+}
+
+export async function sendLandlordListingExpiredCalendarEmail(opts: {
+  landlordEmail: string
+  landlordUserId: string
+  landlordFirst: { firstName?: string | null; name?: string | null }
+  listingId: string
+  listingTitle: string
+  address: string
+  listingExpiresOn: string
+  deactivatedAt: Date
+}): Promise<void> {
+  const w = WOHNEN_SITE_ORIGIN.replace(/\/$/, '')
+  const editLink = `${w}/matching/properties/${encodeURIComponent(opts.listingId)}/bearbeiten`
+  const payload = templateLandlordListingExpiredCalendar({
+    tenantFirstName: firstName(opts.landlordFirst),
+    listingTitle: opts.listingTitle,
+    listingId: opts.listingId,
+    address: opts.address,
+    listingExpiresOn: opts.listingExpiresOn,
+    editLink,
+    deactivatedAt: opts.deactivatedAt,
+  })
+  await sendWohnenEmail({
+    to: opts.landlordEmail,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+    userId: opts.landlordUserId,
+  })
+}
+
+export async function sendAdminListingExpiredCalendarEmail(opts: {
+  listingId: string
+  listingTitle: string
+  address: string
+  listingExpiresOn: string
+  deactivatedAt: Date
+}): Promise<void> {
+  const payload = templateAdminListingExpiredCalendar({
+    listingId: opts.listingId,
+    listingTitle: opts.listingTitle,
+    address: opts.address,
+    listingExpiresOn: opts.listingExpiresOn,
+    deactivatedAt: opts.deactivatedAt,
   })
   await sendWohnenEmail({
     to: 'admin@helvenda.ch',

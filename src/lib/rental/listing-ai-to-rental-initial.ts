@@ -1,6 +1,7 @@
 import type { RentalListingLandlordInitial } from '@/lib/rental/rental-landlord-initial'
 
 import { ingestOptionalText } from '@/lib/rental/ingest-optional-text'
+import { ImportSource } from '@prisma/client'
 import type { ImportListingAiResult } from '@/lib/rental/listing-url-import-types'
 
 function normalizeCanton(c: string): string {
@@ -72,5 +73,8 @@ export function mapAiImportToRentalLandlordInitial(ai: ImportListingAiResult): R
     requiresCreditCheck: true,
     photos: [],
     status: 'active',
+    listingExpiresOn: null,
+    importedFrom: null,
+    importSource: ImportSource.IMPORTED,
   }
 }

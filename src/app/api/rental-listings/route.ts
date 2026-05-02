@@ -1,6 +1,11 @@
 import { authOptions } from '@/lib/auth'
 import { evaluateMatch, parsePostalCodesList } from '@/lib/matching/evaluate-match'
 import { prisma } from '@/lib/prisma'
+import {
+  parseListingExpiresOnFromBody,
+  rentalListingHasMonitoringHttpUrl,
+  validateListingExpiresOnForUpsert,
+} from '@/lib/rental/rental-listing-expiry-on'
 import { trackRentalMatchMetricsEvent } from '@/lib/rental/match-metrics'
 import { decideRentalMatchRollout } from '@/lib/rental/match-rollout'
 import type { Prisma } from '@prisma/client'
@@ -388,6 +393,7 @@ export async function POST(request: NextRequest) {
       depositAmount,
       availableFrom,
       photos,
+      importedFrom: rawImportedFrom,
     } = body
 
     if (!title || !description || !address || !zip || !city || !canton) {
@@ -435,6 +441,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Mindestens 3 und maximal 10 Fotos' }, { status: 400 })
     }
 
+    const importedFrom =
+      typeof rawImportedFrom === 'string' && rawImportedFrom.trim() ? String(rawImportedFrom).trim().slice(0, 2000) : null
+    const hasMonitoringUrl = rentalListingHasMonitoringHttpUrl(importedFrom)
+    const bodyRecord = body as Record<string, unknown>
+    const parsedExpires = parseListingExpiresOnFromBody(bodyRecord)
+    const expiryCheck = validateListingExpiresOnForUpsert({
+      hasMonitoringUrl,
+      listingExpiresOn: parsedExpires,
+      intent: 'create',
+    })
+    if (!expiryCheck.ok) {
+      return NextResponse.json({ message: expiryCheck.message }, { status: 400 })
+    }
+
     const listing = await prisma.rentalListing.create({
       data: {
         userId: session.user.id,
@@ -454,6 +474,8 @@ export async function POST(request: NextRequest) {
         requiresCreditCheck: true,
         photos: JSON.stringify(photoArr),
         status: 'active',
+        importedFrom,
+        listingExpiresOn: expiryCheck.value,
       },
     })
 

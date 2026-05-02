@@ -55,6 +55,9 @@ export default async function BearbeitenLandlordRentalPage({ params }: PageProps
     requiresCreditCheck: listing.requiresCreditCheck,
     photos,
     status: listing.status,
+    listingExpiresOn: listing.listingExpiresOn ?? null,
+    importedFrom: listing.importedFrom,
+    importSource: listing.importSource,
   }
 
   return <RentalListingLandlordForm mode="edit" listingId={listing.id} initial={initial} />

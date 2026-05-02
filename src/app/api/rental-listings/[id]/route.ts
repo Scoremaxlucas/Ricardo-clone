@@ -1,5 +1,11 @@
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import {
+  parseListingExpiresOnFromBody,
+  rentalListingHasMonitoringHttpUrl,
+  todayYmdInZurich,
+  validateListingExpiresOnForUpsert,
+} from '@/lib/rental/rental-listing-expiry-on'
 import type { Prisma } from '@prisma/client'
 import { RentalListingStatus } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
@@ -197,7 +203,48 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (!STATUS_VALUES.has(st)) {
         return NextResponse.json({ message: 'Ungültiger Status' }, { status: 400 })
       }
-      data.status = st as RentalListingStatus
+      const nextSt = st as RentalListingStatus
+      data.status = nextSt
+      if (nextSt === 'active' && existing.status === 'archived') {
+        data.autoDeactivatedAt = null
+        data.autoDeactivatedReason = null
+        data.needsExpiryReview = false
+      }
+    }
+
+    const hasMonitoringUrl = rentalListingHasMonitoringHttpUrl(existing.importedFrom)
+    const nextListingExpiresOn =
+      'listingExpiresOn' in body ? parseListingExpiresOnFromBody(body) : existing.listingExpiresOn
+    const expiryVal = validateListingExpiresOnForUpsert({
+      hasMonitoringUrl,
+      listingExpiresOn: nextListingExpiresOn,
+      intent: 'edit',
+      existingListingExpiresOn: existing.listingExpiresOn,
+    })
+    if (!expiryVal.ok) {
+      return NextResponse.json({ message: expiryVal.message }, { status: 400 })
+    }
+    if ('listingExpiresOn' in body) {
+      data.listingExpiresOn = expiryVal.value
+    }
+
+    if (
+      typeof body.status === 'string' &&
+      body.status === 'active' &&
+      existing.status === 'archived' &&
+      !rentalListingHasMonitoringHttpUrl(existing.importedFrom)
+    ) {
+      const effExpires = 'listingExpiresOn' in body ? expiryVal.value : existing.listingExpiresOn
+      const today = todayYmdInZurich()
+      if (!effExpires || effExpires < today) {
+        return NextResponse.json(
+          {
+            message:
+              'Zum Reaktivieren ohne überwachbare Original-URL (https://…) bitte ein neues «Gültig bis»-Datum in der Zukunft setzen.',
+          },
+          { status: 400 },
+        )
+      }
     }
 
     if (Object.keys(data).length === 0) {

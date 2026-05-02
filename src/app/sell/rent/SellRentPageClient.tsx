@@ -40,6 +40,11 @@ export function SellRentPageClient() {
   const [depositAmount, setDepositAmount] = useState('')
   const [description, setDescription] = useState('')
   const [imageUrls, setImageUrls] = useState<string[]>([])
+  const [listingExpiresOn, setListingExpiresOn] = useState(() => {
+    const d = new Date()
+    d.setUTCDate(d.getUTCDate() + 90)
+    return d.toISOString().slice(0, 10)
+  })
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -92,6 +97,10 @@ export function SellRentPageClient() {
       toast.error('Beschreibung mindestens 50 Zeichen')
       return
     }
+    if (!listingExpiresOn.trim()) {
+      toast.error('Bitte «Gültig bis» setzen.')
+      return
+    }
     setSubmitting(true)
     try {
       const res = await fetch('/api/rental-listings', {
@@ -113,6 +122,7 @@ export function SellRentPageClient() {
           description,
           requiresCreditCheck: true,
           photos: imageUrls,
+          listingExpiresOn: listingExpiresOn.trim(),
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -305,6 +315,19 @@ export function SellRentPageClient() {
             />
           </div>
           <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Gültig bis * (Kalendertag, Schweiz)</label>
+            <input
+              required
+              type="date"
+              value={listingExpiresOn}
+              onChange={e => setListingExpiresOn(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Ohne https-Original-URL ist ein Enddatum Pflicht; danach wird das Inserat automatisch archiviert.
+            </p>
+          </div>
+          <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Fotos * (3–10)</label>
             <input
               type="file"
@@ -353,7 +376,12 @@ export function SellRentPageClient() {
 
           <button
             type="submit"
-            disabled={submitting || imageUrls.length < 3 || description.trim().length < 50}
+            disabled={
+              submitting ||
+              imageUrls.length < 3 ||
+              description.trim().length < 50 ||
+              !listingExpiresOn.trim()
+            }
             className="w-full rounded-xl bg-primary-600 py-3 font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-50"
           >
             {submitting ? 'Wird gespeichert…' : 'Inserat veröffentlichen'}

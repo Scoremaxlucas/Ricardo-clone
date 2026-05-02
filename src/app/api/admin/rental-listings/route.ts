@@ -2,6 +2,11 @@ import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
 import { encryptLandlordContactForStorage } from '@/lib/rental/pdf-crypto'
+import {
+  parseListingExpiresOnFromBody,
+  rentalListingHasMonitoringHttpUrl,
+  validateListingExpiresOnForUpsert,
+} from '@/lib/rental/rental-listing-expiry-on'
 import { ImportSource } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
 import { revalidatePath } from 'next/cache'
@@ -125,6 +130,18 @@ export async function POST(request: Request) {
 
     const createStatus = rawCreateStatus === 'archived' ? 'archived' : 'active'
 
+    const hasMonitoringUrl = rentalListingHasMonitoringHttpUrl(importedFrom)
+    const bodyRecord = body as Record<string, unknown>
+    const parsedExpires = parseListingExpiresOnFromBody(bodyRecord)
+    const expiryCheck = validateListingExpiresOnForUpsert({
+      hasMonitoringUrl,
+      listingExpiresOn: parsedExpires,
+      intent: 'create',
+    })
+    if (!expiryCheck.ok) {
+      return NextResponse.json({ message: expiryCheck.message }, { status: 400 })
+    }
+
     const listing = await prisma.rentalListing.create({
       data: {
         userId: session.user.id,
@@ -148,6 +165,7 @@ export async function POST(request: Request) {
         importedFrom,
         landlordContact,
         ingestPermissionBasis,
+        listingExpiresOn: expiryCheck.value,
       },
     })
 

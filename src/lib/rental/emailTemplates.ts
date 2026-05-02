@@ -681,6 +681,88 @@ ${buttonRow(adminLink, 'Inserat prüfen')}
   return { subject, html: layout(inner, { publicNotice: false }), text: appendWohnenPublicNotice(text, false) }
 }
 
+/** Vermieter:in: Inserat wegen abgelaufenem «Gültig bis» archiviert */
+export function templateLandlordListingExpiredCalendar(input: {
+  tenantFirstName: string
+  listingTitle: string
+  listingId: string
+  address: string
+  listingExpiresOn: string
+  editLink: string
+  deactivatedAt: Date
+}): WohnenEmailPayload {
+  const when = input.deactivatedAt.toLocaleString('de-CH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const inner = `
+<p style="margin:0 0 14px 0;">Hallo ${escapeHtml(input.tenantFirstName)},</p>
+<p style="margin:0 0 14px 0;">dein Miet-Inserat <strong>${escapeHtml(input.listingTitle)}</strong> (${escapeHtml(
+    input.address,
+  )}) wurde automatisch archiviert, weil das eingetragene <strong>Gültig bis</strong>-Datum (<strong>${escapeHtml(
+    input.listingExpiresOn,
+  )}</strong>) erreicht ist.</p>
+<p style="margin:0 0 14px 0;">Wenn die Wohnung noch verfügbar ist, kannst du ein neues Gültigkeitsdatum setzen und das Inserat wieder aktivieren.</p>
+${buttonRow(input.editLink, 'Inserat bearbeiten')}
+<p style="margin:16px 0 0 0;font-size:13px;color:#6b7280;">Archiviert am: ${escapeHtml(when)} · Inserat-ID: ${escapeHtml(
+    input.listingId,
+  )}</p>
+`
+  const subject = `Dein Miet-Inserat wurde archiviert (Gültigkeit ${input.listingExpiresOn})`
+  const text = [
+    `Hallo ${input.tenantFirstName},`,
+    '',
+    `Dein Inserat «${input.listingTitle}» (${input.address}) wurde archiviert.`,
+    `Gültig bis: ${input.listingExpiresOn}`,
+    `Archiviert am: ${when}`,
+    '',
+    input.editLink,
+  ].join('\n')
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
+}
+
+/** Admin: Kalender-Gültigkeit abgelaufen — Prüfung / Verlängern / Entfernen */
+export function templateAdminListingExpiredCalendar(input: {
+  listingTitle: string
+  address: string
+  listingId: string
+  listingExpiresOn: string
+  deactivatedAt: Date
+}): WohnenEmailPayload {
+  const m = mainOrigin()
+  const adminLink = `${m}/admin/listings/${encodeURIComponent(input.listingId)}/bearbeiten`
+  const when = input.deactivatedAt.toLocaleString('de-CH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const inner = `
+<p style="margin:0 0 14px 0;">Ein Miet-Inserat wurde automatisch archiviert, weil das <strong>Gültig bis</strong>-Datum erreicht ist (ohne oder zusätzlich zur URL-Überwachung):</p>
+<p style="margin:0 0 6px 0;"><strong>Titel:</strong> ${escapeHtml(input.listingTitle)}</p>
+<p style="margin:0 0 6px 0;"><strong>Adresse:</strong> ${escapeHtml(input.address)}</p>
+<p style="margin:0 0 6px 0;"><strong>Gültig bis:</strong> ${escapeHtml(input.listingExpiresOn)}</p>
+<p style="margin:0 0 18px 0;"><strong>Archiviert am:</strong> ${escapeHtml(when)}</p>
+${buttonRow(adminLink, 'Inserat prüfen')}
+<p style="margin:16px 0 0 0;font-size:14px;color:#4b5563;">Bitte im Admin entscheiden: verlängern (neues Datum, reaktivieren), dauerhaft entfernen oder die Prüfung in der Inserat-Liste als erledigt markieren.</p>
+`
+  const subject = '[ADMIN] Miet-Inserat archiviert — «Gültig bis» abgelaufen'
+  const text = [
+    'Inserat archiviert (Kalender-Gültigkeit).',
+    `Titel: ${input.listingTitle}`,
+    `Adresse: ${input.address}`,
+    `Gültig bis: ${input.listingExpiresOn}`,
+    `Archiviert am: ${when}`,
+    '',
+    adminLink,
+  ].join('\n')
+  return { subject, html: layout(inner, { publicNotice: false }), text: appendWohnenPublicNotice(text, false) }
+}
+
 export function templateTenantCertificateExpired(input: {
   tenantFirstName: string
   renewLink: string

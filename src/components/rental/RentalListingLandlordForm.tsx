@@ -2,10 +2,11 @@
 
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
 import type { RentalListingLandlordInitial } from '@/lib/rental/rental-landlord-initial'
+import { rentalListingHasMonitoringHttpUrl } from '@/lib/rental/rental-listing-expiry-on'
 import type { RentalListingStatus } from '@prisma/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { wohnenToast } from '@/lib/wohnen-toast'
 import toast from 'react-hot-toast'
@@ -74,6 +75,8 @@ export function RentalListingLandlordForm({
   const [description, setDescription] = useState('')
   const [imageUrls, setImageUrls] = useState<string[]>([])
   const [listingStatus, setListingStatus] = useState<RentalListingStatus>('active')
+  const [listingExpiresOn, setListingExpiresOn] = useState('')
+  const createDefaultExpirySeeded = useRef(false)
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -104,7 +107,36 @@ export function RentalListingLandlordForm({
     if (mode === 'edit') {
       setListingStatus(initial.status)
     }
+    setListingExpiresOn(initial.listingExpiresOn ?? '')
   }, [initial, mode])
+
+  useEffect(() => {
+    if (mode !== 'create' || initial != null || createDefaultExpirySeeded.current) return
+    createDefaultExpirySeeded.current = true
+    const d = new Date()
+    d.setUTCDate(d.getUTCDate() + 90)
+    setListingExpiresOn(d.toISOString().slice(0, 10))
+  }, [mode, initial])
+
+  const hasMonitoringHttpUrl = useMemo(() => {
+    if (importMetaLocked?.importedFrom) {
+      return rentalListingHasMonitoringHttpUrl(importMetaLocked.importedFrom)
+    }
+    if (initial?.importedFrom) {
+      return rentalListingHasMonitoringHttpUrl(initial.importedFrom)
+    }
+    if (isAdminForm && adminShowAcquisitionFields && acquisition === 'imported') {
+      return rentalListingHasMonitoringHttpUrl(originalUrl.trim())
+    }
+    return false
+  }, [importMetaLocked, initial?.importedFrom, isAdminForm, adminShowAcquisitionFields, acquisition, originalUrl])
+
+  const minExpireYmd = useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const maxExpireYmd = useMemo(() => {
+    const d = new Date()
+    d.setUTCDate(d.getUTCDate() + 730)
+    return d.toISOString().slice(0, 10)
+  }, [])
 
   const roomsValue = useMemo(() => (rooms === '5+' ? 5 : parseFloat(rooms)), [rooms])
 
@@ -201,6 +233,11 @@ export function RentalListingLandlordForm({
       return
     }
 
+    if (!hasMonitoringHttpUrl && !listingExpiresOn.trim()) {
+      toast.error('Bitte ein «Gültig bis»-Datum setzen (Pflicht ohne https-Original-URL).')
+      return
+    }
+
     if (isAdminForm && adminShowAcquisitionFields) {
       if (acquisition === 'imported') {
         if (!originalUrl.trim()) {
@@ -236,6 +273,11 @@ export function RentalListingLandlordForm({
         description,
         requiresCreditCheck: true,
         photos: imageUrls,
+        ...(hasMonitoringHttpUrl ?
+          listingExpiresOn.trim() ?
+            { listingExpiresOn: listingExpiresOn.trim() }
+          : {}
+        : { listingExpiresOn: listingExpiresOn.trim() }),
         ...(mode === 'edit' ? { status: listingStatus } : {}),
       }
 
@@ -282,7 +324,8 @@ export function RentalListingLandlordForm({
     !submitting &&
     imageUrls.length >= minPhotos &&
     imageUrls.length <= 10 &&
-    description.trim().length >= minDescriptionLen
+    description.trim().length >= minDescriptionLen &&
+    (hasMonitoringHttpUrl || listingExpiresOn.trim().length > 0)
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
@@ -601,6 +644,25 @@ export function RentalListingLandlordForm({
             onChange={e => setAvailableFrom(e.target.value)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2"
           />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Gültig bis (Kalendertag, Schweiz){hasMonitoringHttpUrl ? ' (optional)' : ' *'}
+          </label>
+          <input
+            required={!hasMonitoringHttpUrl}
+            type="date"
+            min={minExpireYmd}
+            max={maxExpireYmd}
+            value={listingExpiresOn}
+            onChange={e => setListingExpiresOn(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2"
+          />
+          <p className="mt-1 text-xs text-slate-500">
+            {hasMonitoringHttpUrl ?
+              'Mit überwachbarer Original-URL (https://…) ist kein Enddatum nötig — du kannst eines setzen, dann archivieren wir das Inserat automatisch an diesem Tag.'
+            : 'Ohne https-Original-URL ist ein Enddatum Pflicht. Ab diesem Tag wird das Inserat automatisch archiviert; du erhältst eine E-Mail und der Admin eine Prüf-Aufgabe.'}
+          </p>
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">

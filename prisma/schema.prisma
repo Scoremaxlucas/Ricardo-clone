@@ -1723,6 +1723,8 @@ enum DeactivationReason {
   URL_RENTED
   STALE_REPORTS
   MANUAL_ADMIN
+  /// Kalender-Gültigkeit (ohne überwachbare http(s)-Quell-URL) abgelaufen
+  LISTING_EXPIRED
 }
 
 /** Admin: E-Mail mit Link — externe Person reicht Inserat-URL ein; automatischer Import oder Entwurf. */
@@ -1775,6 +1777,11 @@ model RentalListing {
   /// Aufeinanderfolgende UNREACHABLE-Läufe (Cron); bei ACTIVE/GONE/RENTED zurücksetzen.
   urlUnreachableStreak Int @default(0)
 
+  /// Inklusives Kalenderdatum (Europe/Zurich) YYYY-MM-DD; Pflicht wenn keine http(s)-`importedFrom`-URL.
+  listingExpiresOn  String?
+  /// Nach Ablauf: Admin soll verlängern oder endgültig entfernen / als erledigt markieren.
+  needsExpiryReview   Boolean @default(false)
+
   user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications  RentalApplication[]
   sourceInvites RentalListingInvite[]
@@ -1785,6 +1792,7 @@ model RentalListing {
   @@index([availableFrom])
   @@index([importSource])
   @@index([status, lastCheckedAt])
+  @@index([status, listingExpiresOn])
   @@map("rental_listings")
 }
 

@@ -3,7 +3,7 @@
 import type { ImportSource, RentalListingStatus } from '@prisma/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 
 export type AdminListingRow = {
@@ -29,9 +29,18 @@ export type AdminListingAttentionRow = {
   dateLabel: string
 }
 
+export type AdminExpiryReviewRow = {
+  id: string
+  title: string
+  address: string
+  listingExpiresOn: string | null
+  autoDeactivatedAt: string
+}
+
 type Props = {
   listings: AdminListingRow[]
   attentionItems: AdminListingAttentionRow[]
+  expiryReviewItems: AdminExpiryReviewRow[]
   stats: {
     total: number
     active: number
@@ -46,14 +55,45 @@ function statusLabel(s: RentalListingStatus): string {
   return 'Archiviert'
 }
 
-export function AdminListingsClient({ listings: initialListings, attentionItems, stats }: Props) {
+export function AdminListingsClient({
+  listings: initialListings,
+  attentionItems,
+  expiryReviewItems: initialExpiryReviews,
+  stats,
+}: Props) {
   const router = useRouter()
   const [listings, setListings] = useState(initialListings)
+  const [expiryReviews, setExpiryReviews] = useState(initialExpiryReviews)
   const [cantonFilter, setCantonFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | RentalListingStatus>('all')
   const [sourceFilter, setSourceFilter] = useState<'all' | 'admin' | 'landlord' | 'import'>('all')
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setExpiryReviews(initialExpiryReviews)
+  }, [initialExpiryReviews])
+
+  const dismissExpiryReview = async (id: string) => {
+    setBusyId(id)
+    try {
+      const res = await fetch(`/api/admin/rental-listings/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ needsExpiryReview: false }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error((data as { message?: string }).message || 'Aktion fehlgeschlagen')
+        return
+      }
+      setExpiryReviews(prev => prev.filter(x => x.id !== id))
+      toast.success('Prüfung als erledigt markiert')
+      router.refresh()
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   const filtered = useMemo(() => {
     return listings.filter(l => {
@@ -121,6 +161,59 @@ export function AdminListingsClient({ listings: initialListings, attentionItems,
       <p className="mt-2 max-w-3xl text-sm text-slate-600">
         Alle Inserate auf der Plattform — erstellt, importiert oder von Vermietern inseriert
       </p>
+
+      <section className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/60 p-5 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-900">Gültigkeit — Admin-Entscheid</h2>
+        <p className="mt-1 text-sm text-slate-700">
+          Inserate, die per Kalender-Gültigkeit automatisch archiviert wurden. Bitte verlängern (Bearbeiten → neues
+          «Gültig bis», reaktivieren), endgültig löschen oder die Prüfung hier als erledigt abhaken.
+        </p>
+        {expiryReviews.length === 0 ?
+          <p className="mt-4 text-sm text-slate-600">Keine offenen Gültigkeits-Reviews.</p>
+        : <ul className="mt-4 divide-y divide-amber-200/80">
+            {expiryReviews.map(row => (
+              <li key={row.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900">{row.title}</p>
+                  <p className="text-sm text-slate-600">{row.address}</p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Gültig bis: <span className="font-medium">{row.listingExpiresOn || '—'}</span>
+                    {row.autoDeactivatedAt ?
+                      <>
+                        {' '}
+                        · Archiviert:{' '}
+                        {new Date(row.autoDeactivatedAt).toLocaleString('de-CH', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </>
+                    : null}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Link
+                    href={`/admin/listings/${row.id}/bearbeiten`}
+                    className="inline-flex items-center justify-center rounded-lg bg-[#18a87c] px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
+                  >
+                    Bearbeiten / verlängern
+                  </Link>
+                  <button
+                    type="button"
+                    disabled={busyId === row.id}
+                    onClick={() => void dismissExpiryReview(row.id)}
+                    className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Prüfung erledigt
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        }
+      </section>
 
       <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-bold text-slate-900">Aufmerksamkeit erforderlich</h2>

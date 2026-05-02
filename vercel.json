@@ -86,6 +86,10 @@
     {
       "path": "/api/cron/check-listing-urls",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/rental-listing-expiry",
+      "schedule": "30 6 * * *"
     }
   ]
 }

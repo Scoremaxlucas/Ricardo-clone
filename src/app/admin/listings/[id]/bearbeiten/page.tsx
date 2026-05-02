@@ -58,6 +58,9 @@ export default async function AdminEditListingPage({ params }: PageProps) {
     requiresCreditCheck: listing.requiresCreditCheck,
     photos,
     status: listing.status,
+    listingExpiresOn: listing.listingExpiresOn ?? null,
+    importedFrom: listing.importedFrom,
+    importSource: listing.importSource,
   }
 
   return (

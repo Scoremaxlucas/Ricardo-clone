@@ -39,6 +39,8 @@ function deactivationReasonDe(r: DeactivationReason | null): string {
       return 'Mehrere Bewerber-Meldungen'
     case 'MANUAL_ADMIN':
       return 'Manuell durch Admin'
+    case 'LISTING_EXPIRED':
+      return '«Gültig bis» abgelaufen'
     default:
       return String(r)
   }
@@ -74,8 +76,17 @@ export default async function AdminListingsPage() {
   const sevenDaysAgoAttention = new Date()
   sevenDaysAgoAttention.setDate(sevenDaysAgoAttention.getDate() - 7)
 
-  const [total, active, addedThisWeek, totalApplications, rawListings, unreachableRows, staleRows, recentOff] =
-    await Promise.all([
+  const [
+    total,
+    active,
+    addedThisWeek,
+    totalApplications,
+    rawListings,
+    unreachableRows,
+    staleRows,
+    recentOff,
+    expiryReviewRows,
+  ] = await Promise.all([
     prisma.rentalListing.count(),
     prisma.rentalListing.count({ where: { status: 'active' } }),
     prisma.rentalListing.count({ where: { createdAt: { gte: weekAgo } } }),
@@ -121,6 +132,18 @@ export default async function AdminListingsPage() {
         address: true,
         autoDeactivatedAt: true,
         autoDeactivatedReason: true,
+      },
+    }),
+    prisma.rentalListing.findMany({
+      where: { needsExpiryReview: true },
+      orderBy: { autoDeactivatedAt: 'desc' },
+      take: 100,
+      select: {
+        id: true,
+        title: true,
+        address: true,
+        listingExpiresOn: true,
+        autoDeactivatedAt: true,
       },
     }),
   ])
@@ -201,10 +224,19 @@ export default async function AdminListingsPage() {
     }
   })
 
+  const expiryReviewItems = expiryReviewRows.map(r => ({
+    id: r.id,
+    title: r.title,
+    address: r.address,
+    listingExpiresOn: r.listingExpiresOn,
+    autoDeactivatedAt: r.autoDeactivatedAt?.toISOString() ?? '',
+  }))
+
   return (
     <AdminListingsClient
       listings={listings}
       attentionItems={attentionItems}
+      expiryReviewItems={expiryReviewItems}
       stats={{
         total,
         active,

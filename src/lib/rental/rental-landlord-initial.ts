@@ -1,4 +1,4 @@
-import type { RentalListingStatus } from '@prisma/client'
+import type { ImportSource, RentalListingStatus } from '@prisma/client'
 
 /** Initiale Werte für das Miet-Inserat-Formular (Server + Client). */
 export type RentalListingLandlordInitial = {
@@ -18,4 +18,8 @@ export type RentalListingLandlordInitial = {
   requiresCreditCheck: boolean
   photos: string[]
   status: RentalListingStatus
+  /** YYYY-MM-DD; Pflicht wenn keine http(s)-Original-URL. */
+  listingExpiresOn: string | null
+  importedFrom: string | null
+  importSource: ImportSource
 }

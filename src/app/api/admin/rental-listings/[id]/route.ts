@@ -2,6 +2,12 @@ import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
 import { encryptLandlordContactForStorage } from '@/lib/rental/pdf-crypto'
+import {
+  parseListingExpiresOnFromBody,
+  rentalListingHasMonitoringHttpUrl,
+  todayYmdInZurich,
+  validateListingExpiresOnForUpsert,
+} from '@/lib/rental/rental-listing-expiry-on'
 import type { Prisma } from '@prisma/client'
 import { DeactivationReason, ImportSource, RentalListingStatus } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
@@ -125,6 +131,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (next === 'active' && existing.status === 'archived') {
         data.autoDeactivatedAt = null
         data.autoDeactivatedReason = null
+        data.needsExpiryReview = false
       }
     }
 
@@ -137,6 +144,60 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       } else if (typeof body.importedFrom === 'string') {
         data.importedFrom = body.importedFrom.trim().slice(0, 2000)
       }
+    }
+
+    let mergedImportedFrom = existing.importedFrom
+    if (body.importedFrom !== undefined) {
+      mergedImportedFrom =
+        body.importedFrom === null || body.importedFrom === '' ?
+          null
+        : typeof body.importedFrom === 'string' ?
+          body.importedFrom.trim().slice(0, 2000)
+        : existing.importedFrom
+    }
+
+    const onlyNeedsExpiryReviewDismiss =
+      Object.keys(body).length === 1 && Object.prototype.hasOwnProperty.call(body, 'needsExpiryReview')
+
+    if (!onlyNeedsExpiryReviewDismiss) {
+      const hasMonitoringUrl = rentalListingHasMonitoringHttpUrl(mergedImportedFrom)
+      const nextListingExpiresOn =
+        'listingExpiresOn' in body ? parseListingExpiresOnFromBody(body) : existing.listingExpiresOn
+      const expiryVal = validateListingExpiresOnForUpsert({
+        hasMonitoringUrl,
+        listingExpiresOn: nextListingExpiresOn,
+        intent: 'edit',
+        existingListingExpiresOn: existing.listingExpiresOn,
+      })
+      if (!expiryVal.ok) {
+        return NextResponse.json({ message: expiryVal.message }, { status: 400 })
+      }
+      if ('listingExpiresOn' in body) {
+        data.listingExpiresOn = expiryVal.value
+      }
+
+      if (
+        typeof body.status === 'string' &&
+        body.status === 'active' &&
+        existing.status === 'archived' &&
+        !rentalListingHasMonitoringHttpUrl(mergedImportedFrom)
+      ) {
+        const effExpires = 'listingExpiresOn' in body ? expiryVal.value : existing.listingExpiresOn
+        const today = todayYmdInZurich()
+        if (!effExpires || effExpires < today) {
+          return NextResponse.json(
+            {
+              message:
+                'Zum Reaktivieren ohne überwachbare Original-URL (https://…) bitte ein neues «Gültig bis»-Datum in der Zukunft setzen.',
+            },
+            { status: 400 },
+          )
+        }
+      }
+    }
+
+    if (typeof body.needsExpiryReview === 'boolean') {
+      data.needsExpiryReview = body.needsExpiryReview
     }
 
     if (typeof body.landlordContactPlain === 'string') {
