@@ -1970,6 +1970,8 @@ model TenantProfile {
   creditCheckExpiresAt  DateTime?
   /** Letzte E-Mail „Betreibungsregisterauszug läuft ab“ (Cron, max. 1× / 24h Fenster) */
   expiryReminderSentAt  DateTime?
+  /** Einmalige E-Mail ca. 14 Tage vor Ablauf des Betreibungsregister-Auszugs */
+  creditCheckExpiryReminder14dSentAt DateTime?
 
   isComplete            Boolean            @default(false)
 
@@ -2020,6 +2022,11 @@ model HelvendaCertificate {
 
   verificationCount Int       @default(0)
   lastVerifiedAt    DateTime?
+
+  /** Cron: einmalige Erinnerung ca. 14 Tage vor Zertifikats-Ablauf (ACTIVE) */
+  expiryReminder14dSentAt DateTime?
+  /** Cron: einmalige Erinnerung in den letzten 3 Tagen vor Ablauf (ACTIVE) */
+  expiryReminder3dSentAt  DateTime?
 
   @@index([certificateCode])
   @@index([userId])

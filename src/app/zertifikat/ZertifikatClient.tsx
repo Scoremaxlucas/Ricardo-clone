@@ -1,5 +1,6 @@
 'use client'
 
+import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { formatDate } from '@/lib/utils/formatDate'
 import { CheckCircle2, Shield } from 'lucide-react'
 import Link from 'next/link'
@@ -22,7 +23,7 @@ function issueErrorDe(reason?: string): { title: string; body: string; href: str
     case 'PROFILE_INCOMPLETE':
       return {
         title: 'Profil unvollständig',
-        body: 'Bitte vervollständige zuerst dein Mieterprofil.',
+        body: 'Vervollständige bitte zuerst dein Mieterprofil.',
         href: '/profil/bearbeiten',
         cta: 'Profil bearbeiten',
       }
@@ -87,6 +88,8 @@ export function ZertifikatClient({
     }
   }, [])
 
+  const verifyPageUrl = code ? `${WOHNEN_SITE_ORIGIN.replace(/\/$/, '')}/verify/${encodeURIComponent(code)}` : ''
+
   const downloadPdf = useCallback(() => {
     if (!code) return
     window.open(
@@ -94,6 +97,26 @@ export function ZertifikatClient({
       '_blank',
       'noopener,noreferrer'
     )
+  }, [code])
+
+  const copyVerifyLink = useCallback(async () => {
+    if (!verifyPageUrl) return
+    try {
+      await navigator.clipboard.writeText(verifyPageUrl)
+      toast.success('Prüf-Link kopiert ✓')
+    } catch {
+      toast.error('Kopieren fehlgeschlagen')
+    }
+  }, [verifyPageUrl])
+
+  const copyCertificateCode = useCallback(async () => {
+    if (!code) return
+    try {
+      await navigator.clipboard.writeText(code)
+      toast.success('Code kopiert ✓')
+    } catch {
+      toast.error('Kopieren fehlgeschlagen')
+    }
   }, [code])
 
   const validUntil =
@@ -109,7 +132,7 @@ export function ZertifikatClient({
             </div>
             <h1 className="mt-8 text-2xl font-extrabold text-[#0d2b1f]">Zertifikat ausgestellt ✓</h1>
             <p className="mt-3 font-mono text-sm font-semibold tracking-[0.2em] text-[#8aa89e]">{code}</p>
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
               <button
                 type="button"
                 onClick={downloadPdf}
@@ -117,12 +140,60 @@ export function ZertifikatClient({
               >
                 PDF herunterladen
               </button>
+              <button
+                type="button"
+                onClick={() => void copyVerifyLink()}
+                className="rounded-xl border-2 border-[#18a87c] bg-white px-6 py-3 text-sm font-bold text-[#107a5a] hover:bg-[#f5fdfb]"
+              >
+                Prüf-Link kopieren
+              </button>
+              <button
+                type="button"
+                onClick={() => void copyCertificateCode()}
+                className="rounded-xl border-2 border-[#18a87c] bg-white px-6 py-3 text-sm font-bold text-[#107a5a] hover:bg-[#f5fdfb]"
+              >
+                Code kopieren
+              </button>
               <Link
                 href="/profil"
-                className="inline-flex items-center justify-center rounded-xl border-2 border-[#18a87c] px-6 py-3 text-sm font-bold text-[#107a5a] hover:bg-white/80"
+                className="inline-flex items-center justify-center rounded-xl border-2 border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
               >
                 Zum Profil
               </Link>
+            </div>
+            <div className="mx-auto mt-10 max-w-lg rounded-2xl border border-[#d4eee4] bg-white px-5 py-5 text-left shadow-sm">
+              <p className="text-sm font-bold text-[#0d2b1f]">So nutzt du den Nachweis ausserhalb von Helvenda</p>
+              <ul className="mt-3 space-y-2 text-sm leading-relaxed text-[#5a7a6e]">
+                <li className="flex gap-2">
+                  <span className="shrink-0 text-[#107a5a]">1.</span>
+                  <span>
+                    <strong className="text-[#0d2b1f]">PDF</strong> der Bewerbung beilegen — wie einen klassischen
+                    Bewerbungsnachweis.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="shrink-0 text-[#107a5a]">2.</span>
+                  <span>
+                    <strong className="text-[#0d2b1f]">Prüf-Link</strong> in die E-Mail oder Signatur setzen, damit
+                    Vermieter den Stand selbst prüfen können.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="shrink-0 text-[#107a5a]">3.</span>
+                  <span>
+                    Auf Helvenda bewirbst du dich danach mit einem Klick auf passende Inserate — Profil und Nachweis
+                    sind bereits verbunden.
+                  </span>
+                </li>
+              </ul>
+              {verifyPageUrl ?
+                <p className="mt-4 break-all text-left text-xs text-[#8aa89e]">
+                  Öffentliche Prüfseite:{' '}
+                  <a href={verifyPageUrl} className="font-mono font-semibold text-[#107a5a] underline" target="_blank" rel="noreferrer">
+                    {verifyPageUrl}
+                  </a>
+                </p>
+              : null}
             </div>
           </>
         : phase === 'loading' ?
@@ -184,10 +255,18 @@ export function ZertifikatClient({
               </li>
             </ul>
             <p className="mt-8 text-sm font-semibold text-[#107a5a]">Gültig bis: {validUntil}</p>
+            <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-[#d4eee4] bg-white px-5 py-4 text-left text-sm leading-relaxed text-[#5a7a6e] shadow-sm">
+              <p className="font-bold text-[#0d2b1f]">Auch für Bewerbungen ausserhalb Helvenda</p>
+              <p className="mt-2">
+                Nach der Ausstellung erhältst du ein PDF und einen öffentlichen Prüf-Link. Beides kannst du bei
+                Portalen, per E-Mail oder direkt beim Vermieter einreichen — derselbe Nachweis gilt auf Helvenda
+                weiterhin automatisch.
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => void issue()}
-              className="mt-10 w-full max-w-xs rounded-xl bg-[#18a87c] px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:opacity-95 sm:w-auto"
+              className="mt-8 w-full max-w-xs rounded-xl bg-[#18a87c] px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:opacity-95 sm:w-auto"
             >
               Zertifikat ausstellen
             </button>

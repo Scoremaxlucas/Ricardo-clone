@@ -99,6 +99,10 @@ export function CertificateProfilSection({
                 Läuft in {daysLeft} Tag{daysLeft === 1 ? '' : 'en'} ab — Betreibungsregister erneuern
               </p>
             : null}
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-teal-50/95">
+              <span className="font-semibold text-white">Ausserhalb Helvenda:</span> PDF an Bewerbungen anhängen oder den
+              Prüf-Link an Vermieter senden — sie prüfen den Stand auf der offiziellen Seite (dieser Link).
+            </p>
             <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <button
                 type="button"

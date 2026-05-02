@@ -76,6 +76,10 @@
       "schedule": "0 8 * * *"
     },
     {
+      "path": "/api/cron/certificate-expiry-reminders",
+      "schedule": "15 8 * * *"
+    },
+    {
       "path": "/api/cron/expire-certificates",
       "schedule": "0 7 * * *"
     },

@@ -1455,6 +1455,22 @@ export const it: Translation = {
         '',
       ],
     },
+    'wohnungen-qualitaetsnachweis-pruefen': {
+      title: 'Certificato Helvenda Wohnungen — come verificarlo come locatore',
+      category: 'Sicurezza',
+      content: [
+        'I candidati possono allegare un certificato di qualità Helvenda (PDF più link). Per verificarlo in modo rapido e sicuro:',
+        '1. Usate solo il link ufficiale: la pagina di controllo si trova su Helvenda Wohnungen sotto /verify/ seguito da un codice come HLV-…. Screenshot o link verso domini sconosciuti non bastano.',
+        '2. Leggete lo stato: la pagina mostra valido, scaduto, revocato o non trovato. Se scaduto o revocato, chiedete un estratto aggiornato o un nuovo certificato.',
+        "3. Cosa attesta il certificato: al momento dell'emissione Helvenda ha verificato tra l'altro l'estratto del registro delle esecuzioni e i dati dichiarati (ad es. fascia di reddito, occupazione).",
+        "4. Cosa non sostituisce: non è un punteggio di credito bancario, non è un contratto di locazione né una garanzia sui pagamenti futuri. La scelta dell'inquilino resta vostra.",
+        '5. In caso di dubbi: chiedete al candidato di reinviare il link o di aggiornare il profilo Helvenda. Se dubitate dell’identità, richiedete i documenti abituali in aggiunta.',
+      ],
+      tips: [
+        'Conservate l’URL di una verifica riuscita nel fascicolo di candidatura (annotare la data).',
+        'Gli annunci di affitto attuali sono su Helvenda Wohnungen.',
+      ],
+    },
     'system-outages': {
       title: 'Principi in caso di interruzioni del sistema',
       category: 'Generale',

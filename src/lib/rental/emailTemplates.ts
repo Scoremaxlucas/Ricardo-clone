@@ -431,6 +431,82 @@ Online: <a href="https://betreibungsaemter.ch" style="color:#18a87c;">betreibung
   return { subject, html: layout(inner), text }
 }
 
+/** Template 8b — Betreibungsregisterauszug: frühe Erinnerung (~14 Tage) */
+export function templateTenantCreditExpiryReminder14d(input: {
+  tenantFirstName: string
+  expiresOn: Date
+}): WohnenEmailPayload {
+  const o = wohnenOrigin()
+  const link = `${o}/profil/betreibungsregister`
+  const exp = input.expiresOn.toLocaleDateString('de-CH', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+  const inner = `
+<p style="margin:0 0 14px 0;">Hallo ${escapeHtml(input.tenantFirstName)},</p>
+<p style="margin:0 0 14px 0;">dein Betreibungsregisterauszug läuft am <strong>${escapeHtml(exp)}</strong> ab — in etwa zwei Wochen.</p>
+<p style="margin:0 0 14px 0;">Wenn du frühzeitig einen neuen Auszug bestellst und hochlädst, bleiben dein Profil und dein Helvenda Qualitätsnachweis ohne Unterbruch gültig.</p>
+${buttonRow(link, 'Auszug vorbereiten')}
+<p style="margin:20px 0 0 0;font-size:14px;color:#4b5563;"><strong>Wo bestellen?</strong><br>
+Betreibungsamt deines Wohnorts oder online: <a href="https://betreibungsaemter.ch" style="color:#18a87c;">betreibungsaemter.ch</a></p>
+`
+  const subject = 'Erinnerung: Betreibungsregisterauszug läuft in ca. 14 Tagen ab'
+  const text = [
+    `Hallo ${input.tenantFirstName},`,
+    '',
+    `Dein Auszug läuft am ${exp} ab (ca. 14 Tage).`,
+    link,
+    'betreibungsaemter.ch',
+  ].join('\n')
+  return { subject, html: layout(inner), text }
+}
+
+/** Qualitätsnachweis läuft bald ab (ACTIVE, vor Ablaufdatum) */
+export function templateTenantCertificateExpirySoon(input: {
+  tenantFirstName: string
+  expiresOn: Date
+  daysBefore: 14 | 3
+  certificateCode: string
+}): WohnenEmailPayload {
+  const o = wohnenOrigin()
+  const zertLink = `${o}/zertifikat`
+  const registerLink = `${o}/profil/betreibungsregister`
+  const exp = input.expiresOn.toLocaleDateString('de-CH', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+  const phase =
+    input.daysBefore === 14 ?
+      'In etwa zwei Wochen läuft dein Helvenda Qualitätsnachweis ab.'
+    : 'Dein Helvenda Qualitätsnachweis läuft in den nächsten 3 Tagen ab.'
+  const inner = `
+<p style="margin:0 0 14px 0;">Hallo ${escapeHtml(input.tenantFirstName)},</p>
+<p style="margin:0 0 14px 0;">${escapeHtml(phase)}</p>
+<p style="margin:0 0 10px 0;"><strong>Gültig bis:</strong> ${escapeHtml(exp)}</p>
+<p style="margin:0 0 10px 0;"><strong>Code:</strong> <span style="font-family:ui-monospace,monospace;">${escapeHtml(input.certificateCode)}</span></p>
+<p style="margin:0 0 14px 0;">Nach Ablauf funktionieren PDF und Prüf-Link für Vermieter nicht mehr. Stelle bei Bedarf ein neues Zertifikat aus, sobald dein Betreibungsregister wieder gültig ist.</p>
+${buttonRow(zertLink, 'Zum Qualitätsnachweis')}
+<p style="margin:16px 0 0 0;font-size:14px;color:#4b5563;">Register erneuern: <a href="${escapeHtml(registerLink)}" style="color:#18a87c;">${escapeHtml(registerLink)}</a></p>
+`
+  const subject =
+    input.daysBefore === 14 ?
+      'Dein Helvenda Qualitätsnachweis läuft in ca. 14 Tagen ab'
+    : 'Dein Helvenda Qualitätsnachweis läuft bald ab ⚠️'
+  const text = [
+    `Hallo ${input.tenantFirstName},`,
+    '',
+    phase,
+    `Gültig bis: ${exp}`,
+    `Code: ${input.certificateCode}`,
+    '',
+    zertLink,
+    registerLink,
+  ].join('\n')
+  return { subject, html: layout(inner), text }
+}
+
 /** Admin: Inserat automatisch deaktiviert — URL 404 */
 export function templateAdminListingDeactivatedUrl404(input: {
   listingTitle: string

@@ -61,9 +61,11 @@ function StaticListingPlaceholders() {
 export async function WohnenMarketingHome({
   primaryHref = '/wohnungen',
   primaryLabel = 'Wohnungen suchen',
+  signedIn = false,
 }: {
   primaryHref?: string
   primaryLabel?: string
+  signedIn?: boolean
 }) {
   const [listings, activeCount] = await Promise.all([
     loadWohnenHomeListings(6),
@@ -76,6 +78,11 @@ export async function WohnenMarketingHome({
     { tema: 'Inserat inserieren', hg: 'CHF 14–28 pro Tag', hv: 'Kostenlos' },
     { tema: 'Mieter kontaktieren', hg: 'CHF 39.95 / Monat Pflicht-Abo', hv: 'Kostenlos, sofort' },
     { tema: 'Bewerbungsqualität', hg: 'Unstrukturierte E-Mails', hv: 'Verifiziert mit Betreibungsregisterauszug' },
+    {
+      tema: 'Nachweis für externe Bewerbungen',
+      hg: 'Kein standardisierter Nachweis',
+      hv: 'Helvenda Qualitätsnachweis (PDF + Online-Prüfung)',
+    },
     { tema: 'Login', hg: 'Separates Konto pro Plattform', hv: 'Ein Helvenda-Konto für alles' },
     { tema: 'Inserate-Qualität', hg: 'Keine Vorprüfung', hv: 'Betreibungsregisterauszug inklusive' },
     { tema: 'Mieterplus-Abo', hg: 'CHF 39.95/Monat Pflicht', hv: 'Nie — kostenlos für alle' },
@@ -160,6 +167,35 @@ export async function WohnenMarketingHome({
               </span>
             </p>
           : null}
+
+          <div
+            id="qualitaetsnachweis"
+            className="mx-auto mt-10 max-w-2xl rounded-2xl border border-[#c4ead7] bg-white/90 px-5 py-6 text-center shadow-sm sm:px-8"
+          >
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#18a87c]">Helvenda Qualitätsnachweis</p>
+            <p className="mt-2 text-lg font-extrabold leading-snug text-slate-900 sm:text-xl">
+              Ein Nachweis — auch ausserhalb von Helvenda
+            </p>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[#5a7a6e] sm:text-base">
+              Wenn dein Profil und Betreibungsregister stimmen, stellst du den Qualitätsnachweis aus:{' '}
+              <strong className="text-slate-800">PDF und Prüf-Link</strong> für Vermieter — für E-Mail-Bewerbungen,
+              andere Portale und gleichzeitig für Helvenda-Inserate.
+            </p>
+            <div className="mt-5 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap">
+              <Link
+                href={signedIn ? '/zertifikat' : '/register'}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[#18a87c] px-5 text-sm font-bold text-white shadow-sm transition hover:opacity-95"
+              >
+                {signedIn ? 'Zum Qualitätsnachweis' : 'Konto erstellen'}
+              </Link>
+              <Link
+                href="#wie-es-funktioniert"
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-[#18a87c] hover:text-[#18a87c]"
+              >
+                So funktioniert’s
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 

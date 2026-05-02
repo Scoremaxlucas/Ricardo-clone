@@ -38,6 +38,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       creditCheckExpiresAt: expires,
       creditCheckUploadedAt: now,
       expiryReminderSentAt: null,
+      creditCheckExpiryReminder14dSentAt: null,
     },
     select: { creditCheckStatus: true, creditCheckExpiresAt: true },
   })

@@ -1477,6 +1477,22 @@ export const en: Translation = {
         '',
       ],
     },
+    'wohnungen-qualitaetsnachweis-pruefen': {
+      title: 'Helvenda tenant certificate — how landlords should verify it',
+      category: 'Safety',
+      content: [
+        'Applicants may attach a Helvenda quality certificate (PDF plus a verification link). Verify it quickly and safely as follows:',
+        '1. Use only the official link: the check page is hosted on Helvenda Wohnungen at /verify/ followed by a code such as HLV-…. Screenshots or links to unknown domains are not a substitute.',
+        '2. Read the status: the page shows valid, expired, revoked, or not found. If expired or revoked, ask the applicant for an updated extract or a new certificate.',
+        '3. What the certificate proves: at issuance time Helvenda verified the debt collection register excerpt and the stated details (for example income band and employment).',
+        '4. What it does not replace: it is not a bank credit score, not a tenancy agreement, and not a guarantee of future payments. Choosing a tenant remains your decision.',
+        '5. If anything is unclear: ask the applicant to resend the link or update their Helvenda profile. If identity is in doubt, request your usual additional documents.',
+      ],
+      tips: [
+        'Keep the URL of a successful check in your application file (note the date from your browser or an export).',
+        'Browse current rental listings anytime on Helvenda Wohnungen.',
+      ],
+    },
     'prohibited-items': {
       title: 'Prohibited Items List',
       category: 'General',

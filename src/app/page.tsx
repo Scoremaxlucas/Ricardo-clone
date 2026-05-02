@@ -125,7 +125,11 @@ export default async function Home() {
             `,
           }}
         />
-        <WohnenMarketingHome primaryHref={primaryHref} primaryLabel={primaryLabel} />
+        <WohnenMarketingHome
+          primaryHref={primaryHref}
+          primaryLabel={primaryLabel}
+          signedIn={Boolean(session?.user?.id)}
+        />
       </div>
     )
   }

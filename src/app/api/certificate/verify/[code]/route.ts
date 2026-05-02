@@ -1,9 +1,27 @@
+import { isBotUserAgent } from '@/lib/http/is-bot'
 import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { prisma } from '@/lib/prisma'
 import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
+
+const VERIFY_ANALYTICS_SESSION = 'public-certificate-verify'
+
+function noteVerifyApiOutcome(req: NextRequest, outcome: string) {
+  if (isBotUserAgent(req.headers.get('user-agent'))) return
+  void prisma.analyticsEvent
+    .create({
+      data: {
+        name: 'certificate_verify',
+        sessionId: VERIFY_ANALYTICS_SESSION,
+        userId: null,
+        path: '/api/certificate/verify',
+        metadata: JSON.stringify({ outcome }),
+      },
+    })
+    .catch(() => {})
+}
 
 function normalizeCode(raw: string): string {
   return decodeURIComponent(raw || '')
@@ -12,10 +30,11 @@ function normalizeCode(raw: string): string {
     .replace(/\s+/g, '')
 }
 
-export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: string }> }) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ code: string }> }) {
   const { code: raw } = await ctx.params
   const certificateCode = normalizeCode(raw)
   if (!certificateCode || !certificateCode.startsWith('HLV-')) {
+    noteVerifyApiOutcome(req, 'INVALID_CODE')
     return NextResponse.json({ valid: false, reason: 'NOT_FOUND' as const })
   }
 
@@ -24,14 +43,17 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
   })
 
   if (!row) {
+    noteVerifyApiOutcome(req, 'NOT_FOUND')
     return NextResponse.json({ valid: false, reason: 'NOT_FOUND' as const })
   }
 
   if (row.status === 'REVOKED') {
+    noteVerifyApiOutcome(req, 'REVOKED')
     return NextResponse.json({ valid: false, reason: 'REVOKED' as const })
   }
 
   if (row.status === 'SUPERSEDED') {
+    noteVerifyApiOutcome(req, 'SUPERSEDED')
     return NextResponse.json({ valid: false, reason: 'NOT_FOUND' as const })
   }
 
@@ -48,6 +70,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       null,
       null
     )
+    noteVerifyApiOutcome(req, 'EXPIRED')
     return NextResponse.json({
       valid: false,
       reason: 'EXPIRED' as const,
@@ -74,6 +97,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       lastVerifiedAt: now,
     },
   })
+
+  noteVerifyApiOutcome(req, 'VALID')
 
   const incomeCategory = row.verifiedIncomeCategory as IncomeCategory
   const incomeLabel = incomeCategoryLabelDe(incomeCategory)

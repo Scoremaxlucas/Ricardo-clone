@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
         creditCheckResult: Prisma.JsonNull,
         creditCheckExpiresAt: null,
         expiryReminderSentAt: null,
+        creditCheckExpiryReminder14dSentAt: null,
       },
     })
 

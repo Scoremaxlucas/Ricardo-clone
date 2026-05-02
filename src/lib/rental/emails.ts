@@ -17,7 +17,9 @@ import {
   templateLandlordNewApplication,
   templateTenantApplicationSubmitted,
   templateTenantCertificateExpired,
+  templateTenantCertificateExpirySoon,
   templateTenantCreditExpiryReminder,
+  templateTenantCreditExpiryReminder14d,
   templateTenantCreditManualReview,
   templateTenantCreditRejected,
   templateTenantCreditVerified,
@@ -356,6 +358,48 @@ export async function sendTenantCreditExpiryReminderEmail(opts: {
   const p = templateTenantCreditExpiryReminder({
     tenantFirstName: firstName(opts.tenantFirst),
     expiresOn: opts.expiresOn,
+  })
+  await sendWohnenEmail({
+    to: opts.tenantEmail,
+    subject: p.subject,
+    html: p.html,
+    text: p.text,
+    userId: opts.tenantUserId,
+  })
+}
+
+export async function sendTenantCreditExpiryReminder14dEmail(opts: {
+  tenantEmail: string
+  tenantUserId: string
+  tenantFirst: { firstName?: string | null; name?: string | null }
+  expiresOn: Date
+}): Promise<void> {
+  const p = templateTenantCreditExpiryReminder14d({
+    tenantFirstName: firstName(opts.tenantFirst),
+    expiresOn: opts.expiresOn,
+  })
+  await sendWohnenEmail({
+    to: opts.tenantEmail,
+    subject: p.subject,
+    html: p.html,
+    text: p.text,
+    userId: opts.tenantUserId,
+  })
+}
+
+export async function sendTenantCertificateExpirySoonEmail(opts: {
+  tenantEmail: string
+  tenantUserId: string
+  tenantFirst: { firstName?: string | null; name?: string | null }
+  expiresOn: Date
+  daysBefore: 14 | 3
+  certificateCode: string
+}): Promise<void> {
+  const p = templateTenantCertificateExpirySoon({
+    tenantFirstName: firstName(opts.tenantFirst),
+    expiresOn: opts.expiresOn,
+    daysBefore: opts.daysBefore,
+    certificateCode: opts.certificateCode,
   })
   await sendWohnenEmail({
     to: opts.tenantEmail,

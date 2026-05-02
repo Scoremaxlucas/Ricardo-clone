@@ -63,6 +63,29 @@ export function VerifyPageClient({ code }: { code: string }) {
       <main className="mx-auto max-w-[600px] px-6 py-10 pb-16 sm:px-10 sm:py-12">
         <p className="text-center text-sm text-[#8aa89e]">Zertifikats-Verifizierung</p>
 
+        <aside className="mt-6 rounded-xl border border-teal-200 bg-teal-50/90 px-4 py-4 text-sm text-teal-950 shadow-sm">
+          <p className="font-bold text-teal-950">Für Vermieterinnen, Verwalterinnen und Agenturen</p>
+          <ul className="mt-2 list-disc space-y-1.5 pl-5 leading-relaxed text-teal-900">
+            <li>
+              Prüfen Sie den Nachweis nur über diesen offiziellen Helvenda-Link — nicht über Screenshots oder
+              Weiterleitungen allein.
+            </li>
+            <li>
+              Der Nachweis belegt die zum Ausstellungszeitpunkt verifizierten Angaben (u. a. Betreibungsregister,
+              Einkommenskategorie). Er ersetzt keine Mietvertragsprüfung und keine Bank-Bonität.
+            </li>
+            <li>Bei Unklarheiten oder abgelaufenem Register: direkt beim Bewerber nachfragen oder erneut prüfen lassen.</li>
+          </ul>
+          <p className="mt-3 flex flex-col gap-2 text-teal-900 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
+            <Link href="/help/wohnungen-qualitaetsnachweis-pruefen" className="font-semibold text-[#107a5a] underline underline-offset-2">
+              Ausführliche Anleitung (Hilfe-Center)
+            </Link>
+            <Link href="/wohnungen" className="font-semibold text-[#107a5a] underline underline-offset-2">
+              Aktuelle Inserate auf Helvenda
+            </Link>
+          </p>
+        </aside>
+
         {state.loading ?
           <p className="mt-10 text-center text-slate-600">Wird geprüft…</p>
         : !state.data.valid && state.data.reason === 'NOT_FOUND' ?
@@ -149,6 +172,19 @@ function Valid({ cert }: { cert: VerifyCertificatePayload }) {
         Helvenda Wohnungen hat die oben genannten Angaben zum Zeitpunkt der Ausstellung verifiziert. Dieses Zertifikat
         ersetzt keine offizielle Bonitätsprüfung und stellt keine rechtlich bindende Garantie dar.
       </p>
+      <div className="mx-auto mt-8 max-w-lg rounded-xl border border-slate-200 bg-slate-50/90 px-4 py-4 text-left text-sm text-slate-800">
+        <p className="font-bold text-slate-900">Was dieser Nachweis praktisch bedeutet</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 leading-relaxed text-slate-700">
+          <li>
+            <strong className="text-slate-900">Belegt:</strong> Helvenda hat die ausgewiesenen Daten zum Zeitpunkt der
+            Ausstellung geprüft (siehe Karte oben).
+          </li>
+          <li>
+            <strong className="text-slate-900">Belegt nicht:</strong> künftige Zahlungsfähigkeit, persönliche
+            Zuverlässigkeit oder Eignung für eine konkrete Wohnung — das bleibt Ihre Auswahl.
+          </li>
+        </ul>
+      </div>
       <p className="mt-4 text-center text-[11px] text-[#8aa89e]">
         Verifizierung: {WOHNEN_SITE_ORIGIN}/verify/{cert.certificateCode}
       </p>

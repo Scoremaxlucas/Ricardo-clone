@@ -1465,6 +1465,22 @@ export const de = {
         'Der Verkäufer ist allein verantwortlich für die Richtigkeit der bereitgestellten Informationen. Insbesondere stellt der Verkäufer sicher, dass seine kommunizierten Bankdaten (z.B. IBAN) stets aktuell und korrekt sind, damit die Überweisung des Kaufpreises korrekt erfolgen kann.',
       ],
     },
+    'wohnungen-qualitaetsnachweis-pruefen': {
+      title: 'Helvenda Qualitätsnachweis — so prüfen Sie ihn als Vermieter',
+      category: 'Sicherheit',
+      content: [
+        'Mieterinnen und Mieter können einen Helvenda Qualitätsnachweis (PDF plus Link) beilegen. So prüfen Sie den Nachweis schnell und sicher:',
+        '1. Nur den offiziellen Link verwenden: Die Prüfseite liegt auf Helvenda Wohnungen unter /verify/ und einem Code wie HLV-…. Screenshots oder Links auf unbekannte Domains sind kein Ersatz.',
+        '2. Status lesen: Die Seite zeigt gültig, abgelaufen, widerrufen oder nicht gefunden. Bei abgelaufen oder widerrufen können Sie einen aktuellen Auszug beim Bewerber anfordern.',
+        '3. Was der Nachweis belegt: Zum Zeitpunkt der Ausstellung hat Helvenda unter anderem den Betreibungsregisterauszug und die angegebenen Angaben (z. B. Einkommenskategorie, Beschäftigung) geprüft.',
+        '4. Was der Nachweis nicht ersetzt: Er ist keine Bank-Bonitätsprüfung, kein Mietvertrag und keine Garantie für künftige Zahlungen. Ihre Auswahl des Mieters bleibt bei Ihnen.',
+        '5. Bei Unklarheiten: Bitten Sie den Bewerber, den Link erneut zu senden oder das Profil auf Helvenda zu aktualisieren. Bei Zweifeln an der Identität fordern Sie die üblichen Unterlagen zusätzlich ein.',
+      ],
+      tips: [
+        'Speichern Sie die URL der erfolgreichen Prüfung als Nachweis in Ihrer Bewerbungsakte (Datum im Browser/Export).',
+        'Aktuelle Mietinserate finden Sie jederzeit auf Helvenda Wohnungen.',
+      ],
+    },
     'prohibited-items': {
       title: 'Verbotsliste',
       category: 'Allgemein',

@@ -86,6 +86,7 @@ export default function HelpPage() {
         { id: 'disputes', slug: 'disputes' },
         { id: 'scams', slug: 'scams' },
         { id: 'moneyguard-terms', slug: 'moneyguard-terms' },
+        { id: 'wohnungen-qualitaetsnachweis-pruefen', slug: 'wohnungen-qualitaetsnachweis-pruefen' },
       ],
     },
     {

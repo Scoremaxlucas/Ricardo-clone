@@ -1455,6 +1455,22 @@ export const fr: Translation = {
         '',
       ],
     },
+    'wohnungen-qualitaetsnachweis-pruefen': {
+      title: 'Certificat Helvenda Wohnungen — comment les bailleurs le vérifient',
+      category: 'Sécurité',
+      content: [
+        'Les candidats peuvent joindre un certificat de qualité Helvenda (PDF plus lien). Pour le vérifier rapidement et en toute sécurité :',
+        "1. N'utilisez que le lien officiel : la page de contrôle se trouve sur Helvenda Wohnungen sous /verify/ suivi d'un code du type HLV-…. Les captures d'écran ou les liens vers des domaines inconnus ne suffisent pas.",
+        '2. Lisez le statut : la page indique valide, expiré, révoqué ou introuvable. Si le certificat est expiré ou révoqué, demandez un extrait à jour ou un nouveau certificat.',
+        "3. Ce que le certificat atteste : au moment de l'émission, Helvenda a notamment vérifié l'extrait du registre des poursuites et les indications déclarées (par ex. tranche de revenu, activité).",
+        "4. Ce qu'il ne remplace pas : ce n'est pas une cote bancaire, ni un bail, ni une garantie de paiements futurs. Le choix du locataire reste le vôtre.",
+        "5. En cas de doute : demandez au candidat de renvoyer le lien ou de mettre à jour son profil Helvenda. Si l'identité pose question, exigez vos documents habituels en complément.",
+      ],
+      tips: [
+        "Conservez l'URL d'une vérification réussie dans le dossier de candidature (notez la date).",
+        'Les annonces de location actuelles sont sur Helvenda Wohnungen.',
+      ],
+    },
     'system-outages': {
       title: 'Principes en cas de pannes système',
       category: 'Général',
