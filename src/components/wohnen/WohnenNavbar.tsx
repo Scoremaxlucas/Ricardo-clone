@@ -1,7 +1,7 @@
 'use client'
 
 import { Logo } from '@/components/ui/Logo'
-import { LogOut, Menu, User, X } from 'lucide-react'
+import { ChevronDown, LogOut, Menu, User, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
@@ -113,6 +113,71 @@ function HlvMiniPanel({
   )
 }
 
+function LandlordVermietenPanel({
+  open,
+  anchorRef,
+  onClose,
+  newInquiriesCount,
+}: {
+  open: boolean
+  anchorRef: React.RefObject<HTMLButtonElement | null>
+  onClose: () => void
+  newInquiriesCount: number
+}) {
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (panelRef.current?.contains(t)) return
+      if (anchorRef.current?.contains(t)) return
+      onClose()
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [open, onClose, anchorRef])
+
+  if (!open) return null
+
+  return (
+    <div
+      ref={panelRef}
+      className="absolute right-0 top-full z-[60] mt-2 w-[min(100vw-2rem,17rem)] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl"
+      role="region"
+      aria-label="Vermieten"
+    >
+      <Link
+        href="/matching/properties"
+        className="block px-3 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
+        onClick={onClose}
+      >
+        Meine Inserate
+      </Link>
+      <Link
+        href="/matching/properties#vermieten-neue"
+        className="flex items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
+        onClick={onClose}
+      >
+        <span>Neue Anfragen</span>
+        {newInquiriesCount > 0 ?
+          <span className="shrink-0 rounded-full bg-[#18a87c] px-2 py-0.5 text-[11px] font-bold text-white">
+            {newInquiriesCount}
+          </span>
+        : null}
+      </Link>
+      <div className="my-0.5 border-t border-slate-100" />
+      <Link
+        href="/matching/properties/new"
+        className="block px-3 py-2.5 text-sm font-medium text-[#107a5a] hover:bg-[#f5fdfb]"
+        onClick={onClose}
+      >
+        Neues Inserat
+      </Link>
+    </div>
+  )
+}
+
 export function WohnenNavbar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
@@ -128,12 +193,15 @@ export function WohnenNavbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [hlvOpen, setHlvOpen] = useState(false)
+  const [vermietenOpen, setVermietenOpen] = useState(false)
   const hlvBtnRef = useRef<HTMLButtonElement>(null)
+  const vermietenBtnRef = useRef<HTMLButtonElement>(null)
 
   const closeAll = useCallback(() => {
     setMenuOpen(false)
     setMobileOpen(false)
     setHlvOpen(false)
+    setVermietenOpen(false)
   }, [])
 
   useEffect(() => {
@@ -205,6 +273,10 @@ export function WohnenNavbar() {
     return
   }, [mobileOpen])
 
+  useEffect(() => {
+    setVermietenOpen(false)
+  }, [pathname])
+
   const n = nav
   const isLandlord = Boolean(n?.hasListings)
   const tenantVerified = Boolean(n?.profileComplete && n?.creditApprovedAndValid)
@@ -243,6 +315,7 @@ export function WohnenNavbar() {
     }
 
     if (isLandlord) {
+      const landlordHubActive = pathname.startsWith('/matching/properties')
       return (
         <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-2 md:flex md:gap-3">
           <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
@@ -253,20 +326,42 @@ export function WohnenNavbar() {
               Meine Matches
             </Link>
           : null}
-          <Link href="/matching/properties" className={navLinkClass(pathname.startsWith('/matching/properties'))}>
-            Meine Inserate
-          </Link>
-          <Link
-            href="/matching/properties"
-            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100"
-          >
-            Neue Anfragen
-            {n.newInquiriesCount > 0 ?
-              <span className="rounded-full bg-[#18a87c] px-2 py-0.5 text-[11px] font-bold text-white">
-                {n.newInquiriesCount}
-              </span>
-            : null}
-          </Link>
+          <div className="relative">
+            <button
+              ref={vermietenBtnRef}
+              type="button"
+              onClick={() => {
+                setMenuOpen(false)
+                setHlvOpen(false)
+                setVermietenOpen(v => !v)
+              }}
+              className={`inline-flex items-center gap-1 rounded-md py-1.5 pl-2 pr-1.5 text-sm font-medium ${
+                landlordHubActive || vermietenOpen ?
+                  'bg-[#18a87c] px-2 font-semibold text-white shadow-sm hover:opacity-95'
+                : 'px-2 text-slate-800 hover:bg-slate-100'
+              }`}
+              aria-expanded={vermietenOpen ? 'true' : 'false'}
+              aria-haspopup="true"
+            >
+              Vermieten
+              <ChevronDown className={`h-3.5 w-3.5 shrink-0 ${landlordHubActive || vermietenOpen ? 'text-white/90' : 'opacity-70'}`} aria-hidden />
+              {n.newInquiriesCount > 0 ?
+                <span
+                  className={`min-w-[1.25rem] shrink-0 rounded-full px-1.5 py-0.5 text-center text-[11px] font-bold ${
+                    landlordHubActive || vermietenOpen ? 'bg-white/20 text-white' : 'bg-[#18a87c] text-white'
+                  } `}
+                >
+                  {n.newInquiriesCount}
+                </span>
+              : null}
+            </button>
+            <LandlordVermietenPanel
+              open={vermietenOpen}
+              anchorRef={vermietenBtnRef}
+              onClose={() => setVermietenOpen(false)}
+              newInquiriesCount={n.newInquiriesCount}
+            />
+          </div>
           <Link
             href="/meine-bewerbungen"
             className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100"
@@ -355,7 +450,10 @@ export function WohnenNavbar() {
               <button
                 ref={hlvBtnRef}
                 type="button"
-                onClick={() => setHlvOpen(o => !o)}
+                onClick={() => {
+                  setVermietenOpen(false)
+                  setHlvOpen(o => !o)
+                }}
                 className="rounded-md border border-[#18a87c] bg-[#e8f7f2] px-2.5 py-1 text-xs font-bold tracking-wide text-[#107a5a] hover:bg-[#dff5eb]"
                 aria-expanded={hlvOpen ? 'true' : 'false'}
               >
@@ -415,6 +513,7 @@ export function WohnenNavbar() {
           type="button"
           onClick={() => {
             setHlvOpen(false)
+            setVermietenOpen(false)
             setMenuOpen(m => !m)
           }}
           className="flex items-center gap-2 rounded-full border border-slate-200 p-0.5 pl-0.5 hover:bg-slate-50"
@@ -616,8 +715,15 @@ export function WohnenNavbar() {
           <Link href="/matching/properties" className={mobileDrawerLinkTeal} onClick={closeAll}>
             Meine Inserate
           </Link>
-          <Link href="/matching/properties" className={mobileDrawerLink} onClick={closeAll}>
+          <Link
+            href="/matching/properties#vermieten-neue"
+            className={mobileDrawerLink}
+            onClick={closeAll}
+          >
             Neue Anfragen{n.newInquiriesCount > 0 ? ` (${n.newInquiriesCount})` : ''}
+          </Link>
+          <Link href="/matching/properties/new" className={mobileDrawerLink} onClick={closeAll}>
+            Neues Inserat
           </Link>
           <Link href="/meine-bewerbungen" className={mobileDrawerLink} onClick={closeAll}>
             Bewerbungen{n.openApplicationsCount > 0 ? ` (${n.openApplicationsCount})` : ''}

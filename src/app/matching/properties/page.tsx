@@ -44,7 +44,10 @@ export default async function LandlordRentalPropertiesPage() {
           <p className="mt-1 text-2xl font-bold text-teal-900">{dash.activeCount}</p>
           <p className="text-sm text-teal-800">Aktive Inserate</p>
         </div>
-        <div className="rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-4 shadow-sm">
+        <div
+          id="vermieten-neue"
+          className="scroll-mt-[5.5rem] rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-4 shadow-sm"
+        >
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">Neu</p>
           <p className="mt-1 text-2xl font-bold text-blue-900">{dash.neueApplicationsTotal}</p>
           <p className="text-sm text-blue-900">Neue Bewerbungen</p>
