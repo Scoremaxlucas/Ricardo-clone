@@ -29,7 +29,7 @@ function WohnenFooterSlim() {
           ·
         </span>
         <Link href="/help" className="font-medium hover:text-teal-800 hover:underline">
-          Hilfe
+          Hilfe-Center
         </Link>
         <span className="hidden text-slate-300 sm:inline" aria-hidden>
           ·
@@ -44,7 +44,8 @@ function WohnenFooterSlim() {
 
 export function WohnenFooter() {
   const pathname = usePathname() || ''
-  if (pathname === '/profil/suche') return null
+  /** Schmale Leiste mit Hilfe/Kontakt — Navbar verzichtet dort auf doppelte Links */
+  if (pathname === '/profil/suche') return <WohnenFooterSlim />
   if (isTenantProfilWizardPath(pathname)) return null
   if (isBetreibungsregisterPath(pathname)) return <WohnenFooterSlim />
 
@@ -102,8 +103,18 @@ export function WohnenFooter() {
           </div>
 
           <div className="mb-6 md:mb-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-teal-200/90">Info</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-teal-200/90">Service &amp; Recht</p>
             <ul className="mt-4 space-y-1.5 text-sm">
+              <li>
+                <Link href="/help" className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline">
+                  Hilfe-Center
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline">
+                  Kontakt
+                </Link>
+              </li>
               <li>
                 <a
                   href={`${MAIN_SHOP_ORIGIN}/`}
@@ -138,16 +149,6 @@ export function WohnenFooter() {
                 >
                   Nutzungsbedingungen
                 </a>
-              </li>
-              <li>
-                <Link href="/contact" className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline">
-                  Kontakt
-                </Link>
-              </li>
-              <li>
-                <Link href="/help" className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline">
-                  Hilfe-Center
-                </Link>
               </li>
             </ul>
           </div>
