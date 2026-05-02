@@ -20,9 +20,10 @@ function LoginPageContent() {
   const rawCallbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect') || '/'
   const callbackUrl = validateCallbackUrl(rawCallbackUrl)
 
+  /** Default `/` keeps Marktplatz on helvenda.ch; `/meine-matches` is redirected to wohnen by middleware. */
   const determinePostLoginRoute = () => {
     if (callbackUrl && callbackUrl !== '/') return callbackUrl
-    return '/meine-matches'
+    return '/'
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
