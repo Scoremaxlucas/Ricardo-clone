@@ -47,11 +47,27 @@ function StaticListingPlaceholders() {
       {[1, 2, 3].map(i => (
         <div
           key={i}
-          className="flex min-h-[220px] w-[min(100%,calc(100vw-2.5rem-env(safe-area-inset-left)-env(safe-area-inset-right)))] max-w-[320px] shrink-0 snap-start flex-col justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/90 px-5 py-10 text-center sm:min-w-0 sm:w-auto sm:max-w-none"
+          className="flex min-h-[220px] w-[min(100%,calc(100vw-2.5rem-env(safe-area-inset-left)-env(safe-area-inset-right)))] max-w-[320px] shrink-0 snap-start flex-col justify-center gap-4 rounded-xl border border-dashed border-slate-300 bg-slate-50/90 px-5 py-8 text-center sm:min-w-0 sm:w-auto sm:max-w-none"
         >
           <p className="text-[15px] font-normal leading-relaxed text-[#5a7a6e]">
-            Hier erscheinen bald echte Inserate. Schau später wieder vorbei — oder inseriere die erste Wohnung.
+            Sobald Vermieter hier inserieren, siehst du echte Wohnungen — mit Betreibungsregister-Nachweis wo nötig. Schau bald wieder vorbei.
           </p>
+          {i === 1 ?
+            <Link
+              href="/matching/properties/new"
+              className="mx-auto inline-flex rounded-lg bg-[#18a87c] px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-95"
+            >
+              Wohnung kostenlos inserieren
+            </Link>
+          : null}
+          {i === 2 ?
+            <p className="text-[13px] leading-relaxed text-slate-500">
+              <Link href="/help/wohnungen-qualitaetsnachweis-pruefen" className="font-semibold text-teal-800 underline-offset-2 hover:underline">
+                Qualitätsnachweis prüfen
+              </Link>
+              {' — für Vermieter und Bewerbende.'}
+            </p>
+          : null}
         </div>
       ))}
     </div>

@@ -19,9 +19,13 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
 }
 
-/** Kurzer EN-Hinweis für CH-Vierfeldrigkeit (transaktionale Mieter-Mails). */
+/** Kurze DE/EN/FR/IT-Hinweise für CH (transaktionale Mieter-Mails). */
 function wohnenEmailBilingualFooter(): string {
-  return `<p style="margin:20px 0 0 0;padding-top:14px;border-top:1px solid #e5e7eb;font-size:12px;line-height:1.55;color:#6b7280;"><strong>English:</strong> Automated message from Helvenda Wohnungen (Swiss rentals). For support, use the contact or help section on the website. Do not rely on replies to this sender address.</p>`
+  return `<div style="margin:20px 0 0 0;padding-top:14px;border-top:1px solid #e5e7eb;font-size:11px;line-height:1.55;color:#6b7280;">
+<p style="margin:0 0 6px 0;"><strong>English:</strong> Automated message from Helvenda Wohnungen (Swiss rentals). For support, use the contact or help section on the website.</p>
+<p style="margin:0 0 6px 0;"><strong>Français :</strong> Message automatique de Helvenda Wohnungen (locations en Suisse). Pour l’assistance, utilisez le formulaire de contact ou l’aide sur le site.</p>
+<p style="margin:0;"><strong>Italiano:</strong> Messaggio automatico da Helvenda Wohnungen (affitti in Svizzera). Per assistenza, usa il contatto o la sezione aiuto sul sito.</p>
+</div>`
 }
 
 function wohnenOrigin(): string {

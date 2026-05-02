@@ -215,6 +215,13 @@ export function WohnenNavbar() {
   const showBewerbungenBadge = Boolean(n && n.openApplicationsCount > 0)
   const showHlvBadge = Boolean(n?.hasActiveCertificate && n?.certificateCode)
 
+  const helfenActive = (pathname ?? '').startsWith('/help')
+  const hilfeNavLink = (
+    <Link href="/help" className={navLinkClass(helfenActive)}>
+      Hilfe
+    </Link>
+  )
+
   type DropdownKind = 'A' | 'B' | 'C' | 'D' | 'P' | 'N'
   const dropdownKind: DropdownKind = (() => {
     if (!n) return 'N'
@@ -238,6 +245,7 @@ export function WohnenNavbar() {
           <Link href="/profil" className={navLinkClass(pathname.startsWith('/profil'))}>
             Profil
           </Link>
+          {hilfeNavLink}
         </nav>
       )
     }
@@ -278,6 +286,7 @@ export function WohnenNavbar() {
               </span>
             : null}
           </Link>
+          {hilfeNavLink}
         </nav>
       )
     }
@@ -299,6 +308,7 @@ export function WohnenNavbar() {
             >
               Profil vervollständigen
             </Link>}
+          {hilfeNavLink}
         </nav>
       )
     }
@@ -326,6 +336,7 @@ export function WohnenNavbar() {
             >
               Auszug hochladen
             </Link>}
+          {hilfeNavLink}
         </nav>
       )
     }
@@ -370,6 +381,7 @@ export function WohnenNavbar() {
               />
             </div>
           : null}
+          {hilfeNavLink}
         </nav>
       )
     }
@@ -394,6 +406,7 @@ export function WohnenNavbar() {
               </span>
             : null}
           </Link>
+          {hilfeNavLink}
         </nav>
       )
     }
@@ -403,6 +416,7 @@ export function WohnenNavbar() {
         <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
           Wohnungen suchen
         </Link>
+        {hilfeNavLink}
       </nav>
     )
   }
@@ -504,6 +518,20 @@ export function WohnenNavbar() {
 
               <div className="my-1 border-t border-slate-100" />
               <Link
+                href="/help"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
+                onClick={() => setMenuOpen(false)}
+              >
+                Hilfe-Center
+              </Link>
+              <Link
+                href="/contact"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
+                onClick={() => setMenuOpen(false)}
+              >
+                Kontakt
+              </Link>
+              <Link
                 href="/profil"
                 className="flex items-center gap-2 px-3 py-2 text-sm text-slate-800 hover:bg-slate-50"
                 onClick={() => setMenuOpen(false)}
@@ -555,6 +583,9 @@ export function WohnenNavbar() {
           <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
             Wohnungen suchen
           </Link>
+          <Link href="/help" className={mobileDrawerLink} onClick={closeAll}>
+            Hilfe
+          </Link>
           <Link href={WOHNEN_LOGIN_HREF} className={`${mobileDrawerLink} text-slate-600`} onClick={closeAll}>
             Anmelden
           </Link>
@@ -579,6 +610,9 @@ export function WohnenNavbar() {
           </Link>
           <Link href="/profil" className={mobileDrawerLink} onClick={closeAll}>
             Profil
+          </Link>
+          <Link href="/help" className={mobileDrawerLink} onClick={closeAll}>
+            Hilfe
           </Link>
           <div className="my-2 border-t border-slate-200" />
           <div className="border-b border-[#e8f7f2] px-3 py-3">
@@ -617,6 +651,9 @@ export function WohnenNavbar() {
           <Link href="/meine-bewerbungen" className={mobileDrawerLink} onClick={closeAll}>
             Bewerbungen{n.openApplicationsCount > 0 ? ` (${n.openApplicationsCount})` : ''}
           </Link>
+          <Link href="/help" className={mobileDrawerLink} onClick={closeAll}>
+            Hilfe
+          </Link>
           <div className="my-2 border-t border-slate-200" />
           <div className="border-b border-[#e8f7f2] px-3 py-3">
             <p className="text-xs font-semibold text-slate-500">Konto</p>
@@ -646,6 +683,9 @@ export function WohnenNavbar() {
       <>
         <Link href="/wohnungen" className={mobileDrawerLink} onClick={closeAll}>
           Wohnungen suchen
+        </Link>
+        <Link href="/help" className={mobileDrawerLink} onClick={closeAll}>
+          Hilfe
         </Link>
         {!n.profileComplete ?
           isTenantProfilWizardPath(pathname) ?
@@ -750,6 +790,7 @@ export function WohnenNavbar() {
                 <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
                   Wohnungen suchen
                 </Link>
+                {hilfeNavLink}
                 <Link
                   href={WOHNEN_LOGIN_HREF}
                   className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"

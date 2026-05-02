@@ -22,14 +22,15 @@ function WohnenFooterSlim() {
         >
           Datenschutz
         </a>
-        <a
-          href={`${MAIN_SHOP_ORIGIN}/contact`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium hover:text-teal-800 hover:underline"
-        >
+        <Link href="/contact" className="font-medium hover:text-teal-800 hover:underline">
           Kontakt
-        </a>
+        </Link>
+        <span className="hidden text-slate-300 sm:inline" aria-hidden>
+          ·
+        </span>
+        <Link href="/help" className="font-medium hover:text-teal-800 hover:underline">
+          Hilfe
+        </Link>
         <span className="hidden text-slate-300 sm:inline" aria-hidden>
           ·
         </span>
@@ -139,14 +140,14 @@ export function WohnenFooter() {
                 </a>
               </li>
               <li>
-                <a
-                  href={`${MAIN_SHOP_ORIGIN}/contact`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline"
-                >
+                <Link href="/contact" className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline">
                   Kontakt
-                </a>
+                </Link>
+              </li>
+              <li>
+                <Link href="/help" className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline">
+                  Hilfe-Center
+                </Link>
               </li>
             </ul>
           </div>

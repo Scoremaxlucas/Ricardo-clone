@@ -7,7 +7,7 @@ import {
 import { RentalListingCard } from '@/components/rental/RentalListingCard'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { matchListings } from '@/lib/rental/matchListings'
+import { matchListings, type MatchEmptyReason } from '@/lib/rental/matchListings'
 import { rentalListingRowToCardData } from '@/lib/rental/rental-listings-public'
 import { formatCHF } from '@/lib/utils/formatCurrency'
 import type { TenantProfile } from '@prisma/client'
@@ -115,7 +115,33 @@ function buildProgressSteps(profile: TenantProfile | null, firstApplication: boo
   ]
 }
 
-function EmptyStateCard() {
+function emptyStateCopy(reason: MatchEmptyReason | null): { title: string; body: string } {
+  switch (reason) {
+    case 'INCOME_BLOCKED':
+      return {
+        title: 'Einkommensregel',
+        body: 'Für die aktuell sichtbaren Inserate reicht dein angegebenes Einkommen vermutlich nicht (3-fach-Regel). Passe Budget oder Einkommenskategorie im Profil an — oder sieh dir alle Wohnungen ohne Match-Filter an.',
+      }
+    case 'CREDIT_CHECK_REQUIRED':
+      return {
+        title: 'Betreibungsregister nötig',
+        body: 'Viele Inserate verlangen einen nachgewiesenen Betreibungsregisterauszug. Sobald deiner freigegeben ist, erscheinen hier mehr Treffer.',
+      }
+    case 'CANTON_RESTRICTED':
+      return {
+        title: 'Kanton-Filter',
+        body: 'Im Moment gibt es in deinem gewählten Kanton keine passenden Inserate. Erweitere die Suche oder passe den Kanton in den Präferenzen an.',
+      }
+    default:
+      return {
+        title: 'Noch keine Matches',
+        body: 'Wir haben noch keine Wohnungen, die genau zu deinen Präferenzen passen. Sobald etwas Passendes inseriert wird, erscheint es hier.',
+      }
+  }
+}
+
+function EmptyStateCard({ reason }: { reason: MatchEmptyReason }) {
+  const { title, body } = emptyStateCopy(reason)
   return (
     <div className="mx-auto mt-8 max-w-[500px] rounded-2xl border border-slate-200 bg-white px-5 py-8 text-center shadow-sm sm:p-8">
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-teal-700">
@@ -123,18 +149,34 @@ function EmptyStateCard() {
           <path fill="currentColor" d="m21.7 20.3-5-5a7 7 0 1 0-1.4 1.4l5 5a1 1 0 0 0 1.4-1.4ZM5 10a5 5 0 1 1 10 0A5 5 0 0 1 5 10Z" />
         </svg>
       </div>
-      <h2 className="mt-4 text-xl font-bold text-slate-900">Noch keine Matches</h2>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600">
-        Wir haben noch keine Wohnungen die genau zu deinen Präferenzen passen. Sobald etwas Passendes inseriert wird, melden wir uns.
-      </p>
+      <h2 className="mt-4 text-xl font-bold text-slate-900">{title}</h2>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600">{body}</p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-        <Link href="/profil/bearbeiten" className="rounded-lg border border-teal-300 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50">
-          Präferenzen anpassen
-        </Link>
+        {reason === 'CREDIT_CHECK_REQUIRED' ?
+          <Link
+            href="/profil/betreibungsregister"
+            className="rounded-lg border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-900 hover:bg-orange-100"
+          >
+            Auszug hochladen
+          </Link>
+        : (
+          <Link href="/profil/bearbeiten" className="rounded-lg border border-teal-300 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50">
+            Präferenzen anpassen
+          </Link>
+        )}
         <Link href="/wohnungen" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
           Alle Wohnungen ansehen
         </Link>
       </div>
+      <p className="mt-5 text-center text-xs text-slate-500">
+        <Link href="/help" className="font-medium text-teal-700 underline-offset-2 hover:underline">
+          Hilfe-Center
+        </Link>
+        {' · '}
+        <Link href="/contact" className="font-medium text-teal-700 underline-offset-2 hover:underline">
+          Kontakt
+        </Link>
+      </p>
     </div>
   )
 }
@@ -313,7 +355,7 @@ export default async function MeineMatchesPage() {
         {!showProfileHint ?
           <section className="mt-6">
             {emptyReason || matches.length === 0 ?
-              <EmptyStateCard />
+              <EmptyStateCard reason={emptyReason ?? 'NO_MATCHES'} />
             : (
               <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {matches.map(m => {
