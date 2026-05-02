@@ -15,9 +15,10 @@ type Props = {
     preferredBudgetMax: number | null
     preferredMoveInEarliest: string | null
   }
+  className?: string
 }
 
-export function MatchPreferencesInlineEditor({ initial }: Props) {
+export function MatchPreferencesInlineEditor({ initial, className = '' }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -64,7 +65,7 @@ export function MatchPreferencesInlineEditor({ initial }: Props) {
   }
 
   return (
-    <section className="mt-4">
+    <section className={`mt-4 ${className}`.trim()}>
       <button
         type="button"
         onClick={() => setOpen(v => !v)}

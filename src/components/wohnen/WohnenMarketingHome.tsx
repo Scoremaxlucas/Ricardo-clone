@@ -47,27 +47,25 @@ function StaticListingPlaceholders() {
       {[1, 2, 3].map(i => (
         <div
           key={i}
-          className="flex min-h-[220px] w-[min(100%,calc(100vw-2.5rem-env(safe-area-inset-left)-env(safe-area-inset-right)))] max-w-[320px] shrink-0 snap-start flex-col justify-center gap-4 rounded-xl border border-dashed border-slate-300 bg-slate-50/90 px-5 py-8 text-center sm:min-w-0 sm:w-auto sm:max-w-none"
+          className="flex min-h-[200px] w-[min(100%,calc(100vw-2.5rem-env(safe-area-inset-left)-env(safe-area-inset-right)))] max-w-[320px] shrink-0 snap-start flex-col justify-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50/90 px-5 py-7 text-center sm:min-w-0 sm:w-auto sm:max-w-none"
         >
-          <p className="text-[15px] font-normal leading-relaxed text-[#5a7a6e]">
-            Sobald Vermieter hier inserieren, siehst du echte Wohnungen — mit Betreibungsregister-Nachweis wo nötig. Schau bald wieder vorbei.
-          </p>
-          {i === 1 ?
-            <Link
-              href="/matching/properties/new"
-              className="mx-auto inline-flex rounded-lg bg-[#18a87c] px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-95"
-            >
-              Wohnung kostenlos inserieren
-            </Link>
-          : null}
-          {i === 2 ?
-            <p className="text-[13px] leading-relaxed text-slate-500">
-              <Link href="/help/wohnungen-qualitaetsnachweis-pruefen" className="font-semibold text-teal-800 underline-offset-2 hover:underline">
-                Qualitätsnachweis prüfen
+          <p className="text-[14px] font-normal leading-relaxed text-[#5a7a6e]">
+            {i === 1 ?
+              <>
+                Hier erscheinen passende Inserate — mit Nachweis, wo Vermieter ihn verlangen.
+                <span className="mt-3 block text-[13px] text-slate-500">
+                  Vermieter?{' '}
+                  <Link href="/matching/properties/new" className="font-semibold text-teal-800 underline-offset-2 hover:underline">
+                    Kostenlos inserieren
+                  </Link>
+                </span>
+              </>
+            : i === 2 ?
+              <Link href="/help/wohnungen-qualitaetsnachweis-pruefen" className="text-[13px] text-teal-800 underline-offset-2 hover:underline">
+                Qualitätsnachweis für ausserhalb von Helvenda
               </Link>
-              {' — für Vermieter und Bewerbende.'}
-            </p>
-          : null}
+            : 'Weitere Regionen folgen, sobald Inserate live sind.'}
+          </p>
         </div>
       ))}
     </div>
@@ -128,90 +126,56 @@ export async function WohnenMarketingHome({
         }}
       />
 
-      {/* 1. Hero */}
+      {/* 1. Hero — Mieter-first, weniger parallele Claims */}
       <section
-        className="relative flex min-h-[min(100dvh,920px)] flex-col justify-center bg-white px-4 pb-16 pt-[max(5.5rem,calc(3.5rem+env(safe-area-inset-top,0px)+1.25rem))] sm:px-6 sm:pb-20 sm:pt-[max(6rem,calc(3.5rem+env(safe-area-inset-top,0px)+2rem))] md:min-h-[85vh] md:px-8 md:pt-24"
-        style={{ backgroundImage: 'linear-gradient(180deg, #e8f7f2 0%, #ffffff 40%)' }}
+        className="relative flex min-h-[min(88dvh,760px)] flex-col justify-center bg-white px-4 pb-12 pt-[max(5.25rem,calc(3.5rem+env(safe-area-inset-top,0px)+1rem))] sm:px-6 sm:pb-16 sm:pt-[max(5.5rem,calc(3.5rem+env(safe-area-inset-top,0px)+1.5rem))] md:min-h-[min(78vh,820px)] md:px-8 md:pt-20"
+        style={{ backgroundImage: 'linear-gradient(180deg, #e8f7f2 0%, #ffffff 45%)' }}
       >
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#18a87c] md:text-[13px]">
-            🇨🇭 DER FAIRE SCHWEIZER MIETMARKT
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#18a87c] sm:text-[12px]">
+            Schweizer Mietmarkt — fair für Mieter
           </p>
 
-          <h1 className="mx-auto mt-5 max-w-none text-[clamp(1.875rem,7vw,2.25rem)] font-black leading-[1.08] tracking-[-0.02em] text-slate-900 sm:text-[2.35rem] md:mt-6 md:max-w-[18ch] md:text-[clamp(2.75rem,8vw,4.5rem)] md:leading-none lg:text-[72px]">
+          <h1 className="mx-auto mt-4 max-w-[20ch] text-[clamp(1.75rem,6.5vw,2.1rem)] font-black leading-[1.06] tracking-[-0.02em] text-slate-900 sm:max-w-none sm:text-[2.25rem] md:mt-5 md:text-[clamp(2.5rem,7vw,3.25rem)] md:leading-[1.05]">
             <span className="block text-slate-900">Wohnung finden.</span>
-            <span className="mt-2 block text-[#18a87c] md:mt-3">
+            <span className="mt-1.5 block text-[#18a87c] md:mt-2">
               Ohne Abo.
               <br className="md:hidden" /> Ohne Abzocke.
             </span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-[600px] text-[1rem] font-normal leading-relaxed text-[#5a7a6e] sm:text-[1.0625rem] md:mt-8 md:text-[22px] md:leading-[1.6]">
-            Wohnungssuche in der Schweiz ist stressig genug.
-            <br />
-            Bei Helvenda bewirbst du dich einmal — und wirst überall sofort ernst genommen.
+          <p className="mx-auto mt-5 max-w-[34rem] text-[0.9375rem] leading-relaxed text-[#5a7a6e] sm:mt-6 sm:text-[1.0625rem] md:text-[1.125rem] md:leading-[1.55]">
+            Einmal Profil und Betreibungsregister — dann passende Inserate und ein Nachweis, den du auch ausserhalb von Helvenda nutzen kannst.
           </p>
 
-          <div className="mx-auto mt-8 flex max-w-xl flex-col items-stretch justify-center gap-3 sm:mt-10 sm:flex-row sm:items-center sm:gap-6">
+          <div className="mx-auto mt-8 max-w-md sm:mt-9">
             <Link
               href={primaryHref}
-              className="inline-flex h-[52px] w-full items-center justify-center rounded-xl bg-[#18a87c] px-6 text-base font-semibold text-white shadow-sm transition hover:opacity-95 md:h-auto md:px-10 md:py-4 md:text-lg"
+              className="inline-flex h-[52px] w-full items-center justify-center rounded-xl bg-[#18a87c] px-6 text-base font-semibold text-white shadow-sm transition hover:opacity-95 md:h-[54px] md:text-[1.0625rem]"
             >
               {primaryLabel}
             </Link>
-            <Link
-              href="/matching/properties/new"
-              className="flex h-[52px] w-full items-center justify-center text-center text-base font-semibold text-[#5a7a6e] transition hover:text-[#18a87c] sm:h-auto sm:w-auto sm:py-4 md:text-lg"
-            >
-              Als Vermieter inserieren →
-            </Link>
+            <p className="mt-4 text-center text-sm text-slate-500">
+              <Link href="/matching/properties/new" className="font-medium text-[#2d6a4f] underline-offset-2 hover:text-[#18a87c] hover:underline">
+                Vermieter?
+              </Link>{' '}
+              Inserieren ist kostenlos.
+            </p>
           </div>
 
-          <div className="mx-auto mt-8 flex max-w-2xl flex-wrap justify-center gap-x-2 gap-y-2 text-xs font-normal text-[#8aa89e] sm:mt-10 sm:gap-x-6 sm:text-sm md:text-[14px]">
-            <span>✓ Inserieren kostenlos</span>
-            <span>✓ Nur verifizierte Bewerber</span>
-            <span>✓ Kein Pflicht-Abo</span>
-          </div>
-
-          {activeCount > 0 ?
-            <p className="mx-auto mt-4 flex flex-wrap items-center justify-center gap-2 text-sm font-bold text-[#18a87c] sm:mt-5 md:text-base">
-              <span className="whome-pulse-dot inline-block text-[#18a87c]" aria-hidden>
-                ●
-              </span>
-              <span>
-                Aktuell {activeCount.toLocaleString('de-CH')} Wohnungen verfügbar in der Schweiz
-              </span>
-            </p>
-          : null}
-
-          <div
-            id="qualitaetsnachweis"
-            className="mx-auto mt-10 max-w-2xl rounded-2xl border border-[#c4ead7] bg-white/90 px-5 py-6 text-center shadow-sm sm:px-8"
-          >
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#18a87c]">Helvenda Qualitätsnachweis</p>
-            <p className="mt-2 text-lg font-extrabold leading-snug text-slate-900 sm:text-xl">
-              Ein Nachweis — auch ausserhalb von Helvenda
-            </p>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[#5a7a6e] sm:text-base">
-              Wenn dein Profil und Betreibungsregister stimmen, stellst du den Qualitätsnachweis aus:{' '}
-              <strong className="text-slate-800">PDF und Prüf-Link</strong> für Vermieter — für E-Mail-Bewerbungen,
-              andere Portale und gleichzeitig für Helvenda-Inserate.
-            </p>
-            <div className="mt-5 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap">
-              <Link
-                href={signedIn ? '/zertifikat' : '/register'}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[#18a87c] px-5 text-sm font-bold text-white shadow-sm transition hover:opacity-95"
-              >
-                {signedIn ? 'Zum Qualitätsnachweis' : 'Konto erstellen'}
-              </Link>
-              <Link
-                href="#wie-es-funktioniert"
-                className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-[#18a87c] hover:text-[#18a87c]"
-              >
-                So funktioniert’s
-              </Link>
-            </div>
-          </div>
+          <p className="mx-auto mt-8 max-w-xl text-[12px] leading-relaxed text-slate-500 sm:mt-9 sm:text-[13px]">
+            <span className="text-slate-400">✓</span> Kostenlos für Mieter &nbsp;·&nbsp; verifizierte Bewerbungen &nbsp;·&nbsp; kein Pflicht-Abo
+            {activeCount > 0 ?
+              <>
+                {' '}
+                ·{' '}
+                <span className="whome-pulse-dot font-semibold text-[#18a87c]" aria-hidden>
+                  ●
+                </span>{' '}
+                <span className="font-medium text-[#2d6a4f]">{activeCount.toLocaleString('de-CH')} Inserate online</span>
+              </>
+            : null}
+          </p>
         </div>
       </section>
 
@@ -229,17 +193,51 @@ export async function WohnenMarketingHome({
         </div>
       </section>
 
+      {/* Qualitätsnachweis — nach Listings, kompakt (Anker #qualitaetsnachweis) */}
+      <section
+        id="qualitaetsnachweis"
+        className="whome-anim whome-d1 border-t border-slate-100 bg-gradient-to-b from-[#f8fdfb] to-white px-4 py-10 sm:px-6 sm:py-12 lg:px-8"
+      >
+        <div className="mx-auto max-w-6xl">
+          <div className="flex flex-col gap-5 rounded-2xl border border-[#bfe8d4] bg-white/95 px-5 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-7 sm:py-6">
+            <div className="min-w-0 flex-1 text-left">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#18a87c]">Helvenda Qualitätsnachweis</p>
+              <p className="mt-1.5 text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
+                PDF + Prüf-Link — auch für Bewerbungen ausserhalb von Helvenda
+              </p>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5a7a6e]">
+                Sobald Profil und Betreibungsregister passen, stellst du den Nachweis in wenigen Klicks aus.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col gap-2.5 sm:flex-row sm:items-center">
+              <Link
+                href={signedIn ? '/zertifikat' : '/register'}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[#18a87c] px-5 text-sm font-bold text-white shadow-sm transition hover:opacity-95 sm:min-w-[10.5rem]"
+              >
+                {signedIn ? 'Zum Nachweis' : 'Konto erstellen'}
+              </Link>
+              <Link
+                href="#wie-es-funktioniert"
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-[#18a87c] hover:text-[#18a87c]"
+              >
+                So funktioniert’s
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 3. Wie es funktioniert */}
       <section
         id="wie-es-funktioniert"
-        className="whome-anim whome-d1 border-t border-slate-100 bg-[#f5fdfb] px-4 py-16 sm:px-6 lg:px-8"
+        className="whome-anim whome-d2 border-t border-slate-100 bg-[#f5fdfb] px-4 py-16 sm:px-6 lg:px-8"
         style={{ backgroundImage: 'linear-gradient(to bottom, #f5fdfb 0%, #f5fdfb 78%, #ffffff 100%)' }}
       >
         <WohnenHomeHowItWorks />
       </section>
 
       {/* 4. Vergleich */}
-      <section className="whome-anim whome-d2 border-t border-slate-100 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+      <section className="whome-anim whome-d3 border-t border-slate-100 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <h2 className="text-center text-[1.25rem] font-extrabold leading-snug tracking-[-0.03em] text-slate-900 sm:text-[1.5rem] md:text-[2.25rem] md:tracking-[-0.06em]">
             Warum Helvenda — und nicht Homegate?
@@ -309,7 +307,7 @@ export async function WohnenMarketingHome({
       </section>
 
       {/* 5. Footer CTA */}
-      <section className="whome-anim whome-d3 bg-[#18a87c] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+      <section className="whome-anim whome-d4 bg-[#18a87c] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <div className="mx-auto max-w-6xl text-white">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-8">
             <div className="pr-0 md:pr-8">

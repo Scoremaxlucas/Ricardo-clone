@@ -261,7 +261,7 @@ export default async function MeineMatchesPage() {
 
   return (
     <main className="min-h-screen bg-[#f8fdfb]">
-      <div className="mx-auto max-w-6xl pb-10 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[max(2.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))] sm:pl-[max(1.5rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.5rem,env(safe-area-inset-right,0px))] sm:pt-12">
+      <div className="mx-auto max-w-6xl pb-10 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[max(3.25rem,calc(2rem+env(safe-area-inset-top,0px)))] sm:pl-[max(1.5rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.5rem,env(safe-area-inset-right,0px))] sm:pt-14">
         {showDashboard ?
           <MeineMatchesProgressDashboard firstName={firstName} steps={steps} accountEmail={accountEmail} />
         : null}
@@ -274,9 +274,8 @@ export default async function MeineMatchesPage() {
               Guten {greeting}, {firstName}.
             </h1>
             {accountEmail ?
-              <p className="mt-2 text-sm text-slate-600">
-                <span className="text-slate-500">Angemeldet als</span>{' '}
-                <span className="font-semibold text-slate-800">{accountEmail}</span>
+              <p className="mt-1.5 text-sm text-slate-500">
+                <span className="font-medium text-slate-600">{accountEmail}</span>
               </p>
             : null}
             {!showProfileHint && matches.length > 0 ?
@@ -310,7 +309,8 @@ export default async function MeineMatchesPage() {
         {showProfileHint ?
           <ProfileIncompleteHint />
         : showPreferencesBlock ?
-          <section className="mb-8 rounded-2xl border border-slate-200 bg-white px-3 py-4 shadow-sm sm:px-5">
+          <section className="mb-8 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Deine Suche</p>
             <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 pl-0.5 pr-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] scroll-pl-1 scroll-pr-1 sm:scroll-pl-0 [&::-webkit-scrollbar]:hidden">
               {profile!.preferredCanton ?
                 <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[20px] bg-[#e8f7f2] px-3 py-[5px] text-xs font-semibold text-[#107a5a]">
@@ -342,6 +342,7 @@ export default async function MeineMatchesPage() {
             </div>
 
             <MatchPreferencesInlineEditor
+              className="mt-3 sm:mt-4"
               initial={{
                 preferredCanton: profile!.preferredCanton,
                 preferredMinRooms: profile!.preferredMinRooms,

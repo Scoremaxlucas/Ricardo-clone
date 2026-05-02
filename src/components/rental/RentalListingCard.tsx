@@ -52,9 +52,9 @@ function validDate(d: string | Date | null | undefined): Date | null {
 }
 
 function matchBadge(score: number): { label: string; cls: string } {
-  if (score >= 80) return { label: '⭐ Sehr gut', cls: 'bg-emerald-600 text-white' }
-  if (score >= 60) return { label: '✓ Gut', cls: 'border border-emerald-500 bg-white text-emerald-700' }
-  return { label: '~ Passabel', cls: 'bg-slate-200 text-slate-700' }
+  if (score >= 80) return { label: 'Sehr gut', cls: 'bg-emerald-600 text-white' }
+  if (score >= 60) return { label: 'Gut', cls: 'border border-emerald-500 bg-white text-emerald-700' }
+  return { label: 'Passabel', cls: 'bg-slate-200 text-slate-700' }
 }
 
 function ListingQualificationBadge({ listingId }: { listingId: string }) {
@@ -129,7 +129,7 @@ export function RentalListingCard({
             </div>
           }
         </div>
-        <div className="pointer-events-none absolute left-2 top-2 z-10 flex max-w-[calc(100%-1rem)] flex-wrap items-start gap-1.5">
+        <div className="pointer-events-none absolute left-2 top-2 z-10 flex max-w-[calc(100%-0.75rem)] flex-wrap items-start gap-1.5 pr-1">
           {isNew ?
             <span className="shrink-0 rounded-full bg-teal-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
               Neu
@@ -138,7 +138,8 @@ export function RentalListingCard({
           <ListingQualificationBadge listingId={l.id} />
           {typeof matchScore === 'number' ? (
             <span
-              className={`shrink-0 max-w-[min(33.333%,10rem)] truncate whitespace-nowrap rounded-full px-2 py-[3px] text-[11px] font-bold shadow-sm ${matchBadge(matchScore).cls}`}
+              className={`shrink-0 whitespace-nowrap rounded-full px-2 py-[3px] text-[11px] font-bold shadow-sm ${matchBadge(matchScore).cls}`}
+              title={`Match-Score ${matchScore}`}
             >
               {matchBadge(matchScore).label}
             </span>
