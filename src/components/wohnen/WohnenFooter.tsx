@@ -1,14 +1,51 @@
 'use client'
 
+import { isBetreibungsregisterPath, isTenantProfilWizardPath } from '@/lib/wohnen-profil-flow-paths'
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const footerBg = '#0d2b1f'
 
+function WohnenFooterSlim() {
+  return (
+    <footer className="mt-auto border-t border-slate-200 bg-slate-50/90 py-3 text-slate-600">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-5 gap-y-1 px-4 text-xs sm:text-[13px]">
+        <Link href="/imprint" className="font-medium hover:text-teal-800 hover:underline">
+          Impressum
+        </Link>
+        <a
+          href={`${MAIN_SHOP_ORIGIN}/privacy`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium hover:text-teal-800 hover:underline"
+        >
+          Datenschutz
+        </a>
+        <a
+          href={`${MAIN_SHOP_ORIGIN}/contact`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium hover:text-teal-800 hover:underline"
+        >
+          Kontakt
+        </a>
+        <span className="hidden text-slate-300 sm:inline" aria-hidden>
+          ·
+        </span>
+        <span className="w-full text-center text-[11px] text-slate-400 sm:w-auto sm:text-left">
+          © Helvenda Wohnungen
+        </span>
+      </div>
+    </footer>
+  )
+}
+
 export function WohnenFooter() {
-  const pathname = usePathname()
+  const pathname = usePathname() || ''
   if (pathname === '/profil/suche') return null
+  if (isTenantProfilWizardPath(pathname)) return null
+  if (isBetreibungsregisterPath(pathname)) return <WohnenFooterSlim />
 
   return (
     <footer className="mt-auto text-white" style={{ backgroundColor: footerBg }}>

@@ -26,19 +26,31 @@ const EMPLOYMENT: { status: EmploymentStatus; label: string }[] = [
 ]
 
 const INCOME_CHOICES: { id: string; label: string; category: IncomeCategory }[] = [
-  { id: 'i1', label: "Unter CHF 2'000", category: 'UNDER_2000' },
-  { id: 'i2', label: "CHF 2'000 – 3'000", category: 'FROM_2000_TO_3000' },
-  { id: 'i3', label: "CHF 3'000 – 4'000", category: 'FROM_3000_TO_4000' },
-  { id: 'i4', label: "CHF 4'000 – 5'000", category: 'FROM_4000_TO_5000' },
-  { id: 'i5', label: "CHF 5'000 – 7'000", category: 'FROM_5000_TO_7000' },
-  { id: 'i6', label: "CHF 7'000 – 9'000", category: 'FROM_7000_TO_9000' },
-  { id: 'i7', label: "CHF 9'000 – 12'000", category: 'FROM_9000_TO_12000' },
-  { id: 'i8', label: "CHF 12'000 – 15'000", category: 'FROM_12000_TO_15000' },
-  { id: 'i9', label: "CHF 15'000 – 20'000", category: 'FROM_15000_TO_20000' },
-  { id: 'i10', label: "CHF 20'000 – 30'000", category: 'FROM_20000_TO_30000' },
-  { id: 'i11', label: "CHF 30'000 – 50'000", category: 'FROM_30000_TO_50000' },
-  { id: 'i12', label: "Über CHF 50'000", category: 'ABOVE_50000' },
+  { id: 'i1', label: "Unter CHF 2'000 / Monat", category: 'UNDER_2000' },
+  { id: 'i2', label: "CHF 2'000 – 3'000 / Monat", category: 'FROM_2000_TO_3000' },
+  { id: 'i3', label: "CHF 3'000 – 4'000 / Monat", category: 'FROM_3000_TO_4000' },
+  { id: 'i4', label: "CHF 4'000 – 5'000 / Monat", category: 'FROM_4000_TO_5000' },
+  { id: 'i5', label: "CHF 5'000 – 7'000 / Monat", category: 'FROM_5000_TO_7000' },
+  { id: 'i6', label: "CHF 7'000 – 9'000 / Monat", category: 'FROM_7000_TO_9000' },
+  { id: 'i7', label: "CHF 9'000 – 12'000 / Monat", category: 'FROM_9000_TO_12000' },
+  { id: 'i8', label: "CHF 12'000 – 15'000 / Monat", category: 'FROM_12000_TO_15000' },
+  { id: 'i9', label: "CHF 15'000 – 20'000 / Monat", category: 'FROM_15000_TO_20000' },
+  { id: 'i10', label: "CHF 20'000 – 30'000 / Monat", category: 'FROM_20000_TO_30000' },
+  { id: 'i11', label: "CHF 30'000 – 50'000 / Monat", category: 'FROM_30000_TO_50000' },
+  { id: 'i12', label: "Über CHF 50'000 / Monat", category: 'ABOVE_50000' },
 ]
+
+const ONBOARDING_STEP_TITLES = [
+  'Persönliches',
+  'Geburtsdatum',
+  'Adresse',
+  'Kontakt',
+  'Beruf',
+  'Einkommen',
+  'Haushalt',
+  'Referenz',
+  'Prüfen',
+] as const
 
 /** Legacy DB-Werte auf die neue Onboarding-Auswahl abbilden. */
 function incomeChoiceIdFromStoredCategory(cat: IncomeCategory): string {
@@ -380,7 +392,13 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
     const hh = `${personText} · ${kinderText} · ${rauchText} · ${tierText}`
     const ref =
       form.referenceName.trim() || form.referencePhone.trim() || form.referenceRelation.trim() ?
-        `${form.referenceName.trim() || '—'}`
+        [
+          form.referenceName.trim() || null,
+          form.referenceRelation.trim() || null,
+          form.referencePhone.trim() || null,
+        ]
+          .filter(Boolean)
+          .join(' · ')
       : '—'
     return [
       { key: 1, label: 'Name', value: `${form.firstName.trim()} ${form.lastName.trim()}`.trim() },
@@ -397,8 +415,10 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
   const slideClass =
     dir === 'fwd' ? 'animate-[onbInFwd_0.25s_ease_0.1s_both]' : 'animate-[onbInBack_0.25s_ease_0.1s_both]'
 
+  const stepTitle = ONBOARDING_STEP_TITLES[step - 1] ?? ''
+
   return (
-    <div className="min-h-dvh bg-white text-[#0d2b1f]">
+    <div className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-white text-[#0d2b1f]">
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -413,11 +433,11 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
         `,
         }}
       />
-      <StepperBar current={step} total={totalSteps} onBack={onBack} disableBack={false} />
+      <StepperBar current={step} total={totalSteps} stepTitle={stepTitle} onBack={onBack} disableBack={false} />
 
-      <main className="flex min-h-dvh flex-col pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[calc(4rem+env(safe-area-inset-top,0px))] sm:px-6">
-        <div className="flex flex-1 flex-col items-center justify-center">
-          <div key={step} className={`w-full max-w-[520px] ${slideClass}`}>
+      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[calc(6.25rem+env(safe-area-inset-top,0px))] sm:px-6">
+        <div className="mx-auto flex w-full max-w-[560px] flex-1 flex-col justify-center py-6 sm:py-10">
+          <div key={step} className={`w-full ${slideClass}`}>
             {step === 1 ?
               <>
                 <p className="text-[12px] font-semibold uppercase tracking-[1.5px] text-[#18a87c]">
@@ -450,7 +470,8 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
 
             {step === 2 ?
               <>
-                <h1 className="text-[26px] font-extrabold leading-[1.2] text-[#0d2b1f] sm:text-[32px]">
+                <p className="text-[12px] font-semibold uppercase tracking-[1.5px] text-[#18a87c]">Geburtsdatum</p>
+                <h1 className="mt-4 text-[26px] font-extrabold leading-[1.2] text-[#0d2b1f] sm:text-[32px]">
                   Wann wurdest du geboren?
                 </h1>
                 <p className="mt-3 text-[15px] leading-relaxed text-[#8aa89e]">Du musst mindestens 18 Jahre alt sein.</p>
@@ -482,7 +503,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                 <h1 className="mt-4 text-[26px] font-extrabold leading-[1.2] text-[#0d2b1f] sm:text-[32px]">
                   Wo wohnst du aktuell?
                 </h1>
-                <div className="mt-10 flex flex-col gap-12">
+                <div className="mt-10 flex flex-col gap-4">
                   <input
                     ref={el => {
                       firstFieldRef.current = el
@@ -493,7 +514,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                     onChange={e => setForm(f => ({ ...f, currentAddress: e.target.value }))}
                     autoComplete="street-address"
                   />
-                  <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 min-[480px]:items-start">
                     <input
                       className={INPUT_CLASS}
                       placeholder="PLZ"
@@ -523,7 +544,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                 <p className="mt-3 text-[15px] leading-relaxed text-[#8aa89e]">
                   So meldet sich der Vermieter nach deiner Bewerbung bei dir.
                 </p>
-                <div className="mt-10 flex flex-col gap-12">
+                <div className="mt-10 flex flex-col gap-5">
                   <input
                     ref={el => {
                       firstFieldRef.current = el
@@ -571,7 +592,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                   ))}
                 </div>
                 {needsEmployer ?
-                  <div className="mt-12 flex max-h-[600px] flex-col gap-12 overflow-visible border-0 opacity-100 transition-all duration-300">
+                  <div className="mt-10 flex max-h-[600px] flex-col gap-5 overflow-visible border-0 opacity-100 transition-all duration-300">
                     <input
                       ref={employerFieldRef}
                       className={INPUT_CLASS}
@@ -614,7 +635,9 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                   Wie hoch ist das monatliche Nettoeinkommen deines Haushalts?
                 </h1>
                 <p className="mt-3 text-[15px] leading-relaxed text-[#8aa89e]">
-                  Alle Einkommen zusammengezählt. Vermieter sehen nur die Kategorie — nie deinen genauen Betrag.
+                  Summe aus Löhnen, Renten und weiteren regelmässigen Nettoeinkünften aller Personen im Haushalt — in
+                  Schweizer Franken <strong>pro Monat</strong>. Auch sehr hohe Haushaltseinkommen sind in der letzten
+                  Kategorie erfasst. Vermieter sehen nur die <strong>Kategorie</strong>, nie den genauen Betrag.
                 </p>
                 <div className="mt-10">
                   <CustomDropdown
@@ -647,7 +670,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                 <h1 className="mt-4 text-[26px] font-extrabold leading-[1.2] text-[#0d2b1f] sm:text-[32px]">
                   Wer wohnt mit dir?
                 </h1>
-                <div className="mt-10 flex flex-col gap-12 min-[480px]:flex-row min-[480px]:gap-16">
+                <div className="mt-10 flex flex-col gap-8 min-[480px]:flex-row min-[480px]:gap-12">
                   <StepperInput
                     ref={el => {
                       firstFieldRef.current = el
@@ -685,7 +708,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                   Hast du eine frühere Vermieter-Referenz?
                 </h1>
                 <p className="mt-3 text-[15px] leading-relaxed text-[#8aa89e]">Optional — erhöht deine Chancen erheblich.</p>
-                <div className="mt-10 flex flex-col gap-12">
+                <div className="mt-10 flex flex-col gap-6">
                   <input
                     ref={el => {
                       firstFieldRef.current = el
@@ -697,16 +720,22 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                   />
                   <input
                     className={INPUT_CLASS}
-                    placeholder="Telefon oder E-Mail"
+                    placeholder="Telefon oder E-Mail der Person"
                     value={form.referencePhone}
                     onChange={e => setForm(f => ({ ...f, referencePhone: e.target.value }))}
                   />
-                  <input
-                    className={INPUT_CLASS}
-                    placeholder="z.B. Frühere Vermieterin, Arbeitgeber"
-                    value={form.referenceRelation}
-                    onChange={e => setForm(f => ({ ...f, referenceRelation: e.target.value }))}
-                  />
+                  <div>
+                    <label htmlFor="ref-relation" className="mb-2 block text-[13px] font-medium text-[#5a7a6e]">
+                      Bezug zur Person
+                    </label>
+                    <input
+                      id="ref-relation"
+                      className={INPUT_CLASS}
+                      placeholder="z. B. frühere Vermieterin, Arbeitgeberin, WG-Mitbewohner"
+                      value={form.referenceRelation}
+                      onChange={e => setForm(f => ({ ...f, referenceRelation: e.target.value }))}
+                    />
+                  </div>
                 </div>
               </>
             : null}
@@ -722,14 +751,16 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                   {summaryRows.map(row => (
                     <div
                       key={row.key}
-                      className="flex flex-col gap-2 border-b border-[#f0f0f0] py-[14px] min-[480px]:flex-row min-[480px]:items-start min-[480px]:justify-between"
+                      className="flex flex-col gap-2 border-b border-[#f0f0f0] py-3 min-[520px]:flex-row min-[520px]:items-start min-[520px]:gap-4"
                     >
-                      <span className="min-w-[120px] text-[13px] font-medium text-[#8aa89e]">{row.label}</span>
-                      <div className="flex flex-1 flex-col gap-2 min-[480px]:flex-row min-[480px]:items-start min-[480px]:justify-between">
-                        <span className="whitespace-pre-line text-[14px] font-medium text-[#0d2b1f]">{row.value}</span>
+                      <span className="min-w-[7.5rem] shrink-0 text-[13px] font-semibold text-[#5a7a6e]">{row.label}</span>
+                      <div className="flex min-w-0 flex-1 flex-col gap-2 min-[520px]:flex-row min-[520px]:items-start min-[520px]:justify-between min-[520px]:gap-3">
+                        <span className="min-w-0 flex-1 whitespace-pre-line text-[14px] font-medium leading-snug text-[#0d2b1f]">
+                          {row.value}
+                        </span>
                         <button
                           type="button"
-                          className="shrink-0 text-left text-[13px] font-semibold text-[#18a87c] min-[480px]:text-right"
+                          className="shrink-0 self-start rounded-lg px-0 py-1 text-left text-[13px] font-semibold text-[#18a87c] underline decoration-[#18a87c]/40 underline-offset-2 hover:decoration-[#18a87c] min-[520px]:self-center min-[520px]:px-2 min-[520px]:py-1.5 min-[520px]:no-underline min-[520px]:hover:bg-[#f0faf7]"
                           onClick={() => goStep(row.key, 'back')}
                         >
                           Ändern
@@ -738,26 +769,28 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                     </div>
                   ))}
                 </div>
-                <label className="mt-10 flex cursor-pointer items-start gap-3">
-                  <input
-                    type="checkbox"
-                    className="peer sr-only"
-                    checked={form.confirmTruth}
-                    onChange={e => setForm(f => ({ ...f, confirmTruth: e.target.checked }))}
-                  />
-                  <span
-                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border-[1.5px] border-[#e0e0e0] peer-checked:border-0 peer-checked:bg-[#18a87c]`}
-                  >
-                    {form.confirmTruth ?
-                      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
-                        <path d="M2 6l3 3 5-6" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" />
-                      </svg>
-                    : null}
-                  </span>
-                  <span className="text-[15px] font-medium leading-snug text-[#0d2b1f]">
-                    Ich bestätige, dass alle Angaben korrekt und wahrheitsgemäss sind.
-                  </span>
-                </label>
+                <div className="mt-10 rounded-2xl border border-[#e4eeea] bg-[#f9fcfa] p-4 sm:p-5">
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input
+                      type="checkbox"
+                      className="peer sr-only"
+                      checked={form.confirmTruth}
+                      onChange={e => setForm(f => ({ ...f, confirmTruth: e.target.checked }))}
+                    />
+                    <span
+                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border-[1.5px] border-[#e0e0e0] bg-white peer-checked:border-0 peer-checked:bg-[#18a87c]`}
+                    >
+                      {form.confirmTruth ?
+                        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
+                          <path d="M2 6l3 3 5-6" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" />
+                        </svg>
+                      : null}
+                    </span>
+                    <span className="text-[15px] font-medium leading-snug text-[#0d2b1f]">
+                      Ich bestätige, dass alle Angaben korrekt und wahrheitsgemäss sind.
+                    </span>
+                  </label>
+                </div>
               </>
             : null}
           </div>
@@ -765,7 +798,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
       </main>
 
       <footer
-        className="fixed bottom-0 left-0 right-0 z-50 flex min-h-[72px] items-center justify-between border-t border-[#f0f0f0] bg-white pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-[env(safe-area-inset-bottom,0px)] pt-0 sm:px-6"
+        className="fixed bottom-0 left-0 right-0 z-50 flex min-h-[72px] items-center justify-between gap-3 border-t border-[#e8ece9] bg-white/98 px-[max(1rem,env(safe-area-inset-left,0px))] pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] pt-2 shadow-[0_-4px_12px_rgba(13,43,31,0.06)] backdrop-blur-sm sm:px-6"
       >
         {optionalStep ?
           <button
@@ -789,7 +822,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
             if (step === 9) void onSubmit()
             else onNext()
           }}
-          className="flex h-12 min-h-[48px] min-w-[130px] items-center justify-center rounded-xl bg-[#18a87c] px-5 text-[15px] font-bold text-white transition disabled:cursor-not-allowed disabled:bg-[#e0e0e0] disabled:text-[#b0b0b0]"
+          className="flex h-12 min-h-[48px] min-w-[140px] items-center justify-center rounded-xl bg-[#18a87c] px-6 text-[15px] font-bold text-white shadow-sm transition hover:bg-[#159673] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
         >
           {submitting ?
             <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />

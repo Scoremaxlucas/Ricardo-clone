@@ -81,7 +81,7 @@ function deriveCompletionState(profile: TenantProfile | null): UserCompletionSta
 
 function buildProgressSteps(profile: TenantProfile | null, firstApplication: boolean): ProgressStep[] {
   const profileHref = !profile ? '/profil/erstellen' : '/profil/bearbeiten'
-  const profileCta = !profile ? 'Profil jetzt erstellen' : 'Profil vervollstaendigen'
+  const profileCta = !profile ? 'Profil jetzt erstellen' : 'Profil vervollständigen'
   const creditDone = creditApprovedValid(profile)
   const creditPending = Boolean(
     profile?.creditCheckStatus === 'PENDING' || profile?.creditCheckStatus === 'PENDING_MANUAL_REVIEW'
@@ -91,7 +91,7 @@ function buildProgressSteps(profile: TenantProfile | null, firstApplication: boo
     { id: 'account', label: 'Konto erstellt', done: true, ctaLabel: '', ctaHref: '/' },
     {
       id: 'profile',
-      label: 'Profil vervollstaendigen',
+      label: 'Profil vervollständigen',
       done: profile?.isComplete === true,
       ctaLabel: profileCta,
       ctaHref: profileHref,
@@ -101,7 +101,7 @@ function buildProgressSteps(profile: TenantProfile | null, firstApplication: boo
       label: 'Betreibungsregister hochladen',
       done: creditDone,
       pending: creditPending,
-      pendingLabel: 'Wird geprueft...',
+      pendingLabel: 'Wird geprüft …',
       ctaLabel: creditPending ? 'Zum Betreibungsregister' : 'Jetzt hochladen',
       ctaHref: '/profil/betreibungsregister',
     },
@@ -141,8 +141,8 @@ function EmptyStateCard() {
 
 function ProfileIncompleteHint() {
   return (
-    <div className="mx-auto mt-6 max-w-xl rounded-xl border border-slate-200 bg-white px-5 py-6 text-center text-sm text-slate-600 shadow-sm">
-      Vervollstaendige dein Profil um Wohnungen zu sehen die zu dir passen.
+    <div className="mx-auto mt-6 max-w-xl rounded-xl border border-slate-200 bg-white px-5 py-6 text-center text-sm leading-relaxed text-slate-600 shadow-sm">
+      Vervollständige dein Profil, damit wir dir Wohnungen zeigen können, die zu deinen Angaben passen.
     </div>
   )
 }
@@ -221,32 +221,49 @@ export default async function MeineMatchesPage() {
     <main className="min-h-screen bg-[#f8fdfb]">
       <div className="mx-auto max-w-6xl pb-10 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[max(2.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))] sm:pl-[max(1.5rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.5rem,env(safe-area-inset-right,0px))] sm:pt-12">
         {showDashboard ?
-          <MeineMatchesProgressDashboard firstName={firstName} steps={steps} />
+          <MeineMatchesProgressDashboard firstName={firstName} steps={steps} accountEmail={accountEmail} />
         : null}
 
         {showCertBanner ? <ZertifikatTeaserBanner /> : null}
 
-        <section className="pb-8">
-          <h1 className="text-[1.5rem] font-extrabold leading-tight text-[#0d2b1f] sm:text-[1.875rem] md:text-[2rem]">
-            Guten {greeting}, {firstName}.
-          </h1>
-          {accountEmail ?
-            <p className="mt-2 text-sm text-slate-600">
-              <span className="text-slate-500">Angemeldet als</span>{' '}
-              <span className="font-semibold text-slate-800">{accountEmail}</span>
-            </p>
-          : null}
-          {!showProfileHint && matches.length > 0 ?
-            <p className="mt-3 text-base leading-relaxed text-slate-700 sm:text-[17px]">
-              Wir haben <span className="font-extrabold text-teal-700">{matches.length}</span> Wohnungen gefunden die zu dir passen.
-            </p>
-          : null}
-          {!showProfileHint && matches.length === 0 && profile?.isComplete ?
-            <p className="mt-3 text-base leading-relaxed text-slate-500 sm:text-[17px]">
-              Noch keine Wohnungen die genau zu dir passen — wir suchen täglich weiter.
-            </p>
-          : null}
-        </section>
+        {!showDashboard ?
+          <section className="pb-8">
+            <h1 className="text-[1.5rem] font-extrabold leading-tight text-[#0d2b1f] sm:text-[1.875rem] md:text-[2rem]">
+              Guten {greeting}, {firstName}.
+            </h1>
+            {accountEmail ?
+              <p className="mt-2 text-sm text-slate-600">
+                <span className="text-slate-500">Angemeldet als</span>{' '}
+                <span className="font-semibold text-slate-800">{accountEmail}</span>
+              </p>
+            : null}
+            {!showProfileHint && matches.length > 0 ?
+              <p className="mt-3 text-base leading-relaxed text-slate-700 sm:text-[17px]">
+                Wir haben <span className="font-extrabold text-teal-700">{matches.length}</span> Wohnungen gefunden, die
+                zu dir passen.
+              </p>
+            : null}
+            {!showProfileHint && matches.length === 0 && profile?.isComplete ?
+              <p className="mt-3 text-base leading-relaxed text-slate-500 sm:text-[17px]">
+                Noch keine Wohnungen, die genau zu dir passen — wir suchen täglich weiter.
+              </p>
+            : null}
+          </section>
+        : showDashboard && !showProfileHint ?
+          <section className="pb-6">
+            {!showProfileHint && matches.length > 0 ?
+              <p className="mt-2 text-base leading-relaxed text-slate-700 sm:text-[17px]">
+                Wir haben <span className="font-extrabold text-teal-700">{matches.length}</span> Wohnungen gefunden, die
+                zu dir passen.
+              </p>
+            : null}
+            {!showProfileHint && matches.length === 0 && profile?.isComplete ?
+              <p className="mt-2 text-base leading-relaxed text-slate-500 sm:text-[17px]">
+                Noch keine Wohnungen, die genau zu dir passen — wir suchen täglich weiter.
+              </p>
+            : null}
+          </section>
+        : null}
 
         {showProfileHint ?
           <ProfileIncompleteHint />

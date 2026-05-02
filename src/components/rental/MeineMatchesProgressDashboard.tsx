@@ -20,6 +20,8 @@ export type ProgressStep = {
 type Props = {
   firstName: string
   steps: ProgressStep[]
+  /** Optional: eine Zeile unter dem CTA (z. B. Login-E-Mail), damit keine zweite Begrüssung nötig ist. */
+  accountEmail?: string | null
 }
 
 function StepIcon({ kind }: { kind: 'done' | 'current' | 'pending' }) {
@@ -44,7 +46,7 @@ function StepIcon({ kind }: { kind: 'done' | 'current' | 'pending' }) {
   )
 }
 
-export function MeineMatchesProgressDashboard({ firstName, steps }: Props) {
+export function MeineMatchesProgressDashboard({ firstName, steps, accountEmail }: Props) {
   const doneCount = steps.filter(s => s.done).length
   const pct = (doneCount / steps.length) * 100
   const currentIndex = steps.findIndex(s => !s.done)
@@ -93,11 +95,11 @@ export function MeineMatchesProgressDashboard({ firstName, steps }: Props) {
               </div>
               <div className="w-24 shrink-0 text-right">
                 {isCurrent && step.pending ?
-                  <span className="text-[10px] font-semibold text-[#8aa89e]">Wird geprueft</span>
+                  <span className="text-[10px] font-semibold text-[#8aa89e]">Wird geprüft</span>
                 : isCurrent ?
                   <span className="text-[10px] font-bold uppercase tracking-wide text-[#18a87c]">Jetzt</span>
                 : !isDone && i === currentIndex + 1 ?
-                  <span className="text-[10px] text-[#b0b0b0]">als naechstes</span>
+                  <span className="text-[10px] text-[#b0b0b0]">als Nächstes</span>
                 : null}
               </div>
             </li>
@@ -112,6 +114,13 @@ export function MeineMatchesProgressDashboard({ firstName, steps }: Props) {
         >
           {current.ctaLabel}
         </Link>
+      : null}
+
+      {accountEmail?.trim() ?
+        <p className="mt-4 text-center text-xs text-slate-500">
+          <span className="text-slate-400">Angemeldet als</span>{' '}
+          <span className="font-medium text-slate-700">{accountEmail.trim()}</span>
+        </p>
       : null}
     </section>
   )

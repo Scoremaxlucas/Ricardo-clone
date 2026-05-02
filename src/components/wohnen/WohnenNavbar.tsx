@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { isBetreibungsregisterPath, isTenantProfilWizardPath } from '@/lib/wohnen-profil-flow-paths'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { formatDate } from '@/lib/utils/formatDate'
 
@@ -79,7 +80,7 @@ function HlvMiniPanel({
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Dein Helvenda Zertifikat</p>
       <p className="mt-1 font-mono text-sm font-bold text-slate-900">{certificateCode}</p>
       <p className="mt-1 text-xs text-slate-600">
-        Gueltig bis{' '}
+        Gültig bis{' '}
         {certificateExpiresAt ? formatDate(certificateExpiresAt) : 'n. v.'}
       </p>
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -282,22 +283,28 @@ export function WohnenNavbar() {
     }
 
     if (showIncompleteProfile) {
+      const onProfilWizard = isTenantProfilWizardPath(pathname)
       return (
         <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-2 md:flex md:gap-3">
           <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
             Wohnungen suchen
           </Link>
-          <Link
-            href="/profil/erstellen"
-            className="rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-orange-600"
-          >
-            Profil vervollstaendigen
-          </Link>
+          {onProfilWizard ?
+            <span className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-900">
+              Profil-Assistent
+            </span>
+          : <Link
+              href="/profil/erstellen"
+              className="rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-orange-600"
+            >
+              Profil vervollständigen
+            </Link>}
         </nav>
       )
     }
 
     if (showAuszugPill) {
+      const onBetreibungsPage = isBetreibungsregisterPath(pathname)
       return (
         <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-2 md:flex md:gap-3">
           <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
@@ -306,12 +313,19 @@ export function WohnenNavbar() {
           <Link href="/meine-matches" className={navLinkClass(pathname === '/meine-matches')}>
             Meine Matches
           </Link>
-          <Link
-            href="/profil/betreibungsregister"
-            className="rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-orange-600"
-          >
-            Auszug hochladen
-          </Link>
+          {onBetreibungsPage ?
+            <Link
+              href="/profil"
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+            >
+              Zum Profil
+            </Link>
+          : <Link
+              href="/profil/betreibungsregister"
+              className="rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-orange-600"
+            >
+              Auszug hochladen
+            </Link>}
         </nav>
       )
     }
@@ -430,8 +444,8 @@ export function WohnenNavbar() {
 
               {dropdownKind === 'A' ?
                 <div className="mx-2 my-2 rounded-lg border-l-[3px] border-amber-500 bg-[#fffbeb] px-3 py-2.5">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-amber-500">Naechster Schritt</p>
-                  <p className="mt-1 text-[13px] font-semibold text-[#1a1a1a]">Profil vervollstaendigen</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-amber-500">Nächster Schritt</p>
+                  <p className="mt-1 text-[13px] font-semibold text-[#1a1a1a]">Profil vervollständigen</p>
                   <p className="mt-0.5 text-[11px] text-[#5a5a5a]">Ohne Profil keine Bewerbungen</p>
                   <Link
                     href="/profil/erstellen"
@@ -445,7 +459,7 @@ export function WohnenNavbar() {
 
               {dropdownKind === 'B' ?
                 <div className="mx-2 my-2 rounded-lg border-l-[3px] border-amber-500 bg-[#fffbeb] px-3 py-2.5">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-amber-500">Naechster Schritt</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-amber-500">Nächster Schritt</p>
                   <p className="mt-1 text-[13px] font-semibold text-[#1a1a1a]">Betreibungsregister hochladen</p>
                   <p className="mt-0.5 text-[11px] text-[#5a5a5a]">Viele Vermieter setzen ihn voraus</p>
                   <Link
@@ -461,14 +475,14 @@ export function WohnenNavbar() {
               {dropdownKind === 'P' ?
                 <div className="mx-2 my-2 rounded-lg border-l-[3px] border-amber-500 bg-[#fffbeb] px-3 py-2.5">
                   <p className="text-[10px] font-bold uppercase tracking-wide text-amber-500">Status</p>
-                  <p className="mt-1 text-[13px] font-semibold text-[#1a1a1a]">Betreibungsregister wird geprueft</p>
+                  <p className="mt-1 text-[13px] font-semibold text-[#1a1a1a]">Betreibungsregister wird geprüft</p>
                   <p className="mt-0.5 text-[11px] text-[#5a5a5a]">Du wirst per E-Mail informiert.</p>
                   <Link
                     href="/profil/betreibungsregister"
                     className="mt-1.5 inline-block text-xs font-semibold text-amber-600 hover:underline"
                     onClick={() => setMenuOpen(false)}
                   >
-                    Zur Uebersicht
+                    Zur Übersicht
                   </Link>
                 </div>
               : null}
@@ -634,26 +648,34 @@ export function WohnenNavbar() {
           Wohnungen suchen
         </Link>
         {!n.profileComplete ?
-          <Link
-            href="/profil/erstellen"
-            className={`${mobileDrawerLink} bg-orange-50 font-semibold text-orange-950`}
-            onClick={closeAll}
-          >
-            Profil vervollstaendigen
-          </Link>
+          isTenantProfilWizardPath(pathname) ?
+            <div className={`${mobileDrawerLink} bg-teal-50 text-sm font-semibold text-teal-900`}>
+              Profil-Assistent — Schritt für Schritt
+            </div>
+          : <Link
+              href="/profil/erstellen"
+              className={`${mobileDrawerLink} bg-orange-50 font-semibold text-orange-950`}
+              onClick={closeAll}
+            >
+              Profil vervollständigen
+            </Link>
         : null}
         {n.profileComplete && !n.creditApprovedAndValid && !n.creditPendingReview ?
           <>
             <Link href="/meine-matches" className={mobileDrawerLinkTeal} onClick={closeAll}>
               Meine Matches
             </Link>
-            <Link
-              href="/profil/betreibungsregister"
-              className={`${mobileDrawerLink} bg-orange-50 font-semibold text-orange-950`}
-              onClick={closeAll}
-            >
-              Auszug hochladen
-            </Link>
+            {isBetreibungsregisterPath(pathname) ?
+              <Link href="/profil" className={mobileDrawerLink} onClick={closeAll}>
+                Zum Profil
+              </Link>
+            : <Link
+                href="/profil/betreibungsregister"
+                className={`${mobileDrawerLink} bg-orange-50 font-semibold text-orange-950`}
+                onClick={closeAll}
+              >
+                Auszug hochladen
+              </Link>}
           </>
         : null}
         {n.profileComplete && n.creditPendingReview ?
