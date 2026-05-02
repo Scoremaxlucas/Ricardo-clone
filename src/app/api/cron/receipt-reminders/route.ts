@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
+import { multilingualTransactionalNoticeHtml } from '@/lib/email/transactional-multilingual-notice'
 
 /**
  * POST/GET /api/cron/receipt-reminders
@@ -154,6 +155,7 @@ async function sendReceiptReminders() {
         Bei Fragen erreichen Sie uns unter
         <a href="mailto:support@helvenda.ch" style="color: #0f766e;">support@helvenda.ch</a>
       </p>
+      ${multilingualTransactionalNoticeHtml('marketplace', 'light')}
     </div>
   </div>
 </body>

@@ -8,6 +8,10 @@ import { employmentLabelDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/l
 import { MAIN_SHOP_ORIGIN, WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { isCreditCheckResult } from '@/lib/rental/types'
+import {
+  multilingualTransactionalNoticeHtml,
+  multilingualTransactionalNoticePlaintext,
+} from '@/lib/email/transactional-multilingual-notice'
 
 export type WohnenEmailPayload = { subject: string; html: string; text: string }
 
@@ -19,13 +23,9 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
 }
 
-/** Kurze DE/EN/FR/IT-Hinweise für CH (transaktionale Mieter-Mails). */
-function wohnenEmailBilingualFooter(): string {
-  return `<div style="margin:20px 0 0 0;padding-top:14px;border-top:1px solid #e5e7eb;font-size:11px;line-height:1.55;color:#6b7280;">
-<p style="margin:0 0 6px 0;"><strong>English:</strong> Automated message from Helvenda Wohnungen (Swiss rentals). For support, use the contact or help section on the website.</p>
-<p style="margin:0 0 6px 0;"><strong>Français :</strong> Message automatique de Helvenda Wohnungen (locations en Suisse). Pour l’assistance, utilisez le formulaire de contact ou l’aide sur le site.</p>
-<p style="margin:0;"><strong>Italiano:</strong> Messaggio automatico da Helvenda Wohnungen (affitti in Svizzera). Per assistenza, usa il contatto o la sezione aiuto sul sito.</p>
-</div>`
+function appendWohnenPublicNotice(text: string, publicNotice: boolean): string {
+  if (!publicNotice) return text
+  return text + multilingualTransactionalNoticePlaintext('wohnungen')
 }
 
 function wohnenOrigin(): string {
@@ -45,8 +45,10 @@ function formatRoomsDe(rooms: number): string {
   return `${s} Zi`
 }
 
-function layout(innerHtml: string): string {
+function layout(innerHtml: string, options?: { publicNotice?: boolean }): string {
+  const publicNotice = options?.publicNotice !== false
   const origin = wohnenOrigin()
+  const notice = publicNotice ? multilingualTransactionalNoticeHtml('wohnungen', 'light') : ''
   return `<!DOCTYPE html>
 <html lang="de">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -68,6 +70,7 @@ ${innerHtml}
 <td style="background-color:#e5e7eb;padding:18px 24px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.55;color:#6b7280;">
 © 2026 Helvenda Wohnungen · Score-Max GmbH<br>
 <a href="${escapeHtml(origin)}" style="color:#18a87c;text-decoration:underline;">wohnen.helvenda.ch</a>
+${notice}
 </td>
 </tr>
 </table>
@@ -177,7 +180,7 @@ ${buttonRow(link, 'Bewerbung ansehen')}
     .filter(Boolean)
     .join('\n')
 
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
 }
 
 /** Template 2 — Bewerbung abgeschickt (Mieter) */
@@ -213,7 +216,7 @@ ${buttonRow(link, 'Meine Bewerbungen')}
     '',
     'Tipp: Beantworte Nachrichten des Vermieters schnell.',
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
 }
 
 /** Template 3 — Betreibungsregisterauszug ungültig (Mieter) */
@@ -247,7 +250,7 @@ Online: <a href="https://betreibungsaemter.ch" style="color:#18a87c;">betreibung
     '',
     'betreibungsaemter.ch',
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
 }
 
 /** Template 4 — Betreibungsregisterauszug verifiziert (Mieter) */
@@ -283,7 +286,7 @@ ${buttonRow(link, 'Wohnungen suchen')}
     '',
     link,
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
 }
 
 /** Template 5 — Manuelle Prüfung (Mieter) */
@@ -304,7 +307,7 @@ ${buttonRow(link, 'Zu meinem Profil')}
     'Dein Auszug wird manuell geprüft (1–2 Werktage).',
     link,
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
 }
 
 /** Template 6 — Manuelle Prüfung (Admin, Profil-Credit-Check) */
@@ -342,7 +345,7 @@ ${buttonRow(adminLink, 'Zum Admin-Bereich')}
     `Datei: ${input.encryptedFileRef}`,
     adminLink,
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner, { publicNotice: false }), text: appendWohnenPublicNotice(text, false) }
 }
 
 /** Admin: Mietanfrage mit PDF — manuelle Prüfung (Legacy-Kontaktflow) */
@@ -360,7 +363,7 @@ ${buttonRow(link, 'Anfrage öffnen')}
 `
   const subject = `[Helvenda] Manuelle Prüfung — ${input.listingTitle}`
   const text = [`Manuelle Prüfung Mietanfrage`, `Inserat: ${input.listingTitle}`, `ID: ${input.applicationId}`, link].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner, { publicNotice: false }), text: appendWohnenPublicNotice(text, false) }
 }
 
 /** Template 7 — Besichtigung angefragt (Mieter) */
@@ -405,7 +408,7 @@ ${buttonRow(link, 'Meine Bewerbungen')}
   ]
     .filter(Boolean)
     .join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
 }
 
 /** Template 8 — Betreibungsregisterauszug läuft bald ab (Mieter) */
@@ -428,7 +431,6 @@ ${buttonRow(link, 'Jetzt erneuern')}
 <p style="margin:20px 0 0 0;font-size:14px;color:#4b5563;"><strong>Wo bekommst du den Auszug?</strong><br>
 Bestelle ihn beim Betreibungsamt deines Wohnorts (ca. CHF 17.—).<br>
 Online: <a href="https://betreibungsaemter.ch" style="color:#18a87c;">betreibungsaemter.ch</a></p>
-${wohnenEmailBilingualFooter()}
 `
   const subject = 'Dein Betreibungsregisterauszug läuft in 3 Tagen ab ⚠️'
   const text = [
@@ -437,10 +439,8 @@ ${wohnenEmailBilingualFooter()}
     `Dein Auszug läuft am ${exp} ab.`,
     link,
     'betreibungsaemter.ch',
-    '',
-    'EN: Automated reminder from Helvenda Wohnungen — renew your debt collection register excerpt before it expires.',
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
 }
 
 /** Template 8b — Betreibungsregisterauszug: frühe Erinnerung (~14 Tage) */
@@ -462,7 +462,6 @@ export function templateTenantCreditExpiryReminder14d(input: {
 ${buttonRow(link, 'Auszug vorbereiten')}
 <p style="margin:20px 0 0 0;font-size:14px;color:#4b5563;"><strong>Wo bestellen?</strong><br>
 Betreibungsamt deines Wohnorts oder online: <a href="https://betreibungsaemter.ch" style="color:#18a87c;">betreibungsaemter.ch</a></p>
-${wohnenEmailBilingualFooter()}
 `
   const subject = 'Erinnerung: Betreibungsregisterauszug läuft in ca. 14 Tagen ab'
   const text = [
@@ -471,10 +470,8 @@ ${wohnenEmailBilingualFooter()}
     `Dein Auszug läuft am ${exp} ab (ca. 14 Tage).`,
     link,
     'betreibungsaemter.ch',
-    '',
-    'EN: Early reminder from Helvenda Wohnungen — order a new register excerpt before the current one expires.',
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
 }
 
 /** Qualitätsnachweis läuft bald ab (ACTIVE, vor Ablaufdatum) */
@@ -504,7 +501,6 @@ export function templateTenantCertificateExpirySoon(input: {
 <p style="margin:0 0 14px 0;">Nach Ablauf funktionieren PDF und Prüf-Link für Vermieter nicht mehr. Stelle bei Bedarf ein neues Zertifikat aus, sobald dein Betreibungsregister wieder gültig ist.</p>
 ${buttonRow(zertLink, 'Zum Qualitätsnachweis')}
 <p style="margin:16px 0 0 0;font-size:14px;color:#4b5563;">Register erneuern: <a href="${escapeHtml(registerLink)}" style="color:#18a87c;">${escapeHtml(registerLink)}</a></p>
-${wohnenEmailBilingualFooter()}
 `
   const subject =
     input.daysBefore === 14 ?
@@ -519,10 +515,8 @@ ${wohnenEmailBilingualFooter()}
     '',
     zertLink,
     registerLink,
-    '',
-    'EN: Your Helvenda tenant certificate is expiring soon — renew your register excerpt and re-issue if needed.',
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
 }
 
 /** Admin: Inserat automatisch deaktiviert — URL 404 */
@@ -563,7 +557,7 @@ ${buttonRow(adminLink, 'Inserat prüfen')}
     '',
     'Falls die Wohnung noch verfügbar ist, Inserat manuell wieder aktivieren.',
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner, { publicNotice: false }), text: appendWohnenPublicNotice(text, false) }
 }
 
 /** Admin: Inserat automatisch deaktiviert — „vergeben“ laut URL-Text */
@@ -605,7 +599,7 @@ ${buttonRow(adminLink, 'Inserat prüfen')}
     '',
     adminLink,
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner, { publicNotice: false }), text: appendWohnenPublicNotice(text, false) }
 }
 
 /** Admin: Inserat wegen mehrerer Bewerber-Meldungen deaktiviert */
@@ -655,7 +649,7 @@ ${buttonRow(adminLink, 'Inserat prüfen')}
     '',
     adminLink,
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner, { publicNotice: false }), text: appendWohnenPublicNotice(text, false) }
 }
 
 /** Admin: URL mehrfach nicht erreichbar (3 aufeinanderfolgende UNREACHABLE) */
@@ -684,7 +678,7 @@ ${buttonRow(adminLink, 'Inserat prüfen')}
     '',
     adminLink,
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner, { publicNotice: false }), text: appendWohnenPublicNotice(text, false) }
 }
 
 export function templateTenantCertificateExpired(input: {
@@ -697,7 +691,6 @@ export function templateTenantCertificateExpired(input: {
 <p style="margin:0 0 14px 0;">Wenn du deinen Betreibungsregisterauszug erneuerst und erneut von uns geprüft wird, kannst du ein neues Zertifikat ausstellen lassen — ideal für Bewerbungen ausserhalb von Helvenda.</p>
 ${buttonRow(input.renewLink, 'Betreibungsregister erneuern')}
 <p style="margin:20px 0 0 0;font-size:13px;color:#6b7280;">Hinweis: Der Verifikations-Link auf deinem alten PDF ist nicht mehr gültig.</p>
-${wohnenEmailBilingualFooter()}
 `
   const subject = 'Dein Helvenda Qualitätsnachweis ist abgelaufen'
   const text = [
@@ -706,8 +699,6 @@ ${wohnenEmailBilingualFooter()}
     'Dein Helvenda Qualitätsnachweis ist abgelaufen.',
     'Erneuere deinen Betreibungsregisterauszug, um ein neues Zertifikat auszustellen.',
     input.renewLink,
-    '',
-    'EN: Your Helvenda certificate has expired — upload a new register excerpt to issue a new certificate.',
   ].join('\n')
-  return { subject, html: layout(inner), text }
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
 }

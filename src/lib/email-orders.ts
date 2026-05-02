@@ -9,6 +9,7 @@ import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
 import { getMainAddress } from '@/lib/address'
 import { getEmailBaseUrl } from '@/lib/email/config'
+import { multilingualTransactionalNoticeHtml, multilingualTransactionalNoticePlaintext } from '@/lib/email/transactional-multilingual-notice'
 import { getUserPreferredLanguage } from '@/lib/user-language'
 
 const BASE_URL = getEmailBaseUrl()
@@ -234,6 +235,7 @@ export async function sendOrderConfirmationEmail(orderId: string) {
         Bei Fragen können Sie uns jederzeit kontaktieren.<br>
         ${localizedOrderText.closing}
       </p>
+      ${multilingualTransactionalNoticeHtml('marketplace', 'light')}
     </body>
     </html>
   `
@@ -264,6 +266,7 @@ Bitte kontaktieren Sie den Verkäufer innerhalb von 7 Tagen.
 Bestellung ansehen: ${BASE_URL}/my-watches/buying/orders
 
 Ihr Helvenda-Team
+${multilingualTransactionalNoticePlaintext('marketplace')}
   `
 
   await sendEmail({
@@ -363,6 +366,7 @@ export async function sendPaymentReminderEmail(orderId: string, reminderNumber: 
       <p style="color: #6b7280; font-size: 12px; margin-top: 16px;">
         Diese E-Mail wurde automatisch versendet. Wenn Sie bereits bezahlt haben, ignorieren Sie diese Nachricht bitte.
       </p>
+      ${multilingualTransactionalNoticeHtml('marketplace', 'light')}
     </body>
     </html>
   `
@@ -385,6 +389,7 @@ Bitte überweisen Sie den Betrag an den Verkäufer.
 Bestellung ansehen: ${BASE_URL}/my-watches/buying/orders/${order.id}
 
 Ihr Helvenda-Team
+${multilingualTransactionalNoticePlaintext('marketplace')}
   `
 
   await sendEmail({
@@ -475,6 +480,7 @@ export async function sendAutoCancellationEmail(orderId: string, reason: string)
           </a>
         </div>
       </div>
+      ${multilingualTransactionalNoticeHtml('marketplace', 'light')}
     </body>
     </html>
   `
@@ -516,6 +522,7 @@ export async function sendAutoCancellationEmail(orderId: string, reason: string)
           </a>
         </div>
       </div>
+      ${multilingualTransactionalNoticeHtml('marketplace', 'light')}
     </body>
     </html>
   `

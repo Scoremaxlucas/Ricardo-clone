@@ -1,3 +1,4 @@
+import { multilingualTransactionalNoticeHtml, multilingualTransactionalNoticePlaintext } from '@/lib/email/transactional-multilingual-notice'
 import { sendEmail } from '@/lib/email/sender'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 
@@ -20,9 +21,10 @@ export async function sendRentalListingInviteEmail(params: { to: string; token: 
   <p style="font-size:14px;color:#64748b;">Oder diese Adresse im Browser öffnen:<br/><span style="word-break:break-all;">${link}</span></p>
   <p style="font-size:13px;color:#94a3b8;">Der Link ist persönlich und zeitlich begrenzt. Bitte nicht weitergeben.</p>
   <p style="margin-top:28px;font-size:13px;color:#64748b;">Freundliche Grüsse<br/>Helvenda Wohnungen</p>
+  ${multilingualTransactionalNoticeHtml('wohnungen', 'light')}
 </body>
 </html>`
-  const text = `Guten Tag\n\ndu wurdest eingeladen, einen Link zum Mietinserat einzureichen:\n${link}\n\nFreundliche Grüsse\nHelvenda Wohnungen`
+  const text = `Guten Tag\n\ndu wurdest eingeladen, einen Link zum Mietinserat einzureichen:\n${link}\n\nFreundliche Grüsse\nHelvenda Wohnungen${multilingualTransactionalNoticePlaintext('wohnungen')}`
 
   const res = await sendEmail({ to: params.to, subject, html, text })
   if (!res.success) return { ok: false, error: res.error || 'E-Mail-Versand fehlgeschlagen' }

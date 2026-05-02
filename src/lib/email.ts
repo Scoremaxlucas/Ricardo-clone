@@ -9,6 +9,10 @@ import { getDisputeOpenedEmail as getDisputeOpenedEmailNew } from './email/templ
 import { getPriceOfferRejectedEmail as getPriceOfferRejectedEmailNew } from './email/templates/notifications'
 import { sanitizeEmailHtmlLinks, sanitizeEmailTextLinks, sanitizeEmailUrl } from './email/url-safety'
 import { normalizeLanguage, type AppLanguage } from './user-language'
+import {
+  multilingualTransactionalNoticeHtml,
+  multilingualTransactionalNoticePlaintext,
+} from './email/transactional-multilingual-notice'
 
 // Resend Client initialisieren (falls API Key vorhanden)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
@@ -3058,6 +3062,7 @@ export function getHelvendaEmailTemplate(
               </div>
               <!-- Footer Tagline -->
               <p style="font-size: 13px; color: #9ca3af; margin: 8px 0 16px 0;">${footerTagline}</p>
+              ${multilingualTransactionalNoticeHtml('marketplace', 'dark')}
               <!-- Copyright -->
               <p style="font-size: 12px; color: #6b7280; margin: 0;">© ${currentYear} Helvenda.ch – Alle Rechte vorbehalten</p>
             </td>
@@ -4522,6 +4527,7 @@ export function getWelcomeEmail(userName: string) {
         <p style="font-size: 12px; color: #9ca3af; margin-top: 12px;">
           © ${new Date().getFullYear()} Helvenda.ch - Schweizer Online-Marktplatz
         </p>
+        ${multilingualTransactionalNoticeHtml('marketplace', 'light')}
       </div>
     </div>
   </div>
@@ -4556,6 +4562,7 @@ Jetzt entdecken: ${baseUrl}/search
 ---
 Fragen? Kontaktieren Sie uns unter support@helvenda.ch
 © ${new Date().getFullYear()} Helvenda.ch - Schweizer Online-Marktplatz
+${multilingualTransactionalNoticePlaintext('marketplace')}
   `.trim()
 
   return { subject, html, text }

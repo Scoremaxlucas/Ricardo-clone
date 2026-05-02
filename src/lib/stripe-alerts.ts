@@ -1,4 +1,5 @@
 import { getEmailBaseUrl, sendEmail } from './email'
+import { multilingualTransactionalNoticeHtml, multilingualTransactionalNoticePlaintext } from './email/transactional-multilingual-notice'
 import { prisma } from './prisma'
 
 /**
@@ -168,6 +169,7 @@ async function sendAlertToAdmins(
     <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
       Diese E-Mail wurde automatisch gesendet, da Probleme mit der Stripe-Webhook-Verarbeitung erkannt wurden.
     </p>
+    ${multilingualTransactionalNoticeHtml('marketplace', 'light')}
   </div>
 </body>
 </html>
@@ -186,6 +188,7 @@ Metriken (letzte Stunde):
 - Durchschnittliche Verarbeitungszeit: ${Math.round(metrics.averageProcessingTime)}ms
 
 Monitoring Dashboard: ${monitoringUrl}
+${multilingualTransactionalNoticePlaintext('marketplace')}
     `.trim()
 
     // Send to all admins

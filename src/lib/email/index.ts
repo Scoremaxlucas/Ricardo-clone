@@ -18,6 +18,12 @@ export {
   injectUnsubscribeLink,
   type EmailTemplateOptions,
 } from './base-template'
+export {
+  multilingualTransactionalNoticeHtml,
+  multilingualTransactionalNoticePlaintext,
+  type TransactionalNoticeKind,
+  type TransactionalNoticeSurface,
+} from './transactional-multilingual-notice'
 
 // Unsubscribe
 export {

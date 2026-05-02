@@ -8,6 +8,7 @@
 import { getEmailBaseUrl } from './config'
 import { getMarketingUnsubscribeUrl } from './marketing-unsubscribe'
 import { sanitizeEmailUrl } from './url-safety'
+import { multilingualTransactionalNoticeHtml } from './transactional-multilingual-notice'
 
 export interface ProductCard {
   id: string
@@ -202,6 +203,7 @@ export function buildMarketingEmailWithProducts(
           <p style="font-size: 12px; color: #9ca3af;">
             Helvenda - Ihr vertrauensvoller Marktplatz für Artikel in der Schweiz.
           </p>
+          ${multilingualTransactionalNoticeHtml('marketplace', 'light')}
           ${unsubscribeHtml}
         </td>
       </tr>

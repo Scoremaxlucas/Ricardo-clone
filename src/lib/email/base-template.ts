@@ -7,6 +7,7 @@
 import { getEmailBaseUrl } from './config'
 import { getUnsubscribeUrl } from './unsubscribe'
 import { sanitizeEmailUrl } from './url-safety'
+import { multilingualTransactionalNoticeHtml } from './transactional-multilingual-notice'
 
 export interface EmailTemplateOptions {
   title: string
@@ -17,6 +18,8 @@ export interface EmailTemplateOptions {
   unsubscribeUrl?: string
   /** If provided and unsubscribeUrl is not set, auto-generates unsubscribe link */
   userId?: string
+  /** EN/FR/IT notice in footer; set false for rare exceptions */
+  transactionalNotice?: 'marketplace' | false
 }
 
 /**
@@ -30,6 +33,7 @@ export function getHelvendaEmailTemplate({
   buttonUrl,
   unsubscribeUrl,
   userId,
+  transactionalNotice = 'marketplace',
 }: EmailTemplateOptions): string {
   const baseUrl = getEmailBaseUrl()
   // Auto-generate unsubscribe URL from userId if not explicitly provided
@@ -217,6 +221,11 @@ export function getHelvendaEmailTemplate({
         <p class="footer-text" style="font-size: 12px; color: #9ca3af;">
           Helvenda - Ihr vertrauensvoller Marktplatz für Artikel in der Schweiz.
         </p>
+        ${
+          transactionalNotice === 'marketplace' ?
+            multilingualTransactionalNoticeHtml('marketplace', 'light')
+          : ''
+        }
         ${
           safeUnsubscribeUrl
             ? `
