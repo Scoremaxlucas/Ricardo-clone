@@ -25,12 +25,12 @@ export default function TermsPage() {
 
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">Geltung</h4>
                   <p className="text-sm sm:text-base mb-3 sm:mb-4">
-                    Diese Allgemeinen Geschäftsbedingungen (AGB) der Score-Max-GmbH, in der Hauswiese 2, CH-Zollikerberg, Schweiz (nachfolgend „Helvenda") sowie die von diesen AGB als verbindlich erklärten, neben der AGB festgehaltenen Bestimmungen, insbesondere die Datenschutzerklärung und das Gebührenreglement, regeln die mit der Nutzung der über die Webseite www.helvenda.ch (inkl. aller Subdomains) angebotenen Produkte Helvenda (zusammen nachfolgend „Marktplatz") im Zusammenhang stehenden Rechte und Pflichten und das vertragliche Verhältnis zwischen Helvenda und Helvenda-Mitgliedern.
+                    Diese Allgemeinen Geschäftsbedingungen (AGB) der Score-Max-GmbH, in der Hauswiese 2, CH-Zollikerberg, Schweiz (nachfolgend „Helvenda") sowie die von diesen AGB als verbindlich erklärten, neben der AGB festgehaltenen Bestimmungen, insbesondere die Datenschutzerklärung und das Gebührenreglement, regeln die mit der Nutzung der über die Webseite www.helvenda.ch (inkl. aller Subdomains) angebotenen Produkte Helvenda im Zusammenhang stehenden Rechte und Pflichten und das vertragliche Verhältnis zwischen Helvenda und Helvenda-Mitgliedern. Dazu zählen insbesondere der klassische Online-Marktplatz für Waren und Dienstleistungen (nachfolgend „Marktplatz") sowie das Angebot „Helvenda Wohnungen" auf der Subdomain wohnen.helvenda.ch und allfälligen weiteren unter dem Markenauftritt Helvenda Wohnungen geführten Zugängen (nachfolgend „Helvenda Wohnungen" oder „Wohnen").
                   </p>
 
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">Bestätigung und Änderung dieser AGB</h4>
                   <p className="text-sm sm:text-base mb-3 sm:mb-4">
-                    Das Mitglied bestätigt diese AGB jedes Mal neu, wenn es sich auf dem Marktplatz einloggt. Helvenda behält sich das Recht vor, an diesen AGB jederzeit Änderungen vorzunehmen und die jeweils aktuelle Fassung auf Helvenda zu veröffentlichen. Wesentliche Änderungen werden den Mitgliedern zudem innert angemessener Frist vor ihrem Inkrafttreten mitgeteilt.
+                    Das Mitglied bestätigt diese AGB jedes Mal neu, wenn es sich auf dem Marktplatz oder im Bereich Helvenda Wohnungen einloggt. Helvenda behält sich das Recht vor, an diesen AGB jederzeit Änderungen vorzunehmen und die jeweils aktuelle Fassung auf Helvenda zu veröffentlichen. Wesentliche Änderungen werden den Mitgliedern zudem innert angemessener Frist vor ihrem Inkrafttreten mitgeteilt.
                   </p>
 
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 mt-4 sm:mt-6">1.2 Marktplatz von Helvenda</h3>
@@ -89,6 +89,53 @@ export default function TermsPage() {
                       Enthält ein Angebot in Auktionsform zusätzlich die Möglichkeit, das Produkt sofort zu einem Fixpreis zu kaufen und damit die Auktion vorzeitig zu beenden, wird dieser Preis der Deutlichkeit halber als „Sofort-kaufen-Preis" bezeichnet.
                     </p>
                   </div>
+
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 mt-6 sm:mt-8">1.5 Helvenda Wohnungen (Mietwohnungen)</h3>
+
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.1 Zweck und Begriffe</h4>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Unter Helvenda Wohnungen versteht Helvenda die digitalen Funktionen rund um Mietwohnungs-Inserate, Suchprofile, Vermittlungshilfen zwischen Inserenten und Mietinteressierten, Bewerbungsabläufe sowie Hilfsmittel wie z.&nbsp;B. den Helvenda-Qualitätsnachweis. Soweit nachfolgend nicht ausdrücklich anders bezeichnet, gelten die Begriffe „Mitglied", „Angebot" und „Inhalt" sinngemäss auch für Inserate, Suchprofile, Bewerbungen und sonstige im Wohnen-Bereich publizierte Informationen. „Vermieter" bezeichnet ein Mitglied, das ein Mietwohnungs-Inserat führt; „Suchende" oder „Mietinteressierte" bezeichnet ein Mitglied, das Such- oder Bewerbungsfunktionen nutzt.
+                  </p>
+
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.2 Rechtsstellung von Helvenda</h4>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Helvenda stellt unter Helvenda Wohnungen eine technische Plattform und begleitende Dienstleistungen (z.&nbsp;B. Anzeige, Matching, Formularhilfen, Prüf- und Verifikationsfunktionen) bereit. Helvenda wird nicht Partei eines Miet- oder sonstigen Wohnrechtsvertrags zwischen Mitgliedern. Anbahnung, Abschluss und Erfüllung eines Mietverhältnisses liegen in der alleinigen Verantwortung der beteiligten Mitglieder. Entscheidungen über Annahme oder Ablehnung von Bewerbungen, Besichtigungen, Bonitäts- oder Referenzprüfungen sowie die Auswahl eines Kontrahenten treffen die Mitglieder eigenverantwortlich.
+                  </p>
+
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.3 Inserate, Suchangaben und Profile</h4>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Mitglieder sind verpflichtet, sämtliche Angaben zu Objekten, Mietzinsen, Nebenkosten, Verfügbarkeit, Haustierregeln, Mindestdauer und weiteren wesentlichen Umständen wahrheitsgemäss und nicht irreführend zu machen und bei Änderungen unverzüglich zu aktualisieren. Bild- und Textmaterial darf nur verwendet werden, an dem das Mitglied die erforderlichen Rechte hat. Unzulässig sind insbesondere falsche oder fremde Identitäten, irreführende Symbolfotos, Doppelinserate mit dem Zweck der Täuschung sowie Inserate ohne ernsthafte Vermietungsabsicht.
+                  </p>
+
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.4 Bewerbungen, Nachrichten und Diskriminierung</h4>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Bewerbungen und sonstige Nachrichten im Wohnen-Bereich sind sachlich und respektvoll zu halten. Es ist untersagt, Mitglieder aufgrund von Geschlecht, Herkunft, Religion, Alter, Familienstand, sexueller Orientierung, Behinderung oder anderen diskriminierungsrelevanten Merkmalen zu benachteiligen, soweit dies nach anwendbarem Recht geschützt ist. Helvenda kann Inhalte sperren oder entfernen und Konten einschränken, wenn ein begründeter Verdacht auf Rechtsverstoss oder schwerwiegenden Verstoss gegen diese AGB besteht.
+                  </p>
+
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.5 Betreibungsregisterauszug und Datenprüfungen</h4>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Wo Helvenda die Einreichung eines Betreibungsregisterauszugs oder anderer Nachweise vorsieht, hat das Mitglied authentische, vollständige und den Vorgaben entsprechende Unterlagen bereitzustellen. Helvenda darf Unterlagen plausibilisiert prüfen (einschliesslich automatisierter oder manueller Verfahren) und Bewerbungs- oder Zertifikatsfunktionen verweigern oder einstellen, wenn Anhaltspunkte für Fälschung, Manipulation, fehlende Berechtigung oder sonstige Unzuverlässigkeit bestehen. Mit der Nutzung der entsprechenden Funktionen willigt das Mitglied in die zur Plausibilisierung erforderliche Bearbeitung ein; Massgeblich bleibt die Datenschutzerklärung.
+                  </p>
+
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.6 Qualitätsnachweis (Zertifikat)</h4>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Ein Helvenda-Qualitätsnachweis dokumentiert ausdrücklich nur den zum Zeitpunkt der Ausstellung in den Systemen von Helvenda festgestellten Prüfstand (z.&nbsp;B. Kategorien zu Einkommen und Beschäftigung sowie Ergebnis der eingereichten Betreibungsregister-Plausibilisierung). Er stellt keine Rechtsberatung, keine Bonitätsauskunft im Sinne eines Auskunfteien und keine Garantie für künftige Zahlungsfähigkeit oder Vertragsloyalität dar. Gültigkeit, Verlängerung und Entzug richten sich nach den auf der Plattform kommunizierten Regeln; ein öffentlicher Prüf-Link oder PDF dient ausschliesslich der Nachvollziehbarkeit dieses Stands.
+                  </p>
+
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.7 Mietvertrag und Haftung zwischen Mitgliedern</h4>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Etwaige Mietverträge, Vorverträge, Untermieten oder andere Vereinbarungen schliessen ausschliesslich die beteiligten Mitglieder untereinander ab. Helvenda übernimmt keine Gewähr für die Richtigkeit von Objektangaben, keine Prüfung der Vertragskonformität mit öffentlichem Recht (z.&nbsp;B. Mietzinsbildung, Kündigungsschutz, Meldepflichten) und keine Haftung für Schäden aus dem zwischen Mitgliedern geschlossenen oder nicht geschlossenen Mietverhältnis.
+                  </p>
+
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.8 Entgelte</h4>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Soweit für Helvenda Wohnungen Entgelte oder Gebühren erhoben werden, ergeben sich diese aus dem jeweils auf Helvenda publizierten Gebührenreglement und/oder den beim Erwerb der Leistung angezeigten Bedingungen. Soweit dort nichts Abweichendes festgehalten ist, bleiben die allgemeinen Regeln dieser AGB zur Rechnungsstellung und Zahlung sinngemäss anwendbar.
+                  </p>
+
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.9 Verhältnis zu den übrigen AGB</h4>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Soweit spezifische Bestimmungen des Marktplatzes (z.&nbsp;B. Auktionslogik, klassische Käufer-Verkäufer-Mechanik) auf Helvenda Wohnungen schlichtweg nicht passen, finden sie auf diesen Teil des Angebots keine Anwendung. Im Übrigen gelten sämtliche allgemeinen Pflichten der Mitglieder (z.&nbsp;B. zu Immaterialgüterrechten, Persönlichkeitsrechten, Missbrauchsverboten, technischen Eingriffen und Haftungsbeschränkungen) sinngemäss auch im Wohnen-Bereich. Bei Widersprüchen zwischen den allgemeinen Marktplatz-Regeln und den vorstehenden Ziffern 1.5.1–1.5.8 gehen die Regeln zu Helvenda Wohnungen für diesen Funktionsbereich vor.
+                  </p>
                 </section>
 
                 <section>
@@ -585,9 +632,12 @@ export default function TermsPage() {
                   </p>
                 </section>
 
-                <div className="border-t border-gray-200 pt-4 sm:pt-6 mt-6 sm:mt-8">
+                <div className="border-t border-gray-200 pt-4 sm:pt-6 mt-6 sm:mt-8 space-y-1">
                   <p className="text-xs sm:text-sm text-gray-600">
                     <strong>AGB gültig seit 17.01.2025</strong>
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    <strong>Ergänzung «Helvenda Wohnungen» (Abschnitt 1.5): Stand 01.05.2026</strong>
                   </p>
                 </div>
               </div>
