@@ -1,11 +1,14 @@
 'use client'
 
 import { useLanguage } from '@/contexts/LanguageContext'
+import { cn } from '@/lib/utils'
 import { Globe } from 'lucide-react'
 
 interface LegalPageWrapperProps {
   titleKey: 'terms' | 'privacy' | 'fees' | 'imprint' | 'withdrawalRights'
   validSince?: string
+  /** Helvenda Wohnungen: surface aligned with tenant marketing (teal frame, deep green titles). */
+  surface?: 'default' | 'wohnen'
   children: React.ReactNode
 }
 
@@ -13,16 +16,31 @@ interface LegalPageWrapperProps {
  * Wrapper for legal pages that adds translated title and
  * a language notice for non-German users.
  */
-export function LegalPageWrapper({ titleKey, validSince, children }: LegalPageWrapperProps) {
+export function LegalPageWrapper({ titleKey, validSince, surface = 'default', children }: LegalPageWrapperProps) {
   const { t, language } = useLanguage()
   const title = t.legalPages[titleKey].title
   const isNonGerman = language !== 'de'
+  const wohnen = surface === 'wohnen'
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6 md:p-8 lg:p-12">
-      <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:text-3xl">{title}</h1>
+    <div
+      className={cn(
+        'bg-white p-4 shadow-sm sm:p-6 md:p-8 lg:p-12',
+        wohnen
+          ? 'rounded-2xl border border-[#d4eee4] shadow-[0_12px_40px_-20px_rgba(13,43,31,0.12)]'
+          : 'rounded-lg border border-gray-200'
+      )}
+    >
+      <h1
+        className={cn(
+          'mb-2 text-2xl font-bold sm:text-3xl',
+          wohnen ? 'font-extrabold tracking-[-0.02em] text-[#0d2b1f]' : 'text-gray-900'
+        )}
+      >
+        {title}
+      </h1>
       {validSince && (
-        <p className="mb-4 text-sm text-gray-600 sm:text-base">
+        <p className={cn('mb-4 text-sm sm:text-base', wohnen ? 'text-[#5a7a6e]' : 'text-gray-600')}>
           {t.legalPages.validSince} {validSince}
         </p>
       )}

@@ -13,11 +13,19 @@ import { Logo } from '@/components/ui/Logo'
 
 interface AuthHeaderProps {
   showBackLink?: boolean
+  /** Helvenda Wohnungen: softer chrome aligned with tenant UI. */
+  isWohnen?: boolean
 }
 
-export function AuthHeader({ showBackLink = true }: AuthHeaderProps) {
+export function AuthHeader({ showBackLink = true, isWohnen = false }: AuthHeaderProps) {
   return (
-    <header className="border-b border-gray-200 bg-white">
+    <header
+      className={
+        isWohnen
+          ? 'border-b border-[#d4eee4] bg-white/90 backdrop-blur-sm'
+          : 'border-b border-gray-200 bg-white'
+      }
+    >
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center justify-between">
           {/* Logo - Clickable to homepage */}
@@ -29,7 +37,11 @@ export function AuthHeader({ showBackLink = true }: AuthHeaderProps) {
           {showBackLink && (
             <Link
               href="/"
-              className="text-sm font-medium text-gray-600 transition-colors hover:text-primary-600"
+              className={
+                isWohnen
+                  ? 'text-sm font-medium text-[#5a7a6e] transition-colors hover:text-[#107a5a]'
+                  : 'text-sm font-medium text-gray-600 transition-colors hover:text-primary-600'
+              }
             >
               Zurück zur Startseite
             </Link>

@@ -2,11 +2,15 @@
 
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
+import { useAuthWohnenSurface } from '@/contexts/AuthSurfaceContext'
+import { authCardShellClass, authInputClass, authLabelClass, authLinkAccentClass } from '@/lib/auth-surface-classes'
+import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function ForgotPasswordPage() {
+  const isWohnen = useAuthWohnenSurface()
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -48,15 +52,20 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="space-y-8 rounded-xl bg-white px-8 py-10 shadow-lg ring-1 ring-gray-100">
+      <div className={cn(authCardShellClass(isWohnen), 'space-y-8 px-8 py-10')}>
         <div className="text-center">
           <div className="mb-6 flex justify-center">
             <Logo size="lg" />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+          <h2
+            className={cn(
+              'mt-6 text-center text-3xl font-bold tracking-tight',
+              isWohnen ? 'font-extrabold text-[#0d2b1f]' : 'text-gray-900'
+            )}
+          >
             Passwort zurücksetzen
           </h2>
-          <p className="mt-3 text-center text-sm text-gray-600">
+          <p className={cn('mt-3 text-center text-sm', isWohnen ? 'text-[#5a7a6e]' : 'text-gray-600')}>
             Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen des
             Passworts.
           </p>
@@ -64,7 +73,14 @@ export default function ForgotPasswordPage() {
 
         {success ? (
           <div className="space-y-4">
-            <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-600">
+            <div
+              className={cn(
+                'rounded-lg border px-4 py-3 text-sm',
+                isWohnen
+                  ? 'border-[#bfe8d4] bg-[#f0faf5] text-[#107a5a]'
+                  : 'border-green-200 bg-green-50 text-green-600'
+              )}
+            >
               Wir haben Ihnen eine E-Mail mit Anweisungen zum Zurücksetzen Ihres Passworts gesendet.
             </div>
             <Link href="/login">
@@ -82,7 +98,7 @@ export default function ForgotPasswordPage() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className={cn(authLabelClass(isWohnen), 'block')}>
                 E-Mail-Adresse
               </label>
               <input
@@ -93,7 +109,7 @@ export default function ForgotPasswordPage() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 sm:text-sm"
+                className={cn(authInputClass(isWohnen), 'relative mt-1 sm:text-sm')}
                 placeholder="ihre@email.com"
               />
             </div>
@@ -108,10 +124,7 @@ export default function ForgotPasswordPage() {
               >
                 {isLoading ? 'Wird gesendet...' : 'Link senden'}
               </Button>
-              <Link
-                href="/login"
-                className="text-center text-sm text-gray-600 hover:text-primary-600"
-              >
+              <Link href="/login" className={cn('text-center', authLinkAccentClass(isWohnen, 'medium'))}>
                 Zurück zur Anmeldung
               </Link>
             </div>

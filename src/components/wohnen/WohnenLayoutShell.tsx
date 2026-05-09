@@ -1,6 +1,7 @@
 'use client'
 
 import { isCompactProfilShellPath, isTenantProfilWizardPath } from '@/lib/wohnen-profil-flow-paths'
+import { WohnenUiBrandProvider } from '@/contexts/WohnenUiBrandContext'
 import { WohnenFooter } from '@/components/wohnen/WohnenFooter'
 import { WohnenNavbar } from '@/components/wohnen/WohnenNavbar'
 import { usePathname } from 'next/navigation'
@@ -16,26 +17,29 @@ export function WohnenLayoutShell({ children }: { children: ReactNode }) {
   const wizardOnly = isTenantProfilWizardPath(pathname)
 
   return (
-    <div
-      className={
-        compact ?
-          'flex min-h-screen flex-col bg-white text-slate-900'
-        : 'flex min-h-screen flex-col bg-gradient-to-b from-slate-50 to-white text-slate-900'
-      }
-    >
-      <WohnenNavbar />
-      <main
-        id="main-content"
+    <WohnenUiBrandProvider>
+      <div
+        data-wohnen-shell
         className={
-          wizardOnly ?
-            'flex min-h-0 w-full flex-1 flex-col overflow-hidden'
-          : 'flex min-h-0 w-full flex-1 flex-col'
+          compact ?
+            'flex min-h-screen flex-col bg-white text-slate-900'
+          : 'flex min-h-screen flex-col bg-gradient-to-b from-slate-50 to-white text-slate-900'
         }
-        tabIndex={-1}
       >
-        {children}
-      </main>
-      <WohnenFooter />
-    </div>
+        <WohnenNavbar />
+        <main
+          id="main-content"
+          className={
+            wizardOnly ?
+              'flex min-h-0 w-full flex-1 flex-col overflow-hidden'
+            : 'flex min-h-0 w-full flex-1 flex-col'
+          }
+          tabIndex={-1}
+        >
+          {children}
+        </main>
+        <WohnenFooter />
+      </div>
+    </WohnenUiBrandProvider>
   )
 }

@@ -84,11 +84,15 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 5,
-  themeColor: '#0f766e',
+export async function generateViewport(): Promise<Viewport> {
+  const h = await headers()
+  const wohnen = isWohnenMatchingHostFromHeaders(h)
+  return {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    themeColor: wohnen ? '#107a5a' : '#0f766e',
+  }
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -96,56 +100,86 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const isWohnenMatching = isWohnenMatchingHostFromHeaders(h)
   const htmlLang = isWohnenMatching ? 'de-CH' : 'de'
 
+  const toastPad = { padding: '12px 16px', fontSize: '14px' as const }
+  const toastOptions = isWohnenMatching ?
+    {
+      duration: 3500,
+      success: {
+        style: {
+          ...toastPad,
+          background: '#18a87c',
+          color: '#fff',
+          borderRadius: '12px',
+          boxShadow: '0 10px 28px rgba(13, 43, 31, 0.14)',
+          fontWeight: 500,
+        },
+      },
+      error: {
+        style: {
+          ...toastPad,
+          background: '#dc2626',
+          color: '#fff',
+          borderRadius: '12px',
+          boxShadow: '0 10px 28px rgba(0, 0, 0, 0.12)',
+          fontWeight: 500,
+        },
+      },
+      loading: {
+        style: {
+          ...toastPad,
+          background: '#1e3d2f',
+          color: '#fff',
+          borderRadius: '12px',
+          fontWeight: 500,
+        },
+      },
+    }
+  : {
+      duration: 3500,
+      success: {
+        style: {
+          background: '#10b981',
+          color: '#fff',
+          borderRadius: '8px',
+          ...toastPad,
+        },
+      },
+      error: {
+        style: {
+          background: '#ef4444',
+          color: '#fff',
+          borderRadius: '8px',
+          ...toastPad,
+        },
+      },
+      loading: {
+        style: {
+          background: '#334155',
+          color: '#fff',
+          borderRadius: '8px',
+          ...toastPad,
+        },
+      },
+    }
+
   return (
     <html lang={htmlLang} className="h-full">
       <head>
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
         <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
-        <meta name="theme-color" content="#0f766e" />
         <link rel="dns-prefetch" href="https://vercel.live" />
         <link rel="preconnect" href="https://vercel.live" crossOrigin="anonymous" />
       </head>
-      <body className={`${inter.className} flex min-h-screen flex-col`}>
+      <body
+        className={`${inter.className} flex min-h-screen flex-col${isWohnenMatching ? ' helvenda-wohnen' : ''}`}
+      >
         <Providers>
           <SkipLinks />
           {isWohnenMatching ?
             <WohnenLayoutShell>{children}</WohnenLayoutShell>
           : <div className="flex flex-1 flex-col">{children}</div>}
 
-          <Toaster
-            position="top-right"
-            containerStyle={{ zIndex: 99999 }}
-            toastOptions={{
-              duration: 3500,
-              success: {
-                style: {
-                  background: '#10b981',
-                  color: '#fff',
-                  borderRadius: '8px',
-                  padding: '12px 16px',
-                  fontSize: '14px',
-                },
-              },
-              error: {
-                style: {
-                  background: '#ef4444',
-                  color: '#fff',
-                  borderRadius: '8px',
-                  padding: '12px 16px',
-                  fontSize: '14px',
-                },
-              },
-              loading: {
-                style: {
-                  background: '#334155',
-                  color: '#fff',
-                  borderRadius: '8px',
-                  padding: '12px 16px',
-                  fontSize: '14px',
-                },
-              },
-            }}
-          />
+          <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} toastOptions={toastOptions} />
 
           {!isWohnenMatching && <AnalyticsTracker />}
 

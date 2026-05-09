@@ -2,8 +2,19 @@
 
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
+import { useAuthWohnenSurface } from '@/contexts/AuthSurfaceContext'
 import { useLanguage } from '@/contexts/LanguageContext'
+import {
+  authCardShellClass,
+  authCheckboxClass,
+  authInputClass,
+  authLabelClass,
+  authLinkAccentClass,
+  authMutedTextClass,
+  authTitleClass,
+} from '@/lib/auth-surface-classes'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
+import { cn } from '@/lib/utils'
 import { CheckCircle2, Eye, EyeOff, XCircle } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
@@ -11,6 +22,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export default function RegisterPage() {
+  const isWohnenSurface = useAuthWohnenSurface()
   const { t } = useLanguage()
   const [formData, setFormData] = useState({
     firstName: '',
@@ -150,21 +162,18 @@ export default function RegisterPage() {
     }
   }
 
-  // Einheitlicher Input Style - Gleiches Design wie Login
-  const inputClassName = "block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-gray-900 placeholder-gray-400 transition-all focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+  const inputClassName = authInputClass(isWohnenSurface)
 
   return (
     <div className="w-full max-w-md md:max-w-xl">
-      <div className="rounded-2xl bg-white px-6 py-6 shadow-xl ring-1 ring-gray-100 md:px-8 md:py-8">
+      <div className={authCardShellClass(isWohnenSurface)}>
         {/* Header - Kompakter */}
         <div className="text-center">
           <div className="mb-4 flex justify-center">
             <Logo size="md" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">{t.register.title}</h1>
-          <p className="mt-2 text-sm text-gray-500">
-            {t.register.subtitle}
-          </p>
+          <h1 className={authTitleClass(isWohnenSurface)}>{t.register.title}</h1>
+          <p className={`mt-2 ${authMutedTextClass(isWohnenSurface)}`}>{t.register.subtitle}</p>
         </div>
 
         <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
@@ -178,7 +187,7 @@ export default function RegisterPage() {
             {/* Vorname + Nachname in 2-column grid on desktop */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label htmlFor="firstName" className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label htmlFor="firstName" className={authLabelClass(isWohnenSurface)}>
                   {t.register.firstName}
                 </label>
                 <input
@@ -196,7 +205,7 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label htmlFor="lastName" className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label htmlFor="lastName" className={authLabelClass(isWohnenSurface)}>
                   {t.register.lastName}
                 </label>
                 <input
@@ -216,7 +225,7 @@ export default function RegisterPage() {
 
             {/* Nickname */}
             <div>
-              <label htmlFor="nickname" className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label htmlFor="nickname" className={authLabelClass(isWohnenSurface)}>
                 {t.register.username}
               </label>
               <input
@@ -232,14 +241,14 @@ export default function RegisterPage() {
                 className={inputClassName}
                 placeholder="maxmustermann"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className={cn('mt-1 text-xs', isWohnenSurface ? 'text-[#8aa89e]' : 'text-gray-500')}>
                 {t.register.usernameDesc}
               </p>
             </div>
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className={authLabelClass(isWohnenSurface)}>
                 {t.register.email}
               </label>
               <input
@@ -259,7 +268,7 @@ export default function RegisterPage() {
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className={authLabelClass(isWohnenSurface)}>
                 {t.register.password}
               </label>
               <div className="relative">
@@ -280,7 +289,11 @@ export default function RegisterPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
-                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600"
+                  className={
+                    isWohnenSurface
+                      ? 'absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-[#107a5a]'
+                      : 'absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600'
+                  }
                   aria-label={showPassword ? t.register.hidePassword : t.register.showPassword}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -325,7 +338,7 @@ export default function RegisterPage() {
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className={authLabelClass(isWohnenSurface)}>
                 {t.register.confirmPassword}
               </label>
               <div className="relative">
@@ -345,7 +358,11 @@ export default function RegisterPage() {
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   disabled={isLoading}
-                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600"
+                  className={
+                    isWohnenSurface
+                      ? 'absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-[#107a5a]'
+                      : 'absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600'
+                  }
                   aria-label={showConfirmPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
                 >
                   {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -358,7 +375,12 @@ export default function RegisterPage() {
           </div>
 
           {/* Checkboxes - Kompakter */}
-          <div className="space-y-3 rounded-lg bg-gray-50 p-4">
+          <div
+            className={cn(
+              'space-y-3 rounded-lg p-4',
+              isWohnenSurface ? 'bg-[#f0faf5] ring-1 ring-[#d4eee4]/60' : 'bg-gray-50'
+            )}
+          >
             <label className="flex cursor-pointer items-start gap-3">
               <input
                 id="age"
@@ -366,9 +388,9 @@ export default function RegisterPage() {
                 type="checkbox"
                 required
                 disabled={isLoading}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className={cn('mt-0.5', authCheckboxClass(isWohnenSurface))}
               />
-              <span className="text-sm text-gray-700">
+              <span className={isWohnenSurface ? 'text-sm text-[#2d4a3d]' : 'text-sm text-gray-700'}>
                 {t.register.ageCheck}
               </span>
             </label>
@@ -380,15 +402,21 @@ export default function RegisterPage() {
                 type="checkbox"
                 required
                 disabled={isLoading}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className={cn('mt-0.5', authCheckboxClass(isWohnenSurface))}
               />
-              <span className="text-sm text-gray-700">
+              <span className={isWohnenSurface ? 'text-sm text-[#2d4a3d]' : 'text-sm text-gray-700'}>
                 {t.register.termsCheck}{' '}
-                <Link href="/terms" className="font-medium text-primary-600 hover:underline">
+                <Link
+                  href="/terms"
+                  className={cn('font-medium underline', isWohnenSurface ? 'text-[#107a5a]' : 'text-primary-600')}
+                >
                   {t.register.terms}
                 </Link>{' '}
                 {t.register.and}{' '}
-                <Link href="/privacy" className="font-medium text-primary-600 hover:underline">
+                <Link
+                  href="/privacy"
+                  className={cn('font-medium underline', isWohnenSurface ? 'text-[#107a5a]' : 'text-primary-600')}
+                >
                   {t.register.privacy}
                 </Link>
               </span>
@@ -410,10 +438,10 @@ export default function RegisterPage() {
         {/* Divider */}
         <div className="relative mt-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200" />
+            <div className={cn('w-full border-t', isWohnenSurface ? 'border-[#d4eee4]' : 'border-gray-200')} />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-3 text-gray-400">oder</span>
+            <span className={cn('bg-white px-3', isWohnenSurface ? 'text-[#8aa89e]' : 'text-gray-400')}>oder</span>
           </div>
         </div>
 
@@ -422,7 +450,12 @@ export default function RegisterPage() {
           type="button"
           onClick={() => signIn('google', { callbackUrl: '/' })}
           disabled={isLoading}
-          className="mt-4 flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 disabled:opacity-50"
+          className={cn(
+            'mt-4 flex w-full items-center justify-center gap-3 rounded-lg border bg-white px-4 py-3 text-sm font-medium shadow-sm transition-all disabled:opacity-50',
+            isWohnenSurface
+              ? 'border-[#cfe8dc] text-[#2d4a3d] hover:bg-[#f5fdfb]'
+              : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+          )}
         >
           <svg viewBox="0 0 24 24" width="20" height="20">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -434,9 +467,9 @@ export default function RegisterPage() {
         </button>
 
         {/* Footer */}
-        <p className="mt-6 text-center text-sm text-gray-500">
+        <p className={cn('mt-6 text-center text-sm', authMutedTextClass(isWohnenSurface))}>
           {t.register.alreadyHaveAccount}{' '}
-          <Link href="/login" className="font-semibold text-primary-600 hover:text-primary-700">
+          <Link href="/login" className={authLinkAccentClass(isWohnenSurface)}>
             {t.register.login}
           </Link>
         </p>

@@ -1,14 +1,16 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { LegalPageWrapper } from '@/components/legal/LegalPageWrapper'
+import { legalMainBgClass, legalSurfaceFromHeaders } from '@/lib/legal-page-surface'
 
 export default function ImprintPage() {
+  const surface = legalSurfaceFromHeaders()
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-50">
+      <main className={legalMainBgClass(surface)}>
         <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
-          <LegalPageWrapper titleKey="imprint">
+          <LegalPageWrapper titleKey="imprint" surface={surface}>
 
             <div className="prose prose-sm max-w-none sm:prose-base lg:prose-lg">
               <div className="space-y-4 text-gray-700 sm:space-y-6">

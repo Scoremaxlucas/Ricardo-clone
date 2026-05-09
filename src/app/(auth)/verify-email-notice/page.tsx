@@ -2,12 +2,16 @@
 
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
+import { useAuthWohnenSurface } from '@/contexts/AuthSurfaceContext'
+import { authCardShellClass } from '@/lib/auth-surface-classes'
+import { cn } from '@/lib/utils'
 import { CheckCircle, Loader2, Mail, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 
 function VerifyEmailNoticeContent() {
+  const isWohnen = useAuthWohnenSurface()
   const searchParams = useSearchParams()
   const email = searchParams.get('email') || ''
   const intentWohnen = searchParams.get('intent') === 'wohnen'
@@ -45,7 +49,7 @@ function VerifyEmailNoticeContent() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="space-y-8 rounded-xl bg-white px-8 py-10 shadow-lg ring-1 ring-gray-100">
+      <div className={cn(authCardShellClass(isWohnen), 'space-y-8 px-8 py-10')}>
         <div className="text-center">
           <div className="mb-6 flex justify-center">
             <Logo size="lg" />
@@ -87,8 +91,13 @@ function VerifyEmailNoticeContent() {
         </div>
 
         {resendSuccess && (
-          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-            ✅ Neue Bestätigungs-E-Mail wurde gesendet!
+          <div
+            className={cn(
+              'rounded-lg border px-4 py-3 text-sm',
+              isWohnen ? 'border-[#bfe8d4] bg-[#f0faf5] text-[#107a5a]' : 'border-green-200 bg-green-50 text-green-700'
+            )}
+          >
+            Neue Bestätigungs-E-Mail wurde gesendet.
           </div>
         )}
 

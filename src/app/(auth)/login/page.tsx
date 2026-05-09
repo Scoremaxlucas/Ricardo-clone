@@ -2,7 +2,18 @@
 
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
+import { useAuthWohnenSurface } from '@/contexts/AuthSurfaceContext'
+import {
+  authCardShellClass,
+  authCheckboxClass,
+  authInputClass,
+  authLabelClass,
+  authLinkAccentClass,
+  authMutedTextClass,
+  authTitleClass,
+} from '@/lib/auth-surface-classes'
 import { validateCallbackUrl } from '@/lib/url-validation'
+import { cn } from '@/lib/utils'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { getSession, signIn } from 'next-auth/react'
 import Link from 'next/link'
@@ -10,6 +21,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 
 function LoginPageContent() {
+  const isWohnen = useAuthWohnenSurface()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -76,12 +88,12 @@ function LoginPageContent() {
           router.refresh()
         }, 100)
       } else {
-        console.error('❌ Unexpected login result')
+        console.error('Unexpected login result')
         setError('Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.')
         setIsLoading(false)
       }
     } catch (error: any) {
-      console.error('❌ Login exception:', error)
+      console.error('Login exception:', error)
       setError(`Fehler: ${error.message || 'Unbekannter Fehler'}`)
       setIsLoading(false)
     }
@@ -89,16 +101,14 @@ function LoginPageContent() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="rounded-2xl bg-white px-6 py-6 shadow-xl ring-1 ring-gray-100 md:px-8 md:py-8">
+      <div className={authCardShellClass(isWohnen)}>
         {/* Header - Kompakter */}
         <div className="text-center">
           <div className="mb-4 flex justify-center">
             <Logo size="md" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Willkommen zurück</h1>
-          <p className="mt-2 text-sm text-gray-500">
-            Melden Sie sich bei Ihrem Konto an
-          </p>
+          <h1 className={authTitleClass(isWohnen)}>Willkommen zurück</h1>
+          <p className={`mt-2 ${authMutedTextClass(isWohnen)}`}>Melden Sie sich bei Ihrem Konto an</p>
         </div>
 
         <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
@@ -111,7 +121,7 @@ function LoginPageContent() {
           <div className="space-y-4">
             {/* E-Mail Input */}
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className={authLabelClass(isWohnen)}>
                 E-Mail-Adresse
               </label>
               <input
@@ -122,14 +132,14 @@ function LoginPageContent() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-gray-900 placeholder-gray-400 transition-all focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                className={authInputClass(isWohnen)}
                 placeholder="ihre@email.com"
               />
             </div>
 
             {/* Passwort Input */}
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className={authLabelClass(isWohnen)}>
                 Passwort
               </label>
               <div className="relative">
@@ -141,13 +151,17 @@ function LoginPageContent() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 transition-all focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`${authInputClass(isWohnen)} pr-12`}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600"
+                  className={
+                    isWohnen
+                      ? 'absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-[#107a5a]'
+                      : 'absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600'
+                  }
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5" />
@@ -166,15 +180,12 @@ function LoginPageContent() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className={authCheckboxClass(isWohnen)}
               />
-              <span className="text-sm text-gray-600">Angemeldet bleiben</span>
+              <span className={isWohnen ? 'text-sm text-[#5a7a6e]' : 'text-sm text-gray-600'}>Angemeldet bleiben</span>
             </label>
 
-            <Link
-              href="/forgot-password"
-              className="text-sm font-medium text-primary-600 hover:text-primary-700"
-            >
+            <Link href="/forgot-password" className={authLinkAccentClass(isWohnen, 'medium')}>
               Passwort vergessen?
             </Link>
           </div>
@@ -194,10 +205,10 @@ function LoginPageContent() {
         {/* Divider */}
         <div className="relative mt-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200" />
+            <div className={cn('w-full border-t', isWohnen ? 'border-[#d4eee4]' : 'border-gray-200')} />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-3 text-gray-400">oder</span>
+            <span className={cn('bg-white px-3', isWohnen ? 'text-[#8aa89e]' : 'text-gray-400')}>oder</span>
           </div>
         </div>
 
@@ -209,7 +220,12 @@ function LoginPageContent() {
             void signIn('google', { callbackUrl: determinePostLoginRoute() })
           }}
           disabled={isLoading}
-          className="mt-4 flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 disabled:opacity-50"
+          className={cn(
+            'mt-4 flex w-full items-center justify-center gap-3 rounded-lg border bg-white px-4 py-3 text-sm font-medium shadow-sm transition-all disabled:opacity-50',
+            isWohnen
+              ? 'border-[#cfe8dc] text-[#2d4a3d] hover:bg-[#f5fdfb]'
+              : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+          )}
         >
           <svg viewBox="0 0 24 24" width="20" height="20">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -221,12 +237,9 @@ function LoginPageContent() {
         </button>
 
         {/* Footer Link */}
-        <p className="mt-6 text-center text-sm text-gray-500">
+        <p className={cn('mt-6 text-center text-sm', authMutedTextClass(isWohnen))}>
           Noch kein Konto?{' '}
-          <Link
-            href="/register"
-            className="font-semibold text-primary-600 hover:text-primary-700"
-          >
+          <Link href="/register" className={authLinkAccentClass(isWohnen)}>
             Jetzt registrieren
           </Link>
         </p>

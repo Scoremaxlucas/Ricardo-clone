@@ -95,11 +95,22 @@ a:active {
   transform: scale(0.98);
 }
 
+/* Helvenda Wohnungen: calmer press (no global shrink) */
+body.helvenda-wohnen button:active:not(:disabled),
+body.helvenda-wohnen a:active {
+  transform: none;
+}
+
 /* Smooth focus transitions */
 *:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   transition: outline-offset 0.2s ease;
+}
+
+/* Wohnen: brand green focus ring overrides default teal */
+body.helvenda-wohnen *:focus-visible {
+  outline-color: #18a87c;
 }
 
 /* ===== ANIMATIONS ===== */

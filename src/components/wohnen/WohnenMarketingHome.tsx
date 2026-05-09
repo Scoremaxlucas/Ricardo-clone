@@ -3,6 +3,7 @@ import { WohnenHomeListingCards, type WohnenHomeListingSerialized } from '@/comp
 import { loadWohnenHomeListings } from '@/lib/rental/wohnen-home-listings'
 import { prisma } from '@/lib/prisma'
 import { RentalListingStatus } from '@prisma/client'
+import { Check, X } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
@@ -22,9 +23,7 @@ function serializeListingsForClient(
 function HomegateCell({ children }: { children: ReactNode }) {
   return (
     <span className="inline-flex items-start gap-2 text-[15px] text-slate-600">
-      <span className="mt-0.5 shrink-0 text-red-500/85" aria-hidden>
-        ✗
-      </span>
+      <X className="mt-0.5 h-4 w-4 shrink-0 text-red-500/90" strokeWidth={2.5} aria-hidden />
       <span>{children}</span>
     </span>
   )
@@ -33,9 +32,7 @@ function HomegateCell({ children }: { children: ReactNode }) {
 function HelvendaCell({ children }: { children: ReactNode }) {
   return (
     <span className="inline-flex items-start gap-2 text-[15px] font-bold text-teal-900">
-      <span className="mt-0.5 shrink-0 text-emerald-600" aria-hidden>
-        ✓
-      </span>
+      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
       <span>{children}</span>
     </span>
   )

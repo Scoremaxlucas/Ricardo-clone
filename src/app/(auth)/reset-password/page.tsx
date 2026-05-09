@@ -2,12 +2,17 @@
 
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
+import { useAuthWohnenSurface } from '@/contexts/AuthSurfaceContext'
+import { authCardShellClass, authInputClass, authLabelClass, authLinkAccentClass } from '@/lib/auth-surface-classes'
+import { cn } from '@/lib/utils'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 
 function ResetPasswordContent() {
+  const isWohnen = useAuthWohnenSurface()
+  const cardClass = cn(authCardShellClass(isWohnen), 'space-y-8 px-8 py-10')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -87,21 +92,23 @@ function ResetPasswordContent() {
   if (!token) {
     return (
       <div className="w-full max-w-md">
-        <div className="space-y-8 rounded-xl bg-white px-8 py-10 shadow-lg ring-1 ring-gray-100">
+        <div className={cardClass}>
           <div className="text-center">
             <div className="mb-6 flex justify-center">
               <Logo size="lg" />
             </div>
-            <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+            <h2
+              className={cn(
+                'mt-6 text-center text-3xl font-bold tracking-tight',
+                isWohnen ? 'font-extrabold text-[#0d2b1f]' : 'text-gray-900'
+              )}
+            >
               Ungültiger Link
             </h2>
-            <p className="mt-3 text-center text-sm text-gray-600">
+            <p className={cn('mt-3 text-center text-sm', isWohnen ? 'text-[#5a7a6e]' : 'text-gray-600')}>
               Der Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen.
             </p>
-            <Link
-              href="/forgot-password"
-              className="mt-4 inline-block text-sm font-semibold text-primary-600 hover:text-primary-700"
-            >
+            <Link href="/forgot-password" className={cn('mt-4 inline-block', authLinkAccentClass(isWohnen))}>
               Neuen Link anfordern
             </Link>
           </div>
@@ -113,15 +120,20 @@ function ResetPasswordContent() {
   if (success) {
     return (
       <div className="w-full max-w-md">
-        <div className="space-y-8 rounded-xl bg-white px-8 py-10 shadow-lg ring-1 ring-gray-100">
+        <div className={cardClass}>
           <div className="text-center">
             <div className="mb-6 flex justify-center">
               <Logo size="lg" />
             </div>
-            <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+            <h2
+              className={cn(
+                'mt-6 text-center text-3xl font-bold tracking-tight',
+                isWohnen ? 'font-extrabold text-[#0d2b1f]' : 'text-gray-900'
+              )}
+            >
               Passwort erfolgreich zurückgesetzt
             </h2>
-            <p className="mt-3 text-center text-sm text-gray-600">
+            <p className={cn('mt-3 text-center text-sm', isWohnen ? 'text-[#5a7a6e]' : 'text-gray-600')}>
               Sie werden in Kürze zur Anmeldeseite weitergeleitet.
             </p>
           </div>
@@ -132,15 +144,20 @@ function ResetPasswordContent() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="space-y-8 rounded-xl bg-white px-8 py-10 shadow-lg ring-1 ring-gray-100">
+      <div className={cardClass}>
         <div className="text-center">
           <div className="mb-6 flex justify-center">
             <Logo size="lg" />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+          <h2
+            className={cn(
+              'mt-6 text-center text-3xl font-bold tracking-tight',
+              isWohnen ? 'font-extrabold text-[#0d2b1f]' : 'text-gray-900'
+            )}
+          >
             Neues Passwort festlegen
           </h2>
-          <p className="mt-3 text-center text-sm text-gray-600">
+          <p className={cn('mt-3 text-center text-sm', isWohnen ? 'text-[#5a7a6e]' : 'text-gray-600')}>
             Geben Sie Ihr neues Passwort ein.
           </p>
         </div>
@@ -154,7 +171,7 @@ function ResetPasswordContent() {
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className={cn(authLabelClass(isWohnen), 'block')}>
                 Neues Passwort
               </label>
               <div className="relative mt-1">
@@ -166,25 +183,26 @@ function ResetPasswordContent() {
                   minLength={8}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
+                  className={cn(authInputClass(isWohnen), 'relative pr-10 sm:text-sm')}
                   placeholder="Mindestens 8 Zeichen, Zahl und Sonderzeichen"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                  className={cn(
+                    'absolute inset-y-0 right-0 flex items-center pr-3',
+                    isWohnen ? 'text-slate-400 hover:text-[#107a5a]' : 'text-gray-400 hover:text-gray-600'
                   )}
+                >
+                  {showPassword ?
+                    <EyeOff className="h-5 w-5" />
+                  : <Eye className="h-5 w-5" />}
                 </button>
               </div>
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className={cn(authLabelClass(isWohnen), 'block')}>
                 Passwort bestätigen
               </label>
               <div className="relative mt-1">
@@ -196,19 +214,20 @@ function ResetPasswordContent() {
                   minLength={8}
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  className="relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
+                  className={cn(authInputClass(isWohnen), 'relative pr-10 sm:text-sm')}
                   placeholder="Passwort wiederholen"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                  className={cn(
+                    'absolute inset-y-0 right-0 flex items-center pr-3',
+                    isWohnen ? 'text-slate-400 hover:text-[#107a5a]' : 'text-gray-400 hover:text-gray-600'
                   )}
+                >
+                  {showConfirmPassword ?
+                    <EyeOff className="h-5 w-5" />
+                  : <Eye className="h-5 w-5" />}
                 </button>
               </div>
             </div>
@@ -224,10 +243,7 @@ function ResetPasswordContent() {
             >
               {isLoading ? 'Wird gespeichert...' : 'Passwort zurücksetzen'}
             </Button>
-            <Link
-              href="/login"
-              className="text-center text-sm text-gray-600 hover:text-primary-600"
-            >
+            <Link href="/login" className={cn('text-center', authLinkAccentClass(isWohnen, 'medium'))}>
               Zurück zur Anmeldung
             </Link>
           </div>
