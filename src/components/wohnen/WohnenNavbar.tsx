@@ -930,7 +930,7 @@ export function WohnenNavbar() {
             <button
               type="button"
               className="inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-teal-200 bg-white text-[#18a87c] shadow-sm"
-              aria-expanded={mobileOpen}
+              aria-expanded={mobileOpen ? 'true' : 'false'}
               aria-controls="wohnen-mobile-nav"
               aria-label={mobileOpen ? 'Menü schliessen' : 'Menü öffnen'}
               onClick={() => setMobileOpen(o => !o)}
@@ -944,7 +944,7 @@ export function WohnenNavbar() {
       <div
         id="wohnen-mobile-nav"
         className={`fixed inset-0 z-[100] md:hidden ${mobileOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
-        aria-hidden={!mobileOpen}
+        aria-hidden={mobileOpen ? 'false' : 'true'}
       >
         <button
           type="button"
