@@ -11,7 +11,7 @@ import { SWISS_CANTONS } from '@/lib/swiss-cantons'
 import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
 
@@ -45,10 +45,20 @@ export function SellRentPageClient() {
     d.setUTCDate(d.getUTCDate() + 90)
     return d.toISOString().slice(0, 10)
   })
+  const [landlordNotifyEmail, setLandlordNotifyEmail] = useState('')
+  const notifyEmailSeeded = useRef(false)
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const roomsValue = rooms === '5+' ? 5 : parseFloat(rooms)
+
+  useEffect(() => {
+    if (notifyEmailSeeded.current) return
+    const em = (session?.user as { email?: string | null })?.email?.trim()
+    if (!em) return
+    notifyEmailSeeded.current = true
+    setLandlordNotifyEmail(prev => (prev.trim() ? prev : em))
+  }, [session?.user])
 
   const uploadFiles = async (files: FileList | null) => {
     const userId = (session?.user as { id?: string })?.id
@@ -101,6 +111,11 @@ export function SellRentPageClient() {
       toast.error('Bitte «Gültig bis» setzen.')
       return
     }
+    const notifyTrim = landlordNotifyEmail.trim()
+    if (notifyTrim && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notifyTrim)) {
+      toast.error('Ungültige E-Mail für Bewerbungs-Benachrichtigungen.')
+      return
+    }
     setSubmitting(true)
     try {
       const res = await fetch('/api/rental-listings', {
@@ -123,6 +138,7 @@ export function SellRentPageClient() {
           requiresCreditCheck: true,
           photos: imageUrls,
           listingExpiresOn: listingExpiresOn.trim(),
+          landlordNotifyEmail: notifyTrim || null,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -313,6 +329,20 @@ export function SellRentPageClient() {
               onChange={e => setAvailableFrom(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2"
             />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">E-Mail für Bewerbungs-Benachrichtigungen</label>
+            <input
+              type="email"
+              autoComplete="email"
+              value={landlordNotifyEmail}
+              onChange={e => setLandlordNotifyEmail(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2"
+              placeholder="Standard: Ihre Konto-E-Mail"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              An diese Adresse melden wir qualifizierte Bewerbungen. Leer lassen, um Ihre Konto-E-Mail zu verwenden.
+            </p>
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Gültig bis * (Kalendertag, Schweiz)</label>

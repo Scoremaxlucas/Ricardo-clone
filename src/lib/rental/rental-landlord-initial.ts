@@ -20,6 +20,8 @@ export type RentalListingLandlordInitial = {
   status: RentalListingStatus
   /** YYYY-MM-DD; Pflicht wenn keine http(s)-Original-URL. */
   listingExpiresOn: string | null
+  /** Bewerbungs-Leads; leer = aus Kontaktfeld / Konto ableiten. */
+  landlordNotifyEmail: string | null
   importedFrom: string | null
   importSource: ImportSource
 }

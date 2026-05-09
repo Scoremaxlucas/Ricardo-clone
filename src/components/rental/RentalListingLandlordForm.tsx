@@ -77,6 +77,8 @@ export function RentalListingLandlordForm({
   const [listingStatus, setListingStatus] = useState<RentalListingStatus>('active')
   const [listingExpiresOn, setListingExpiresOn] = useState('')
   const createDefaultExpirySeeded = useRef(false)
+  const [landlordNotifyEmail, setLandlordNotifyEmail] = useState('')
+  const notifyEmailSeeded = useRef(false)
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -108,7 +110,17 @@ export function RentalListingLandlordForm({
       setListingStatus(initial.status)
     }
     setListingExpiresOn(initial.listingExpiresOn ?? '')
+    setLandlordNotifyEmail(initial.landlordNotifyEmail ?? '')
   }, [initial, mode])
+
+  useEffect(() => {
+    if (mode !== 'create' || initial != null || variant !== 'landlord' || notifyEmailSeeded.current) return
+    const em = (session?.user as { email?: string | null })?.email?.trim()
+    if (em) {
+      notifyEmailSeeded.current = true
+      setLandlordNotifyEmail(prev => (prev.trim() ? prev : em))
+    }
+  }, [mode, initial, variant, session?.user])
 
   useEffect(() => {
     if (mode !== 'create' || initial != null || createDefaultExpirySeeded.current) return
@@ -238,6 +250,12 @@ export function RentalListingLandlordForm({
       return
     }
 
+    const notifyTrim = landlordNotifyEmail.trim()
+    if (notifyTrim && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notifyTrim)) {
+      toast.error('Ungültige E-Mail für Bewerbungs-Benachrichtigungen.')
+      return
+    }
+
     if (isAdminForm && adminShowAcquisitionFields) {
       if (acquisition === 'imported') {
         if (!originalUrl.trim()) {
@@ -278,6 +296,9 @@ export function RentalListingLandlordForm({
             { listingExpiresOn: listingExpiresOn.trim() }
           : {}
         : { listingExpiresOn: listingExpiresOn.trim() }),
+        ...(variant === 'landlord' || isAdminForm ?
+          { landlordNotifyEmail: notifyTrim || null }
+        : {}),
         ...(mode === 'edit' ? { status: listingStatus } : {}),
       }
 
@@ -383,6 +404,23 @@ export function RentalListingLandlordForm({
       ) : null}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        {!isAdminForm ?
+          <div className="rounded-xl border border-teal-100 bg-teal-50/50 p-4">
+            <label className="mb-1 block text-sm font-medium text-slate-800">E-Mail für Bewerbungs-Benachrichtigungen</label>
+            <input
+              type="email"
+              autoComplete="email"
+              value={landlordNotifyEmail}
+              onChange={e => setLandlordNotifyEmail(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              placeholder="z. B. buero@example.ch"
+            />
+            <p className="mt-2 text-xs text-slate-600">
+              An diese Adresse senden wir eine E-Mail, sobald sich ein qualifizierter Mieter bewirbt. Wenn leer, verwenden
+              wir die E-Mail Ihres Helvenda-Kontos.
+            </p>
+          </div>
+        : null}
         {isAdminForm && importMetaLocked ?
           <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/80 p-4">
             <p className="text-sm font-bold text-amber-950">Quelle (Import)</p>
@@ -502,6 +540,21 @@ export function RentalListingLandlordForm({
                 onChange={e => setLandlordContactInternal(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
               />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">E-Mail für Bewerbungs-Leads (optional)</label>
+              <input
+                type="email"
+                autoComplete="email"
+                value={landlordNotifyEmail}
+                onChange={e => setLandlordNotifyEmail(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                placeholder="Explizite Zieladresse, unabhängig vom Kontaktfeld"
+              />
+              <p className="mt-1 text-xs text-slate-600">
+                Wenn leer: erste gültige E-Mail im Feld «Telefon oder E-Mail» (nach Entschlüsselung), sonst Konto-E-Mail
+                des Inserats-Inhabers.
+              </p>
             </div>
           </div>
         : null}

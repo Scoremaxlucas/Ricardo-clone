@@ -74,6 +74,7 @@ export function mapAiImportToRentalLandlordInitial(ai: ImportListingAiResult): R
     photos: [],
     status: 'active',
     listingExpiresOn: null,
+    landlordNotifyEmail: null,
     importedFrom: null,
     importSource: ImportSource.IMPORTED,
   }

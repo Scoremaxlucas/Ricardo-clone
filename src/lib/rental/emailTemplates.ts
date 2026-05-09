@@ -131,9 +131,19 @@ export function templateLandlordNewApplication(input: {
   referenceName: string | null
   referencePhone: string | null
   applicantMessage: string | null
+  certificateCode: string | null
 }): WohnenEmailPayload {
   const o = wohnenOrigin()
   const link = `${o}/matching/properties/${encodeURIComponent(input.listingId)}/bewerbungen`
+  const verifyLink =
+    input.certificateCode?.trim() ?
+      `${o}/verify/${encodeURIComponent(input.certificateCode.trim())}`
+    : null
+  const certBlock =
+    verifyLink ?
+      `<p style="margin:0 0 14px 0;"><strong>Helvenda Qualitätsnachweis:</strong> öffentliche Prüfseite mit den geprüften Angaben (Betreibungsregister, Einkommen):<br>
+<a href="${escapeHtml(verifyLink)}" style="color:#0f766e;font-weight:600;">${escapeHtml(verifyLink)}</a></p>`
+    : ''
   const msgBox =
     input.applicantMessage?.trim() ?
       `<div style="margin:16px 0;padding:14px 16px;background-color:#f9fafb;border-left:4px solid #18a87c;border-radius:4px;color:#374151;font-size:14px;">${escapeHtml(input.applicantMessage.trim())}</div>`
@@ -157,6 +167,7 @@ ${
 <p style="margin:0 0 6px 0;"><strong>Einkommen:</strong> ${escapeHtml(incomeCategoryLabelDe(input.incomeCategory))}</p>
 <p style="margin:0 0 6px 0;"><strong>Betreibungsregisterauszug:</strong> ${escapeHtml(betreibungsLineForLandlord(input.requiresCreditCheck, input.creditCheckResult))}</p>
 <p style="margin:0 0 18px 0;"><strong>Referenz:</strong> ${escapeHtml(referenceLine(input.referenceName, input.referencePhone))}</p>
+${certBlock}
 ${msgBox}
 ${buttonRow(link, 'Bewerbung ansehen')}
 `
@@ -173,6 +184,7 @@ ${buttonRow(link, 'Bewerbung ansehen')}
     `Einkommen: ${incomeCategoryLabelDe(input.incomeCategory)}`,
     `Betreibungsregisterauszug: ${betreibungsLineForLandlord(input.requiresCreditCheck, input.creditCheckResult)}`,
     `Referenz: ${referenceLine(input.referenceName, input.referencePhone)}`,
+    verifyLink ? `Qualitätsnachweis (Prüfseite): ${verifyLink}` : '',
     input.applicantMessage?.trim() ? `\nNachricht:\n${input.applicantMessage.trim()}` : '',
     '',
     link,

@@ -25,26 +25,42 @@ export default function FeesPage() {
                 <section>
                   <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">1. Grundsätze</h2>
 
-                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 sm:p-4">
-                    <h3 className="mb-2 text-sm font-semibold text-green-800 sm:text-base">
-                      Kostenlos Einstellen und Kaufen
-                    </h3>
+                  <div className="rounded-lg border-2 border-green-300 bg-green-50 p-4 sm:p-6">
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="text-2xl">🎉</span>
+                      <h3 className="text-lg font-bold text-green-800 sm:text-xl">
+                        Aktuell: Helvenda ist komplett kostenlos!
+                      </h3>
+                    </div>
+                    <p className="mb-3 text-sm text-green-700 sm:text-base">
+                      Während unserer Einführungsphase ist die gesamte Plattform <strong>vollständig kostenlos</strong> nutzbar:
+                    </p>
                     <ul className="space-y-1 text-sm text-green-700 sm:text-base">
-                      <li>✓ Angebote einstellen ist kostenlos</li>
-                      <li>✓ Kaufen ist kostenlos</li>
-                      <li>✓ Mitgliedschaft ist kostenlos</li>
+                      <li>✓ Angebote einstellen – <strong>kostenlos</strong></li>
+                      <li>✓ Kaufen – <strong>kostenlos</strong></li>
+                      <li>✓ Mitgliedschaft – <strong>kostenlos</strong></li>
+                      <li>✓ Verkaufsprovision – <strong>derzeit 0%</strong></li>
+                      <li>✓ Booster – <strong>derzeit kostenlos</strong></li>
                     </ul>
+                    <p className="mt-3 text-xs text-green-600 sm:text-sm">
+                      Wir informieren Sie rechtzeitig, bevor die untenstehenden Gebühren aktiviert werden.
+                    </p>
                   </div>
+                </section>
 
-                  <p className="mt-3 text-sm sm:mt-4 sm:text-base">
-                    Helvenda erhebt Gebühren nur bei erfolgreichem Verkauf (Erfolgsprovision) sowie
-                    für optionale Zusatzleistungen (Booster).
+                {/* Zukünftige Gebühren */}
+                <section>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">2. Zukünftige Gebührenstruktur</h2>
+                  <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 sm:mb-4 sm:p-4 sm:text-base">
+                    <strong>Hinweis:</strong> Die folgenden Gebühren sind noch <strong>nicht aktiv</strong>. 
+                    Sie werden erst nach der Einführungsphase erhoben. Wir informieren alle Mitglieder 
+                    mindestens 30 Tage vor Aktivierung per E-Mail.
                   </p>
                 </section>
 
                 {/* Erfolgsprovision */}
                 <section>
-                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">2. Erfolgsprovision</h2>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">2.1 Erfolgsprovision</h2>
 
                   <p className="mb-3 text-sm sm:mb-4 sm:text-base">
                     Bei einem erfolgreichen Verkauf wird eine Erfolgsprovision fällig. Diese wird
@@ -121,7 +137,7 @@ export default function FeesPage() {
 
                 {/* Zahlungsgebühren */}
                 <section>
-                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">3. Zahlungsgebühren</h2>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">2.2 Zahlungsgebühren</h2>
 
                   <p className="mb-3 text-sm sm:mb-4 sm:text-base">
                     Bei Nutzung des Zahlungsschutzes fallen zusätzlich Zahlungsgebühren an, die vom
@@ -182,7 +198,7 @@ export default function FeesPage() {
 
                 {/* Booster */}
                 <section>
-                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">4. Optionale Booster</h2>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">2.3 Optionale Booster</h2>
 
                   <p className="mb-3 text-sm sm:mb-4 sm:text-base">
                     Verkäufer können ihre Angebote mit kostenpflichtigen Boostern hervorheben und so die Sichtbarkeit erhöhen:
@@ -303,7 +319,7 @@ export default function FeesPage() {
 
                 {/* Fälligkeit */}
                 <section>
-                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">5. Fälligkeit und Zahlung</h2>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">3. Fälligkeit und Zahlung</h2>
 
                   <h3 className="mb-2 mt-3 text-base font-semibold text-gray-900 sm:mt-4 sm:text-lg">
                     5.1 Zahlungsfrist
@@ -336,7 +352,7 @@ export default function FeesPage() {
 
                 {/* Rückerstattungen */}
                 <section>
-                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">6. Rückerstattungen</h2>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">4. Rückerstattungen</h2>
 
                   <h3 className="mb-2 mt-3 text-base font-semibold text-gray-900 sm:mt-4 sm:text-lg">
                     6.1 Erfolgsprovision

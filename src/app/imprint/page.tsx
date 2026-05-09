@@ -58,15 +58,30 @@ export default function ImprintPage() {
                 </div>
 
                 <div className="mt-4 border-t border-gray-200 pt-4 sm:mt-6 sm:pt-6">
-                  <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">Kontakt</h2>
+                  <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">Vertretungsberechtigte Person</h2>
                   <p className="text-sm text-gray-700 sm:text-base">
-                    E-Mail:{' '}
-                    <a href="mailto:support@helvenda.ch" className="text-teal-600 hover:underline">
-                      support@helvenda.ch
-                    </a>
+                    Lucas Rodrigues, Geschäftsführer
                   </p>
-                  <p className="mt-2 text-sm text-gray-700 sm:text-base">
-                    Für Fragen oder Anregungen können Sie uns jederzeit per E-Mail erreichen.
+                </div>
+
+                <div className="mt-4 border-t border-gray-200 pt-4 sm:mt-6 sm:pt-6">
+                  <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">Kontakt</h2>
+                  <div className="space-y-2 text-sm text-gray-700 sm:text-base">
+                    <p>
+                      Telefon:{' '}
+                      <a href="tel:+41445082890" className="text-teal-600 hover:underline">
+                        +41 44 508 28 90
+                      </a>
+                    </p>
+                    <p>
+                      E-Mail:{' '}
+                      <a href="mailto:support@helvenda.ch" className="text-teal-600 hover:underline">
+                        support@helvenda.ch
+                      </a>
+                    </p>
+                  </div>
+                  <p className="mt-3 text-sm text-gray-700 sm:text-base">
+                    Für Fragen oder Anregungen können Sie uns jederzeit per E-Mail oder Telefon erreichen.
                   </p>
                 </div>
 

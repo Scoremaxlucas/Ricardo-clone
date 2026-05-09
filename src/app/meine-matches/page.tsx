@@ -10,6 +10,7 @@ import { prisma } from '@/lib/prisma'
 import { matchListings, type MatchEmptyReason } from '@/lib/rental/matchListings'
 import { rentalListingRowToCardData } from '@/lib/rental/rental-listings-public'
 import { formatCHF } from '@/lib/utils/formatCurrency'
+import { creditApprovedValid } from '@/lib/wohnenTenantJourney'
 import type { TenantProfile } from '@prisma/client'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
@@ -62,13 +63,6 @@ function IconShieldCheck({ colorClass }: { colorClass: string }) {
   )
 }
 
-function creditApprovedValid(profile: TenantProfile | null): boolean {
-  if (!profile) return false
-  if (profile.creditCheckStatus !== 'APPROVED') return false
-  const exp = profile.creditCheckExpiresAt
-  return Boolean(exp && exp.getTime() > Date.now())
-}
-
 function deriveCompletionState(profile: TenantProfile | null): UserCompletionState {
   if (!profile) return 'NO_PROFILE'
   if (!profile.isComplete) return 'INCOMPLETE_PROFILE'
@@ -79,7 +73,11 @@ function deriveCompletionState(profile: TenantProfile | null): UserCompletionSta
   return 'READY'
 }
 
-function buildProgressSteps(profile: TenantProfile | null, firstApplication: boolean): ProgressStep[] {
+function buildProgressSteps(
+  profile: TenantProfile | null,
+  firstApplication: boolean,
+  hasActiveCertificate: boolean
+): ProgressStep[] {
   const profileHref = !profile ? '/profil/erstellen' : '/profil/bearbeiten'
   const profileCta = !profile ? 'Profil jetzt erstellen' : 'Profil vervollständigen'
   const creditDone = creditApprovedValid(profile)
@@ -87,32 +85,50 @@ function buildProgressSteps(profile: TenantProfile | null, firstApplication: boo
     profile?.creditCheckStatus === 'PENDING' || profile?.creditCheckStatus === 'PENDING_MANUAL_REVIEW'
   )
 
-  return [
-    { id: 'account', label: 'Konto erstellt', done: true, ctaLabel: '', ctaHref: '/' },
-    {
-      id: 'profile',
-      label: 'Profil vervollständigen',
-      done: profile?.isComplete === true,
-      ctaLabel: profileCta,
-      ctaHref: profileHref,
-    },
-    {
-      id: 'credit_check',
-      label: 'Betreibungsregister hochladen',
-      done: creditDone,
-      pending: creditPending,
-      pendingLabel: 'Wird geprüft …',
-      ctaLabel: creditPending ? 'Zum Betreibungsregister' : 'Jetzt hochladen',
-      ctaHref: '/profil/betreibungsregister',
-    },
-    {
-      id: 'apply',
-      label: 'Erste Bewerbung absenden',
-      done: firstApplication,
-      ctaLabel: 'Wohnungen ansehen',
-      ctaHref: '/wohnungen',
-    },
-  ]
+  const accountStep: ProgressStep = {
+    id: 'account',
+    label: 'Konto erstellt',
+    done: true,
+    ctaLabel: '',
+    ctaHref: '/',
+  }
+  const profileStep: ProgressStep = {
+    id: 'profile',
+    label: 'Profil vervollständigen',
+    done: profile?.isComplete === true,
+    ctaLabel: profileCta,
+    ctaHref: profileHref,
+  }
+  const creditStep: ProgressStep = {
+    id: 'credit_check',
+    label: 'Betreibungsregister hochladen',
+    done: creditDone,
+    pending: creditPending,
+    pendingLabel: 'Wird geprüft …',
+    ctaLabel: creditPending ? 'Zum Betreibungsregister' : 'Jetzt hochladen',
+    ctaHref: '/profil/betreibungsregister',
+  }
+  const applyStep: ProgressStep = {
+    id: 'apply',
+    label: 'Erste Bewerbung absenden',
+    done: firstApplication,
+    ctaLabel: 'Wohnungen ansehen',
+    ctaHref: '/wohnungen',
+  }
+
+  if (!creditDone) {
+    return [accountStep, profileStep, creditStep, applyStep]
+  }
+
+  const certificateStep: ProgressStep = {
+    id: 'certificate',
+    label: 'Helvenda-Qualitätsnachweis',
+    done: hasActiveCertificate,
+    ctaLabel: hasActiveCertificate ? 'Zertifikat ansehen' : 'Jetzt ausstellen',
+    ctaHref: '/zertifikat',
+  }
+
+  return [accountStep, profileStep, creditStep, certificateStep, applyStep]
 }
 
 function emptyStateCopy(reason: MatchEmptyReason | null): { title: string; body: string } {
@@ -236,8 +252,10 @@ export default async function MeineMatchesPage() {
     profile?.firstName?.trim() || account?.firstName?.trim() || account?.lastName?.trim() || 'dich'
 
   const completionState = deriveCompletionState(profile)
-  const steps = buildProgressSteps(profile, applicationCount > 0)
-  const showDashboard = completionState !== 'READY'
+  const firstApplication = applicationCount > 0
+  const steps = buildProgressSteps(profile, firstApplication, Boolean(activeCert))
+  /** Bis zur ersten Bewerbung: Fortschritt inkl. Qualitätsnachweis anzeigen, auch wenn Betreibungsregister schon frei ist. */
+  const showDashboard = completionState !== 'READY' || (completionState === 'READY' && !firstApplication)
 
   const relaxCredit =
     completionState === 'NO_CREDIT_CHECK' || completionState === 'PENDING_CREDIT_CHECK'
@@ -255,7 +273,7 @@ export default async function MeineMatchesPage() {
     completionState === 'NO_CREDIT_CHECK' || completionState === 'PENDING_CREDIT_CHECK'
   const showProfileHint =
     completionState === 'NO_PROFILE' || completionState === 'INCOMPLETE_PROFILE'
-  const showCertBanner = Boolean(creditApprovedValid(profile) && !activeCert)
+  const showCertBanner = Boolean(creditApprovedValid(profile) && !activeCert && !showDashboard)
 
   const greeting = dayGreeting(now)
 

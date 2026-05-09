@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { creditApprovedValid } from '@/lib/wohnenTenantJourney'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
@@ -62,8 +63,11 @@ export async function GET() {
     ])
 
   const exp = profile?.creditCheckExpiresAt
-  const creditApprovedAndValid = Boolean(
-    profile?.creditCheckStatus === 'APPROVED' && exp && exp.getTime() > now.getTime()
+  const creditApprovedAndValid = creditApprovedValid(
+    profile ?
+      { creditCheckStatus: profile.creditCheckStatus, creditCheckExpiresAt: exp ?? null }
+    : null,
+    now
   )
   const creditPendingReview = Boolean(
     profile?.creditCheckStatus === 'PENDING' ||

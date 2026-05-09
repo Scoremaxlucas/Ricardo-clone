@@ -62,6 +62,9 @@ export function Footer() {
             <Link href="/help/safe-buying" className={linkClass}>
               {t.footer.safety}
             </Link>
+            <Link href="/payment-protection" className={linkClass}>
+              Zahlungsschutz
+            </Link>
             <Link href="/fees" className={linkClass}>
               Gebühren
             </Link>
@@ -97,6 +100,12 @@ export function Footer() {
                 className="transition-colors hover:text-white hover:underline"
               >
                 {t.footer.termsOfService}
+              </Link>
+              <Link
+                href="/withdrawal-rights"
+                className="transition-colors hover:text-white hover:underline"
+              >
+                Widerrufsbelehrung
               </Link>
               <Link
                 href="/forbidden-items"

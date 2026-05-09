@@ -8,7 +8,7 @@ export default function PrivacyPage() {
       <Header />
       <main className="min-h-screen bg-gray-50">
         <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
-          <LegalPageWrapper titleKey="privacy" validSince="18. Januar 2026">
+          <LegalPageWrapper titleKey="privacy" validSince="09.05.2026">
 
             <div className="prose prose-sm max-w-none sm:prose-base lg:prose-lg">
               <div className="space-y-6 text-gray-700 sm:space-y-8">
@@ -184,7 +184,65 @@ export default function PrivacyPage() {
                 </section>
 
                 <section>
-                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">6. Ihre Rechte</h2>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">
+                    6. Rechtsgrundlagen der Datenverarbeitung (DSGVO)
+                  </h2>
+                  <p className="mb-3 text-sm sm:mb-4 sm:text-base">
+                    Für Nutzer aus der Europäischen Union verarbeiten wir Ihre Daten auf folgenden 
+                    Rechtsgrundlagen gemäss Art. 6 Abs. 1 DSGVO:
+                  </p>
+                  <ul className="mb-3 ml-2 list-inside list-disc space-y-2 text-sm sm:mb-4 sm:ml-4 sm:text-base">
+                    <li>
+                      <strong>Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO):</strong> Verarbeitung 
+                      zur Erfüllung eines Vertrags, z.B. Abwicklung von Käufen, Zahlungen und 
+                      Kommunikation zwischen Nutzern.
+                    </li>
+                    <li>
+                      <strong>Einwilligung (Art. 6 Abs. 1 lit. a DSGVO):</strong> Wenn Sie 
+                      freiwillig eingewilligt haben, z.B. für Marketing-E-Mails oder 
+                      Analyse-Cookies.
+                    </li>
+                    <li>
+                      <strong>Berechtigte Interessen (Art. 6 Abs. 1 lit. f DSGVO):</strong> Zur 
+                      Betrugsprävention, Verbesserung unserer Dienste und Gewährleistung der 
+                      IT-Sicherheit.
+                    </li>
+                    <li>
+                      <strong>Rechtliche Verpflichtung (Art. 6 Abs. 1 lit. c DSGVO):</strong> Zur 
+                      Erfüllung gesetzlicher Aufbewahrungspflichten und steuerrechtlicher 
+                      Anforderungen.
+                    </li>
+                  </ul>
+                </section>
+
+                <section>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">
+                    7. Datenübermittlung in Drittländer
+                  </h2>
+                  <p className="mb-3 text-sm sm:mb-4 sm:text-base">
+                    Einige unserer Dienstleister haben ihren Sitz ausserhalb der Schweiz bzw. des 
+                    Europäischen Wirtschaftsraums (EWR):
+                  </p>
+                  <ul className="mb-3 ml-2 list-inside list-disc space-y-2 text-sm sm:mb-4 sm:ml-4 sm:text-base">
+                    <li>
+                      <strong>Stripe, Inc. (USA):</strong> Zahlungsabwicklung. Stripe ist unter dem 
+                      EU-US Data Privacy Framework zertifiziert und bietet angemessene Garantien 
+                      gemäss Art. 46 DSGVO.
+                    </li>
+                    <li>
+                      <strong>Vercel Inc. (USA):</strong> Hosting und Infrastruktur. Vercel 
+                      verwendet Standardvertragsklauseln der EU-Kommission.
+                    </li>
+                  </ul>
+                  <p className="text-sm sm:text-base">
+                    Wir stellen sicher, dass bei Datenübermittlungen in Drittländer ein angemessenes 
+                    Datenschutzniveau gewährleistet ist, entweder durch Angemessenheitsbeschlüsse, 
+                    Standardvertragsklauseln oder gleichwertige Garantien.
+                  </p>
+                </section>
+
+                <section>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">8. Ihre Rechte</h2>
                   <p className="mb-3 text-sm sm:mb-4 sm:text-base">
                     Gemäss dem Schweizerischen Datenschutzgesetz (DSG) und der DSGVO haben Sie
                     folgende Rechte:
@@ -202,12 +260,20 @@ export default function PrivacyPage() {
                       <strong>Löschungsrecht:</strong> Sie können die Löschung Ihrer Daten verlangen
                     </li>
                     <li>
+                      <strong>Einschränkung der Verarbeitung:</strong> Sie können die Einschränkung 
+                      der Verarbeitung Ihrer Daten verlangen
+                    </li>
+                    <li>
                       <strong>Datenübertragbarkeit:</strong> Sie können Ihre Daten in einem
                       gängigen Format erhalten
                     </li>
                     <li>
                       <strong>Widerspruchsrecht:</strong> Sie können der Verarbeitung Ihrer Daten
                       widersprechen
+                    </li>
+                    <li>
+                      <strong>Widerruf der Einwilligung:</strong> Sie können erteilte Einwilligungen 
+                      jederzeit mit Wirkung für die Zukunft widerrufen
                     </li>
                   </ul>
                   <p className="mb-3 text-sm sm:mb-4 sm:text-base">
@@ -222,7 +288,30 @@ export default function PrivacyPage() {
                 </section>
 
                 <section>
-                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">7. Datensicherheit</h2>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">
+                    9. Beschwerderecht bei einer Aufsichtsbehörde
+                  </h2>
+                  <p className="mb-3 text-sm sm:mb-4 sm:text-base">
+                    Wenn Sie der Ansicht sind, dass die Verarbeitung Ihrer personenbezogenen Daten 
+                    gegen das Datenschutzrecht verstösst, haben Sie das Recht, sich bei einer 
+                    Aufsichtsbehörde zu beschweren:
+                  </p>
+                  <ul className="mb-3 ml-2 list-inside list-disc space-y-2 text-sm sm:mb-4 sm:ml-4 sm:text-base">
+                    <li>
+                      <strong>Schweiz:</strong> Eidgenössischer Datenschutz- und 
+                      Öffentlichkeitsbeauftragter (EDÖB), Feldeggweg 1, 3003 Bern, 
+                      <a href="https://www.edoeb.admin.ch" target="_blank" rel="noopener noreferrer" 
+                         className="ml-1 text-primary-600 hover:underline">www.edoeb.admin.ch</a>
+                    </li>
+                    <li>
+                      <strong>EU:</strong> Sie können sich an die Datenschutzbehörde Ihres 
+                      Wohnsitzlandes oder an die für uns zuständige Aufsichtsbehörde wenden.
+                    </li>
+                  </ul>
+                </section>
+
+                <section>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">10. Datensicherheit</h2>
                   <p className="mb-3 text-sm sm:mb-4 sm:text-base">
                     Wir setzen technische und organisatorische Sicherheitsmassnahmen ein:
                   </p>
@@ -236,7 +325,7 @@ export default function PrivacyPage() {
                 </section>
 
                 <section>
-                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">8. Speicherdauer</h2>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">11. Speicherdauer</h2>
                   <p className="mb-3 text-sm sm:mb-4 sm:text-base">
                     Wir speichern Ihre Daten nur so lange, wie es für die genannten Zwecke
                     erforderlich ist:
@@ -258,7 +347,19 @@ export default function PrivacyPage() {
                 </section>
 
                 <section>
-                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">9. Kontakt</h2>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">
+                    12. Automatisierte Entscheidungsfindung
+                  </h2>
+                  <p className="mb-3 text-sm sm:mb-4 sm:text-base">
+                    Wir nutzen keine vollautomatisierten Entscheidungsprozesse im Sinne von Art. 22 
+                    DSGVO, die rechtliche Wirkung entfalten oder Sie erheblich beeinträchtigen. 
+                    Wenn wir automatisierte Verfahren zur Betrugsprävention einsetzen, werden 
+                    endgültige Entscheidungen stets von Menschen überprüft.
+                  </p>
+                </section>
+
+                <section>
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">13. Kontakt</h2>
                   <p className="mb-3 text-sm sm:mb-4 sm:text-base">
                     Bei Fragen zum Datenschutz wenden Sie sich an:
                   </p>
@@ -282,7 +383,7 @@ export default function PrivacyPage() {
 
                 <section>
                   <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">
-                    10. Änderungen dieser Datenschutzerklärung
+                    14. Änderungen dieser Datenschutzerklärung
                   </h2>
                   <p className="mb-3 text-sm sm:mb-4 sm:text-base">
                     Wir behalten uns vor, diese Datenschutzerklärung anzupassen, um sie an geänderte
@@ -294,6 +395,8 @@ export default function PrivacyPage() {
                 <div className="mt-6 border-t border-gray-200 pt-4 sm:mt-8 sm:pt-6">
                   <p className="text-xs text-gray-600 sm:text-sm">
                     <strong>Datenschutzerklärung gültig seit 18. Januar 2026</strong>
+                    <br />
+                    <span className="text-gray-500">Letzte Aktualisierung: 09.05.2026 (DSGVO-Erweiterungen)</span>
                   </p>
                 </div>
               </div>

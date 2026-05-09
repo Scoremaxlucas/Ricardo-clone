@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { Globe } from 'lucide-react'
 
 interface LegalPageWrapperProps {
-  titleKey: 'terms' | 'privacy' | 'fees' | 'imprint'
+  titleKey: 'terms' | 'privacy' | 'fees' | 'imprint' | 'withdrawalRights'
   validSince?: string
   children: React.ReactNode
 }

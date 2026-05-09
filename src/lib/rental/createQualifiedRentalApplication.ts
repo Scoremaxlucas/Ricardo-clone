@@ -1,7 +1,8 @@
-import { Prisma } from '@prisma/client'
+import { CertificateStatus, Prisma } from '@prisma/client'
 import { sendRentalApplicantSuccessEmail, sendRentalLandlordNewApplicationEmail } from '@/lib/rental/emails'
 import { prisma } from '@/lib/prisma'
 import { qualifyTenant, type QualificationIssue } from '@/lib/rental/qualifyTenant'
+import { resolveLandlordApplicationNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
 
 export type CreateRentalApplicationErrorCode =
   | 'LISTING_NOT_ACTIVE'
@@ -10,6 +11,7 @@ export type CreateRentalApplicationErrorCode =
   | 'NOT_QUALIFIED'
   | 'ALREADY_APPLIED'
   | 'NO_EMAIL'
+  | 'NO_LANDLORD_NOTIFY_EMAIL'
 
 export type CreateRentalApplicationResult =
   | { ok: true; applicationId: string }
@@ -33,6 +35,8 @@ const LISTING_SELECT = {
   utilitiesPerMonth: true,
   requiresCreditCheck: true,
   status: true,
+  landlordNotifyEmail: true,
+  landlordContact: true,
   user: {
     select: {
       id: true,
@@ -59,8 +63,23 @@ export async function createQualifiedRentalApplication(params: {
     select: LISTING_SELECT,
   })
 
-  if (!listing || !listing.user?.email) {
+  if (!listing) {
     return { ok: false, status: 404, code: 'LISTING_NOT_ACTIVE', message: 'Inserat nicht aktiv' }
+  }
+
+  const landlordNotifyTo = resolveLandlordApplicationNotifyEmail({
+    landlordNotifyEmail: listing.landlordNotifyEmail,
+    landlordContactStored: listing.landlordContact,
+    ownerAccountEmail: listing.user?.email,
+  })
+  if (!landlordNotifyTo) {
+    return {
+      ok: false,
+      status: 422,
+      code: 'NO_LANDLORD_NOTIFY_EMAIL',
+      message:
+        'Für dieses Inserat ist keine gültige Vermieter-E-Mail hinterlegt. Bitte im Inserat eine Benachrichtigungs-Adresse setzen oder den internen Vermieter-Kontakt mit E-Mail pflegen.',
+    }
   }
 
   if (listing.userId === userId) {
@@ -138,9 +157,19 @@ export async function createQualifiedRentalApplication(params: {
 
   const creditResult = tenantProfile.creditCheckResult
 
+  const activeCert = await prisma.helvendaCertificate.findFirst({
+    where: {
+      tenantProfileId: tenantProfile.id,
+      status: CertificateStatus.ACTIVE,
+      expiresAt: { gt: new Date() },
+    },
+    orderBy: { issuedAt: 'desc' },
+    select: { certificateCode: true },
+  })
+
   const emailResults = await Promise.allSettled([
     sendRentalLandlordNewApplicationEmail({
-      landlordEmail: listing.user.email,
+      landlordEmail: landlordNotifyTo,
       landlordUserId: listing.userId,
       landlordFirst: listing.user,
       listingId: listing.id,
@@ -156,6 +185,7 @@ export async function createQualifiedRentalApplication(params: {
       monthlyIncomeCategory: tenantProfile.monthlyIncomeCategory,
       referenceName: tenantProfile.referenceName,
       referencePhone: tenantProfile.referencePhone,
+      certificateCode: activeCert?.certificateCode ?? null,
     }),
     sendRentalApplicantSuccessEmail({
       applicantEmail: applicantContactEmail,

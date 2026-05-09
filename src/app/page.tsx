@@ -10,6 +10,7 @@ import { getFeaturedProducts } from '@/lib/products'
 import { prisma } from '@/lib/prisma'
 import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import { isWohnenMatchingHostFromHeaders } from '@/lib/tenant-host'
+import { deriveWohnenHomeCta } from '@/lib/wohnenTenantJourney'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
@@ -86,17 +87,41 @@ export default async function Home() {
     const session = await getServerSession(authOptions)
     let primaryHref = '/wohnungen'
     let primaryLabel = 'Wohnungen suchen'
+    let primaryHint: string | undefined
+    let secondaryHref: string | undefined
+    let secondaryLabel: string | undefined
+    let footerTenantHref: string | undefined
+    let footerTenantLabel: string | undefined
 
-    // Mieter mit vollständigem Profil: Einstieg über personalisierte Matches (Server + Client Navbar konsistent).
     if (session?.user?.id) {
-      const profile = await prisma.tenantProfile.findUnique({
-        where: { userId: session.user.id },
-        select: { isComplete: true },
+      const now = new Date()
+      const [profile, activeCert] = await Promise.all([
+        prisma.tenantProfile.findUnique({
+          where: { userId: session.user.id },
+          select: { isComplete: true, creditCheckStatus: true, creditCheckExpiresAt: true },
+        }),
+        prisma.helvendaCertificate.findFirst({
+          where: { userId: session.user.id, status: 'ACTIVE', expiresAt: { gt: now } },
+          select: { id: true },
+        }),
+      ])
+      const cta = deriveWohnenHomeCta({
+        profile: profile
+          ? {
+              isComplete: profile.isComplete,
+              creditCheckStatus: profile.creditCheckStatus,
+              creditCheckExpiresAt: profile.creditCheckExpiresAt,
+            }
+          : null,
+        hasActiveCertificate: Boolean(activeCert),
       })
-      if (profile?.isComplete) {
-        primaryHref = '/meine-matches'
-        primaryLabel = 'Meine Matches ansehen'
-      }
+      primaryHref = cta.primaryHref
+      primaryLabel = cta.primaryLabel
+      primaryHint = cta.primaryHint
+      secondaryHref = cta.secondaryHref
+      secondaryLabel = cta.secondaryLabel
+      footerTenantHref = cta.footerTenantHref
+      footerTenantLabel = cta.footerTenantLabel
     }
 
     return (
@@ -128,6 +153,11 @@ export default async function Home() {
         <WohnenMarketingHome
           primaryHref={primaryHref}
           primaryLabel={primaryLabel}
+          primaryHint={primaryHint}
+          secondaryHref={secondaryHref}
+          secondaryLabel={secondaryLabel}
+          footerTenantHref={footerTenantHref}
+          footerTenantLabel={footerTenantLabel}
           signedIn={Boolean(session?.user?.id)}
         />
       </div>

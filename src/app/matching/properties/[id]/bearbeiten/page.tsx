@@ -56,6 +56,7 @@ export default async function BearbeitenLandlordRentalPage({ params }: PageProps
     photos,
     status: listing.status,
     listingExpiresOn: listing.listingExpiresOn ?? null,
+    landlordNotifyEmail: listing.landlordNotifyEmail ?? null,
     importedFrom: listing.importedFrom,
     importSource: listing.importSource,
   }

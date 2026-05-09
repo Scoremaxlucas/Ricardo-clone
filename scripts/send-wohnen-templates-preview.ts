@@ -93,6 +93,7 @@ async function main() {
       referenceName: 'R. Freund',
       referencePhone: '+41 79 000 00 00',
       applicantMessage: 'Guten Tag, ich interessiere mich sehr für die Wohnung.',
+      certificateCode: 'HLV-PREVIEW',
     }) },
     { name: '2 Mieter — Bewerbung übermittelt', ...templateTenantApplicationSubmitted({
       tenantFirstName: 'Max',

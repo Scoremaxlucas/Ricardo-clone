@@ -2157,6 +2157,9 @@ export const de = {
     imprint: {
       title: 'Impressum',
     },
+    withdrawalRights: {
+      title: 'Widerrufsbelehrung',
+    },
   },
 
   // Settings - Addresses

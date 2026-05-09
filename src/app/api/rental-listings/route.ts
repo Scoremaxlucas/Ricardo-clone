@@ -6,6 +6,7 @@ import {
   rentalListingHasMonitoringHttpUrl,
   validateListingExpiresOnForUpsert,
 } from '@/lib/rental/rental-listing-expiry-on'
+import { normalizeAndValidateLandlordNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
 import { trackRentalMatchMetricsEvent } from '@/lib/rental/match-metrics'
 import { decideRentalMatchRollout } from '@/lib/rental/match-rollout'
 import type { Prisma } from '@prisma/client'
@@ -455,6 +456,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: expiryCheck.message }, { status: 400 })
     }
 
+    const rawNotifyField = (body as Record<string, unknown>).landlordNotifyEmail
+    const rawNotify = typeof rawNotifyField === 'string' ? rawNotifyField : null
+    let landlordNotifyEmail = normalizeAndValidateLandlordNotifyEmail(rawNotify)
+    if (!landlordNotifyEmail) {
+      landlordNotifyEmail = normalizeAndValidateLandlordNotifyEmail(
+        (session.user as { email?: string | null }).email ?? null,
+      )
+    }
+    if (!landlordNotifyEmail) {
+      return NextResponse.json(
+        { message: 'Bitte eine gültige E-Mail für Bewerbungs-Benachrichtigungen angeben (Konto ohne E-Mail).' },
+        { status: 400 },
+      )
+    }
+
     const listing = await prisma.rentalListing.create({
       data: {
         userId: session.user.id,
@@ -476,6 +492,7 @@ export async function POST(request: NextRequest) {
         status: 'active',
         importedFrom,
         listingExpiresOn: expiryCheck.value,
+        landlordNotifyEmail,
       },
     })
 

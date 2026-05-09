@@ -59,6 +59,7 @@ export default async function AdminEditListingPage({ params }: PageProps) {
     photos,
     status: listing.status,
     listingExpiresOn: listing.listingExpiresOn ?? null,
+    landlordNotifyEmail: listing.landlordNotifyEmail ?? null,
     importedFrom: listing.importedFrom,
     importSource: listing.importSource,
   }

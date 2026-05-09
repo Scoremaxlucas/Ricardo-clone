@@ -7,6 +7,7 @@ import {
   rentalListingHasMonitoringHttpUrl,
   validateListingExpiresOnForUpsert,
 } from '@/lib/rental/rental-listing-expiry-on'
+import { normalizeAndValidateLandlordNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
 import { ImportSource } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
 import { revalidatePath } from 'next/cache'
@@ -142,6 +143,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: expiryCheck.message }, { status: 400 })
     }
 
+    const rawLn = (body as Record<string, unknown>).landlordNotifyEmail
+    const landlordNotifyEmailParsed =
+      typeof rawLn === 'string' ? normalizeAndValidateLandlordNotifyEmail(rawLn) : null
+
     const listing = await prisma.rentalListing.create({
       data: {
         userId: session.user.id,
@@ -166,6 +171,7 @@ export async function POST(request: Request) {
         landlordContact,
         ingestPermissionBasis,
         listingExpiresOn: expiryCheck.value,
+        landlordNotifyEmail: landlordNotifyEmailParsed,
       },
     })
 

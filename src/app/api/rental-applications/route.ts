@@ -52,6 +52,9 @@ export async function POST(request: NextRequest) {
       if (result.code === 'NO_EMAIL') {
         return NextResponse.json({ code: 'BAD_REQUEST', message: result.message }, { status: 400 })
       }
+      if (result.code === 'NO_LANDLORD_NOTIFY_EMAIL') {
+        return NextResponse.json({ code: 'NO_LANDLORD_NOTIFY_EMAIL', message: result.message }, { status: 422 })
+      }
       return NextResponse.json({ code: 'LISTING_NOT_ACTIVE', message: result.message }, { status: 404 })
     }
 

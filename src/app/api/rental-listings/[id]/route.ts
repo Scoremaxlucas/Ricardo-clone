@@ -6,6 +6,7 @@ import {
   todayYmdInZurich,
   validateListingExpiresOnForUpsert,
 } from '@/lib/rental/rental-listing-expiry-on'
+import { normalizeAndValidateLandlordNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
 import type { Prisma } from '@prisma/client'
 import { RentalListingStatus } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
@@ -197,6 +198,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         return NextResponse.json({ message: 'Mindestens 3 und maximal 10 Fotos' }, { status: 400 })
       }
       data.photos = JSON.stringify(photoArr)
+    }
+    if ('landlordNotifyEmail' in body) {
+      if (body.landlordNotifyEmail === '' || body.landlordNotifyEmail === null) {
+        data.landlordNotifyEmail = null
+      } else if (typeof body.landlordNotifyEmail === 'string') {
+        const v = normalizeAndValidateLandlordNotifyEmail(body.landlordNotifyEmail)
+        if (!v) {
+          return NextResponse.json({ message: 'Ungültige E-Mail für Bewerbungs-Benachrichtigungen.' }, { status: 400 })
+        }
+        data.landlordNotifyEmail = v
+      }
     }
     if (typeof body.status === 'string') {
       const st = body.status as string

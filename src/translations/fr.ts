@@ -2155,6 +2155,9 @@ export const fr: Translation = {
     imprint: {
       title: 'Mentions légales',
     },
+    withdrawalRights: {
+      title: 'Droit de rétractation',
+    },
   },
   addresses: {
     title: 'Mes adresses',

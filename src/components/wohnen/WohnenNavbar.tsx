@@ -467,7 +467,12 @@ export function WohnenNavbar() {
                 certificateExpiresAt={n.certificateExpiresAt}
               />
             </div>
-          : null}
+          : <Link
+              href="/zertifikat"
+              className="rounded-md border border-[#18a87c] bg-[#e8f7f2] px-2.5 py-1 text-xs font-bold tracking-wide text-[#107a5a] hover:bg-[#dff5eb]"
+            >
+              Qualitätsnachweis
+            </Link>}
         </nav>
       )
     }
@@ -760,6 +765,22 @@ export function WohnenNavbar() {
           Wohnungen suchen
         </Link>
         <p className="border-b border-[#e8f7f2] px-3 py-2 text-xs text-slate-500">Hilfe & Kontakt: Fußzeile der Seite.</p>
+        {n.profileComplete && n.creditApprovedAndValid ?
+          <>
+            <Link href="/meine-matches" className={mobileDrawerLinkTeal} onClick={closeAll}>
+              Meine Matches
+            </Link>
+            {!n.hasActiveCertificate ?
+              <Link
+                href="/zertifikat"
+                className={`${mobileDrawerLink} bg-[#e8f7f2] font-semibold text-[#107a5a]`}
+                onClick={closeAll}
+              >
+                Qualitätsnachweis ausstellen
+              </Link>
+            : null}
+          </>
+        : null}
         {!n.profileComplete ?
           isTenantProfilWizardPath(pathname) ?
             <div className={`${mobileDrawerLink} bg-teal-50 text-sm font-semibold text-teal-900`}>

@@ -2159,6 +2159,9 @@ export const en: Translation = {
     imprint: {
       title: 'Legal Notice',
     },
+    withdrawalRights: {
+      title: 'Right of Withdrawal',
+    },
   },
   addresses: {
     title: 'My Addresses',

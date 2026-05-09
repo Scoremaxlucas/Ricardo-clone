@@ -2155,6 +2155,9 @@ export const it: Translation = {
     imprint: {
       title: 'Impronta',
     },
+    withdrawalRights: {
+      title: 'Diritto di recesso',
+    },
   },
   addresses: {
     title: 'I miei indirizzi',

@@ -1766,6 +1766,8 @@ model RentalListing {
   importedFrom        String? // Original-URL oder Partner-Kennzeichnung
   importSource        ImportSource         @default(SELF)
   landlordContact     String? // AES-GCM (Base64) oder Klartext-Präfix nur ohne Key — nur intern
+  /** Bewerbungs-Leads: E-Mail für Benachrichtigungen (optional; sonst Kontaktfeld / Inhaber-Konto). */
+  landlordNotifyEmail String?
   /** Admin-Ingest: Erlaubnis-Basis (z. B. public_authority, landlord_direct, landlord_consent, tutti_public) */
   ingestPermissionBasis String?
   lastCheckedAt             DateTime?
