@@ -12,7 +12,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default async function ZertifikatPage() {
+export default async function ZertifikatPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ onboarding?: string }> | { onboarding?: string }
+}) {
   const session = await getServerSession(authOptions)
   const userId = session?.user?.id
   if (!userId) {
@@ -32,13 +36,17 @@ export default async function ZertifikatPage() {
   })
 
   const elig = checkCertificateEligibility(profile)
+  const sp = searchParams ? await Promise.resolve(searchParams) : {}
+  const postProfileOnboarding = sp?.onboarding === 'complete'
 
   return (
     <ZertifikatClient
       creditCheckExpiresAt={profile.creditCheckExpiresAt?.toISOString() ?? null}
+      creditCheckStatus={profile.creditCheckStatus}
       eligible={elig.eligible}
       eligibilityReason={elig.eligible ? undefined : elig.reason}
       initialCertificateCode={active?.certificateCode ?? null}
+      postProfileOnboarding={postProfileOnboarding}
     />
   )
 }

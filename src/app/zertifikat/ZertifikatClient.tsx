@@ -9,40 +9,93 @@ import toast from 'react-hot-toast'
 
 type Props = {
   creditCheckExpiresAt: string | null
+  creditCheckStatus: string
   eligible: boolean
   eligibilityReason?: string
   initialCertificateCode: string | null
+  /** Direkt nach abgeschlossenem Profil-Onboarding: wärmere Brücke zum Betreibungsregister-Schritt. */
+  postProfileOnboarding?: boolean
 }
 
 type IssueResponse =
   | { success: true; certificate: { certificateCode: string }; reused?: boolean }
   | { message?: string; reason?: string }
 
-function issueErrorDe(reason?: string): { title: string; body: string; href: string; cta: string } {
+export type ZertifikatGateMessage = {
+  tone: 'milestone' | 'error'
+  title: string
+  body: string
+  href: string
+  cta: string
+}
+
+function creditPending(status: string): boolean {
+  return status === 'PENDING' || status === 'PENDING_MANUAL_REVIEW'
+}
+
+function gateMessageFromEligibility(
+  reason: string | undefined,
+  opts: { postProfileOnboarding?: boolean; creditCheckStatus?: string }
+): ZertifikatGateMessage {
+  const status = opts.creditCheckStatus ?? ''
+  const pending = creditPending(status)
+
   switch (reason) {
     case 'PROFILE_INCOMPLETE':
       return {
-        title: 'Profil unvollständig',
-        body: 'Vervollständige bitte zuerst dein Mieterprofil.',
+        tone: 'milestone',
+        title: 'Profil vervollständigen',
+        body: 'Bitte ergänze zuerst dein Mieterprofil — danach wird der Qualitätsnachweis freigeschaltet.',
         href: '/profil/bearbeiten',
         cta: 'Profil bearbeiten',
       }
-    case 'CREDIT_CHECK_NOT_APPROVED':
+    case 'CREDIT_CHECK_NOT_APPROVED': {
+      if (opts.postProfileOnboarding) {
+        if (pending) {
+          return {
+            tone: 'milestone',
+            title: 'Profil vollständig — Auszug wird geprüft',
+            body: 'Danke für deine Angaben. Dein Betreibungsregisterauszug ist bei uns eingegangen und wird gerade geprüft. Sobald die Freigabe da ist, kannst du hier deinen Qualitätsnachweis mit einem Klick ausstellen (PDF und Prüf-Link für Bewerbungen auch ausserhalb von Helvenda).',
+            href: '/profil/betreibungsregister',
+            cta: 'Zum Upload & Status',
+          }
+        }
+        return {
+          tone: 'milestone',
+          title: 'Profil vollständig — fast geschafft',
+          body: 'Danke für deine Angaben. Als Nächstes brauchen wir einen verifizierten Betreibungsregisterauszug. Sobald er freigegeben ist, stellst du deinen Helvenda-Qualitätsnachweis hier mit einem Klick aus — inklusive PDF und Prüf-Link für Vermieter und andere Portale.',
+          href: '/profil/betreibungsregister',
+          cta: 'Betreibungsregister hochladen',
+        }
+      }
+      if (pending) {
+        return {
+          tone: 'milestone',
+          title: 'Betreibungsregister wird geprüft',
+          body: 'Dein Auszug ist eingegangen. Sobald die Prüfung abgeschlossen ist, kannst du den Qualitätsnachweis hier ausstellen. Du wirst per E-Mail informiert.',
+          href: '/profil/betreibungsregister',
+          cta: 'Upload & Status',
+        }
+      }
       return {
-        title: 'Betreibungsregister fehlt oder wird geprüft',
-        body: 'Ein verifizierter Betreibungsregisterauszug ist Voraussetzung für den Qualitätsnachweis.',
+        tone: 'milestone',
+        title: 'Nächster Schritt: Betreibungsregister',
+        body: 'Für den Helvenda-Qualitätsnachweis brauchen wir einen verifizierten Betreibungsregisterauszug. Nach dem Upload prüfen wir den Auszug — danach kannst du dein Zertifikat hier ausstellen.',
         href: '/profil/betreibungsregister',
         cta: 'Zum Betreibungsregister',
       }
+    }
     case 'CREDIT_CHECK_EXPIRED':
       return {
-        title: 'Betreibungsregister abgelaufen',
-        body: 'Bitte lade einen neuen Auszug hoch, damit wir dein Zertifikat ausstellen können.',
+        tone: 'milestone',
+        title: 'Betreibungsregister erneuern',
+        body: 'Dein letzter Auszug ist nicht mehr gültig. Bitte lade einen aktuellen Auszug hoch — danach kannst du den Qualitätsnachweis wieder ausstellen.',
         href: '/profil/betreibungsregister',
-        cta: 'Auszug erneuern',
+        cta: 'Neuen Auszug hochladen',
       }
     default:
       return {
+        tone: 'error',
         title: 'Ausstellung nicht möglich',
         body: 'Bitte versuche es später erneut oder kontaktiere den Support.',
         href: '/profil',
@@ -51,29 +104,37 @@ function issueErrorDe(reason?: string): { title: string; body: string; href: str
   }
 }
 
+function issueErrorToGate(reason?: string): ZertifikatGateMessage {
+  return gateMessageFromEligibility(reason, {})
+}
+
 export function ZertifikatClient({
   creditCheckExpiresAt,
+  creditCheckStatus,
   eligible,
   eligibilityReason,
   initialCertificateCode,
+  postProfileOnboarding = false,
 }: Props) {
   const [phase, setPhase] = useState<'ready' | 'loading' | 'success' | 'error'>(
     initialCertificateCode ? 'success' : eligible ? 'ready' : 'error'
   )
   const [code, setCode] = useState<string | null>(initialCertificateCode)
-  const [error, setError] = useState<{ title: string; body: string; href: string; cta: string } | null>(
-    eligible ? null : issueErrorDe(eligibilityReason)
+  const [gate, setGate] = useState<ZertifikatGateMessage | null>(
+    eligible ?
+      null
+    : gateMessageFromEligibility(eligibilityReason, { postProfileOnboarding, creditCheckStatus })
   )
 
   const issue = useCallback(async () => {
     setPhase('loading')
-    setError(null)
+    setGate(null)
     try {
       const res = await fetch('/api/certificate/issue', { method: 'POST', credentials: 'same-origin' })
       const data = (await res.json().catch(() => ({}))) as IssueResponse
       if (!res.ok || !('success' in data) || !data.success) {
         const r = 'reason' in data ? data.reason : undefined
-        setError(issueErrorDe(r))
+        setGate(issueErrorToGate(r))
         setPhase('error')
         return
       }
@@ -83,7 +144,7 @@ export function ZertifikatClient({
         toast.success('Zertifikat ausgestellt ✓')
       }
     } catch {
-      setError(issueErrorDe())
+      setGate(issueErrorToGate())
       setPhase('error')
     }
   }, [])
@@ -201,26 +262,33 @@ export function ZertifikatClient({
             </div>
             <p className="mt-10 text-base font-semibold text-[#0d2b1f]">Zertifikat wird ausgestellt…</p>
           </>
-        : phase === 'error' && error ?
+        : phase === 'error' && gate ?
           <>
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-600">
-              <span className="text-2xl font-bold">!</span>
-            </div>
-            <h1 className="mt-8 text-xl font-extrabold text-[#0d2b1f]">{error.title}</h1>
-            <p className="mt-3 text-sm leading-relaxed text-[#5a7a6e]">{error.body}</p>
+            {gate.tone === 'milestone' ?
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#e8f7f2] text-[#18a87c]">
+                <CheckCircle2 className="h-11 w-11" strokeWidth={2} aria-hidden />
+              </div>
+            : <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-600">
+                <span className="text-2xl font-bold" aria-hidden>
+                  !
+                </span>
+              </div>
+            }
+            <h1 className="mt-8 text-xl font-extrabold text-[#0d2b1f] sm:text-2xl">{gate.title}</h1>
+            <p className="mt-3 text-sm leading-relaxed text-[#5a7a6e]">{gate.body}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link
-                href={error.href}
+                href={gate.href}
                 className="inline-flex items-center justify-center rounded-xl bg-[#18a87c] px-6 py-3 text-sm font-bold text-white shadow-md hover:opacity-95"
               >
-                {error.cta}
+                {gate.cta}
               </Link>
               {eligible ?
                 <button
                   type="button"
                   onClick={() => {
                     setPhase('ready')
-                    setError(null)
+                    setGate(null)
                   }}
                   className="inline-flex items-center justify-center rounded-xl border-2 border-[#18a87c] px-6 py-3 text-sm font-bold text-[#107a5a] hover:bg-white/80"
                 >
