@@ -184,7 +184,7 @@ export async function WohnenMarketingHome({
           <div className="mx-auto mt-8 max-w-md sm:mt-9">
             <Link
               href={primaryHref}
-              className="inline-flex h-[52px] w-full items-center justify-center rounded-xl bg-[#18a87c] px-6 text-base font-semibold text-white shadow-sm transition hover:opacity-95 md:h-[54px] md:text-[1.0625rem]"
+              className="inline-flex h-[52px] w-full items-center justify-center rounded-xl bg-[#18a87c] px-6 text-base font-semibold text-white shadow-md shadow-[#18a87c]/25 transition hover:opacity-95 md:h-[54px] md:text-[1.0625rem]"
             >
               {primaryLabel}
             </Link>
@@ -203,7 +203,7 @@ export async function WohnenMarketingHome({
                 </Link>
               </p>
             : null}
-            <p className="mt-4 text-center text-sm text-slate-500">
+            <p className="mt-5 text-center text-sm text-slate-500 sm:mt-4">
               <Link href="/matching/properties/new" className="font-medium text-[#2d6a4f] underline-offset-2 hover:text-[#18a87c] hover:underline">
                 Vermieter?
               </Link>{' '}
@@ -211,28 +211,44 @@ export async function WohnenMarketingHome({
             </p>
           </div>
 
-          <p className="mx-auto mt-8 max-w-xl text-[12px] leading-relaxed text-slate-500 sm:mt-9 sm:text-[13px]">
-            {inventoryNarrow ?
-              <>
-                <span className="text-slate-400">✓</span> Qualitätsnachweis für ausserhalb &nbsp;·&nbsp; kostenlos für
-                Mieter &nbsp;·&nbsp; kein Pflicht-Abo
-              </>
-            : <>
-                <span className="text-slate-400">✓</span> Kostenlos für Mieter &nbsp;·&nbsp; verifizierte Bewerbungen
-                &nbsp;·&nbsp; kein Pflicht-Abo
-              </>
-            }
+          <div className="mx-auto mt-10 w-full max-w-lg sm:mt-11">
+            <ul className="flex flex-col gap-2.5 sm:hidden" aria-label="Vorteile für Mieter">
+              {(inventoryNarrow ?
+                ['Qualitätsnachweis für ausserhalb', 'Kostenlos für Mieter', 'Kein Pflicht-Abo']
+              : ['Kostenlos für Mieter', 'Verifizierte Bewerbungen', 'Kein Pflicht-Abo']
+              ).map(line => (
+                <li
+                  key={line}
+                  className="flex items-start gap-3 rounded-xl border border-[#e8f7f2] bg-[#fafdfb] px-3.5 py-3 text-[13px] font-medium leading-snug text-[#2d4a3d]"
+                >
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="hidden text-center text-[13px] leading-relaxed text-[#5a7a6e] sm:block sm:text-[13px]">
+              {inventoryNarrow ?
+                <>
+                  <Check className="mb-0.5 mr-1 inline h-3.5 w-3.5 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
+                  Qualitätsnachweis für ausserhalb <span className="text-slate-300">·</span> kostenlos für Mieter{' '}
+                  <span className="text-slate-300">·</span> kein Pflicht-Abo
+                </>
+              : <>
+                  <Check className="mb-0.5 mr-1 inline h-3.5 w-3.5 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
+                  Kostenlos für Mieter <span className="text-slate-300">·</span> verifizierte Bewerbungen{' '}
+                  <span className="text-slate-300">·</span> kein Pflicht-Abo
+                </>
+              }
+            </p>
             {activeCount > 0 ?
-              <>
-                {' '}
-                ·{' '}
+              <p className="mt-4 text-center text-[13px] text-[#5a7a6e] sm:mt-3">
                 <span className="whome-pulse-dot font-semibold text-[#18a87c]" aria-hidden>
                   ●
                 </span>{' '}
                 <span className="font-medium text-[#2d6a4f]">{activeCount.toLocaleString('de-CH')} Inserate online</span>
-              </>
+              </p>
             : null}
-          </p>
+          </div>
         </div>
       </section>
 

@@ -274,7 +274,17 @@ export function WohnenNavbar() {
   }, [mobileOpen])
 
   useEffect(() => {
+    if (!mobileOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mobileOpen])
+
+  useEffect(() => {
     setVermietenOpen(false)
+    setMobileOpen(false)
   }, [pathname])
 
   const n = nav
@@ -870,86 +880,105 @@ export function WohnenNavbar() {
   const showSkeleton = status === 'loading' || (signedIn && !navReady)
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/90 bg-white/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur supports-[backdrop-filter]:bg-white/90">
-      <div className="mx-auto flex h-14 min-h-[3.5rem] max-w-6xl items-center justify-between gap-2 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:gap-3 sm:px-6 lg:px-8">
-        <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2" onClick={closeAll}>
-          <Logo size="sm" />
-          <span className="truncate text-sm font-bold tracking-tight text-[#0f766e] sm:text-base">Wohnungen</span>
-        </Link>
+    <>
+      {/*
+        Drawer must sit outside sticky+backdrop-blur <header>: otherwise WebKit treats position:fixed
+        as relative to the header (~56px), producing an empty white strip instead of a full-screen menu.
+      */}
+      <header className="sticky top-0 z-50 border-b border-slate-200/90 bg-white/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur supports-[backdrop-filter]:bg-white/90">
+        <div className="mx-auto flex h-14 min-h-[3.5rem] max-w-6xl items-center justify-between gap-2 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:gap-3 sm:px-6 lg:px-8">
+          <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2" onClick={closeAll}>
+            <Logo size="sm" />
+            <span className="truncate text-sm font-bold tracking-tight text-[#0f766e] sm:text-base">Wohnungen</span>
+          </Link>
 
-        {showSkeleton ?
-          <div className="hidden flex-1 items-center justify-end gap-3 md:flex">
-            <div className="h-4 w-28 animate-pulse rounded bg-slate-200" />
-            <div className="h-8 w-24 animate-pulse rounded-lg bg-slate-200" />
-          </div>
-        : (
-          <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
-            {!signedIn ?
-              <nav className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-                <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
-                  Wohnungen suchen
-                </Link>
-                <Link
-                  href={WOHNEN_LOGIN_HREF}
-                  className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-                >
-                  Anmelden
-                </Link>
-                <Link
-                  href="/register"
-                  className="rounded-xl bg-[#18a87c] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
-                >
-                  Kostenlos registrieren
-                </Link>
-              </nav>
-            : (
-              <>
-                {renderDesktopNav()}
-                {renderAvatarDropdown()}
-              </>
-            )}
-          </div>
-        )}
+          {showSkeleton ?
+            <div className="hidden flex-1 items-center justify-end gap-3 md:flex">
+              <div className="h-4 w-28 animate-pulse rounded bg-slate-200" />
+              <div className="h-8 w-24 animate-pulse rounded-lg bg-slate-200" />
+            </div>
+          : (
+            <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
+              {!signedIn ?
+                <nav className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+                  <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
+                    Wohnungen suchen
+                  </Link>
+                  <Link
+                    href={WOHNEN_LOGIN_HREF}
+                    className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                  >
+                    Anmelden
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="rounded-xl bg-[#18a87c] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+                  >
+                    Kostenlos registrieren
+                  </Link>
+                </nav>
+              : (
+                <>
+                  {renderDesktopNav()}
+                  {renderAvatarDropdown()}
+                </>
+              )}
+            </div>
+          )}
 
-        <div className="flex items-center gap-2 md:hidden">
-          <button
-            type="button"
-            className="inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-teal-200 bg-white text-[#18a87c] shadow-sm"
-            aria-label={mobileOpen ? 'Menü schliessen' : 'Menü öffnen'}
-            onClick={() => setMobileOpen(o => !o)}
-          >
-            {mobileOpen ? <X className="h-6 w-6" strokeWidth={2} /> : <Menu className="h-6 w-6" strokeWidth={2} />}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <button
+              type="button"
+              className="inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-teal-200 bg-white text-[#18a87c] shadow-sm"
+              aria-expanded={mobileOpen}
+              aria-controls="wohnen-mobile-nav"
+              aria-label={mobileOpen ? 'Menü schliessen' : 'Menü öffnen'}
+              onClick={() => setMobileOpen(o => !o)}
+            >
+              {mobileOpen ? <X className="h-6 w-6" strokeWidth={2} /> : <Menu className="h-6 w-6" strokeWidth={2} />}
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <div className={`fixed inset-0 z-[60] md:hidden ${mobileOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+      <div
+        id="wohnen-mobile-nav"
+        className={`fixed inset-0 z-[100] md:hidden ${mobileOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        aria-hidden={!mobileOpen}
+      >
         <button
           type="button"
-          className={`absolute inset-0 bg-black/40 transition-opacity duration-[250ms] ease-out ${
+          className={`absolute inset-0 bg-black/45 transition-opacity duration-200 ease-out ${
             mobileOpen ? 'opacity-100' : 'opacity-0'
           }`}
           aria-label="Menü schliessen"
+          tabIndex={mobileOpen ? 0 : -1}
           onClick={() => setMobileOpen(false)}
         />
         <div
-          className={`absolute inset-y-0 right-0 flex w-[85vw] max-w-[360px] flex-col border-l border-slate-200 bg-white shadow-[-12px_0_24px_rgba(0,0,0,0.12)] transition-transform duration-[250ms] ease-out ${
+          className={`absolute inset-y-0 right-0 flex h-[100dvh] max-h-[100dvh] w-[min(100%,20rem)] flex-col border-l border-[#d4eee4] bg-white pt-[env(safe-area-inset-top,0px)] shadow-[-16px_0_40px_rgba(13,43,31,0.16)] transition-transform duration-200 ease-out ${
             mobileOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation"
         >
-          <div className="flex items-center justify-end border-b border-slate-100 px-4 py-3">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#e8f7f2] px-4 py-3 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(0.75rem,env(safe-area-inset-right,0px))]">
+            <p className="text-sm font-bold tracking-tight text-[#0d2b1f]">Menü</p>
             <button
               type="button"
-              className="inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
+              className="inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-[#5a7a6e] hover:bg-[#f0faf5] hover:text-[#0d2b1f]"
               aria-label="Schliessen"
               onClick={() => setMobileOpen(false)}
             >
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5" strokeWidth={2} />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto px-0 py-0 text-sm font-medium">{mobileNavLinks()}</div>
+          <nav className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom,0px))] text-sm font-medium">
+            {mobileNavLinks()}
+          </nav>
         </div>
       </div>
-    </header>
+    </>
   )
 }
