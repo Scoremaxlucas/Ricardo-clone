@@ -58,6 +58,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (result.code === 'NO_LANDLORD_NOTIFY_EMAIL') {
         return NextResponse.json({ message: result.message, error: 'NO_LANDLORD_NOTIFY_EMAIL' }, { status: 422 })
       }
+      if (result.code === 'LANDLORD_EMAIL_FAILED') {
+        return NextResponse.json({ message: result.message, error: 'LANDLORD_EMAIL_FAILED' }, { status: 503 })
+      }
       return NextResponse.json({ message: result.message }, { status: 404 })
     }
 

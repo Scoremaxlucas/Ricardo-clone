@@ -94,6 +94,22 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
           router.replace('/meine-bewerbungen?already=true')
           return
         }
+        if (data.code === 'LANDLORD_EMAIL_FAILED') {
+          setError(
+            typeof data.message === 'string' ?
+              data.message
+            : 'Die Benachrichtigung an den Vermieter konnte nicht versendet werden. Bitte versuche es in wenigen Minuten erneut.'
+          )
+          return
+        }
+        if (data.code === 'NO_LANDLORD_NOTIFY_EMAIL') {
+          setError(
+            typeof data.message === 'string' ?
+              data.message
+            : 'Für dieses Inserat ist keine gültige Vermieter-E-Mail hinterlegt — eine Bewerbung ist momentan nicht möglich.'
+          )
+          return
+        }
         setError(typeof data.message === 'string' ? data.message : 'Senden fehlgeschlagen')
         return
       }

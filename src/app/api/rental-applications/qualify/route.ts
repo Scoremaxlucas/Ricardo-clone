@@ -1,6 +1,7 @@
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { qualifyTenant } from '@/lib/rental/qualifyTenant'
+import { resolveLandlordApplicationNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -22,7 +23,15 @@ export async function GET(request: NextRequest) {
     prisma.tenantProfile.findUnique({ where: { userId } }),
     prisma.rentalListing.findUnique({
       where: { id: listingId },
-      select: { id: true, rentPerMonth: true, utilitiesPerMonth: true, status: true },
+      select: {
+        id: true,
+        rentPerMonth: true,
+        utilitiesPerMonth: true,
+        status: true,
+        landlordNotifyEmail: true,
+        landlordContact: true,
+        user: { select: { email: true } },
+      },
     }),
   ])
 
@@ -46,5 +55,25 @@ export async function GET(request: NextRequest) {
   }
 
   const result = qualifyTenant(profile, listing)
-  return NextResponse.json({ qualified: result.qualified, issues: result.reasons })
+  const issues = [...result.reasons]
+  let qualified = result.qualified
+
+  const landlordTo = resolveLandlordApplicationNotifyEmail({
+    landlordNotifyEmail: listing.landlordNotifyEmail,
+    landlordContactStored: listing.landlordContact,
+    ownerAccountEmail: listing.user?.email ?? null,
+  })
+  if (qualified && !landlordTo) {
+    qualified = false
+    issues.push({
+      code: 'NO_LANDLORD_NOTIFY_EMAIL',
+      message:
+        'Für dieses Inserat ist keine gültige Vermieter-E-Mail hinterlegt — Bewerbungen sind momentan nicht möglich.',
+      action: 'Zurück',
+      actionUrl: `/wohnungen/${listing.id}`,
+      blocking: true,
+    })
+  }
+
+  return NextResponse.json({ qualified, issues })
 }

@@ -8,7 +8,10 @@ import {
   todayYmdInZurich,
   validateListingExpiresOnForUpsert,
 } from '@/lib/rental/rental-listing-expiry-on'
-import { normalizeAndValidateLandlordNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
+import {
+  normalizeAndValidateLandlordNotifyEmail,
+  resolveLandlordApplicationNotifyEmail,
+} from '@/lib/rental/resolve-landlord-notify-email'
 import type { Prisma } from '@prisma/client'
 import { DeactivationReason, ImportSource, RentalListingStatus } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
@@ -220,6 +223,42 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     if (Object.keys(data).length === 0) {
       return NextResponse.json({ message: 'Keine Felder zum Aktualisieren' }, { status: 400 })
+    }
+
+    const finalStatusAdmin = (typeof body.status === 'string' ? body.status : existing.status) as RentalListingStatus
+    if (finalStatusAdmin === 'active' && !onlyNeedsExpiryReviewDismiss) {
+      let effNotify: string | null = existing.landlordNotifyEmail
+      if ('landlordNotifyEmail' in data) {
+        effNotify =
+          data.landlordNotifyEmail === null ?
+            null
+          : typeof data.landlordNotifyEmail === 'string' ?
+            data.landlordNotifyEmail
+          : existing.landlordNotifyEmail
+      }
+      let nextContactStored: string | null = existing.landlordContact
+      if (typeof body.landlordContactPlain === 'string') {
+        const t = body.landlordContactPlain.trim()
+        nextContactStored = t ? encryptLandlordContactForStorage(t) : null
+      }
+      const owner = await prisma.user.findUnique({
+        where: { id: existing.userId },
+        select: { email: true },
+      })
+      const resolved = resolveLandlordApplicationNotifyEmail({
+        landlordNotifyEmail: effNotify,
+        landlordContactStored: nextContactStored,
+        ownerAccountEmail: owner?.email ?? null,
+      })
+      if (!resolved) {
+        return NextResponse.json(
+          {
+            message:
+              'Für ein aktives Inserat muss eine gültige E-Mail für Bewerbungs-Benachrichtigungen erreichbar sein (Feld «E-Mail für Bewerbungen», oder E-Mail im Vermieter-Kontakt, oder die E-Mail des Helvenda-Kontos des Inserats-Inhabers).',
+          },
+          { status: 400 },
+        )
+      }
     }
 
     const updated = await prisma.rentalListing.update({

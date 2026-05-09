@@ -12,6 +12,8 @@ export type CreateRentalApplicationErrorCode =
   | 'ALREADY_APPLIED'
   | 'NO_EMAIL'
   | 'NO_LANDLORD_NOTIFY_EMAIL'
+  /** Vermieter-Lead-Mail technisch fehlgeschlagen — Bewerbung wird zurückgerollt. */
+  | 'LANDLORD_EMAIL_FAILED'
 
 export type CreateRentalApplicationResult =
   | { ok: true; applicationId: string }
@@ -167,8 +169,8 @@ export async function createQualifiedRentalApplication(params: {
     select: { certificateCode: true },
   })
 
-  const emailResults = await Promise.allSettled([
-    sendRentalLandlordNewApplicationEmail({
+  try {
+    await sendRentalLandlordNewApplicationEmail({
       landlordEmail: landlordNotifyTo,
       landlordUserId: listing.userId,
       landlordFirst: listing.user,
@@ -186,8 +188,23 @@ export async function createQualifiedRentalApplication(params: {
       referenceName: tenantProfile.referenceName,
       referencePhone: tenantProfile.referencePhone,
       certificateCode: activeCert?.certificateCode ?? null,
-    }),
-    sendRentalApplicantSuccessEmail({
+    })
+  } catch (err) {
+    await prisma.rentalApplication.delete({ where: { id: applicationId } }).catch(() => {
+      /* ignore secondary failure */
+    })
+    console.error('[createQualifiedRentalApplication] Vermieter-Benachrichtigung fehlgeschlagen', err)
+    return {
+      ok: false,
+      status: 503,
+      code: 'LANDLORD_EMAIL_FAILED',
+      message:
+        'Die Benachrichtigung an den Vermieter konnte nicht versendet werden. Bitte versuche es in wenigen Minuten erneut. Es wurde keine Bewerbung gespeichert.',
+    }
+  }
+
+  try {
+    await sendRentalApplicantSuccessEmail({
       applicantEmail: applicantContactEmail,
       applicantUserId: userId,
       applicantFirst: applicant,
@@ -195,13 +212,13 @@ export async function createQualifiedRentalApplication(params: {
       addressLine,
       rooms: listing.rooms,
       rentPerMonth: listing.rentPerMonth,
-    }),
-  ])
-  emailResults.forEach((r, i) => {
-    if (r.status === 'rejected') {
-      console.error('[createQualifiedRentalApplication] E-Mail fehlgeschlagen', { index: i, reason: r.reason })
-    }
-  })
+    })
+  } catch (err) {
+    console.error(
+      '[createQualifiedRentalApplication] Bestätigungs-Mail an Mieter fehlgeschlagen (Bewerbung bleibt, Vermieter wurde informiert)',
+      err
+    )
+  }
 
   return { ok: true, applicationId }
 }
