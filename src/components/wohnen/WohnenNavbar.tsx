@@ -400,6 +400,7 @@ export function WohnenNavbar() {
 
     if (showAuszugPill) {
       const onBetreibungsPage = isBetreibungsregisterPath(pathname)
+      const onZertifikatPage = pathname === '/zertifikat'
       return (
         <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-2 md:flex md:gap-3">
           <Link href="/wohnungen" className={navLinkClass(pathname.startsWith('/wohnungen'))}>
@@ -415,6 +416,8 @@ export function WohnenNavbar() {
             >
               Zum Profil
             </Link>
+          : onZertifikatPage ?
+            null
           : <Link
               href="/profil/betreibungsregister"
               className="rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-orange-600"
@@ -803,6 +806,8 @@ export function WohnenNavbar() {
               <Link href="/profil" className={mobileDrawerLink} onClick={closeAll}>
                 Zum Profil
               </Link>
+            : pathname === '/zertifikat' ?
+              null
             : <Link
                 href="/profil/betreibungsregister"
                 className={`${mobileDrawerLink} bg-orange-50 font-semibold text-orange-950`}

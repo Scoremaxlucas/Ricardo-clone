@@ -23,10 +23,13 @@ type IssueResponse =
 
 export type ZertifikatGateMessage = {
   tone: 'milestone' | 'error'
+  eyebrow?: string
   title: string
+  acknowledgment?: string
   body: string
   href: string
   cta: string
+  footnote?: string
 }
 
 function creditPending(status: string): boolean {
@@ -44,54 +47,69 @@ function gateMessageFromEligibility(
     case 'PROFILE_INCOMPLETE':
       return {
         tone: 'milestone',
+        eyebrow: 'Helvenda Qualitätsnachweis',
         title: 'Profil vervollständigen',
         body: 'Bitte ergänze zuerst dein Mieterprofil — danach wird der Qualitätsnachweis freigeschaltet.',
         href: '/profil/bearbeiten',
         cta: 'Profil bearbeiten',
+        footnote: 'Ein vollständiges Profil ist die Basis für alle verifizierten Bewerbungen auf Helvenda.',
       }
     case 'CREDIT_CHECK_NOT_APPROVED': {
       if (opts.postProfileOnboarding) {
         if (pending) {
           return {
             tone: 'milestone',
-            title: 'Profil vollständig — Auszug wird geprüft',
-            body: 'Danke für deine Angaben. Dein Betreibungsregisterauszug ist bei uns eingegangen und wird gerade geprüft. Sobald die Freigabe da ist, kannst du hier deinen Qualitätsnachweis mit einem Klick ausstellen (PDF und Prüf-Link für Bewerbungen auch ausserhalb von Helvenda).',
+            eyebrow: 'Helvenda Qualitätsnachweis',
+            title: 'Auszug wird geprüft',
+            acknowledgment: 'Danke — dein Profil ist vollständig und gespeichert.',
+            body: 'Dein Betreibungsregisterauszug ist eingegangen und wird gerade von uns geprüft. Sobald die Freigabe da ist, stellst du hier deinen Qualitätsnachweis mit einem Klick aus: PDF und öffentlicher Prüf-Link, einsetzbar auch bei anderen Portalen und direkt beim Vermieter.',
             href: '/profil/betreibungsregister',
-            cta: 'Zum Upload & Status',
+            cta: 'Upload & Status anzeigen',
+            footnote: 'Du erhältst eine E-Mail, sobald die Prüfung abgeschlossen ist.',
           }
         }
         return {
           tone: 'milestone',
-          title: 'Profil vollständig — fast geschafft',
-          body: 'Danke für deine Angaben. Als Nächstes brauchen wir einen verifizierten Betreibungsregisterauszug. Sobald er freigegeben ist, stellst du deinen Helvenda-Qualitätsnachweis hier mit einem Klick aus — inklusive PDF und Prüf-Link für Vermieter und andere Portale.',
+          eyebrow: 'Helvenda Qualitätsnachweis',
+          title: 'Profil vollständig — ein Schritt zum Nachweis',
+          acknowledgment: 'Danke. Wir haben deine Angaben sicher übernommen; das Mieterprofil ist vollständig.',
+          body: 'Als Nächstes laden wir gemeinsam deinen Betreibungsregisterauszug hoch. Nach der Freigabe durch Helvenda stellst du hier deinen Qualitätsnachweis mit einem Klick aus — inklusive PDF und Prüf-Link für Vermieter und andere Portale.',
           href: '/profil/betreibungsregister',
-          cta: 'Betreibungsregister hochladen',
+          cta: 'Jetzt Betreibungsregister hochladen',
+          footnote:
+            'In der Regel nur wenige Minuten. Deine Unterlagen werden vertraulich und ausschliesslich für die Verifizierung genutzt.',
         }
       }
       if (pending) {
         return {
           tone: 'milestone',
+          eyebrow: 'Helvenda Qualitätsnachweis',
           title: 'Betreibungsregister wird geprüft',
           body: 'Dein Auszug ist eingegangen. Sobald die Prüfung abgeschlossen ist, kannst du den Qualitätsnachweis hier ausstellen. Du wirst per E-Mail informiert.',
           href: '/profil/betreibungsregister',
           cta: 'Upload & Status',
+          footnote: 'Prüfung in der Regel innerhalb eines Werktags.',
         }
       }
       return {
         tone: 'milestone',
+        eyebrow: 'Helvenda Qualitätsnachweis',
         title: 'Nächster Schritt: Betreibungsregister',
         body: 'Für den Helvenda-Qualitätsnachweis brauchen wir einen verifizierten Betreibungsregisterauszug. Nach dem Upload prüfen wir den Auszug — danach kannst du dein Zertifikat hier ausstellen.',
         href: '/profil/betreibungsregister',
         cta: 'Zum Betreibungsregister',
+        footnote: 'Der Nachweis bleibt gültig, solange dein Auszug gültig ist — und funktioniert auch ausserhalb von Helvenda.',
       }
     }
     case 'CREDIT_CHECK_EXPIRED':
       return {
         tone: 'milestone',
+        eyebrow: 'Helvenda Qualitätsnachweis',
         title: 'Betreibungsregister erneuern',
         body: 'Dein letzter Auszug ist nicht mehr gültig. Bitte lade einen aktuellen Auszug hoch — danach kannst du den Qualitätsnachweis wieder ausstellen.',
         href: '/profil/betreibungsregister',
         cta: 'Neuen Auszug hochladen',
+        footnote: 'So bleibt dein Nachweis für Vermieter und Portale nachvollziehbar aktuell.',
       }
     default:
       return {
@@ -185,7 +203,7 @@ export function ZertifikatClient({
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center bg-[#f5fdfb] px-5 pb-14 pt-20 sm:pt-24">
-      <div className="w-full max-w-md text-center">
+      <div className="w-full max-w-xl text-center">
         {phase === 'success' && code ?
           <>
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#e8f7f2] text-[#107a5a]">
@@ -263,40 +281,84 @@ export function ZertifikatClient({
             <p className="mt-10 text-base font-semibold text-[#0d2b1f]">Zertifikat wird ausgestellt…</p>
           </>
         : phase === 'error' && gate ?
-          <>
-            {gate.tone === 'milestone' ?
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#e8f7f2] text-[#18a87c]">
+          gate.tone === 'milestone' ?
+            <div className="mx-auto w-full max-w-lg rounded-2xl border border-[#bfe8d4] bg-white px-7 py-10 shadow-[0_24px_64px_-28px_rgba(13,43,31,0.18)] sm:px-10 sm:py-12">
+              {gate.eyebrow ?
+                <p className="text-center text-[11px] font-bold uppercase tracking-[0.16em] text-[#18a87c]">
+                  {gate.eyebrow}
+                </p>
+              : null}
+              <div className="mx-auto mt-5 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-[#e8f7f2] text-[#18a87c] ring-1 ring-[#18a87c]/20">
                 <CheckCircle2 className="h-11 w-11" strokeWidth={2} aria-hidden />
               </div>
-            : <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <h1 className="mt-7 text-[1.35rem] font-extrabold leading-tight tracking-[-0.02em] text-[#0d2b1f] sm:text-[1.65rem]">
+                {gate.title}
+              </h1>
+              {gate.acknowledgment ?
+                <p className="mx-auto mt-5 max-w-md text-[1.0625rem] font-semibold leading-snug text-[#0d2b1f]">
+                  {gate.acknowledgment}
+                </p>
+              : null}
+              <p
+                className={`mx-auto max-w-md text-sm leading-relaxed text-[#5a7a6e] sm:text-[15px] ${gate.acknowledgment ? 'mt-4' : 'mt-5'}`}
+              >
+                {gate.body}
+              </p>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                <Link
+                  href={gate.href}
+                  className="inline-flex min-h-[52px] min-w-[min(100%,16rem)] items-center justify-center rounded-xl bg-[#18a87c] px-8 py-3.5 text-[15px] font-bold text-white shadow-md transition hover:opacity-95"
+                >
+                  {gate.cta}
+                </Link>
+                {eligible ?
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhase('ready')
+                      setGate(null)
+                    }}
+                    className="inline-flex items-center justify-center rounded-xl border-2 border-[#18a87c] px-6 py-3 text-sm font-bold text-[#107a5a] hover:bg-[#f5fdfb]"
+                  >
+                    Erneut versuchen
+                  </button>
+                : null}
+              </div>
+              {gate.footnote ?
+                <p className="mx-auto mt-8 max-w-md border-t border-slate-100 pt-6 text-center text-xs leading-relaxed text-[#8aa89e]">
+                  {gate.footnote}
+                </p>
+              : null}
+            </div>
+          : <>
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-600">
                 <span className="text-2xl font-bold" aria-hidden>
                   !
                 </span>
               </div>
-            }
-            <h1 className="mt-8 text-xl font-extrabold text-[#0d2b1f] sm:text-2xl">{gate.title}</h1>
-            <p className="mt-3 text-sm leading-relaxed text-[#5a7a6e]">{gate.body}</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Link
-                href={gate.href}
-                className="inline-flex items-center justify-center rounded-xl bg-[#18a87c] px-6 py-3 text-sm font-bold text-white shadow-md hover:opacity-95"
-              >
-                {gate.cta}
-              </Link>
-              {eligible ?
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPhase('ready')
-                    setGate(null)
-                  }}
-                  className="inline-flex items-center justify-center rounded-xl border-2 border-[#18a87c] px-6 py-3 text-sm font-bold text-[#107a5a] hover:bg-white/80"
+              <h1 className="mt-8 text-xl font-extrabold text-[#0d2b1f] sm:text-2xl">{gate.title}</h1>
+              <p className="mt-3 text-sm leading-relaxed text-[#5a7a6e]">{gate.body}</p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                <Link
+                  href={gate.href}
+                  className="inline-flex items-center justify-center rounded-xl bg-[#18a87c] px-6 py-3 text-sm font-bold text-white shadow-md hover:opacity-95"
                 >
-                  Erneut versuchen
-                </button>
-              : null}
-            </div>
-          </>
+                  {gate.cta}
+                </Link>
+                {eligible ?
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhase('ready')
+                      setGate(null)
+                    }}
+                    className="inline-flex items-center justify-center rounded-xl border-2 border-[#18a87c] px-6 py-3 text-sm font-bold text-[#107a5a] hover:bg-white/80"
+                  >
+                    Erneut versuchen
+                  </button>
+                : null}
+              </div>
+            </>
         : (
           <>
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#e8f7f2]">
