@@ -1,3 +1,4 @@
+import { logAdminAudit } from '@/lib/admin/auditLog'
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
@@ -266,6 +267,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       data,
     })
 
+    if (session.user?.id) {
+      await logAdminAudit({
+        adminUserId: session.user.id,
+        action: 'RENTAL_LISTING_PATCH',
+        entityType: 'RentalListing',
+        entityId: id,
+        metadata: {
+          bodyKeys: Object.keys(body).slice(0, 48),
+          patchedFields: Object.keys(data),
+        },
+      })
+    }
+
     revalidatePath('/admin/listings')
     revalidatePath(`/admin/listings/${id}/bearbeiten`)
     revalidatePath('/wohnungen')
@@ -298,6 +312,16 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     const existing = await prisma.rentalListing.findFirst({ where: { id }, select: { id: true } })
     if (!existing) {
       return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 })
+    }
+
+    if (session.user?.id) {
+      await logAdminAudit({
+        adminUserId: session.user.id,
+        action: 'RENTAL_LISTING_DELETE',
+        entityType: 'RentalListing',
+        entityId: id,
+        metadata: {},
+      })
     }
 
     await prisma.rentalListing.delete({ where: { id } })

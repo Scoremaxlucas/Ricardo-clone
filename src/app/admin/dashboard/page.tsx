@@ -23,9 +23,9 @@ import {
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 
 interface Stats {
   totalUsers: number
@@ -40,6 +40,12 @@ interface Stats {
   verifiedUsers: number
   pendingDisputes: number
   pendingPayoutChangeRequests?: number
+  pendingContactRequests?: number
+  openInvoicesNeedingAction?: number
+  wohnenActiveListings?: number
+  wohnenApplicationsLast7Days?: number
+  wohnenOutboxAlerts?: number
+  wohnenNeedsExpiryReview?: number
 }
 
 export default function AdminDashboard() {
@@ -78,6 +84,13 @@ export default function AdminDashboard() {
         verifiedUsers: Number(data.verifiedUsers) || 0,
         pendingVerifications: Number(data.pendingVerifications) || 0,
         pendingDisputes: Number(data.pendingDisputes) || 0,
+        pendingPayoutChangeRequests: Number(data.pendingPayoutChangeRequests) || 0,
+        pendingContactRequests: Number(data.pendingContactRequests) || 0,
+        openInvoicesNeedingAction: Number(data.openInvoicesNeedingAction) || 0,
+        wohnenActiveListings: Number(data.wohnenActiveListings) || 0,
+        wohnenApplicationsLast7Days: Number(data.wohnenApplicationsLast7Days) || 0,
+        wohnenOutboxAlerts: Number(data.wohnenOutboxAlerts) || 0,
+        wohnenNeedsExpiryReview: Number(data.wohnenNeedsExpiryReview) || 0,
       }
 
       setStats(cleanedData)
@@ -257,7 +270,7 @@ export default function AdminDashboard() {
             icon={AlertCircle}
             href="/admin/contact-requests"
             color="blue"
-            badge={0}
+            badge={stats?.pendingContactRequests || 0}
           />
           <ActionCard
             title={t.admin.dashboard.statistics}
@@ -282,7 +295,7 @@ export default function AdminDashboard() {
             icon={Receipt}
             href="/admin/invoices"
             color="red"
-            badge={0}
+            badge={stats?.openInvoicesNeedingAction || 0}
           />
           <ActionCard
             title={t.admin.dashboard.manageDisputes}
@@ -337,8 +350,19 @@ export default function AdminDashboard() {
           <ActionCard
             title="Helvenda Wohnen (Admin)"
             icon={Shield}
-            href={`${WOHNEN_SITE_ORIGIN}/admin/wohnen`}
+            href={`${WOHNEN_SITE_ORIGIN}/admin/wohnen/betrieb`}
             color="teal"
+            external
+            badge={
+              (stats?.wohnenOutboxAlerts || 0) + (stats?.wohnenNeedsExpiryReview || 0) > 0 ?
+                (stats?.wohnenOutboxAlerts || 0) + (stats?.wohnenNeedsExpiryReview || 0)
+              : undefined
+            }
+            subtitle={
+              stats ?
+                `${stats.wohnenActiveListings ?? 0} aktive Inserate · ${stats.wohnenApplicationsLast7Days ?? 0} Bewerbungen (7 T.)`
+              : undefined
+            }
           />
         </div>
       </div>
@@ -397,12 +421,16 @@ function ActionCard({
   href,
   color,
   badge,
+  external,
+  subtitle,
 }: {
   title: string
   icon: any
   href: string
   color: string
   badge?: number
+  external?: boolean
+  subtitle?: string
 }) {
   const colorClasses = {
     blue: 'text-blue-600 bg-blue-50',
@@ -416,23 +444,38 @@ function ActionCard({
     teal: 'text-teal-600 bg-teal-50',
   }
 
+  const inner = (
+    <div className="rounded-lg bg-white p-6 shadow transition-shadow hover:shadow-md">
+      <div className="flex items-center justify-between">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className={`${colorClasses[color as keyof typeof colorClasses]} shrink-0 rounded-lg p-2`}>
+            <Icon className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            {subtitle ?
+              <p className="mt-1 truncate text-xs text-gray-500">{subtitle}</p>
+            : null}
+          </div>
+        </div>
+        {badge !== undefined && badge > 0 && (
+          <span className="shrink-0 rounded-full bg-red-500 px-2 py-1 text-xs font-semibold text-white">{badge}</span>
+        )}
+      </div>
+    </div>
+  )
+
+  if (external) {
+    return (
+      <a href={href} className="block" rel="noopener noreferrer">
+        {inner}
+      </a>
+    )
+  }
+
   return (
     <Link href={href} className="block">
-      <div className="rounded-lg bg-white p-6 shadow transition-shadow hover:shadow-md">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`${colorClasses[color as keyof typeof colorClasses]} rounded-lg p-2`}>
-              <Icon className="h-5 w-5" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          </div>
-          {badge !== undefined && badge > 0 && (
-            <span className="rounded-full bg-red-500 px-2 py-1 text-xs font-semibold text-white">
-              {badge}
-            </span>
-          )}
-        </div>
-      </div>
+      {inner}
     </Link>
   )
 }

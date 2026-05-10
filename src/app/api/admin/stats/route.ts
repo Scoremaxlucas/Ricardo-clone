@@ -9,6 +9,7 @@ import { shouldShowDetailedErrors } from '@/lib/env'
 import { requireAdmin } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
 import { prismaWherePendingSellerVerificationReview } from '@/lib/verification'
+import { RentalListingStatus } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -43,6 +44,16 @@ export async function GET(request: NextRequest) {
 
       // Payout Change Requests
       pendingPayoutChangeRequests,
+
+      // Kontakt / Rechnungen (Dashboard-Badges)
+      openContactRequests,
+      openInvoicesNeedingAction,
+
+      // Helvenda Wohnen (Kurz-KPIs für Haupt-Dashboard)
+      wohnenActiveListings,
+      wohnenApplicationsLast7Days,
+      wohnenOutboxAlerts,
+      wohnenNeedsExpiryReview,
     ] = await Promise.all([
       // Benutzer
       prisma.user.count(),
@@ -103,6 +114,29 @@ export async function GET(request: NextRequest) {
       prisma.payoutChangeRequest.count({
         where: { status: 'PENDING' },
       }),
+
+      prisma.contactRequest.count({
+        where: { status: { in: ['pending', 'in_progress'] } },
+      }),
+
+      prisma.invoice.count({
+        where: {
+          status: { in: ['pending', 'overdue'] },
+          collectionStopped: false,
+        },
+      }),
+
+      prisma.rentalListing.count({ where: { status: RentalListingStatus.active } }),
+
+      prisma.rentalApplication.count({
+        where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+      }),
+
+      prisma.wohnenEmailOutbox.count({
+        where: { status: { in: ['pending', 'failed'] } },
+      }),
+
+      prisma.rentalListing.count({ where: { needsExpiryReview: true } }),
     ])
 
     // Berechne Umsatz aus Orders (korrekte Datenquelle)
@@ -142,6 +176,12 @@ export async function GET(request: NextRequest) {
       // Zusätzliche Stats für bessere Übersicht
       totalOrders: orders.length,
       completedOrders: completedOrders.length,
+      pendingContactRequests: openContactRequests || 0,
+      openInvoicesNeedingAction: openInvoicesNeedingAction || 0,
+      wohnenActiveListings: wohnenActiveListings || 0,
+      wohnenApplicationsLast7Days: wohnenApplicationsLast7Days || 0,
+      wohnenOutboxAlerts: wohnenOutboxAlerts || 0,
+      wohnenNeedsExpiryReview: wohnenNeedsExpiryReview || 0,
     }
 
     return NextResponse.json(result)

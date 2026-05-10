@@ -1870,6 +1870,53 @@ model RentalApplication {
   @@map("rental_applications")
 }
 
+/** Wohnen: zuverlässiger E-Mail-Versand (Retry via Cron), z. B. Mieter-Bestätigung nach Bewerbung. */
+enum WohnenEmailOutboxKind {
+  TENANT_APPLICATION_CONFIRM
+}
+
+enum WohnenEmailOutboxStatus {
+  pending
+  sending
+  sent
+  failed
+  cancelled
+}
+
+model WohnenEmailOutbox {
+  id                  String                  @id @default(cuid())
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  kind                WohnenEmailOutboxKind
+  dedupeKey           String                  @unique
+  status              WohnenEmailOutboxStatus @default(pending)
+  attempts            Int                     @default(0)
+  nextAttemptAt       DateTime                @default(now())
+  lastError           String?                 @db.Text
+  sentAt              DateTime?
+  payload             Json
+  rentalApplicationId String?
+  applicantUserId     String?
+
+  @@index([status, nextAttemptAt])
+  @@map("wohnen_email_outbox")
+}
+
+/// Admin-Aktionen (Compliance / Support) — keine sensiblen Inhalte, nur Metadaten.
+model AdminAuditLog {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  adminUserId String
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?
+
+  @@index([entityType, entityId])
+  @@index([adminUserId, createdAt])
+  @@map("admin_audit_logs")
+}
+
 // ============================================
 // HELVENDA WOHNEN — Mieterprofil (Phase 3)
 // ============================================

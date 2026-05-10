@@ -1,13 +1,13 @@
+import { getWohnenAdminOverview } from '@/lib/admin/wohnen-admin-overview'
 import { authOptions } from '@/lib/auth'
 import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
-import { prisma } from '@/lib/prisma'
-import { CreditCheckStatus, RentalApplicationStatus, RentalListingStatus } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
 import type { Metadata } from 'next'
 import type { LucideIcon } from 'lucide-react'
 import {
+  Activity,
   ArrowUpRight,
   Building2,
   ClipboardList,
@@ -34,23 +34,12 @@ export default async function AdminWohnenDashboardPage() {
   if (!session?.user?.id) redirect('/login?callbackUrl=' + encodeURIComponent('/admin/wohnen'))
   if (!(await isAdmin(session))) throwAdminForbidden()
 
-  const [
-    activeListings,
-    applicationsTotal,
-    applicationsPendingReview,
-    applicationsPendingCredit,
-    creditPendingManual,
-  ] = await Promise.all([
-    prisma.rentalListing.count({ where: { status: RentalListingStatus.active } }),
-    prisma.rentalApplication.count(),
-    prisma.rentalApplication.count({ where: { status: RentalApplicationStatus.pending_manual_review } }),
-    prisma.rentalApplication.count({ where: { status: RentalApplicationStatus.pending_credit_check } }),
-    prisma.tenantProfile.count({ where: { creditCheckStatus: CreditCheckStatus.PENDING_MANUAL_REVIEW } }),
-  ])
-
+  const overview = await getWohnenAdminOverview()
   const shopAdminUrl = `${MAIN_SHOP_ORIGIN}/admin/dashboard`
 
-  const pendingApps = applicationsPendingReview + applicationsPendingCredit
+  const pendingApps = overview.applicationsPendingReview + overview.applicationsPendingCredit
+  const opsAttention =
+    overview.outboxPending + overview.outboxFailed + overview.needsExpiryReview + overview.listingsUrlConcern
 
   const cards: Array<{
     href: string
@@ -63,11 +52,18 @@ export default async function AdminWohnenDashboardPage() {
     external?: boolean
   }> = [
     {
+      href: '/admin/wohnen/betrieb',
+      title: 'Betrieb & Monitoring',
+      desc: 'E-Mail-Outbox, Crons, URL-Auffälligkeiten, Gültigkeit',
+      icon: Activity,
+      badge: opsAttention > 0 ? opsAttention : undefined,
+    },
+    {
       href: '/admin/listings',
       title: 'Mietinserate',
       desc: 'Alle Inserate, Status, Aktionen',
       icon: Building2,
-      stat: activeListings,
+      stat: overview.activeListings,
       statLabel: 'aktiv',
     },
     {
@@ -99,7 +95,7 @@ export default async function AdminWohnenDashboardPage() {
       title: 'Bewerbungen',
       desc: 'Mietanfragen & Status',
       icon: ClipboardList,
-      stat: applicationsTotal,
+      stat: overview.applicationsTotal,
       statLabel: 'total',
       badge: pendingApps > 0 ? pendingApps : undefined,
     },
@@ -114,7 +110,7 @@ export default async function AdminWohnenDashboardPage() {
       title: 'Manuelle Reviews',
       desc: 'Betreibungsregisterauszüge — Marktplatz-Admin (www)',
       icon: Shield,
-      stat: creditPendingManual,
+      stat: overview.creditPendingManual,
       statLabel: 'offen',
       external: true,
     },
@@ -136,6 +132,25 @@ export default async function AdminWohnenDashboardPage() {
           Übersicht und Schnellzugriff für Mieten, Inserate und Matching. Den vollständigen Marktplatz-Admin (Uhren,
           Orders, …) findest du auf der Hauptdomain.
         </p>
+
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {[
+            { k: 'Aktiv', v: overview.activeListings },
+            { k: 'Archiviert', v: overview.archivedListings },
+            { k: 'Bewerbungen (7 T.)', v: overview.applicationsLast7Days },
+            { k: 'Bew. genehmigt', v: overview.applicationsApproved },
+            { k: 'HLV-Zert. aktiv', v: overview.activeCertificates },
+            { k: 'Outbox offen', v: overview.outboxPending + overview.outboxFailed },
+          ].map(x => (
+            <div
+              key={x.k}
+              className="rounded-xl border border-slate-200 bg-[#fafdfb] px-3 py-3 text-center ring-1 ring-slate-100"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{x.k}</p>
+              <p className="mt-1 text-xl font-bold text-slate-900">{x.v}</p>
+            </div>
+          ))}
+        </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {cards.map(c => {
@@ -160,7 +175,7 @@ export default async function AdminWohnenDashboardPage() {
                   : null}
                   {c.badge !== undefined && c.badge > 0 ?
                     <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-900">
-                      {c.badge} wartend
+                      {c.badge} offen
                     </span>
                   : null}
                 </div>

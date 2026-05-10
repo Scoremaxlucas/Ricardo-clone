@@ -90,6 +90,10 @@
     {
       "path": "/api/cron/rental-listing-expiry",
       "schedule": "30 6 * * *"
+    },
+    {
+      "path": "/api/cron/wohnen-email-outbox",
+      "schedule": "*/10 * * * *"
     }
   ]
 }

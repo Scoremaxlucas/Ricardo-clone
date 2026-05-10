@@ -1,4 +1,5 @@
 import { CertificateStatus, Prisma } from '@prisma/client'
+import { enqueueTenantApplicationConfirmEmail } from '@/lib/wohnen/email-outbox'
 import { sendRentalApplicantSuccessEmail, sendRentalLandlordNewApplicationEmail } from '@/lib/rental/emails'
 import { prisma } from '@/lib/prisma'
 import { qualifyTenant, type QualificationIssue } from '@/lib/rental/qualifyTenant'
@@ -274,9 +275,26 @@ export async function createQualifiedRentalApplication(params: {
     })
   } catch (err) {
     console.error(
-      '[createQualifiedRentalApplication] Bestätigungs-Mail an Mieter fehlgeschlagen (Bewerbung bleibt, Vermieter wurde informiert)',
-      err
+      '[createQualifiedRentalApplication] Bestätigungs-Mail an Mieter fehlgeschlagen — Outbox für Retry (Vermieter wurde informiert)',
+      err,
     )
+    try {
+      await enqueueTenantApplicationConfirmEmail({
+        rentalApplicationId: applicationId,
+        applicantUserId: userId,
+        payload: {
+          applicantEmail: applicantContactEmail,
+          applicantUserId: userId,
+          applicantFirst: applicant,
+          listingTitle: listing.title,
+          addressLine,
+          rooms: listing.rooms,
+          rentPerMonth: listing.rentPerMonth,
+        },
+      })
+    } catch (enqueueErr) {
+      console.error('[createQualifiedRentalApplication] Outbox enqueue Mieter-Mail fehlgeschlagen', enqueueErr)
+    }
   }
 
   return { ok: true, applicationId }

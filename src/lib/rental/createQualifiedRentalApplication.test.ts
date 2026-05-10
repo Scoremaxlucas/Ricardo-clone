@@ -14,6 +14,7 @@ const prisma = vi.hoisted(() => ({
   },
   user: { findUnique: vi.fn() },
   helvendaCertificate: { findFirst: vi.fn() },
+  wohnenEmailOutbox: { create: vi.fn() },
 }))
 
 vi.mock('@/lib/prisma', () => ({
@@ -89,8 +90,24 @@ describe('createQualifiedRentalApplication', () => {
       nickname: null,
     } as never)
     p.helvendaCertificate.findFirst.mockResolvedValue(null)
+    p.wohnenEmailOutbox.create.mockResolvedValue({ id: 'obx1' } as never)
     vi.mocked(sendRentalLandlordNewApplicationEmail).mockResolvedValue(undefined)
     vi.mocked(sendRentalApplicantSuccessEmail).mockResolvedValue(undefined)
+  })
+
+  it('enqueues outbox when applicant confirmation mail fails', async () => {
+    vi.mocked(sendRentalApplicantSuccessEmail).mockRejectedValueOnce(new Error('smtp down'))
+
+    const result = await createQualifiedRentalApplication({
+      userId: 'applicant_user',
+      rentalListingId: 'listing_1',
+      message: null,
+    })
+
+    expect(result).toEqual({ ok: true, applicationId: 'app_new' })
+    expect(p.wohnenEmailOutbox.create).toHaveBeenCalled()
+    const createArg = p.wohnenEmailOutbox.create.mock.calls[0]?.[0] as { data?: { kind?: string } }
+    expect(createArg?.data?.kind).toBe('TENANT_APPLICATION_CONFIRM')
   })
 
   it('returns ok when landlord mail and applicant mail succeed', async () => {
