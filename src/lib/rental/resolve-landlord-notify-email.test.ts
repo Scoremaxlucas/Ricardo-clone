@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  extractFirstEmailFromText,
+  extractBestEmailFromPlaintext,
   normalizeAndValidateLandlordNotifyEmail,
   resolveLandlordApplicationNotifyEmail,
 } from '@/lib/rental/resolve-landlord-notify-email'
@@ -14,9 +14,19 @@ describe('normalizeAndValidateLandlordNotifyEmail', () => {
   })
 })
 
-describe('extractFirstEmailFromText', () => {
-  it('finds first address', () => {
-    expect(extractFirstEmailFromText('Tel 079 … mail a@b.co und c@d.ch')).toBe('a@b.co')
+describe('extractBestEmailFromPlaintext', () => {
+  it('prefers last non-system address when several appear', () => {
+    expect(extractBestEmailFromPlaintext('Tel 079 … mail a@b.co und c@d.ch')).toBe('c@d.ch')
+  })
+
+  it('skips noreply when a person address exists', () => {
+    expect(
+      extractBestEmailFromPlaintext('Bitte an noreply@portal.ch — direkt: vermieter@example.com'),
+    ).toBe('vermieter@example.com')
+  })
+
+  it('falls back to noreply if it is the only address', () => {
+    expect(extractBestEmailFromPlaintext('Antwort an noreply@only.invalid')).toBe('noreply@only.invalid')
   })
 })
 
@@ -31,7 +41,7 @@ describe('resolveLandlordApplicationNotifyEmail', () => {
     ).toBe('direct@example.com')
   })
 
-  it('uses first email from plain stored contact', () => {
+  it('uses email from plain stored contact', () => {
     expect(
       resolveLandlordApplicationNotifyEmail({
         landlordNotifyEmail: null,

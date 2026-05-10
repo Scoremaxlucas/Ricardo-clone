@@ -72,7 +72,8 @@ export function mapAiImportToRentalLandlordInitial(ai: ImportListingAiResult): R
     availableFrom: avail || new Date().toISOString().slice(0, 10),
     requiresCreditCheck: true,
     photos: [],
-    status: 'active',
+    /** Nicht sofort «live»: Aktivierung läuft über Speichern/Aktivieren mit erreichbarer Vermieter-Mail. */
+    status: 'archived',
     listingExpiresOn: null,
     landlordNotifyEmail: null,
     importedFrom: null,

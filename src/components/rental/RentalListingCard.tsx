@@ -3,7 +3,7 @@
 import { isVercelBlobImageUrl } from '@/lib/rental/remote-image'
 import { formatCHF } from '@/lib/utils/formatCurrency'
 import { formatDate } from '@/lib/utils/formatDate'
-import { Building2, Calendar, MapPin } from 'lucide-react'
+import { Building2, Calendar, Check, MapPin } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
@@ -85,8 +85,9 @@ function ListingQualificationBadge({ listingId }: { listingId: string }) {
 
   if (!qualified) return null
   return (
-    <span className="shrink-0 whitespace-nowrap rounded-[20px] bg-emerald-600 px-2 py-[3px] text-[11px] font-semibold text-white shadow-sm">
-      ✓ Passt zu dir
+    <span className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-[20px] bg-emerald-600 px-2 py-[3px] text-[11px] font-semibold text-white shadow-sm">
+      <Check className="h-3 w-3 shrink-0 opacity-95" strokeWidth={2.5} aria-hidden />
+      Passt zu dir
     </span>
   )
 }

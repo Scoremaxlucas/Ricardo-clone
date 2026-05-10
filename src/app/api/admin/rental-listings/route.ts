@@ -7,7 +7,10 @@ import {
   rentalListingHasMonitoringHttpUrl,
   validateListingExpiresOnForUpsert,
 } from '@/lib/rental/rental-listing-expiry-on'
-import { normalizeAndValidateLandlordNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
+import {
+  normalizeAndValidateLandlordNotifyEmail,
+  resolveLandlordApplicationNotifyEmail,
+} from '@/lib/rental/resolve-landlord-notify-email'
 import { ImportSource } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
 import { revalidatePath } from 'next/cache'
@@ -146,6 +149,27 @@ export async function POST(request: Request) {
     const rawLn = (body as Record<string, unknown>).landlordNotifyEmail
     const landlordNotifyEmailParsed =
       typeof rawLn === 'string' ? normalizeAndValidateLandlordNotifyEmail(rawLn) : null
+
+    if (createStatus === 'active') {
+      const ownerRow = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { email: true },
+      })
+      const resolved = resolveLandlordApplicationNotifyEmail({
+        landlordNotifyEmail: landlordNotifyEmailParsed,
+        landlordContactStored: landlordContact,
+        ownerAccountEmail: ownerRow?.email ?? null,
+      })
+      if (!resolved) {
+        return NextResponse.json(
+          {
+            message:
+              'Für ein aktives Inserat muss eine gültige E-Mail für Bewerbungs-Benachrichtigungen erreichbar sein (Feld «E-Mail für Bewerbungen», oder E-Mail im Vermieter-Kontakt, oder die E-Mail des Helvenda-Kontos des Inserats-Inhabers). Alternativ als Entwurf mit Status «archiviert» anlegen.',
+          },
+          { status: 400 },
+        )
+      }
+    }
 
     const listing = await prisma.rentalListing.create({
       data: {

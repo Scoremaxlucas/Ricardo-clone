@@ -10,20 +10,36 @@ export function normalizeAndValidateLandlordNotifyEmail(raw: string | null | und
   return t
 }
 
-export function extractFirstEmailFromText(text: string): string | null {
+function isDisposableOrSystemLocalPart(local: string): boolean {
+  const l = local.split('+')[0]?.toLowerCase() ?? ''
+  return /^(noreply|no-reply|donotreply|mailer-daemon|postmaster|bounce|bounces)$/.test(l)
+}
+
+/**
+ * Mehrere Adressen im Freitext: zuletzt genannte **nicht-System**-Adresse bevorzugen (oft Signatur);
+ * reine noreply-Adressen werden übersprungen, sofern eine Alternative existiert.
+ */
+export function extractBestEmailFromPlaintext(text: string): string | null {
   const matches = text.match(EMAIL_IN_TEXT)
   if (!matches?.length) return null
+  const normalized: string[] = []
   for (const m of matches) {
     const v = normalizeAndValidateLandlordNotifyEmail(m)
-    if (v) return v
+    if (v) normalized.push(v)
   }
-  return null
+  if (!normalized.length) return null
+  const preferred = normalized.filter(v => {
+    const local = v.split('@')[0] ?? ''
+    return !isDisposableOrSystemLocalPart(local)
+  })
+  const pool = preferred.length ? preferred : normalized
+  return pool[pool.length - 1] ?? null
 }
 
 /**
  * E-Mail für Bewerbungs-Benachrichtigungen:
  * 1) `landlordNotifyEmail` am Inserat
- * 2) erste gültige Adresse aus entschlüsseltem `landlordContact`
+ * 2) beste gültige Adresse aus entschlüsseltem `landlordContact` (siehe `extractBestEmailFromPlaintext`)
  * 3) Konto-E-Mail des Inserats-Inhabers
  */
 export function resolveLandlordApplicationNotifyEmail(input: {
@@ -36,7 +52,7 @@ export function resolveLandlordApplicationNotifyEmail(input: {
 
   const decrypted = decryptLandlordContactFromStorage(input.landlordContactStored ?? null)
   if (decrypted) {
-    const extracted = extractFirstEmailFromText(decrypted)
+    const extracted = extractBestEmailFromPlaintext(decrypted)
     if (extracted) return extracted
   }
 

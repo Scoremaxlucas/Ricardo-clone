@@ -66,8 +66,17 @@ export function WohnungBewerbungsBox({
         setIssues(Array.isArray(data.issues) ? data.issues : [])
       } catch {
         if (!cancelled) {
-          setQualified(tenantApplyReady)
-          setIssues([])
+          setQualified(false)
+          setIssues([
+            {
+              code: 'QUALIFY_UNAVAILABLE',
+              message:
+                'Die Prüfung der Bewerbungsvoraussetzungen ist momentan nicht erreichbar. Bitte Seite neu laden oder später erneut versuchen.',
+              action: 'Erneut laden',
+              actionUrl: `/wohnungen/${listingId}`,
+              blocking: true,
+            },
+          ])
         }
       } finally {
         if (!cancelled) setQualifying(false)
@@ -79,8 +88,22 @@ export function WohnungBewerbungsBox({
   }, [userId, isOwner, alreadyApplied, listingId, tenantApplyReady])
 
   const blockingCount = useMemo(() => issues.filter(i => i.blocking).length, [issues])
-  const isQualifiedNow = userId ? (qualified ?? tenantApplyReady) : false
+  /** Nur nach erfolgreichem Qualify-GET «grün» — kein optimistisches tenantApplyReady vor der Serverantwort. */
+  const isQualifiedNow = Boolean(userId && qualified === true)
   const notQualified = Boolean(userId && !alreadyApplied && !isQualifiedNow)
+
+  const compactHint = useMemo(() => {
+    if (!compact || !userId || alreadyApplied || !notQualified) return null
+    if (issues.find(i => i.code === 'NO_LANDLORD_NOTIFY_EMAIL')) {
+      return 'Keine gültige Vermieter-E-Mail am Inserat — Bewerbung nicht möglich.'
+    }
+    if (issues.find(i => i.code === 'QUALIFY_UNAVAILABLE')) {
+      return 'Prüfung nicht erreichbar — bitte später erneut.'
+    }
+    const first = issues.find(i => i.blocking)?.message ?? issues[0]?.message
+    if (!first) return null
+    return first.length > 96 ? `${first.slice(0, 94)}…` : first
+  }, [compact, userId, alreadyApplied, notQualified, issues])
 
   const onPrimaryClick = () => {
     if (isOwner) return
@@ -142,14 +165,21 @@ export function WohnungBewerbungsBox({
         : null}
 
         {compact ?
-          <div className="flex items-center justify-between gap-3">
-            <p className="min-w-0 text-left text-base font-bold leading-tight text-slate-900">
-              CHF {rentPerMonth.toLocaleString('de-CH')}.—
-              <span className="block text-xs font-semibold text-slate-600">/ Monat</span>
-            </p>
-            <button type="button" onClick={onPrimaryClick} disabled={disabled} className={`${primaryBtnClass} max-w-[58%]`}>
-              {qualifying ? 'Prüfe…' : label}
-            </button>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-3">
+              <p className="min-w-0 text-left text-base font-bold leading-tight text-slate-900">
+                CHF {rentPerMonth.toLocaleString('de-CH')}.—
+                <span className="block text-xs font-semibold text-slate-600">/ Monat</span>
+              </p>
+              <button type="button" onClick={onPrimaryClick} disabled={disabled} className={`${primaryBtnClass} max-w-[58%]`}>
+                {qualifying ? 'Prüfe…' : label}
+              </button>
+            </div>
+            {compactHint ?
+              <p className="mt-1.5 line-clamp-2 text-left text-[11px] font-medium leading-snug text-orange-800">
+                {compactHint}
+              </p>
+            : null}
           </div>
         : (
           <>
@@ -162,7 +192,10 @@ export function WohnungBewerbungsBox({
               <div className="mt-4 flex gap-2 rounded-xl bg-teal-50 px-3 py-3 text-xs leading-relaxed text-teal-900">
                 <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-800" aria-hidden />
                 <span>
-                  {issues.find(i => i.code === 'NO_LANDLORD_NOTIFY_EMAIL') ?
+                  {issues.find(i => i.code === 'QUALIFY_UNAVAILABLE') ?
+                    issues.find(i => i.code === 'QUALIFY_UNAVAILABLE')?.message ??
+                    'Die Prüfung der Bewerbungsvoraussetzungen ist momentan nicht erreichbar.'
+                  : issues.find(i => i.code === 'NO_LANDLORD_NOTIFY_EMAIL') ?
                     'Dieses Inserat hat momentan keine gültige Vermieter-E-Mail für Bewerbungen — eine Bewerbung ist deshalb nicht möglich. Bitte später erneut prüfen oder den Support informieren.'
                   : issues.find(i => i.code.startsWith('CREDIT')) || (!creditCheckOk && requiresCreditCheck) ?
                     'Betreibungsregister: Bitte im Profil hochladen lassen — einmal gültig für alle Bewerbungen auf Helvenda.'

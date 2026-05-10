@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { encryptLandlordContactForStorage } from '@/lib/rental/pdf-crypto'
 import type { AdminIngestOrchestratorResult } from '@/lib/rental/listing-ingest-orchestrator'
+import { resolveLandlordApplicationNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
 import { ImportSource } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 
@@ -87,6 +88,19 @@ export async function createRentalListingFromIngestOrchestrator(params: {
 
   const photoArr = photos.filter(u => typeof u === 'string' && u.startsWith('http'))
 
+  const ownerRow = await prisma.user.findUnique({
+    where: { id: params.adminUserId },
+    select: { email: true },
+  })
+  const canNotifyLandlord = Boolean(
+    resolveLandlordApplicationNotifyEmail({
+      landlordNotifyEmail: null,
+      landlordContactStored: landlordContact,
+      ownerAccountEmail: ownerRow?.email ?? null,
+    }),
+  )
+  const listingStatus = canNotifyLandlord ? ('active' as const) : ('archived' as const)
+
   try {
     const row = await prisma.rentalListing.create({
       data: {
@@ -106,7 +120,7 @@ export async function createRentalListingFromIngestOrchestrator(params: {
         availableFrom: avail,
         requiresCreditCheck: true,
         photos: JSON.stringify(photoArr),
-        status: 'active',
+        status: listingStatus,
         importSource,
         importedFrom,
         landlordContact,

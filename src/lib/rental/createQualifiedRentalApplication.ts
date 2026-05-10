@@ -4,6 +4,63 @@ import { prisma } from '@/lib/prisma'
 import { qualifyTenant, type QualificationIssue } from '@/lib/rental/qualifyTenant'
 import { resolveLandlordApplicationNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
 
+const REJECTION_NOTE_LANDLORD_MAIL_FAILED =
+  '[Helvenda] Automatisch abgewiesen: Vermieter-Benachrichtigung konnte nicht versendet werden. Du kannst dich erneut bewerben.'
+
+async function removeApplicationAfterFailedLandlordEmail(params: {
+  applicationId: string
+  rentalListingId: string
+  applicantUserId: string
+}): Promise<void> {
+  const { applicationId, rentalListingId, applicantUserId } = params
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await prisma.rentalApplication.delete({ where: { id: applicationId } })
+      return
+    } catch (e) {
+      console.warn('[createQualifiedRentalApplication] Rollback delete Versuch fehlgeschlagen', attempt + 1, e)
+      await new Promise(r => setTimeout(r, 45 * (attempt + 1)))
+    }
+  }
+
+  try {
+    const del = await prisma.rentalApplication.deleteMany({
+      where: { id: applicationId, rentalListingId, applicantUserId },
+    })
+    if (del.count > 0) return
+  } catch (e) {
+    console.error('[createQualifiedRentalApplication] Rollback deleteMany fehlgeschlagen', e)
+  }
+
+  const still = await prisma.rentalApplication.findUnique({
+    where: { id: applicationId },
+    select: { id: true },
+  })
+  if (!still) return
+
+  try {
+    await prisma.rentalApplication.update({
+      where: { id: applicationId },
+      data: {
+        status: 'rejected',
+        rejectedAt: new Date(),
+        rejectionNote: REJECTION_NOTE_LANDLORD_MAIL_FAILED,
+      },
+    })
+    console.error(
+      '[createQualifiedRentalApplication] Bewerbung nach fehlgeschlagenem Mail-Versand als rejected markiert (Delete nicht möglich)',
+      { applicationId, rentalListingId, applicantUserId },
+    )
+  } catch (e) {
+    console.error(
+      '[createQualifiedRentalApplication] Kritischer Rollback-Fehler: weder delete noch rejected-Update möglich',
+      { applicationId, rentalListingId, applicantUserId },
+      e,
+    )
+  }
+}
+
 export type CreateRentalApplicationErrorCode =
   | 'LISTING_NOT_ACTIVE'
   | 'FORBIDDEN'
@@ -190,8 +247,10 @@ export async function createQualifiedRentalApplication(params: {
       certificateCode: activeCert?.certificateCode ?? null,
     })
   } catch (err) {
-    await prisma.rentalApplication.delete({ where: { id: applicationId } }).catch(() => {
-      /* ignore secondary failure */
+    await removeApplicationAfterFailedLandlordEmail({
+      applicationId,
+      rentalListingId,
+      applicantUserId: userId,
     })
     console.error('[createQualifiedRentalApplication] Vermieter-Benachrichtigung fehlgeschlagen', err)
     return {
@@ -199,7 +258,7 @@ export async function createQualifiedRentalApplication(params: {
       status: 503,
       code: 'LANDLORD_EMAIL_FAILED',
       message:
-        'Die Benachrichtigung an den Vermieter konnte nicht versendet werden. Bitte versuche es in wenigen Minuten erneut. Es wurde keine Bewerbung gespeichert.',
+        'Die Benachrichtigung an den Vermieter konnte nicht versendet werden. Bitte versuche es in wenigen Minuten erneut. Eine gültige Bewerbung liegt nicht vor — du kannst es danach erneut versuchen.',
     }
   }
 

@@ -38,30 +38,41 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (!result.ok) {
       if (result.code === 'ALREADY_APPLIED') {
-        return NextResponse.json({ message: result.message }, { status: 409 })
+        return NextResponse.json({ code: 'ALREADY_APPLIED', message: result.message }, { status: 409 })
       }
       if (result.code === 'NOT_QUALIFIED') {
         return NextResponse.json(
-          { message: result.message, issues: result.issues, error: 'NOT_QUALIFIED' },
-          { status: 403 }
+          {
+            code: 'NOT_QUALIFIED',
+            message: result.message,
+            issues: result.issues,
+            error: 'NOT_QUALIFIED',
+          },
+          { status: 403 },
         )
       }
       if (result.code === 'NO_PROFILE') {
-        return NextResponse.json({ message: result.message }, { status: 403 })
+        return NextResponse.json({ code: 'NO_PROFILE', message: result.message }, { status: 403 })
       }
       if (result.code === 'FORBIDDEN') {
-        return NextResponse.json({ message: result.message }, { status: 403 })
+        return NextResponse.json({ code: 'FORBIDDEN', message: result.message }, { status: 403 })
       }
       if (result.code === 'NO_EMAIL') {
-        return NextResponse.json({ message: result.message }, { status: 400 })
+        return NextResponse.json({ code: 'NO_EMAIL', message: result.message }, { status: 400 })
       }
       if (result.code === 'NO_LANDLORD_NOTIFY_EMAIL') {
-        return NextResponse.json({ message: result.message, error: 'NO_LANDLORD_NOTIFY_EMAIL' }, { status: 422 })
+        return NextResponse.json(
+          { code: 'NO_LANDLORD_NOTIFY_EMAIL', message: result.message, error: 'NO_LANDLORD_NOTIFY_EMAIL' },
+          { status: 422 },
+        )
       }
       if (result.code === 'LANDLORD_EMAIL_FAILED') {
-        return NextResponse.json({ message: result.message, error: 'LANDLORD_EMAIL_FAILED' }, { status: 503 })
+        return NextResponse.json(
+          { code: 'LANDLORD_EMAIL_FAILED', message: result.message, error: 'LANDLORD_EMAIL_FAILED' },
+          { status: 503 },
+        )
       }
-      return NextResponse.json({ message: result.message }, { status: 404 })
+      return NextResponse.json({ code: result.code, message: result.message }, { status: 404 })
     }
 
     return NextResponse.json({
