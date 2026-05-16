@@ -97,8 +97,6 @@ async function main() {
         'Angestellt bei Muster AG · Haushalt: 2 Personen · Einkommen (Kategorie): CHF 4\'000 – 5\'500 · Betreibungsregister: keine Einträge',
       certificateCode: 'HLV-PREVIEW',
       landlordCanViewOnPlatform: false,
-      landlordRespondUrl: 'https://wohnen.helvenda.ch/lead/preview-token',
-      landlordNoResponseDays: 5,
     }) },
     { name: '2 Mieter — Bewerbung übermittelt', ...templateTenantApplicationSubmitted({
       tenantFirstName: 'Max',

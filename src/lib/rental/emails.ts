@@ -1,5 +1,4 @@
 import { sendEmail } from '@/lib/email/sender'
-import { LANDLORD_NO_RESPONSE_NOTIFY_DAYS } from '@/lib/rental/landlord-lead-token'
 import { isWohnenLeadEmailOverrideVerbose } from '@/lib/rental/wohnen-lead-email-override'
 
 function escapeHtml(s: string): string {
@@ -98,7 +97,6 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
   /** Aktiver Helvenda-Qualitätsnachweis — Link in der Mail, kein PDF-Anhang. */
   certificateCode?: string | null
   landlordCanViewOnPlatform: boolean
-  landlordRespondUrl: string | null
 }): Promise<void> {
   const payload = templateLandlordNewApplication({
     landlordFirstName: opts.landlordSalutationFirstName,
@@ -118,8 +116,6 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
     applicantSummary: opts.applicantSummary ?? null,
     certificateCode: opts.certificateCode ?? null,
     landlordCanViewOnPlatform: opts.landlordCanViewOnPlatform,
-    landlordRespondUrl: opts.landlordRespondUrl,
-    landlordNoResponseDays: LANDLORD_NO_RESPONSE_NOTIFY_DAYS,
   })
   const intended = opts.leadTestIntendedEmail?.trim()
   const verbose = Boolean(intended && isWohnenLeadEmailOverrideVerbose())

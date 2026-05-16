@@ -7,7 +7,6 @@ import {
   resolveLandlordApplicationNotifyEmail,
   resolveLandlordSalutationFirstName,
 } from '@/lib/rental/resolve-landlord-notify-email'
-import { ensureLandlordLeadToken, landlordLeadRespondUrl } from '@/lib/rental/landlord-lead-token'
 import {
   isWohnenLeadEmailOverrideVerbose,
   resolveWohnenLeadDelivery,
@@ -99,8 +98,6 @@ export async function sendLandlordLeadNotificationForApplication(
     ownerAccount: app.listing.user,
   })
 
-  const leadToken = await ensureLandlordLeadToken(applicationId)
-  const respondUrl = landlordLeadRespondUrl(leadToken)
   const canViewOnPlatform = !isHelvendaInternalListingOwnerEmail(app.listing.user?.email)
 
   try {
@@ -126,7 +123,6 @@ export async function sendLandlordLeadNotificationForApplication(
       referencePhone: app.tenantProfile.referencePhone,
       certificateCode: activeCert?.certificateCode ?? null,
       landlordCanViewOnPlatform: canViewOnPlatform,
-      landlordRespondUrl: respondUrl,
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'E-Mail-Versand fehlgeschlagen'

@@ -137,9 +137,6 @@ export function templateLandlordNewApplication(input: {
   certificateCode: string | null
   /** false = Admin-Inserat / externer Vermieter ohne Helvenda-Konto */
   landlordCanViewOnPlatform: boolean
-  /** Magic-Link: Besichtigung / Absage ohne Login */
-  landlordRespondUrl: string | null
-  landlordNoResponseDays: number
 }): WohnenEmailPayload {
   const o = wohnenOrigin()
   const platformLink = `${o}/matching/properties/${encodeURIComponent(input.listingId)}/bewerbungen`
@@ -166,17 +163,16 @@ export function templateLandlordNewApplication(input: {
       `Hallo ${escapeHtml(input.landlordFirstName.trim())},`
     : 'Guten Tag,'
 
-  const respondUrl = input.landlordRespondUrl?.trim() || null
   const ctaBlock =
     input.landlordCanViewOnPlatform ?
-      `${respondUrl ? buttonRow(respondUrl, 'Antwort erfassen') : ''}${buttonRow(platformLink, 'Bewerbung auf Helvenda')}`
-    : `${respondUrl ? buttonRow(respondUrl, 'Antwort erfassen') : ''}${verifyLink ? buttonRow(verifyLink, 'Qualitätsnachweis prüfen') : ''}
-<p style="margin:14px 0 0 0;font-size:13px;line-height:1.55;color:#6b7280;">Kein Helvenda-Konto nötig. Reagieren Sie innerhalb weniger Tage — sonst informieren wir den Bewerber nach ${input.landlordNoResponseDays} Tagen transparent über den Stand.</p>`
+      buttonRow(platformLink, 'Bewerbung ansehen')
+    : `${verifyLink ? buttonRow(verifyLink, 'Qualitätsnachweis prüfen') : ''}
+<p style="margin:${verifyLink ? '12px' : '18px'} 0 0 0;font-size:14px;line-height:1.55;color:#4b5563;">Telefon und E-Mail des Bewerbers stehen oben. Die Prüfseite ist öffentlich — kein Helvenda-Konto nötig.</p>`
 
   const textCtaLines =
     input.landlordCanViewOnPlatform ?
-      [respondUrl, platformLink].filter(Boolean) as string[]
-    : [respondUrl, verifyLink].filter(Boolean) as string[]
+      [platformLink]
+    : [verifyLink ? `Qualitätsnachweis: ${verifyLink}` : ''].filter(Boolean)
 
   const inner = `
 <p style="margin:0 0 14px 0;">${greetingLine}</p>

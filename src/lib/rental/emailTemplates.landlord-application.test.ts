@@ -18,8 +18,6 @@ const base = {
   applicantMessage: null,
   applicantSummary: 'Kurzprofil',
   certificateCode: 'HLV-2026-TEST',
-  landlordRespondUrl: 'https://wohnen.helvenda.ch/lead/test-token',
-  landlordNoResponseDays: 5,
 }
 
 describe('templateLandlordNewApplication CTA', () => {
@@ -28,7 +26,7 @@ describe('templateLandlordNewApplication CTA', () => {
       ...base,
       landlordCanViewOnPlatform: true,
     })
-    expect(html).toContain('Bewerbung auf Helvenda')
+    expect(html).toContain('Bewerbung ansehen')
     expect(html).toContain('/matching/properties/listing_1/bewerbungen')
     expect(html).not.toContain('Bewerber kontaktieren')
     expect(text).toContain('/matching/properties/listing_1/bewerbungen')
@@ -43,7 +41,7 @@ describe('templateLandlordNewApplication CTA', () => {
     expect(html).not.toContain('/matching/properties/')
     expect(html).not.toContain('Bewerber kontaktieren')
     expect(html).not.toContain('mailto:')
-    expect(html).toContain('Antwort erfassen')
+    expect(html).not.toContain('Antwort erfassen')
     expect(html).toContain('Qualitätsnachweis prüfen')
     expect(text).toContain('bewerber@example.com')
     expect(text).not.toContain('/matching/properties/')

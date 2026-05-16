@@ -16,11 +16,6 @@ export function isPublicCertificateVerifyPath(pathname: string): boolean {
   return pathname === '/verify' || pathname.startsWith('/verify/')
 }
 
-/** Vermieter-Antwort per Magic-Link — ohne Login. */
-export function isPublicLandlordLeadPath(pathname: string): boolean {
-  return pathname === '/lead' || pathname.startsWith('/lead/')
-}
-
 export function isPublicWohnenStandalonePath(pathname: string): boolean {
-  return isPublicCertificateVerifyPath(pathname) || isPublicLandlordLeadPath(pathname)
+  return isPublicCertificateVerifyPath(pathname)
 }
