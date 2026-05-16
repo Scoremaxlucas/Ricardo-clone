@@ -116,7 +116,8 @@ export async function WohnenMarketingHome({
   const hero = deriveWohnenHomeHero({ stage: journeyStage, activeCount })
   const footerTenant = deriveWohnenHomeFooterTenant({ stage: journeyStage })
   const listingsSectionSub = deriveWohnenListingsSectionSub({ stage: journeyStage, activeCount })
-  const showCertFirstBlock = journeyStage !== 'ready'
+  /** Cold Start: Qualitätsnachweis prominent — auch für «ready», dort ist er der Kernprodukt. */
+  const showCertFirstBlock = inventoryNarrow
 
   const comparisonRows: { tema: string; hg: string; hv: string }[] = [
     { tema: 'Inserat inserieren', hg: 'CHF 14–28 pro Tag', hv: 'Kostenlos' },
@@ -250,7 +251,9 @@ export async function WohnenMarketingHome({
                     PDF + Prüf-Link — auch für Bewerbungen ausserhalb von Helvenda
                   </p>
                   <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5a7a6e]">
-                    {journeyStage === 'certificate_needed' ?
+                    {journeyStage === 'ready' ?
+                      'Dein Nachweis ist aktiv — nutzbar bei Homegate, E-Mail oder direkt beim Vermieter, unabhängig vom Inserate-Bestand auf Helvenda.'
+                    : journeyStage === 'certificate_needed' ?
                       'Als Nächstes stellst du den Nachweis aus — nutzbar bei Homegate, E-Mail oder direkt beim Vermieter.'
                     : 'Ein Nachweis, den du überall einsetzen kannst — unabhängig davon, wie viele Inserate heute auf Helvenda sind.'}
                   </p>
@@ -260,7 +263,13 @@ export async function WohnenMarketingHome({
                     href={signedIn ? '/zertifikat' : '/register'}
                     className="inline-flex h-11 items-center justify-center rounded-xl bg-[#18a87c] px-5 text-sm font-bold text-white shadow-sm transition hover:opacity-95 sm:min-w-[10.5rem]"
                   >
-                    {signedIn ? 'Zum Nachweis' : 'Konto erstellen'}
+                    {signedIn ?
+                      journeyStage === 'ready' ?
+                        'Nachweis öffnen'
+                      : journeyStage === 'certificate_needed' ?
+                        'Jetzt ausstellen'
+                      : 'Zum Nachweis'
+                    : 'Konto erstellen'}
                   </Link>
                   <Link
                     href="#wie-es-funktioniert"
@@ -336,7 +345,13 @@ export async function WohnenMarketingHome({
                     href={signedIn ? '/zertifikat' : '/register'}
                     className="inline-flex h-11 items-center justify-center rounded-xl bg-[#18a87c] px-5 text-sm font-bold text-white shadow-sm transition hover:opacity-95 sm:min-w-[10.5rem]"
                   >
-                    {signedIn ? 'Zum Nachweis' : 'Konto erstellen'}
+                    {signedIn ?
+                      journeyStage === 'ready' ?
+                        'Nachweis öffnen'
+                      : journeyStage === 'certificate_needed' ?
+                        'Jetzt ausstellen'
+                      : 'Zum Nachweis'
+                    : 'Konto erstellen'}
                   </Link>
                   <Link
                     href="#wie-es-funktioniert"

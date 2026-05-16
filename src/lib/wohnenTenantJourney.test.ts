@@ -42,7 +42,7 @@ describe('deriveWohnenHomeCta', () => {
     expect(cta.secondaryHref).toBe('/meine-matches')
   })
 
-  it('prioritises matches when certificate exists', () => {
+  it('prioritises certificate when active certificate exists', () => {
     const cta = deriveWohnenHomeCta({
       profile: {
         isComplete: true,
@@ -51,8 +51,9 @@ describe('deriveWohnenHomeCta', () => {
       },
       hasActiveCertificate: true,
     })
-    expect(cta.primaryHref).toBe('/meine-matches')
-    expect(cta.footerTenantHref).toBe('/wohnungen')
+    expect(cta.primaryHref).toBe('/zertifikat')
+    expect(cta.secondaryHref).toBe('/meine-matches')
+    expect(cta.footerTenantHref).toBe('/zertifikat')
   })
 })
 
@@ -73,11 +74,13 @@ describe('deriveWohnenJourneyStage', () => {
 })
 
 describe('deriveWohnenHomeHero', () => {
-  it('does not promise future listings when ready user has active inventory', () => {
+  it('keeps certificate-first hero for ready users with few listings', () => {
     const hero = deriveWohnenHomeHero({ stage: 'ready', activeCount: 2 })
-    expect(hero.line1).toBe('Passende Wohnungen.')
+    expect(hero.line1).toMatch(/Qualitätsnachweis/)
+    expect(hero.line2).toMatch(/Ohne Abo/)
     expect(hero.subtext).not.toMatch(/kommen dazu/i)
-    expect(hero.subtext).toMatch(/2/)
+    expect(hero.subtext).not.toMatch(/^Dein Profil ist verifiziert — unter Meine Matches/i)
+    expect(hero.subtext).toMatch(/Zusätzlich auf Helvenda.*2/)
   })
 
   it('uses certificate-first headline for anonymous cold start', () => {

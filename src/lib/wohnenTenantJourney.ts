@@ -83,14 +83,17 @@ export function deriveWohnenHomeHero(args: {
   const inventoryNarrow = activeCount <= 14
 
   if (stage === 'ready') {
+    const helvendaZusatz =
+      activeCount > 0 ?
+        inventoryNarrow ?
+          ` Zusätzlich auf Helvenda: ${activeCount.toLocaleString('de-CH')} passende Inserate unter Meine Matches — dort bewirbst du dich mit einem Klick.`
+        : ' Auf Helvenda findest du passende Inserate und bewirbst dich mit einem Klick.'
+      : ''
     return {
-      line1: 'Passende Wohnungen.',
-      line2: 'Ein Klick bewerben.',
-      subtext:
-        activeCount > 0 ?
-          `Dein Profil ist verifiziert — unter Meine Matches siehst du passende Inserate${activeCount <= 14 ? ` (aktuell ${activeCount.toLocaleString('de-CH')} auf Helvenda)` : ''} und bewirbst dich direkt.`
-        : 'Dein Profil ist verifiziert — sobald etwas Passendes live ist, findest du es unter Meine Matches und bewirbst dich mit einem Klick.',
-      bullets: ['Verifiziertes Profil', 'Qualitätsnachweis bereit', 'Kein Pflicht-Abo'],
+      line1: 'Qualitätsnachweis, der mitgeht.',
+      line2: 'Fair mieten. Ohne Abo-Pflicht.',
+      subtext: `Dein Helvenda-Qualitätsnachweis ist aktiv (PDF mit Prüfcode) — für Bewerbungen bei Homegate, per E-Mail oder direkt beim Vermieter.${helvendaZusatz}`,
+      bullets: ['Qualitätsnachweis bereit', 'PDF + Online-Prüfung', 'Kein Pflicht-Abo'],
     }
   }
 
@@ -159,7 +162,7 @@ export function deriveWohnenHomeHero(args: {
 export function deriveWohnenHomeFooterTenant(args: { stage: WohnenJourneyStage }): WohnenHomeFooterTenant {
   switch (args.stage) {
     case 'ready':
-      return { body: 'Kein Formular. Kein Abo.\nBewirb dich mit einem Klick — Nachweis ist bereit.' }
+      return { body: 'Kein Formular. Kein Abo.\nDein Nachweis gilt überall — unabhängig vom Inserate-Bestand.' }
     case 'certificate_needed':
       return { body: 'Kein Formular. Kein Abo.\nNachweis ausstellen — dann überall bewerben.' }
     case 'credit_pending':
@@ -185,7 +188,7 @@ export function deriveWohnenListingsSectionSub(args: {
       : 'Passende Wohnungen erscheinen hier, sobald sie zu deinem Profil passen.'
   }
   if (stage === 'ready') {
-    return `Passende Inserate zu deinem Profil — aktuell ${activeCount.toLocaleString('de-CH')} auf Helvenda.`
+    return `Zusätzlich auf Helvenda: ${activeCount.toLocaleString('de-CH')} passende Inserate zu deinem Profil.`
   }
   if (activeCount <= 14) {
     return `Aktuell ${activeCount.toLocaleString('de-CH')} Inserate — das Angebot wird laufend ergänzt.`
@@ -258,12 +261,13 @@ export function deriveWohnenHomeCta(args: {
   }
 
   return {
-    primaryHref: '/meine-matches',
-    primaryLabel: 'Meine Matches ansehen',
-    primaryHint: 'Passende Wohnungen auf einen Blick — mit einem Klick bewerben, wenn du verifiziert bist.',
-    secondaryHref: '/wohnungen',
-    secondaryLabel: 'Alle Inserate',
-    footerTenantHref: '/wohnungen',
-    footerTenantLabel: 'Wohnungen durchsuchen →',
+    primaryHref: '/zertifikat',
+    primaryLabel: 'Zum Qualitätsnachweis',
+    primaryHint:
+      'PDF herunterladen oder Prüf-Link teilen — dein Vorteil bei jeder Bewerbung, auch ausserhalb von Helvenda.',
+    secondaryHref: '/meine-matches',
+    secondaryLabel: 'Meine Matches',
+    footerTenantHref: '/zertifikat',
+    footerTenantLabel: 'Qualitätsnachweis öffnen →',
   }
 }
