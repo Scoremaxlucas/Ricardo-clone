@@ -1,5 +1,5 @@
 import { isBotUserAgent } from '@/lib/http/is-bot'
-import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
+import { employmentSummaryDe, incomeCategoryMonthlyLabelDe } from '@/lib/tenant-profile/labels'
 import { prisma } from '@/lib/prisma'
 import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ code: strin
 
   if (expiredByStatus || expiredByDate) {
     const incomeCategory = row.verifiedIncomeCategory as IncomeCategory
-    const incomeLabel = incomeCategoryLabelDe(incomeCategory)
+    const incomeLabel = incomeCategoryMonthlyLabelDe(incomeCategory)
     const empLine = employmentSummaryDe(
       row.verifiedEmploymentStatus as EmploymentStatus,
       row.verifiedEmployer,
@@ -101,7 +101,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ code: strin
   noteVerifyApiOutcome(req, 'VALID')
 
   const incomeCategory = row.verifiedIncomeCategory as IncomeCategory
-  const incomeLabel = incomeCategoryLabelDe(incomeCategory)
+  const incomeLabel = incomeCategoryMonthlyLabelDe(incomeCategory)
   const empLine = employmentSummaryDe(
     row.verifiedEmploymentStatus as EmploymentStatus,
     row.verifiedEmployer,

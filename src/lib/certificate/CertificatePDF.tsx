@@ -1,5 +1,11 @@
-import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import {
+  CERTIFICATE_FOOTNOTE_DE,
+  CERTIFICATE_HERO_PROMISE_DE,
+  CERTIFICATE_LANDLORD_BANNER_DE,
+  type CertificateFieldBadge,
+} from '@/lib/certificate/certificate-display'
 import type { CreditCertificateDisplayStatus } from '@/lib/certificate/issueCertificate'
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 
 /**
  * Helvenda Wohnungen — Qualitätsnachweis PDF
@@ -313,6 +319,39 @@ const styles = StyleSheet.create({
     lineHeight: 1.18,
     width: '100%',
   },
+  landlordBanner: {
+    marginHorizontal: PAD,
+    marginTop: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 11,
+    backgroundColor: TEAL_LIGHT,
+    borderLeftWidth: 3,
+    borderLeftColor: TEAL_ACCENT,
+  },
+  landlordBannerKicker: {
+    fontSize: 6,
+    fontFamily: HFB,
+    color: TEAL,
+    letterSpacing: 1.4,
+    marginBottom: 4,
+  },
+  landlordBannerText: {
+    fontSize: 7.5,
+    fontFamily: HF,
+    color: INK_SOFT,
+    lineHeight: 1.45,
+  },
+  factLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 3,
+  },
+  factBadge: {
+    fontSize: 5.5,
+    fontFamily: HFB,
+    letterSpacing: 1,
+    marginLeft: 5,
+  },
   factSub: {
     fontSize: 7.5,
     fontFamily: HF,
@@ -490,6 +529,36 @@ const styles = StyleSheet.create({
   },
 })
 
+function FactCell({
+  label,
+  badge,
+  value,
+  valueColor,
+  valueLarge,
+  sub,
+}: {
+  label: string
+  badge: CertificateFieldBadge
+  value: string
+  valueColor?: string
+  valueLarge?: boolean
+  sub?: string
+}) {
+  const badgeColor = badge === 'verified' ? TEAL_ACCENT : LABEL
+  const badgeText = badge === 'verified' ? 'GEPRÜFT' : 'ERFASST'
+  const valueBase = valueLarge ? styles.factValueSm : styles.factValue
+  return (
+    <View style={styles.factPairCell}>
+      <View style={styles.factLabelRow}>
+        <Text style={styles.factLabel}>{label}</Text>
+        <Text style={[styles.factBadge, { color: badgeColor }]}>{badgeText}</Text>
+      </View>
+      <Text style={valueColor ? [valueBase, { color: valueColor }] : valueBase}>{value}</Text>
+      {sub ? <Text style={styles.factSub}>{sub}</Text> : null}
+    </View>
+  )
+}
+
 export type CertificatePdfProps = {
   certificateCode: string
   issuedAt: Date
@@ -538,13 +607,13 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
   const holder = `${firstName} ${lastName}`.trim()
   const brClear = creditStatus === 'CLEAR'
   const kantonSuffix = canton ? ` · Kanton ${canton}` : ''
-  const brSub = `Ausgestellt am ${formatPdfDate(creditCheckDate)}${kantonSuffix}`
+  const brSub = `Auszug geprüft · Stichtag ${formatPdfDate(creditCheckDate)}${kantonSuffix}`
 
   const daysRem = daysRemainingFor(expiresAt)
   const expiryValueColor = daysRem > 30 ? INK : daysRem > 14 ? ORANGE : RED
   const verifyPath = verifyDisplayPath(verifyUrl)
 
-  const incomeSub = `Qualifiziert für Mieten bis CHF ${formatNumber(incomeQualifiesUpTo)} / Monat`
+  const incomeSub = `3×-Regel · bis CHF ${formatNumber(incomeQualifiesUpTo)} Miete / Monat (inkl. NK-Anteil nach Profil)`
 
   return (
     <Document>
@@ -580,10 +649,7 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
             <View style={styles.heroCol}>
               <Text style={styles.heroKicker}>AUSGESTELLT FÜR</Text>
               <Text style={styles.heroName}>{holder}</Text>
-              <Text style={styles.heroPromise}>
-                Bestätigung der zum Ausstellungszeitpunkt geprüften Angaben. Nachweis für Mietende und Vermietende —
-                ergänzend zu den üblichen Unterlagen.
-              </Text>
+              <Text style={styles.heroPromise}>{CERTIFICATE_HERO_PROMISE_DE}</Text>
             </View>
             <View style={styles.sealOuter}>
               <View style={styles.sealInner}>
@@ -594,26 +660,44 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
             </View>
           </View>
 
+          <View style={styles.landlordBanner}>
+            <Text style={styles.landlordBannerKicker}>FÜR VERMIETER</Text>
+            <Text style={styles.landlordBannerText}>{CERTIFICATE_LANDLORD_BANNER_DE}</Text>
+          </View>
+
           <View style={styles.factsFrame}>
             <View style={styles.factPairRow}>
-              <View style={styles.factPairCell}>
-                <Text style={styles.factLabel}>BETREIBUNGSREGISTER</Text>
-                <Text
-                  style={[
-                    styles.factValueSm,
-                    { color: brClear ? TEAL_ACCENT : RED },
-                  ]}
-                >
-                  {brClear ? 'Keine Einträge' : 'Einträge vorhanden'}
-                </Text>
-                <Text style={styles.factSub}>{brSub}</Text>
-              </View>
+              <FactCell
+                label="BETREIBUNGSREGISTER"
+                badge="verified"
+                value={brClear ? 'Keine Einträge' : 'Einträge vorhanden'}
+                valueColor={brClear ? TEAL_ACCENT : RED}
+                valueLarge
+                sub={brSub}
+              />
               <View style={styles.factPairVline} />
-              <View style={styles.factPairCell}>
-                <Text style={styles.factLabel}>HAUSHALTSEINKOMMEN</Text>
-                <Text style={styles.factValue}>{incomeLabel}</Text>
-                <Text style={styles.factSub}>{incomeSub}</Text>
-              </View>
+              <FactCell
+                label="HAUSHALTSNETTO"
+                badge="captured"
+                value={incomeLabel}
+                sub={incomeSub}
+              />
+            </View>
+            <View style={styles.factPairHsep} />
+            <View style={styles.factPairRow}>
+              <FactCell
+                label="BESCHÄFTIGUNG"
+                badge="captured"
+                value={employmentLine}
+                sub="Angabe aus Mieterprofil"
+              />
+              <View style={styles.factPairVline} />
+              <FactCell
+                label="WOHNADRESSE"
+                badge="captured"
+                value={address}
+                sub={`${zip} ${city}`.trim()}
+              />
             </View>
             <View style={styles.factPairHsep} />
             <View style={styles.factPairRow}>
@@ -632,21 +716,6 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
                 : null}
               </View>
             </View>
-            <View style={styles.factPairHsep} />
-            <View style={[styles.factPairRow, { minHeight: 52 }]}>
-              <View style={styles.factPairCell}>
-                <Text style={styles.factLabel}>BESCHÄFTIGUNG</Text>
-                <Text style={styles.factValue}>{employmentLine}</Text>
-              </View>
-              <View style={styles.factPairVline} />
-              <View style={styles.factPairCell}>
-                <Text style={styles.factLabel}>ADRESSE</Text>
-                <Text style={styles.factValue}>{address}</Text>
-                <Text style={styles.factSub}>
-                  {zip} {city}
-                </Text>
-              </View>
-            </View>
           </View>
 
           <View style={styles.verifyPanel}>
@@ -655,7 +724,7 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
             </View>
             <View style={styles.qrCopy}>
               <Text style={styles.qrHead}>ELEKTRONISCHE PRÜFUNG</Text>
-              <Text style={styles.qrSub}>Echtheit und Gültigkeit online verifizieren</Text>
+              <Text style={styles.qrSub}>Für Vermieter: Echtheit, Gültigkeit und Registerstand online prüfen</Text>
               <Text style={styles.qrUrl}>{verifyPath}</Text>
               <Text style={styles.qrFoot}>
                 QR-Code scannen oder Adresse eingeben. Der Code in der URL entspricht der Registriernummer oben.
@@ -664,11 +733,7 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
           </View>
 
           <View style={styles.disclaimerSep} />
-          <Text style={styles.disclaimer}>
-            Helvenda Wohnungen bestätigt die Verifizierung der genannten Angaben zum Zeitpunkt der Ausstellung. Für
-            nachträgliche Änderungen der persönlichen oder wirtschaftlichen Situation des Inhabers wird keine Haftung
-            übernommen.
-          </Text>
+          <Text style={styles.disclaimer}>{CERTIFICATE_FOOTNOTE_DE}</Text>
 
           <View style={styles.decSep} />
 

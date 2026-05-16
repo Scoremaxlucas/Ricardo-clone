@@ -48,6 +48,11 @@ export function incomeCategoryLabelDe(c: IncomeCategory): string {
   return INCOME[c] ?? c
 }
 
+/** Wie incomeCategoryLabelDe, mit expliziter Monats-Einheit (Haushaltsnetto). */
+export function incomeCategoryMonthlyLabelDe(c: IncomeCategory): string {
+  return `${incomeCategoryLabelDe(c)} / Monat`
+}
+
 export function householdPetsLabelDe(p: HouseholdPets): string {
   return PETS[p] ?? p
 }

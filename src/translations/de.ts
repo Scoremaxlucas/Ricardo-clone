@@ -1472,9 +1472,10 @@ export const de = {
         'Mieterinnen und Mieter können einen Helvenda Qualitätsnachweis (PDF plus Link) beilegen. So prüfen Sie den Nachweis schnell und sicher:',
         '1. Nur den offiziellen Link verwenden: Die Prüfseite liegt auf Helvenda Wohnungen unter /verify/ und einem Code wie HLV-…. Screenshots oder Links auf unbekannte Domains sind kein Ersatz.',
         '2. Status lesen: Die Seite zeigt gültig, abgelaufen, widerrufen oder nicht gefunden. Bei abgelaufen oder widerrufen können Sie einen aktuellen Auszug beim Bewerber anfordern.',
-        '3. Was der Nachweis belegt: Zum Zeitpunkt der Ausstellung hat Helvenda unter anderem den Betreibungsregisterauszug und die angegebenen Angaben (z. B. Einkommenskategorie, Beschäftigung) geprüft.',
-        '4. Was der Nachweis nicht ersetzt: Er ist keine Bank-Bonitätsprüfung, kein Mietvertrag und keine Garantie für künftige Zahlungen. Ihre Auswahl des Mieters bleibt bei Ihnen.',
-        '5. Bei Unklarheiten: Bitten Sie den Bewerber, den Link erneut zu senden oder das Profil auf Helvenda zu aktualisieren. Bei Zweifeln an der Identität fordern Sie die üblichen Unterlagen zusätzlich ein.',
+        '3. Geprüft (grün «Geprüft»): Betreibungsregisterauszug — Stichtag, Einträge, Plausibilität des PDF.',
+        '4. Erfasst («Erfasst»): Haushaltsnetto pro Monat (Kategorie aus dem Mieterprofil), Beschäftigung, empfohlene Maximalmiete nach 3×-Regel.',
+        '5. Ihre Entscheidung: Der Nachweis bündelt die üblichen Unterlagen — die Auswahl des Mieters und allfällige Lohnbelege bleiben bei Ihnen.',
+        '6. Bei Unklarheiten: Bitten Sie den Bewerber, den Link erneut zu senden oder das Profil auf Helvenda zu aktualisieren. Bei Zweifeln an der Identität fordern Sie die üblichen Unterlagen zusätzlich ein.',
       ],
       tips: [
         'Speichern Sie die URL der erfolgreichen Prüfung als Nachweis in Ihrer Bewerbungsakte (Datum im Browser/Export).',

@@ -1,9 +1,16 @@
 'use client'
 
 import { Logo } from '@/components/ui/Logo'
+import {
+  CERTIFICATE_FIELD_BADGE_LABEL,
+  CERTIFICATE_FOOTNOTE_DE,
+  CERTIFICATE_LANDLORD_BANNER_DE,
+  type CertificateFieldBadge,
+} from '@/lib/certificate/certificate-display'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { formatCHF } from '@/lib/utils/formatCurrency'
 import { formatDate } from '@/lib/utils/formatDate'
+import { Check, CheckCircle2, X } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 
@@ -65,23 +72,25 @@ export function VerifyPageClient({ code }: { code: string }) {
 
         <aside className="mt-6 rounded-xl border border-teal-200 bg-teal-50/90 px-4 py-4 text-sm text-teal-950 shadow-sm">
           <p className="font-bold text-teal-950">Für Vermieterinnen, Verwalterinnen und Agenturen</p>
-          <ul className="mt-2 list-disc space-y-1.5 pl-5 leading-relaxed text-teal-900">
+          <p className="mt-2 leading-relaxed text-teal-900">{CERTIFICATE_LANDLORD_BANNER_DE}</p>
+          <ul className="mt-3 list-disc space-y-1.5 pl-5 leading-relaxed text-teal-900">
             <li>
-              Prüfen Sie den Nachweis nur über diesen offiziellen Helvenda-Link — nicht über Screenshots oder
-              Weiterleitungen allein.
+              <strong className="text-teal-950">Geprüft:</strong> Betreibungsregisterauszug (Stichtag, Einträge).
             </li>
             <li>
-              Der Nachweis belegt die zum Ausstellungszeitpunkt verifizierten Angaben (u. a. Betreibungsregister,
-              Einkommenskategorie). Er ersetzt keine Mietvertragsprüfung und keine Bank-Bonität.
+              <strong className="text-teal-950">Erfasst:</strong> Haushaltsnetto (Kategorie / Monat), Beschäftigung,
+              3×-Mietempfehlung aus dem Mieterprofil.
             </li>
-            <li>Bei Unklarheiten oder abgelaufenem Register: direkt beim Bewerber nachfragen oder erneut prüfen lassen.</li>
           </ul>
           <p className="mt-3 flex flex-col gap-2 text-teal-900 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
-            <Link href="/help/wohnungen-qualitaetsnachweis-pruefen" className="font-semibold text-[#107a5a] underline underline-offset-2">
-              Ausführliche Anleitung (Hilfe-Center)
+            <Link
+              href="/help/wohnungen-qualitaetsnachweis-pruefen"
+              className="font-semibold text-[#107a5a] underline underline-offset-2"
+            >
+              Ausführliche Anleitung
             </Link>
             <Link href="/wohnungen" className="font-semibold text-[#107a5a] underline underline-offset-2">
-              Aktuelle Inserate auf Helvenda
+              Inserate auf Helvenda
             </Link>
           </p>
         </aside>
@@ -105,8 +114,10 @@ export function VerifyPageClient({ code }: { code: string }) {
 function NotFound({ code }: { code: string }) {
   return (
     <div className="mt-10 text-center">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 text-3xl text-slate-500">
-        ?
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 text-slate-500">
+        <span className="text-2xl font-bold" aria-hidden>
+          ?
+        </span>
       </div>
       <h1 className="mt-6 text-xl font-bold text-slate-800">Zertifikat nicht gefunden</h1>
       <p className="mt-3 text-sm leading-relaxed text-[#8aa89e]">
@@ -120,7 +131,9 @@ function NotFound({ code }: { code: string }) {
 function Revoked() {
   return (
     <div className="mt-10 text-center">
-      <div className="mx-auto text-5xl text-red-600">✕</div>
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-700">
+        <X className="h-9 w-9" strokeWidth={2.5} aria-hidden />
+      </div>
       <h1 className="mt-6 text-[22px] font-bold text-red-800">Zertifikat widerrufen</h1>
       <p className="mt-3 text-sm text-[#8aa89e]">Dieses Zertifikat wurde vom Inhaber widerrufen.</p>
     </div>
@@ -133,7 +146,11 @@ function Expired({ payload }: { payload: Extract<VerifyFail, { reason: 'EXPIRED'
   return (
     <div className="mt-10">
       <div className="text-center">
-        <div className="mx-auto text-5xl text-amber-500">!</div>
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+          <span className="text-2xl font-bold" aria-hidden>
+            !
+          </span>
+        </div>
         <h1 className="mt-6 text-[22px] font-bold text-amber-900">Zertifikat abgelaufen</h1>
         <p className="mt-3 text-sm text-[#8aa89e]">Dieses Zertifikat war gültig bis {expStr}.</p>
       </div>
@@ -157,34 +174,20 @@ function Valid({ cert }: { cert: VerifyCertificatePayload }) {
   return (
     <div className="mt-10">
       <div className="flex justify-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-4xl text-[#107a5a]">
-          ✓
-        </div>
+        <CheckCircle2 className="h-16 w-16 text-[#107a5a]" strokeWidth={2} aria-hidden />
       </div>
-      <h1 className="mt-4 text-center text-[22px] font-bold text-[#107a5a]">Gültiges Helvenda-Zertifikat</h1>
+      <h1 className="mt-4 text-center text-[22px] font-bold text-[#107a5a]">Gültiger Helvenda Qualitätsnachweis</h1>
       <p className="mt-3 text-center font-mono text-[13px] font-semibold tracking-[0.2em] text-[#8aa89e]">
         {cert.certificateCode}
+      </p>
+      <p className="mx-auto mt-4 max-w-md text-center text-sm leading-relaxed text-[#5a7a6e]">
+        Offiziell ausgestellt von Helvenda Wohnungen. Betreibungsregister geprüft — Profilangaben gebündelt und online
+        nachvollziehbar.
       </p>
       <div className="mt-8">
         <CertificateCard cert={cert} />
       </div>
-      <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-relaxed text-[#8aa89e]">
-        Helvenda Wohnungen hat die oben genannten Angaben zum Zeitpunkt der Ausstellung verifiziert. Dieses Zertifikat
-        ersetzt keine offizielle Bonitätsprüfung und stellt keine rechtlich bindende Garantie dar.
-      </p>
-      <div className="mx-auto mt-8 max-w-lg rounded-xl border border-slate-200 bg-slate-50/90 px-4 py-4 text-left text-sm text-slate-800">
-        <p className="font-bold text-slate-900">Was dieser Nachweis praktisch bedeutet</p>
-        <ul className="mt-2 list-disc space-y-1 pl-5 leading-relaxed text-slate-700">
-          <li>
-            <strong className="text-slate-900">Belegt:</strong> Helvenda hat die ausgewiesenen Daten zum Zeitpunkt der
-            Ausstellung geprüft (siehe Karte oben).
-          </li>
-          <li>
-            <strong className="text-slate-900">Belegt nicht:</strong> künftige Zahlungsfähigkeit, persönliche
-            Zuverlässigkeit oder Eignung für eine konkrete Wohnung — das bleibt Ihre Auswahl.
-          </li>
-        </ul>
-      </div>
+      <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-relaxed text-[#8aa89e]">{CERTIFICATE_FOOTNOTE_DE}</p>
       <p className="mt-4 text-center text-[11px] text-[#8aa89e]">
         Verifizierung: {WOHNEN_SITE_ORIGIN}/verify/{cert.certificateCode}
       </p>
@@ -195,7 +198,7 @@ function Valid({ cert }: { cert: VerifyCertificatePayload }) {
 function CertificateCard({ cert }: { cert: VerifyCertificatePayload }) {
   const betr =
     cert.creditCheckStatus === 'CLEAR' ?
-      'Keine Einträge ✓'
+      'Keine Einträge'
     : 'Einträge gemäss Betreibungsregisterauszug'
   const rem = daysRemaining(cert.expiresAt)
   const remLabel =
@@ -204,37 +207,44 @@ function CertificateCard({ cert }: { cert: VerifyCertificatePayload }) {
     : `${rem} Tag${rem === 1 ? '' : 'e'} verbleibend`
   const remOrange = rem >= 0 && rem < 14
 
+  const incomeDisplay =
+    cert.incomeCategory.includes('/ Monat') ? cert.incomeCategory : `${cert.incomeCategory} / Monat`
+
   return (
     <div className="rounded-[20px] border border-slate-100 bg-white p-8 shadow-[0_4px_24px_rgba(0,0,0,0.08)]">
-      <Row k="Inhaberin / Inhaber" v={cert.holderName} />
-      <Row k="Beschäftigung" v={cert.employmentLine} />
+      <Row k="Betreibungsregister" badge="verified" v={
+        <>
+          <span className="inline-flex items-center gap-1.5">
+            {betr}
+            {cert.creditCheckStatus === 'CLEAR' ?
+              <Check className="h-4 w-4 text-[#107a5a]" strokeWidth={2.5} aria-hidden />
+            : null}
+          </span>
+          <br />
+          <span className="text-[14px] font-medium text-slate-600">
+            Auszug geprüft · Stichtag {formatDate(cert.creditCheckDate)} · Kanton {cert.creditCheckCanton}
+          </span>
+        </>
+      } />
       <Row
-        k="Haushaltseinkommen"
+        k="Haushaltsnetto"
+        badge="captured"
         v={
           <>
-            {cert.incomeCategory}
+            {incomeDisplay}
             <br />
             <span className="text-[15px] text-slate-700">
-              Qualifiziert für Wohnungen bis {formatCHF(cert.incomeQualifiesUpTo)} / Monat
+              3×-Regel · empfohlen bis {formatCHF(cert.incomeQualifiesUpTo)} Miete / Monat
             </span>
           </>
         }
       />
-      <Row
-        k="Betreibungsregister"
-        v={
-          <>
-            {betr}
-            <br />
-            <span className="text-[14px] font-medium text-slate-600">
-              Ausgestellt: {formatDate(cert.creditCheckDate)} · Kanton {cert.creditCheckCanton}
-            </span>
-          </>
-        }
-      />
+      <Row k="Beschäftigung" badge="captured" v={cert.employmentLine} />
+      <Row k="Inhaberin / Inhaber" badge="captured" v={cert.holderName} />
       <Row k="Ausgestellt am" v={formatDate(cert.issuedAt)} />
       <Row
         k="Gültig bis"
+        badge="captured"
         v={
           <>
             {formatDate(cert.expiresAt)}
@@ -249,10 +259,31 @@ function CertificateCard({ cert }: { cert: VerifyCertificatePayload }) {
   )
 }
 
-function Row({ k, v, last }: { k: string; v: React.ReactNode; last?: boolean }) {
+function Row({
+  k,
+  v,
+  badge,
+  last,
+}: {
+  k: string
+  v: React.ReactNode
+  badge?: CertificateFieldBadge
+  last?: boolean
+}) {
   return (
     <div className={`py-3.5 ${last ? '' : 'border-b border-[#f0f0f0]'}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-[#8aa89e]">{k}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[#8aa89e]">{k}</p>
+        {badge ?
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+              badge === 'verified' ? 'bg-[#e8f7f2] text-[#107a5a]' : 'bg-slate-100 text-slate-600'
+            }`}
+          >
+            {CERTIFICATE_FIELD_BADGE_LABEL[badge]}
+          </span>
+        : null}
+      </div>
       <div className="mt-1 text-base font-semibold text-[#0d2b1f]">{v}</div>
     </div>
   )

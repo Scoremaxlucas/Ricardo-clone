@@ -1,7 +1,7 @@
 import { authOptions } from '@/lib/auth'
 import { CertificatePdfDocument } from '@/lib/certificate/CertificatePDF'
 import { certificateVerifyQrDataUrl } from '@/lib/certificate/qrDataUrl'
-import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
+import { employmentSummaryDe, incomeCategoryMonthlyLabelDe } from '@/lib/tenant-profile/labels'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { prisma } from '@/lib/prisma'
 import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
@@ -59,7 +59,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
     null,
     null
   )
-  const incomeLabel = incomeCategoryLabelDe(certificate.verifiedIncomeCategory as IncomeCategory)
+  const incomeLabel = incomeCategoryMonthlyLabelDe(certificate.verifiedIncomeCategory as IncomeCategory)
 
   const resolvedCanton = (() => {
     const stored = certificate.verifiedCreditCheckCanton
