@@ -61,17 +61,23 @@ export default async function MeineBewerbungenPage() {
   ).length
 
   return (
-    <main className="mx-auto max-w-4xl py-8 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:py-10 sm:pl-6 sm:pr-6">
+    <main className="mx-auto max-w-3xl pb-12 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-[max(3.25rem,calc(2rem+env(safe-area-inset-top,0px)))] sm:pl-6 sm:pr-6 sm:pt-14">
       <Suspense fallback={null}>
         <MeineBewerbungenAlreadyToast />
       </Suspense>
-      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Meine Bewerbungen</h1>
-      <p className="mt-2 text-sm text-slate-600">
-        {activeCount} laufende Bewerbung{activeCount === 1 ? '' : 'en'}
-      </p>
-      <div className="mt-8">
-        <MeineBewerbungenClient applications={rows} profileComplete={profileComplete} />
-      </div>
+      <header className="pb-8">
+        <h1 className="text-[1.5rem] font-extrabold leading-tight tracking-tight text-[#0d2b1f] sm:text-[1.875rem]">
+          Meine Bewerbungen
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          {activeCount === 0 ?
+            'Keine laufenden Bewerbungen.'
+          : activeCount === 1 ?
+            '1 laufende Bewerbung — der Vermieter wurde mit deinem Profil informiert.'
+          : `${activeCount} laufende Bewerbungen — Vermieter wurden mit deinem Profil informiert.`}
+        </p>
+      </header>
+      <MeineBewerbungenClient applications={rows} profileComplete={profileComplete} />
     </main>
   )
 }
