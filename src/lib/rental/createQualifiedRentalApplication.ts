@@ -2,6 +2,8 @@ import { CertificateStatus, Prisma } from '@prisma/client'
 import { enqueueTenantApplicationConfirmEmail } from '@/lib/wohnen/email-outbox'
 import { sendRentalApplicantSuccessEmail, sendRentalLandlordNewApplicationEmail } from '@/lib/rental/emails'
 import { prisma } from '@/lib/prisma'
+import { buildApplicantSummaryForLandlord } from '@/lib/rental/build-applicant-summary'
+import { formatRentalListingAddress } from '@/lib/rental/format-listing-address'
 import { qualifyTenant, type QualificationIssue } from '@/lib/rental/qualifyTenant'
 import { resolveLandlordApplicationNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
 
@@ -192,7 +194,22 @@ export async function createQualifiedRentalApplication(params: {
   const applicantDisplay = applicant.nickname?.trim() || applicant.name?.trim() || 'Helvenda-Nutzer'
   const applicantFullName =
     `${tenantProfile.firstName} ${tenantProfile.lastName}`.trim() || applicantDisplay
-  const addressLine = `${listing.address}, ${listing.zip} ${listing.city}`
+  const addressLine = formatRentalListingAddress({
+    address: listing.address,
+    zip: listing.zip,
+    city: listing.city,
+  })
+  const applicantSummary = buildApplicantSummaryForLandlord({
+    employmentStatus: tenantProfile.employmentStatus,
+    employer: tenantProfile.employer,
+    jobTitle: tenantProfile.jobTitle,
+    employedSince: tenantProfile.employedSince,
+    monthlyIncomeCategory: tenantProfile.monthlyIncomeCategory,
+    householdTotalPersons: tenantProfile.householdTotalPersons,
+    householdChildrenCount: tenantProfile.householdChildrenCount,
+    requiresCreditCheck: listing.requiresCreditCheck,
+    creditCheckResult: tenantProfile.creditCheckResult,
+  })
   const applicantContactEmail = tenantProfile.applicationEmail?.trim() || applicant.email
   const applicantContactPhone = tenantProfile.contactPhone?.trim() || applicant.phone?.trim() || null
 
@@ -238,6 +255,7 @@ export async function createQualifiedRentalApplication(params: {
       applicantContactPhone,
       applicantContactEmail,
       applicantMessage: message,
+      applicantSummary,
       requiresCreditCheck: listing.requiresCreditCheck,
       creditCheckResult: creditResult,
       employmentStatus: tenantProfile.employmentStatus,

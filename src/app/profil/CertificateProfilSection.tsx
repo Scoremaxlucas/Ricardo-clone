@@ -2,7 +2,8 @@
 
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { formatDate } from '@/lib/utils/formatDate'
-import { ShieldCheck } from 'lucide-react'
+import { Check, Circle, ShieldCheck } from 'lucide-react'
+import { dispatchWohnenNavRefresh } from '@/lib/wohnen-nav-refresh'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { useCallback, useState } from 'react'
@@ -33,7 +34,7 @@ export function CertificateProfilSection({
     if (!activeCertificate) return
     try {
       await navigator.clipboard.writeText(verifyUrl)
-      toast.success('Link kopiert ✓')
+      toast.success('Link kopiert')
     } catch {
       toast.error('Kopieren fehlgeschlagen')
     }
@@ -50,7 +51,7 @@ export function CertificateProfilSection({
         })
       } else {
         await navigator.clipboard.writeText(verifyUrl)
-        toast.success('Link kopiert ✓')
+        toast.success('Link kopiert')
       }
     } catch {
       /* user cancelled share */
@@ -74,6 +75,7 @@ export function CertificateProfilSection({
         return
       }
       toast.success('Zertifikat widerrufen')
+      dispatchWohnenNavRefresh()
       window.location.reload()
     } finally {
       setBusy(false)
@@ -165,13 +167,23 @@ export function CertificateProfilSection({
       <p className="mt-4 text-sm font-medium text-slate-700">Für deinen Qualitätsnachweis benötigst du:</p>
       <ul className="mt-4 space-y-3 text-sm">
         <li className="flex flex-wrap items-center justify-between gap-2">
-          <span>{checklist.profileComplete ? '✓' : '○'} Vollständiges Profil</span>
+          <span className="inline-flex items-center gap-2">
+            {checklist.profileComplete ?
+              <Check className="h-4 w-4 text-emerald-700" strokeWidth={2.5} aria-hidden />
+            : <Circle className="h-4 w-4 text-slate-400" strokeWidth={2} aria-hidden />}
+            Vollständiges Profil
+          </span>
           {checklist.profileComplete ?
             <span className="text-emerald-700">Erledigt</span>
           : <Link href="/profil/bearbeiten" className="font-semibold text-teal-800 underline">Vervollständigen</Link>}
         </li>
         <li className="flex flex-wrap items-center justify-between gap-2">
-          <span>{checklist.creditOk ? '✓' : '○'} Gültiges Betreibungsregister</span>
+          <span className="inline-flex items-center gap-2">
+            {checklist.creditOk ?
+              <Check className="h-4 w-4 text-emerald-700" strokeWidth={2.5} aria-hidden />
+            : <Circle className="h-4 w-4 text-slate-400" strokeWidth={2} aria-hidden />}
+            Gültiges Betreibungsregister
+          </span>
           {checklist.creditOk ?
             <span className="text-emerald-700">Erledigt</span>
           : <Link href="/profil/betreibungsregister" className="font-semibold text-teal-800 underline">Jetzt hochladen</Link>}

@@ -13,9 +13,7 @@ import { useMemo, useState } from 'react'
 export type BewerbenListingPreview = {
   id: string
   title: string
-  address: string
-  zip: string
-  city: string
+  addressLine: string
   rooms: number
   areaSqm: number
   rentPerMonth: number
@@ -46,7 +44,6 @@ type Props = {
 
 export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) {
   const router = useRouter()
-  const [message, setMessage] = useState('')
   const [confirm, setConfirm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -82,10 +79,7 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
       const res = await fetch('/api/rental-applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rentalListingId: listing.id,
-          message: message.trim() || undefined,
-        }),
+        body: JSON.stringify({ rentalListingId: listing.id }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -115,6 +109,7 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
       }
       wohnenToast.applicationSuccess()
       setDone(true)
+      router.refresh()
     } catch {
       wohnenToast.genericError()
     } finally {
@@ -129,8 +124,8 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
           <CheckCircle2 className="h-16 w-16 text-emerald-600" aria-hidden />
           <h1 className="mt-6 text-xl font-bold leading-tight text-emerald-950 sm:text-2xl">Bewerbung erfolgreich abgeschickt</h1>
           <p className="mt-4 text-sm leading-relaxed text-emerald-900">
-            Der Vermieter wurde benachrichtigt und wird sich bei dir melden. Du kannst deine Bewerbungen jederzeit unter
-            &quot;Meine Bewerbungen&quot; einsehen.
+            Der Vermieter wurde mit deinem verifizierten Profil benachrichtigt. Du kannst den Status unter Meine
+            Bewerbungen einsehen.
           </p>
           <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
@@ -156,40 +151,43 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
       <Link href={`/wohnungen/${listing.id}`} className="text-sm font-medium text-teal-800 underline-offset-2 hover:underline">
         ← Zurück zum Inserat
       </Link>
-      <h1 className="mt-4 text-2xl font-bold text-slate-900 sm:text-3xl">Bewerbung</h1>
-      <p className="mt-2 text-sm text-slate-600">Prüfe deine Angaben und sende deine Bewerbung mit einem Klick ab.</p>
+      <h1 className="mt-4 text-2xl font-bold text-slate-900 sm:text-3xl">Vorschau deiner Bewerbung</h1>
+      <p className="mt-2 text-sm text-slate-600">
+        So sieht der Vermieter dein Profil. Von der Inseratsseite bewirbst du dich mit einem Klick — hier kannst du vorher
+        prüfen und direkt absenden.
+      </p>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,40%)] lg:items-start">
         <div className="space-y-8">
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex gap-4">
               <div className="h-24 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-                {listing.firstPhotoUrl ? (
+                {listing.firstPhotoUrl ?
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={listing.firstPhotoUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-slate-300" aria-hidden>
+                : <div className="flex h-full items-center justify-center text-slate-300" aria-hidden>
                     <Building2 className="h-8 w-8 opacity-40" />
                   </div>
-                )}
+                }
               </div>
               <div className="min-w-0">
                 <h2 className="text-lg font-bold text-slate-900">{listing.title}</h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  {listing.address}, {listing.zip} {listing.city}
-                </p>
+                <p className="mt-1 text-sm text-slate-600">{listing.addressLine}</p>
                 <p className="mt-2 text-sm text-slate-700">
                   {listing.rooms} Zi. · {listing.areaSqm} m² · CHF {listing.rentPerMonth.toLocaleString('de-CH')}.— / Monat
                 </p>
-                <Link href={`/wohnungen/${listing.id}`} className="mt-3 inline-block text-sm font-semibold text-teal-800 underline-offset-2 hover:underline">
-                  Zur Inserat-Detailseite →
+                <Link
+                  href={`/wohnungen/${listing.id}`}
+                  className="mt-3 inline-block text-sm font-semibold text-teal-800 underline-offset-2 hover:underline"
+                >
+                  Zum Inserat
                 </Link>
               </div>
             </div>
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <h2 className="text-base font-bold text-slate-900">Das sieht der Vermieter von dir:</h2>
+            <h2 className="text-base font-bold text-slate-900">Das sieht der Vermieter von dir</h2>
             <div className="mt-4 space-y-3 text-sm text-slate-800">
               <p>
                 <span className="font-medium text-slate-500">Name:</span> {tenant.firstName} {tenant.lastName}
@@ -205,47 +203,45 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
                 {tenant.householdTotalPersons === 1 ? 'Person (allein)' : 'Personen'}, {tenant.householdChildrenCount}{' '}
                 Kinder
               </p>
-              {requiresCreditCheck && tenant.creditCheckStatus === 'APPROVED' && creditResult ? (
+              {requiresCreditCheck && tenant.creditCheckStatus === 'APPROVED' && creditResult ?
                 <div className="pt-2">
                   <CreditCheckBadge status="approved" creditCheckResult={creditResult} />
                 </div>
-              ) : null}
-              {tenant.referenceName?.trim() ? (
+              : null}
+              {tenant.referenceName?.trim() ?
                 <p>
                   <span className="font-medium text-slate-500">Referenz:</span> {tenant.referenceName}
                   {tenant.referenceRelation?.trim() ? ` · ${tenant.referenceRelation}` : ''}
                 </p>
-              ) : null}
+              : null}
             </div>
-            <Link href="/profil/bearbeiten" className="mt-4 inline-block text-sm font-semibold text-teal-800 underline-offset-2 hover:underline">
-              Profil bearbeiten →
+            <Link
+              href="/profil/bearbeiten"
+              className="mt-4 inline-block text-sm font-semibold text-teal-800 underline-offset-2 hover:underline"
+            >
+              Profil bearbeiten
             </Link>
           </section>
         </div>
 
         <aside className="lg:sticky lg:top-24">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
-            <h2 className="text-lg font-bold text-slate-900">Bewerbung abschicken</h2>
-            <label className="mt-4 block text-sm font-medium text-slate-700">Nachricht an den Vermieter (optional)</label>
-            <textarea
-              className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-base sm:text-sm"
-              rows={4}
-              maxLength={500}
-              placeholder="Stell dich kurz vor — warum interessiert dich diese Wohnung?"
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-            />
-            <p className="mt-1 text-right text-xs text-slate-500">{message.length} / 500</p>
+            <h2 className="text-lg font-bold text-slate-900">Bewerbung absenden</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Dein verifiziertes Profil wird automatisch an den Vermieter übermittelt — inkl. Kurzprofil und
+              Betreibungsregister, wo vorgesehen.
+            </p>
 
             <div className="mt-4 flex gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-900">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" aria-hidden />
               <span>
                 {requiresCreditCheck ?
-                  'Dein geprüfter Betreibungsregisterauszug aus dem Profil wird dem Vermieter mitgeteilt.'
+                  'Geprüfter Betreibungsregisterauszug aus deinem Profil wird mitgeteilt.'
                 : 'Deine Profilangaben werden dem Vermieter mitgeteilt.'}
               </span>
             </div>
-            <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm text-slate-800">
+
+            <label className="mt-5 flex cursor-pointer items-start gap-2 text-sm text-slate-800">
               <input
                 type="checkbox"
                 checked={confirm}
@@ -258,12 +254,16 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
               <span>Ich bestätige, dass alle Angaben in meinem Profil korrekt und aktuell sind.</span>
             </label>
 
-            {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+            {error ?
+              <p className="mt-3 text-sm text-red-600">{error}</p>
+            : !confirm ?
+              <p className="mt-2 text-xs text-slate-500">Bitte Bestätigung ankreuzen, um zu senden.</p>
+            : null}
 
             <button
               type="button"
               disabled={submitting || !confirm}
-              onClick={submit}
+              onClick={() => void submit()}
               className="mt-5 w-full rounded-xl bg-[#18a87c] py-3.5 text-sm font-bold text-white shadow-md hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? 'Wird gesendet…' : 'Bewerbung absenden'}

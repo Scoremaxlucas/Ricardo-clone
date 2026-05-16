@@ -8,6 +8,7 @@ import { Toggle } from '@/components/profil/Toggle'
 import type { ProfilFormInitial } from '@/lib/tenant-profile/profil-form-initial'
 import { employmentLabelDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import type { EmploymentStatus, HouseholdPets, IncomeCategory } from '@prisma/client'
+import { dispatchWohnenNavRefresh } from '@/lib/wohnen-nav-refresh'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -366,6 +367,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
       const base = mode === 'create' ? redirectAfterSave : '/profil'
       const u = new URL(base, typeof window !== 'undefined' ? window.location.origin : 'https://wohnen.helvenda.ch')
       u.searchParams.set('onboarding', 'complete')
+      dispatchWohnenNavRefresh()
       router.push(u.pathname + u.search)
       router.refresh()
     } finally {

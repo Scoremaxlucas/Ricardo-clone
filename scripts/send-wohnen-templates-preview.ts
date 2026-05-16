@@ -92,7 +92,9 @@ async function main() {
       creditCheckResult: sampleCreditNoEntries,
       referenceName: 'R. Freund',
       referencePhone: '+41 79 000 00 00',
-      applicantMessage: 'Guten Tag, ich interessiere mich sehr für die Wohnung.',
+      applicantMessage: null,
+      applicantSummary:
+        'Angestellt bei Muster AG · Haushalt: 2 Personen · Einkommen (Kategorie): CHF 4\'000 – 5\'500 · Betreibungsregister: keine Einträge',
       certificateCode: 'HLV-PREVIEW',
     }) },
     { name: '2 Mieter — Bewerbung übermittelt', ...templateTenantApplicationSubmitted({

@@ -2,6 +2,7 @@ import { BewerbenClient, type BewerbenListingPreview, type BewerbenTenantPreview
 import { QualificationGate } from '@/components/rental/QualificationGate'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { formatRentalListingAddress } from '@/lib/rental/format-listing-address'
 import { qualifyTenant } from '@/lib/rental/qualifyTenant'
 import { fetchActiveRentalListingById, parseRentalListingPhotosJson } from '@/lib/rental/rental-listings-public'
 import type { Metadata } from 'next'
@@ -73,9 +74,11 @@ export default async function WohnungBewerbenPage({ params }: PageProps) {
   const listingPreview: BewerbenListingPreview = {
     id: listing.id,
     title: listing.title,
-    address: listing.address,
-    zip: listing.zip,
-    city: listing.city,
+    addressLine: formatRentalListingAddress({
+      address: listing.address,
+      zip: listing.zip,
+      city: listing.city,
+    }),
     rooms: Number(listing.rooms),
     areaSqm: listing.areaSqm,
     rentPerMonth: listing.rentPerMonth,

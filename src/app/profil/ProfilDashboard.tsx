@@ -5,6 +5,7 @@ import { OnboardingCompleteOverlay } from '@/app/profil/OnboardingCompleteOverla
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { formatDate } from '@/lib/utils/formatDate'
 import type { CreditCheckStatus } from '@prisma/client'
+import { AlertTriangle, Check, Search } from 'lucide-react'
 import Link from 'next/link'
 
 export type ProfilDashboardProps = {
@@ -81,7 +82,7 @@ export function ProfilDashboard({
               href="/profil/suche"
               className="flex h-10 min-h-[40px] min-w-[140px] items-center justify-center rounded-[10px] border-2 border-[#18a87c] px-4 text-sm font-semibold text-[#18a87c]"
             >
-              Suche anpassen
+              {preferenceRows.length ? 'Suche anpassen' : 'Suche einrichten'}
             </Link>
           </div>
         </header>
@@ -95,21 +96,24 @@ export function ProfilDashboard({
 
         <div className="mt-8 flex flex-wrap gap-2">
           {isComplete ?
-            <span className="rounded-full bg-[#e8f7f2] px-[14px] py-1.5 text-xs font-semibold text-[#107a5a]">
-              ✓ Profil vollständig
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#e8f7f2] px-[14px] py-1.5 text-xs font-semibold text-[#107a5a]">
+              <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} aria-hidden />
+              Profil vollständig
             </span>
           : null}
           {approvedValid ?
-            <span className="rounded-full bg-[#e8f7f2] px-[14px] py-1.5 text-xs font-semibold text-[#107a5a]">
-              ✓ Betreibungsregister gültig
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#e8f7f2] px-[14px] py-1.5 text-xs font-semibold text-[#107a5a]">
+              <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} aria-hidden />
+              Betreibungsregister gültig
             </span>
           : null}
           {needsRegisterUpload ?
             <Link
               href="/profil/betreibungsregister"
-              className="rounded-full bg-orange-50 px-[14px] py-1.5 text-xs font-semibold text-orange-900 hover:bg-orange-100"
+              className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-[14px] py-1.5 text-xs font-semibold text-orange-900 hover:bg-orange-100"
             >
-              ⚠️ Betreibungsregister hochladen
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} aria-hidden />
+              Betreibungsregister hochladen
             </Link>
           : null}
           {pendingReview ?
@@ -119,10 +123,34 @@ export function ProfilDashboard({
           : null}
         </div>
 
-        <div className="mt-14 grid gap-14 min-[900px]:grid-cols-2">
+        {preferenceRows.length === 0 ?
+          <section className="mt-10 rounded-2xl border border-[#b2e8d8] bg-[#f5fdfb] p-6 sm:flex sm:items-center sm:justify-between sm:gap-6">
+            <div className="flex min-w-0 gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#e8f7f2] text-[#107a5a]">
+                <Search className="h-5 w-5" strokeWidth={2} aria-hidden />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[#0d2b1f]">Wohnungssuche einrichten</h2>
+                <p className="mt-1 text-sm leading-relaxed text-[#5a7a6e]">
+                  Ort, Budget und Zimmer. Damit wir dir passende Inserate unter Meine Matches zeigen.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/profil/suche"
+              className="mt-5 inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-[#18a87c] px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-95 sm:mt-0"
+            >
+              Suche einrichten
+            </Link>
+          </section>
+        : null}
+
+        <div
+          className={`mt-14 grid gap-14 ${preferenceRows.length ? 'min-[900px]:grid-cols-2' : 'max-w-2xl'}`}
+        >
           <section>
-            <h2 className="sr-only">Persönliche Daten</h2>
-            <div className="flex flex-col gap-5">
+            <h2 className="text-sm font-semibold text-[#0d2b1f]">Persönliche Angaben</h2>
+            <div className="mt-5 flex flex-col gap-5">
               {personalRows.map(row => (
                 <div key={row.key}>
                   <p className="text-xs font-semibold uppercase tracking-wide text-[#8aa89e]">{row.label}</p>
@@ -131,31 +159,25 @@ export function ProfilDashboard({
               ))}
             </div>
           </section>
-          <section>
-            <h2 className="sr-only">Suchpräferenzen</h2>
-            <div className="flex flex-col gap-5">
-              {preferenceRows.length ?
-                preferenceRows.map(row => (
+          {preferenceRows.length ?
+            <section>
+              <h2 className="text-sm font-semibold text-[#0d2b1f]">Suchpräferenzen</h2>
+              <div className="mt-5 flex flex-col gap-5">
+                {preferenceRows.map(row => (
                   <div key={row.key}>
                     <p className="text-xs font-semibold uppercase tracking-wide text-[#8aa89e]">{row.label}</p>
                     <p className="mt-1 text-[15px] font-medium text-[#0d2b1f]">{row.value}</p>
                   </div>
-                ))
-              : (
-                <div className="rounded-xl border-[1.5px] border-[#b2e8d8] bg-[#f5fdfb] p-5">
-                  <p className="text-[15px] font-medium leading-relaxed text-[#0d2b1f]">
-                    Deine Suche ist noch nicht eingerichtet.
-                  </p>
-                  <Link
-                    href="/profil/suche"
-                    className="mt-4 inline-flex min-h-[44px] items-center text-[15px] font-semibold text-[#18a87c] hover:underline"
-                  >
-                    Suche einrichten →
-                  </Link>
-                </div>
-              )}
-            </div>
-          </section>
+                ))}
+                <Link
+                  href="/profil/suche"
+                  className="inline-flex min-h-[44px] items-center text-sm font-semibold text-[#18a87c] hover:underline"
+                >
+                  Suche anpassen
+                </Link>
+              </div>
+            </section>
+          : null}
         </div>
 
         <div className="mt-14">
@@ -169,7 +191,7 @@ export function ProfilDashboard({
                 href="/profil/betreibungsregister"
                 className="mt-3 inline-flex min-h-[44px] text-[13px] font-semibold text-[#107a5a] hover:underline"
               >
-                Neuen Auszug hochladen →
+                Neuen Auszug hochladen
               </Link>
             </div>
           : null}
@@ -186,7 +208,7 @@ export function ProfilDashboard({
                 href="/profil/betreibungsregister"
                 className="mt-3 inline-flex min-h-[44px] text-[14px] font-semibold text-[#c2410c] hover:underline"
               >
-                Jetzt hochladen →
+                Jetzt hochladen
               </Link>
             </div>
           : null}

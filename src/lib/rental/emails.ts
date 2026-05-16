@@ -72,6 +72,7 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
   applicantContactPhone: string | null
   applicantContactEmail: string | null
   applicantMessage?: string | null
+  applicantSummary?: string | null
   requiresCreditCheck: boolean
   creditCheckResult: unknown
   employmentStatus: EmploymentStatus
@@ -97,6 +98,7 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
     referenceName: opts.referenceName,
     referencePhone: opts.referencePhone,
     applicantMessage: opts.applicantMessage ?? null,
+    applicantSummary: opts.applicantSummary ?? null,
     certificateCode: opts.certificateCode ?? null,
   })
   await sendWohnenEmail({

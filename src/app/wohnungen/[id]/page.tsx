@@ -2,6 +2,7 @@ import { RentalListingCard } from '@/components/rental/RentalListingCard'
 import { ListingExpandableDescription } from '@/components/rental/ListingExpandableDescription'
 import { RentalListingDetailGallery } from '@/components/rental/RentalListingDetailGallery'
 import { WohnungBewerbungsBox } from '@/components/rental/WohnungBewerbungsBox'
+import { formatRentalListingAddress } from '@/lib/rental/format-listing-address'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import {
@@ -116,7 +117,11 @@ export default async function WohnungDetailPage({ params }: PageProps) {
             <p className="mt-3 flex flex-wrap items-start gap-2 text-sm text-slate-700">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden />
               <span>
-                {listing.address}, {listing.zip} {listing.city}
+                {formatRentalListingAddress({
+                  address: listing.address,
+                  zip: listing.zip,
+                  city: listing.city,
+                })}
               </span>
             </p>
 
@@ -162,6 +167,7 @@ export default async function WohnungDetailPage({ params }: PageProps) {
           <aside className="hidden lg:block lg:sticky lg:top-24">
             <WohnungBewerbungsBox
               listingId={listing.id}
+              listingTitle={listing.title}
               rentPerMonth={listing.rentPerMonth}
               requiresCreditCheck={listing.requiresCreditCheck}
               userId={userId}
@@ -201,6 +207,7 @@ export default async function WohnungDetailPage({ params }: PageProps) {
           <div className="mx-auto max-w-6xl">
             <WohnungBewerbungsBox
               listingId={listing.id}
+              listingTitle={listing.title}
               rentPerMonth={listing.rentPerMonth}
               requiresCreditCheck={listing.requiresCreditCheck}
               userId={userId}

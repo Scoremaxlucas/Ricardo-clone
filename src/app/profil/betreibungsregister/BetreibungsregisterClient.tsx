@@ -4,6 +4,7 @@ import { FileUp, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useRef, useState } from 'react'
+import { dispatchWohnenNavRefresh } from '@/lib/wohnen-nav-refresh'
 import { wohnenToast } from '@/lib/wohnen-toast'
 import toast from 'react-hot-toast'
 
@@ -84,12 +85,14 @@ export function BetreibungsregisterClient() {
 
       if (status === 'APPROVED') {
         wohnenToast.creditVerified()
+        dispatchWohnenNavRefresh()
         router.push('/profil')
         router.refresh()
         return
       }
       if (status === 'PENDING_MANUAL_REVIEW') {
         toast('Dokument wird manuell geprüft — wir melden uns per E-Mail.', { duration: 4500 })
+        dispatchWohnenNavRefresh()
         router.push('/profil')
         router.refresh()
         return
@@ -105,6 +108,7 @@ export function BetreibungsregisterClient() {
       }
 
       toast.success(message || 'Gespeichert')
+      dispatchWohnenNavRefresh()
       router.push('/profil')
       router.refresh()
     } catch {

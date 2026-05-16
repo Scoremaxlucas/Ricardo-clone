@@ -131,6 +131,8 @@ export function templateLandlordNewApplication(input: {
   referenceName: string | null
   referencePhone: string | null
   applicantMessage: string | null
+  /** Automatische Kurz-Zusammenfassung aus dem Mieterprofil (immer, wenn gesetzt). */
+  applicantSummary: string | null
   certificateCode: string | null
 }): WohnenEmailPayload {
   const o = wohnenOrigin()
@@ -144,9 +146,13 @@ export function templateLandlordNewApplication(input: {
       `<p style="margin:0 0 14px 0;"><strong>Helvenda Qualitätsnachweis:</strong> öffentliche Prüfseite mit den geprüften Angaben (Betreibungsregister, Einkommen):<br>
 <a href="${escapeHtml(verifyLink)}" style="color:#0f766e;font-weight:600;">${escapeHtml(verifyLink)}</a></p>`
     : ''
+  const summaryBox =
+    input.applicantSummary?.trim() ?
+      `<div style="margin:16px 0;padding:14px 16px;background-color:#f0faf5;border-left:4px solid #18a87c;border-radius:4px;color:#1f2937;font-size:14px;line-height:1.55;"><strong style="color:#0f766e;">Kurzprofil (Helvenda):</strong><br>${escapeHtml(input.applicantSummary.trim())}</div>`
+    : ''
   const msgBox =
     input.applicantMessage?.trim() ?
-      `<div style="margin:16px 0;padding:14px 16px;background-color:#f9fafb;border-left:4px solid #18a87c;border-radius:4px;color:#374151;font-size:14px;">${escapeHtml(input.applicantMessage.trim())}</div>`
+      `<div style="margin:16px 0;padding:14px 16px;background-color:#f9fafb;border-left:4px solid #94a3b8;border-radius:4px;color:#374151;font-size:14px;"><strong>Zusätzliche Nachricht:</strong><br>${escapeHtml(input.applicantMessage.trim())}</div>`
     : ''
 
   const inner = `
@@ -168,6 +174,7 @@ ${
 <p style="margin:0 0 6px 0;"><strong>Betreibungsregisterauszug:</strong> ${escapeHtml(betreibungsLineForLandlord(input.requiresCreditCheck, input.creditCheckResult))}</p>
 <p style="margin:0 0 18px 0;"><strong>Referenz:</strong> ${escapeHtml(referenceLine(input.referenceName, input.referencePhone))}</p>
 ${certBlock}
+${summaryBox}
 ${msgBox}
 ${buttonRow(link, 'Bewerbung ansehen')}
 `
@@ -185,7 +192,8 @@ ${buttonRow(link, 'Bewerbung ansehen')}
     `Betreibungsregisterauszug: ${betreibungsLineForLandlord(input.requiresCreditCheck, input.creditCheckResult)}`,
     `Referenz: ${referenceLine(input.referenceName, input.referencePhone)}`,
     verifyLink ? `Qualitätsnachweis (Prüfseite): ${verifyLink}` : '',
-    input.applicantMessage?.trim() ? `\nNachricht:\n${input.applicantMessage.trim()}` : '',
+    input.applicantSummary?.trim() ? `\nKurzprofil (Helvenda):\n${input.applicantSummary.trim()}` : '',
+    input.applicantMessage?.trim() ? `\nZusätzliche Nachricht:\n${input.applicantMessage.trim()}` : '',
     '',
     link,
   ]

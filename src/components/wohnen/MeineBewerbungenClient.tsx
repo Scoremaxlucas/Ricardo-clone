@@ -3,6 +3,7 @@
 import { WohnenEmptyState } from '@/components/wohnen/WohnenEmptyState'
 import type { RentalApplicationStatus } from '@prisma/client'
 import { Building2, ChevronDown, ChevronUp, Inbox } from 'lucide-react'
+import { formatRentalListingAddress } from '@/lib/rental/format-listing-address'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -117,7 +118,11 @@ function BewerbungCard({ app }: { app: MeineBewerbungRow }) {
         <div className="min-w-0">
           <h2 className="font-bold text-slate-900">{app.listing.title}</h2>
           <p className="mt-1 text-xs text-slate-600">
-            {app.listing.address}, {app.listing.zip} {app.listing.city}
+            {formatRentalListingAddress({
+              address: app.listing.address,
+              zip: app.listing.zip,
+              city: app.listing.city,
+            })}
           </p>
           <p className="mt-1 text-xs text-slate-600">
             {app.listing.rooms} Zi. · CHF {app.listing.rentPerMonth.toLocaleString('de-CH')}.— / Monat

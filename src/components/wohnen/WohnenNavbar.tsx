@@ -8,6 +8,7 @@ import { signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { isBetreibungsregisterPath, isTenantProfilWizardPath } from '@/lib/wohnen-profil-flow-paths'
+import { WOHNEN_NAV_REFRESH_EVENT } from '@/lib/wohnen-nav-refresh'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { formatDate } from '@/lib/utils/formatDate'
 
@@ -204,6 +205,45 @@ export function WohnenNavbar() {
     setVermietenOpen(false)
   }, [])
 
+  const loadNavStatus = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!user?.id) return
+    if (!opts?.silent) setNavReady(false)
+    const t0 = Date.now()
+    try {
+      const res = await fetch('/api/user/nav-status', {
+        credentials: 'same-origin',
+        cache: 'no-store',
+      })
+      const json = (await res.json().catch(() => null)) as NavStatus | { message?: string } | null
+      const elapsed = Date.now() - t0
+      if (elapsed < 200) {
+        await new Promise<void>(r => setTimeout(r, 200 - elapsed))
+      }
+      if (res.ok && json && 'profileComplete' in json) {
+        lastGoodNavRef.current = json
+        setNav(json)
+      } else if (lastGoodNavRef.current) {
+        setNav(lastGoodNavRef.current)
+        if (!opts?.silent) {
+          toast.error('Navigation konnte nicht aktualisiert werden — letzter Stand.')
+        }
+      } else {
+        setNav(null)
+      }
+    } catch {
+      if (lastGoodNavRef.current) {
+        setNav(lastGoodNavRef.current)
+        if (!opts?.silent) {
+          toast.error('Navigation konnte nicht aktualisiert werden — letzter Stand.')
+        }
+      } else {
+        setNav(null)
+      }
+    } finally {
+      setNavReady(true)
+    }
+  }, [user?.id])
+
   useEffect(() => {
     if (status === 'loading') {
       setNavReady(false)
@@ -221,46 +261,32 @@ export function WohnenNavbar() {
       return
     }
 
-    let cancelled = false
-    setNavReady(false)
+    void loadNavStatus()
+  }, [status, user?.id, loadNavStatus])
 
-    ;(async () => {
-      const t0 = Date.now()
-      try {
-        const res = await fetch('/api/user/nav-status', { credentials: 'same-origin' })
-        const json = (await res.json().catch(() => null)) as NavStatus | { message?: string } | null
-        const elapsed = Date.now() - t0
-        if (elapsed < 200) {
-          await new Promise<void>(r => setTimeout(r, 200 - elapsed))
-        }
-        if (cancelled) return
-        if (res.ok && json && 'profileComplete' in json) {
-          lastGoodNavRef.current = json
-          setNav(json)
-        } else if (lastGoodNavRef.current) {
-          setNav(lastGoodNavRef.current)
-          toast.error('Navigation konnte nicht aktualisiert werden — letzter Stand.')
-        } else {
-          setNav(null)
-        }
-      } catch {
-        if (!cancelled) {
-          if (lastGoodNavRef.current) {
-            setNav(lastGoodNavRef.current)
-            toast.error('Navigation konnte nicht aktualisiert werden — letzter Stand.')
-          } else {
-            setNav(null)
-          }
-        }
-      } finally {
-        if (!cancelled) setNavReady(true)
-      }
-    })()
-
-    return () => {
-      cancelled = true
+  useEffect(() => {
+    if (status !== 'authenticated' || !user?.id) return
+    const onRefresh = () => {
+      void loadNavStatus({ silent: true })
     }
-  }, [status, user?.id])
+    window.addEventListener(WOHNEN_NAV_REFRESH_EVENT, onRefresh)
+    return () => window.removeEventListener(WOHNEN_NAV_REFRESH_EVENT, onRefresh)
+  }, [status, user?.id, loadNavStatus])
+
+  const navRefreshPaths = [
+    '/profil',
+    '/zertifikat',
+    '/meine-matches',
+    '/meine-bewerbungen',
+    '/profil/betreibungsregister',
+  ]
+  useEffect(() => {
+    if (status !== 'authenticated' || !user?.id) return
+    if (navRefreshPaths.some(p => pathname === p || pathname.startsWith(`${p}/`))) {
+      void loadNavStatus({ silent: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pathname only
+  }, [pathname])
 
   useEffect(() => {
     if (mobileOpen) {
@@ -292,7 +318,10 @@ export function WohnenNavbar() {
   const tenantVerified = Boolean(n?.profileComplete && n?.creditApprovedAndValid)
   const showIncompleteProfile = Boolean(signedIn && n && !n.profileComplete)
   const showAuszugPill = Boolean(
-    n?.profileComplete && !n.creditApprovedAndValid && !n.creditPendingReview
+    n?.profileComplete &&
+      !n.creditApprovedAndValid &&
+      !n.creditPendingReview &&
+      n.creditCheckStatus !== 'APPROVED',
   )
   const showBewerbungenBadge = Boolean(n && n.openApplicationsCount > 0)
   const showHlvBadge = Boolean(n?.hasActiveCertificate && n?.certificateCode)
@@ -482,7 +511,7 @@ export function WohnenNavbar() {
             </div>
           : <Link
               href="/zertifikat"
-              className="rounded-md border border-[#18a87c] bg-[#e8f7f2] px-2.5 py-1 text-xs font-bold tracking-wide text-[#107a5a] hover:bg-[#dff5eb]"
+              className="rounded-full bg-[#18a87c] px-4 py-2 text-sm font-bold text-white shadow-sm hover:opacity-95"
             >
               Qualitätsnachweis
             </Link>}

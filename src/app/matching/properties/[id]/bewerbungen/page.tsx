@@ -4,6 +4,7 @@ import {
   type LandlordApplicationRow,
 } from '@/components/rental/LandlordListingApplicationsClient'
 import { authOptions } from '@/lib/auth'
+import { formatRentalListingAddress } from '@/lib/rental/format-listing-address'
 import { parseRentalListingPhotosJson } from '@/lib/rental/rental-listings-public'
 import { prisma } from '@/lib/prisma'
 import type { Metadata } from 'next'
@@ -84,7 +85,11 @@ export default async function LandlordListingApplicationsPage({ params }: PagePr
   const listingHead = {
     id: listing.id,
     title: listing.title,
-    addressLine: `${listing.address}, ${listing.zip} ${listing.city}`,
+    addressLine: formatRentalListingAddress({
+      address: listing.address,
+      zip: listing.zip,
+      city: listing.city,
+    }),
     rentPerMonth: listing.rentPerMonth,
     thumbUrl: thumbUrls[0] ?? null,
   }

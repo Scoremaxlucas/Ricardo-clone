@@ -2,7 +2,8 @@
 
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { formatDate } from '@/lib/utils/formatDate'
-import { CheckCircle2, Shield } from 'lucide-react'
+import { dispatchWohnenNavRefresh } from '@/lib/wohnen-nav-refresh'
+import { Check, CheckCircle2, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -158,8 +159,9 @@ export function ZertifikatClient({
       }
       setCode(data.certificate.certificateCode)
       setPhase('success')
+      dispatchWohnenNavRefresh()
       if (!data.reused) {
-        toast.success('Zertifikat ausgestellt ✓')
+        toast.success('Zertifikat ausgestellt')
       }
     } catch {
       setGate(issueErrorToGate())
@@ -182,7 +184,7 @@ export function ZertifikatClient({
     if (!verifyPageUrl) return
     try {
       await navigator.clipboard.writeText(verifyPageUrl)
-      toast.success('Prüf-Link kopiert ✓')
+      toast.success('Prüf-Link kopiert')
     } catch {
       toast.error('Kopieren fehlgeschlagen')
     }
@@ -192,7 +194,7 @@ export function ZertifikatClient({
     if (!code) return
     try {
       await navigator.clipboard.writeText(code)
-      toast.success('Code kopiert ✓')
+      toast.success('Code kopiert')
     } catch {
       toast.error('Kopieren fehlgeschlagen')
     }
@@ -246,7 +248,21 @@ export function ZertifikatClient({
                   Prüfseite in neuem Tab öffnen
                 </a>
               : null}
-              <Link href="/profil" className="block pt-1 text-center text-sm font-medium text-slate-500 hover:text-slate-700">
+              <div className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-2">
+                <Link
+                  href="/meine-matches"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[#18a87c] px-4 py-3 text-sm font-bold text-white shadow-sm hover:opacity-95"
+                >
+                  Meine Matches
+                </Link>
+                <Link
+                  href="/wohnungen"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border-2 border-[#18a87c] bg-white px-4 py-3 text-sm font-bold text-[#107a5a] hover:bg-[#f5fdfb]"
+                >
+                  Wohnungen suchen
+                </Link>
+              </div>
+              <Link href="/profil" className="block pt-2 text-center text-sm font-medium text-slate-500 hover:text-slate-700">
                 Zum Profil
               </Link>
             </div>
@@ -362,25 +378,24 @@ export function ZertifikatClient({
         : (
           <>
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#e8f7f2]">
-              <Shield className="h-11 w-11 animate-pulse text-[#18a87c]" strokeWidth={1.75} />
+              <Shield className="h-11 w-11 text-[#18a87c]" strokeWidth={1.75} aria-hidden />
             </div>
             <h1 className="mt-10 text-2xl font-extrabold text-[#0d2b1f]">Dein Helvenda Qualitätsnachweis</h1>
             <p className="mt-4 text-sm leading-relaxed text-[#5a7a6e]">
               Wir stellen dir jetzt deinen persönlichen Qualitätsnachweis aus. Er enthält:
             </p>
             <ul className="mx-auto mt-6 max-w-sm space-y-2 text-left text-sm font-medium text-[#0d2b1f]">
-              <li className="flex gap-2">
-                <span className="text-[#107a5a]">✓</span> Verifiziertes Betreibungsregister
-              </li>
-              <li className="flex gap-2">
-                <span className="text-[#107a5a]">✓</span> Einkommenskategorie
-              </li>
-              <li className="flex gap-2">
-                <span className="text-[#107a5a]">✓</span> Beschäftigungsstatus
-              </li>
-              <li className="flex gap-2">
-                <span className="text-[#107a5a]">✓</span> Einzigartiger Verifikations-Code
-              </li>
+              {[
+                'Verifiziertes Betreibungsregister',
+                'Einkommenskategorie',
+                'Beschäftigungsstatus',
+                'Einzigartiger Verifikations-Code',
+              ].map(label => (
+                <li key={label} className="flex items-start gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#107a5a]" strokeWidth={2.5} aria-hidden />
+                  {label}
+                </li>
+              ))}
             </ul>
             <p className="mt-8 text-sm font-semibold text-[#107a5a]">Gültig bis: {validUntil}</p>
             <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-[#d4eee4] bg-white px-5 py-4 text-left text-sm leading-relaxed text-[#5a7a6e] shadow-sm">
