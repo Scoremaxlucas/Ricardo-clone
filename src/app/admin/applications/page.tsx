@@ -3,6 +3,7 @@ import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
 import { landlordLeadEmailForApplication } from '@/lib/rental/resolve-landlord-notify-email'
+import { getWohnenLeadEmailOverride, isWohnenLeadEmailOverrideActive } from '@/lib/rental/wohnen-lead-email-override'
 import { formatDate } from '@/lib/utils/formatDate'
 import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
@@ -126,11 +127,24 @@ export default async function AdminApplicationsPage({
     }
   }
   const totalScoreBucketItems = Object.values(matchStats.scoreBuckets).reduce((a, b) => a + b, 0)
+  const leadOverrideActive = isWohnenLeadEmailOverrideActive()
+  const leadOverrideTo = getWohnenLeadEmailOverride()
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <h1 className="text-3xl font-bold text-slate-900">Alle Bewerbungen</h1>
       <p className="mt-1 text-sm text-slate-600">Plattformweite Bewerbungs-Transparenz inklusive Credit-Check-Status.</p>
+
+      {leadOverrideActive && leadOverrideTo ?
+        <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-semibold">Test-Modus aktiv</p>
+          <p className="mt-1">
+            Alle neuen Vermieter-Lead-Mails gehen an <span className="font-mono font-medium">{leadOverrideTo}</span>.
+            In der Tabelle «Lead an» steht weiterhin die <strong>ursprünglich vorgesehene</strong> Adresse. Variable{' '}
+            <code className="rounded bg-amber-100 px-1">WOHNEN_LEAD_EMAIL_OVERRIDE</code> entfernen zum Deaktivieren.
+          </p>
+        </div>
+      : null}
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">Total Bewerbungen</p><p className="text-2xl font-bold">{total}</p></div>

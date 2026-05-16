@@ -6,6 +6,7 @@ import { buildApplicantSummaryForLandlord } from '@/lib/rental/build-applicant-s
 import { formatRentalListingAddress } from '@/lib/rental/format-listing-address'
 import { qualifyTenant, type QualificationIssue } from '@/lib/rental/qualifyTenant'
 import { resolveLandlordApplicationNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
+import { resolveWohnenLeadDelivery } from '@/lib/rental/wohnen-lead-email-override'
 
 const REJECTION_NOTE_LANDLORD_MAIL_FAILED =
   '[Helvenda] Automatisch abgewiesen: Vermieter-Benachrichtigung konnte nicht versendet werden. Du kannst dich erneut bewerben.'
@@ -245,9 +246,12 @@ export async function createQualifiedRentalApplication(params: {
     select: { certificateCode: true },
   })
 
+  const leadDelivery = resolveWohnenLeadDelivery(landlordNotifyTo)
+
   try {
     await sendRentalLandlordNewApplicationEmail({
-      landlordEmail: landlordNotifyTo,
+      landlordEmail: leadDelivery.to,
+      leadTestIntendedEmail: leadDelivery.isOverride ? leadDelivery.intendedEmail : null,
       landlordUserId: listing.userId,
       landlordFirst: listing.user,
       listingId: listing.id,
