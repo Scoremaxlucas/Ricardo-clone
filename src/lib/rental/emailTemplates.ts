@@ -90,18 +90,6 @@ function buttonRow(href: string, label: string): string {
 </table>`
 }
 
-function buildApplicantMailtoLink(
-  email: string,
-  listingTitle: string,
-  applicantFullName: string
-): string {
-  const subject = encodeURIComponent(`Bewerbung: ${listingTitle}`)
-  const body = encodeURIComponent(
-    `Guten Tag ${applicantFullName}\n\nIch habe Ihre Bewerbung über Helvenda erhalten und melde mich bezüglich der Wohnung «${listingTitle}».\n\nFreundliche Grüsse`,
-  )
-  return `mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`
-}
-
 function betreibungsLineForLandlord(requiresCredit: boolean, result: unknown): string {
   if (!requiresCredit) return 'Nicht vorhanden'
   if (!result || !isCreditCheckResult(result)) return 'Nicht vorhanden'
@@ -175,25 +163,16 @@ export function templateLandlordNewApplication(input: {
       `Hallo ${escapeHtml(input.landlordFirstName.trim())},`
     : 'Guten Tag,'
 
-  const applicantEmail = input.applicantContactEmail?.trim() || null
-  const mailtoLink =
-    applicantEmail ? buildApplicantMailtoLink(applicantEmail, input.listingTitle, input.applicantFullName) : null
-
   const ctaBlock =
     input.landlordCanViewOnPlatform ?
       buttonRow(platformLink, 'Bewerbung ansehen')
-    : `<p style="margin:18px 0 10px 0;font-size:14px;line-height:1.55;color:#4b5563;">Alle geprüften Angaben stehen oben. Für Rückfragen oder eine Besichtigung kontaktieren Sie den Bewerber direkt — ein Helvenda-Konto ist nicht nötig.</p>
-${mailtoLink ? buttonRow(mailtoLink, 'Bewerber kontaktieren') : ''}
-${verifyLink ? buttonRow(verifyLink, 'Qualitätsnachweis prüfen') : ''}`
+    : `${verifyLink ? buttonRow(verifyLink, 'Qualitätsnachweis prüfen') : ''}
+<p style="margin:${verifyLink ? '12px' : '18px'} 0 0 0;font-size:14px;line-height:1.55;color:#4b5563;">Telefon und E-Mail des Bewerbers stehen oben. Die Prüfseite ist öffentlich — kein Helvenda-Konto nötig.</p>`
 
   const textCtaLines =
     input.landlordCanViewOnPlatform ?
       [platformLink]
-    : [
-        'Alle geprüften Angaben stehen oben. Bewerber direkt kontaktieren (kein Helvenda-Login nötig).',
-        mailtoLink ? `E-Mail an Bewerber: ${applicantEmail}` : '',
-        verifyLink ? `Qualitätsnachweis: ${verifyLink}` : '',
-      ].filter(Boolean)
+    : [verifyLink ? `Qualitätsnachweis: ${verifyLink}` : ''].filter(Boolean)
 
   const inner = `
 <p style="margin:0 0 14px 0;">${greetingLine}</p>

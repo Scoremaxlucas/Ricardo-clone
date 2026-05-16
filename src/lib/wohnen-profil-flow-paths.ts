@@ -10,3 +10,8 @@ export function isBetreibungsregisterPath(pathname: string): boolean {
 export function isCompactProfilShellPath(pathname: string): boolean {
   return isTenantProfilWizardPath(pathname) || isBetreibungsregisterPath(pathname)
 }
+
+/** Öffentliche Zertifikats-Prüfseite — ohne Mieter-/Vermieter-Navigation. */
+export function isPublicCertificateVerifyPath(pathname: string): boolean {
+  return pathname === '/verify' || pathname.startsWith('/verify/')
+}

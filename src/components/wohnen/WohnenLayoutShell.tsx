@@ -1,6 +1,10 @@
 'use client'
 
-import { isCompactProfilShellPath, isTenantProfilWizardPath } from '@/lib/wohnen-profil-flow-paths'
+import {
+  isCompactProfilShellPath,
+  isPublicCertificateVerifyPath,
+  isTenantProfilWizardPath,
+} from '@/lib/wohnen-profil-flow-paths'
 import { WohnenUiBrandProvider } from '@/contexts/WohnenUiBrandContext'
 import { WohnenFooter } from '@/components/wohnen/WohnenFooter'
 import { WohnenNavbar } from '@/components/wohnen/WohnenNavbar'
@@ -13,8 +17,19 @@ import type { ReactNode } from 'react'
  */
 export function WohnenLayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() || ''
+  const publicVerify = isPublicCertificateVerifyPath(pathname)
   const compact = isCompactProfilShellPath(pathname)
   const wizardOnly = isTenantProfilWizardPath(pathname)
+
+  if (publicVerify) {
+    return (
+      <WohnenUiBrandProvider>
+        <div data-wohnen-shell="verify-public" className="min-h-screen">
+          {children}
+        </div>
+      </WohnenUiBrandProvider>
+    )
+  }
 
   return (
     <WohnenUiBrandProvider>
