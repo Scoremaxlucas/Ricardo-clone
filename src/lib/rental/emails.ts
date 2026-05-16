@@ -1,4 +1,5 @@
 import { sendEmail } from '@/lib/email/sender'
+import { LANDLORD_NO_RESPONSE_NOTIFY_DAYS } from '@/lib/rental/landlord-lead-token'
 import { isWohnenLeadEmailOverrideVerbose } from '@/lib/rental/wohnen-lead-email-override'
 
 function escapeHtml(s: string): string {
@@ -25,7 +26,10 @@ import {
   templateAdminListingUrlUnreachableStreak,
   templateAdminRentalApplicationManualReview,
   templateLandlordNewApplication,
+  templateTenantApplicationRejectedByLandlord,
   templateTenantApplicationSubmitted,
+  templateTenantLandlordDirectContact,
+  templateTenantLandlordNoResponseYet,
   templateLandlordListingExpiredCalendar,
   templateTenantCertificateExpired,
   templateTenantCertificateExpirySoon,
@@ -94,6 +98,7 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
   /** Aktiver Helvenda-Qualitätsnachweis — Link in der Mail, kein PDF-Anhang. */
   certificateCode?: string | null
   landlordCanViewOnPlatform: boolean
+  landlordRespondUrl: string | null
 }): Promise<void> {
   const payload = templateLandlordNewApplication({
     landlordFirstName: opts.landlordSalutationFirstName,
@@ -113,13 +118,15 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
     applicantSummary: opts.applicantSummary ?? null,
     certificateCode: opts.certificateCode ?? null,
     landlordCanViewOnPlatform: opts.landlordCanViewOnPlatform,
+    landlordRespondUrl: opts.landlordRespondUrl,
+    landlordNoResponseDays: LANDLORD_NO_RESPONSE_NOTIFY_DAYS,
   })
   const intended = opts.leadTestIntendedEmail?.trim()
   const verbose = Boolean(intended && isWohnenLeadEmailOverrideVerbose())
   const testPrefix = verbose ? `[TEST · eigentlich ${intended}] ` : ''
   const testBanner =
     verbose ?
-      `<div style="margin:0 0 16px 0;padding:12px 14px;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;font-size:13px;line-height:1.5;color:#9a3412;"><strong>Test-Modus:</strong> Diese Lead-Mail wurde an <strong>${escapeHtml(opts.landlordEmail)}</strong> gesendet. Ursprünglich vorgesehen war <strong>${escapeHtml(intended)}</strong>. Entferne <code>WOHNEN_LEAD_EMAIL_OVERRIDE</code> in Vercel, um echte Vermieter zu benachrichtigen.</div>`
+      `<div style="margin:0 0 16px 0;padding:12px 14px;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;font-size:13px;line-height:1.5;color:#9a3412;"><strong>Test-Modus:</strong> Diese Lead-Mail wurde an <strong>${escapeHtml(opts.landlordEmail)}</strong> gesendet. Ursprünglich vorgesehen war <strong>${escapeHtml(intended!)}</strong>. Entferne <code>WOHNEN_LEAD_EMAIL_OVERRIDE</code> in Vercel, um echte Vermieter zu benachrichtigen.</div>`
     : ''
 
   await sendWohnenEmail({
@@ -163,6 +170,67 @@ export async function sendRentalApplicantSuccessEmail(opts: {
     addressLine: opts.addressLine,
     rooms: opts.rooms,
     rentPerMonth: opts.rentPerMonth,
+  })
+  await sendWohnenEmail({
+    to: opts.applicantEmail,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+    userId: opts.applicantUserId,
+  })
+}
+
+export async function sendRentalApplicantRejectedByLandlordEmail(opts: {
+  applicantEmail: string
+  applicantUserId: string
+  applicantFirst: { firstName?: string | null; name?: string | null }
+  listingTitle: string
+}): Promise<void> {
+  const payload = templateTenantApplicationRejectedByLandlord({
+    tenantFirstName: firstName(opts.applicantFirst),
+    listingTitle: opts.listingTitle,
+  })
+  await sendWohnenEmail({
+    to: opts.applicantEmail,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+    userId: opts.applicantUserId,
+  })
+}
+
+export async function sendRentalApplicantLandlordDirectContactEmail(opts: {
+  applicantEmail: string
+  applicantUserId: string
+  applicantFirst: { firstName?: string | null; name?: string | null }
+  listingTitle: string
+  landlordNote?: string | null
+}): Promise<void> {
+  const payload = templateTenantLandlordDirectContact({
+    tenantFirstName: firstName(opts.applicantFirst),
+    listingTitle: opts.listingTitle,
+    landlordNote: opts.landlordNote ?? null,
+  })
+  await sendWohnenEmail({
+    to: opts.applicantEmail,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+    userId: opts.applicantUserId,
+  })
+}
+
+export async function sendRentalApplicantLandlordNoResponseEmail(opts: {
+  applicantEmail: string
+  applicantUserId: string
+  applicantFirst: { firstName?: string | null; name?: string | null }
+  listingTitle: string
+  daysSinceApplication: number
+}): Promise<void> {
+  const payload = templateTenantLandlordNoResponseYet({
+    tenantFirstName: firstName(opts.applicantFirst),
+    listingTitle: opts.listingTitle,
+    daysSinceApplication: opts.daysSinceApplication,
   })
   await sendWohnenEmail({
     to: opts.applicantEmail,

@@ -94,6 +94,10 @@
     {
       "path": "/api/cron/wohnen-email-outbox",
       "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/landlord-response-followup",
+      "schedule": "30 9 * * *"
     }
   ]
 }

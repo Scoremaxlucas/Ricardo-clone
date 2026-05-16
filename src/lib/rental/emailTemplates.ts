@@ -137,6 +137,9 @@ export function templateLandlordNewApplication(input: {
   certificateCode: string | null
   /** false = Admin-Inserat / externer Vermieter ohne Helvenda-Konto */
   landlordCanViewOnPlatform: boolean
+  /** Magic-Link: Besichtigung / Absage ohne Login */
+  landlordRespondUrl: string | null
+  landlordNoResponseDays: number
 }): WohnenEmailPayload {
   const o = wohnenOrigin()
   const platformLink = `${o}/matching/properties/${encodeURIComponent(input.listingId)}/bewerbungen`
@@ -163,16 +166,17 @@ export function templateLandlordNewApplication(input: {
       `Hallo ${escapeHtml(input.landlordFirstName.trim())},`
     : 'Guten Tag,'
 
+  const respondUrl = input.landlordRespondUrl?.trim() || null
   const ctaBlock =
     input.landlordCanViewOnPlatform ?
-      buttonRow(platformLink, 'Bewerbung ansehen')
-    : `${verifyLink ? buttonRow(verifyLink, 'Qualitätsnachweis prüfen') : ''}
-<p style="margin:${verifyLink ? '12px' : '18px'} 0 0 0;font-size:14px;line-height:1.55;color:#4b5563;">Telefon und E-Mail des Bewerbers stehen oben. Die Prüfseite ist öffentlich — kein Helvenda-Konto nötig.</p>`
+      `${respondUrl ? buttonRow(respondUrl, 'Antwort erfassen') : ''}${buttonRow(platformLink, 'Bewerbung auf Helvenda')}`
+    : `${respondUrl ? buttonRow(respondUrl, 'Antwort erfassen') : ''}${verifyLink ? buttonRow(verifyLink, 'Qualitätsnachweis prüfen') : ''}
+<p style="margin:14px 0 0 0;font-size:13px;line-height:1.55;color:#6b7280;">Kein Helvenda-Konto nötig. Reagieren Sie innerhalb weniger Tage — sonst informieren wir den Bewerber nach ${input.landlordNoResponseDays} Tagen transparent über den Stand.</p>`
 
   const textCtaLines =
     input.landlordCanViewOnPlatform ?
-      [platformLink]
-    : [verifyLink ? `Qualitätsnachweis: ${verifyLink}` : ''].filter(Boolean)
+      [respondUrl, platformLink].filter(Boolean) as string[]
+    : [respondUrl, verifyLink].filter(Boolean) as string[]
 
   const inner = `
 <p style="margin:0 0 14px 0;">${greetingLine}</p>
@@ -222,6 +226,89 @@ ${ctaBlock}
     .filter(Boolean)
     .join('\n')
 
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
+}
+
+/** Template — Bewerbung nicht berücksichtigt (Mieter, nach Vermieter-Absage) */
+export function templateTenantApplicationRejectedByLandlord(input: {
+  tenantFirstName: string
+  listingTitle: string
+}): WohnenEmailPayload {
+  const o = wohnenOrigin()
+  const link = `${o}/meine-bewerbungen`
+  const inner = `
+<p style="margin:0 0 14px 0;">Hallo ${escapeHtml(input.tenantFirstName)},</p>
+<p style="margin:0 0 14px 0;">der Vermieter von <strong>„${escapeHtml(input.listingTitle)}“</strong> hat uns mitgeteilt, dass deine Bewerbung für diese Wohnung leider nicht weiterverfolgt wird.</p>
+<p style="margin:0 0 14px 0;">Das bedeutet nicht, dass etwas mit deinem Profil nicht stimmt — auf dem Schweizer Mietmarkt sind viele Bewerbungen gleichzeitig im Rennen.</p>
+${buttonRow(link, 'Weitere Bewerbungen')}
+`
+  const subject = `Update zu „${input.listingTitle}“`
+  const text = [
+    `Hallo ${input.tenantFirstName},`,
+    '',
+    `Der Vermieter von „${input.listingTitle}“ verfolgt deine Bewerbung nicht weiter.`,
+    '',
+    link,
+  ].join('\n')
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
+}
+
+/** Template — Vermieter meldet sich direkt (Mieter) */
+export function templateTenantLandlordDirectContact(input: {
+  tenantFirstName: string
+  listingTitle: string
+  landlordNote: string | null
+}): WohnenEmailPayload {
+  const o = wohnenOrigin()
+  const link = `${o}/meine-bewerbungen`
+  const noteBlock =
+    input.landlordNote?.trim() ?
+      `<p style="margin:14px 0 0 0;padding:12px 14px;background-color:#f0faf5;border-radius:4px;font-size:14px;color:#374151;"><strong>Notiz:</strong><br>${escapeHtml(input.landlordNote.trim())}</p>`
+    : ''
+  const inner = `
+<p style="margin:0 0 14px 0;">Hallo ${escapeHtml(input.tenantFirstName)},</p>
+<p style="margin:0 0 14px 0;">gute Nachrichten: Der Vermieter von <strong>„${escapeHtml(input.listingTitle)}“</strong> hat deine Bewerbung erhalten und wird sich <strong>direkt bei dir</strong> melden (Telefon oder E-Mail).</p>
+${noteBlock}
+${buttonRow(link, 'Meine Bewerbungen')}
+`
+  const subject = `Der Vermieter meldet sich — „${input.listingTitle}“`
+  const text = [
+    `Hallo ${input.tenantFirstName},`,
+    '',
+    `Der Vermieter von „${input.listingTitle}“ meldet sich direkt bei dir.`,
+    input.landlordNote?.trim() ? `Notiz: ${input.landlordNote.trim()}` : '',
+    '',
+    link,
+  ]
+    .filter(Boolean)
+    .join('\n')
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
+}
+
+/** Template — Keine Vermieter-Rückmeldung nach Frist (Mieter) */
+export function templateTenantLandlordNoResponseYet(input: {
+  tenantFirstName: string
+  listingTitle: string
+  daysSinceApplication: number
+}): WohnenEmailPayload {
+  const o = wohnenOrigin()
+  const link = `${o}/meine-bewerbungen`
+  const inner = `
+<p style="margin:0 0 14px 0;">Hallo ${escapeHtml(input.tenantFirstName)},</p>
+<p style="margin:0 0 14px 0;">zu deiner Bewerbung für <strong>„${escapeHtml(input.listingTitle)}“</strong>: Der Vermieter hat über Helvenda noch keine Rückmeldung erfasst (seit ${input.daysSinceApplication} Tagen).</p>
+<p style="margin:0 0 14px 0;">Das kommt vor — viele Vermieter bearbeiten Anfragen per E-Mail oder Telefon. Deine Bewerbung wurde mit Qualitätsnachweis zugestellt; du musst nichts weiter tun.</p>
+<p style="margin:0 0 14px 0;">In «Meine Bewerbungen» kannst du die Bewerbung nach einigen Tagen als «keine Rückmeldung» melden, falls das Inserat veraltet wirkt.</p>
+${buttonRow(link, 'Meine Bewerbungen')}
+`
+  const subject = `Stand deiner Bewerbung — „${input.listingTitle}“`
+  const text = [
+    `Hallo ${input.tenantFirstName},`,
+    '',
+    `Zu „${input.listingTitle}“: noch keine Rückmeldung vom Vermieter über Helvenda (${input.daysSinceApplication} Tage).`,
+    'Das ist häufig normal — viele Vermieter antworten direkt.',
+    '',
+    link,
+  ].join('\n')
   return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
 }
 

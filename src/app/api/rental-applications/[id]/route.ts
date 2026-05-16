@@ -1,5 +1,5 @@
 import { authOptions } from '@/lib/auth'
-import { sendRentalApplicantViewingInvitationEmail } from '@/lib/rental/emails'
+import { applyLandlordApplicationDecision } from '@/lib/rental/apply-landlord-application-decision'
 import { prisma } from '@/lib/prisma'
 import type { Prisma } from '@prisma/client'
 import { RentalApplicationStatus } from '@prisma/client'
@@ -105,37 +105,39 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ message: 'Ungültiger Body' }, { status: 400 })
     }
 
-    const data: Prisma.RentalApplicationUpdateInput = {}
-    let sendViewingEmail = false
-    let viewingAtIso: string | null = null
-    let viewingNote: string | null =
+    const viewingNote =
       typeof body.viewingNote === 'string' ? body.viewingNote.trim() || null : null
 
-    if (body.action === 'reject') {
-      if (app.rejectedAt != null || app.status === RentalApplicationStatus.rejected) {
-        return NextResponse.json({ message: 'Bereits abgelehnt' }, { status: 400 })
+    if (body.action === 'reject' || body.action === 'request_viewing') {
+      const result = await applyLandlordApplicationDecision({
+        applicationId: id,
+        action: body.action,
+        viewingDate: body.viewingDate != null ? String(body.viewingDate) : undefined,
+        viewingNote,
+        rejectionNote: typeof body.rejectionNote === 'string' ? body.rejectionNote : undefined,
+      })
+      if (!result.ok) {
+        return NextResponse.json({ message: result.message }, { status: result.status })
       }
-      data.status = RentalApplicationStatus.rejected
-      data.rejectedAt = new Date()
-    } else if (body.action === 'request_viewing') {
-      if (app.rejectedAt != null || app.status === RentalApplicationStatus.rejected) {
-        return NextResponse.json({ message: 'Abgelehnte Bewerbung' }, { status: 400 })
-      }
-      if (app.viewingRequestedAt) {
-        return NextResponse.json({ message: 'Besichtigung wurde bereits angefragt' }, { status: 400 })
-      }
-      const vd = body.viewingDate != null ? new Date(String(body.viewingDate)) : null
-      if (!vd || Number.isNaN(vd.getTime())) {
-        return NextResponse.json({ message: 'viewingDate erforderlich' }, { status: 400 })
-      }
-      if (vd.getTime() < Date.now() - 60_000) {
-        return NextResponse.json({ message: 'Besichtigung muss in der Zukunft liegen' }, { status: 400 })
-      }
-      data.viewingDate = vd
-      data.viewingRequestedAt = new Date()
-      viewingAtIso = vd.toISOString()
-      sendViewingEmail = true
-    } else {
+      const updated = await prisma.rentalApplication.findUnique({ where: { id } })
+      revalidatePath(`/matching/properties/${app.listing.id}/bewerbungen`)
+      revalidatePath('/matching/properties')
+      revalidatePath('/meine-bewerbungen')
+      return NextResponse.json({
+        application: {
+          id: updated!.id,
+          status: updated!.status,
+          viewingDate: updated!.viewingDate?.toISOString() ?? null,
+          viewingRequestedAt: updated!.viewingRequestedAt?.toISOString() ?? null,
+          rejectedAt: updated!.rejectedAt?.toISOString() ?? null,
+          rejectionNote: updated!.rejectionNote,
+        },
+      })
+    }
+
+    const data: Prisma.RentalApplicationUpdateInput = {}
+
+    {
       if (typeof body.status === 'string') {
         if (!APP_STATUSES.has(body.status)) {
           return NextResponse.json({ message: 'Ungültiger Status' }, { status: 400 })
@@ -182,34 +184,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
-    if (Object.keys(data).length === 0 && !sendViewingEmail) {
+    if (Object.keys(data).length === 0) {
       return NextResponse.json({ message: 'Keine Felder zum Aktualisieren' }, { status: 400 })
     }
 
-    const updated =
-      Object.keys(data).length > 0 ?
-        await prisma.rentalApplication.update({
-          where: { id },
-          data,
-        })
-      : app
-
-    if (sendViewingEmail && viewingAtIso && app.applicant?.email && app.listing) {
-      const listingAddress = `${app.listing.address}, ${app.listing.zip} ${app.listing.city}`
-      try {
-        await sendRentalApplicantViewingInvitationEmail({
-          applicantEmail: app.applicant.email,
-          applicantUserId: app.applicant.id,
-          applicantFirst: { firstName: app.applicant.firstName, name: app.applicant.name },
-          listingTitle: app.listing.title,
-          listingAddress,
-          viewingAtIso,
-          note: viewingNote,
-        })
-      } catch (err) {
-        console.error('[rental-applications PATCH] viewing email', err)
-      }
-    }
+    const updated = await prisma.rentalApplication.update({
+      where: { id },
+      data,
+    })
 
     revalidatePath(`/matching/properties/${app.listing.id}/bewerbungen`)
     revalidatePath('/matching/properties')

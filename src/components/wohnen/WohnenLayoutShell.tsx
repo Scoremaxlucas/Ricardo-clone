@@ -2,7 +2,7 @@
 
 import {
   isCompactProfilShellPath,
-  isPublicCertificateVerifyPath,
+  isPublicWohnenStandalonePath,
   isTenantProfilWizardPath,
 } from '@/lib/wohnen-profil-flow-paths'
 import { WohnenUiBrandProvider } from '@/contexts/WohnenUiBrandContext'
@@ -17,11 +17,11 @@ import type { ReactNode } from 'react'
  */
 export function WohnenLayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() || ''
-  const publicVerify = isPublicCertificateVerifyPath(pathname)
+  const publicStandalone = isPublicWohnenStandalonePath(pathname)
   const compact = isCompactProfilShellPath(pathname)
   const wizardOnly = isTenantProfilWizardPath(pathname)
 
-  if (publicVerify) {
+  if (publicStandalone) {
     return (
       <WohnenUiBrandProvider>
         <div data-wohnen-shell="verify-public" className="min-h-screen">

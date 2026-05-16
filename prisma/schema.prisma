@@ -1862,6 +1862,12 @@ model RentalApplication {
   landlordLeadEmail           String?
   /** Tatsächliche Zustelladresse der Vermieter-Mail (kann Test-Override sein). */
   landlordLeadEmailDeliveredTo String?
+  /** Magic-Link-Token für Vermieter-Antwort ohne Konto (einmalig pro Bewerbung, rotierbar). */
+  landlordLeadToken            String?   @unique
+  landlordLeadTokenExpiresAt   DateTime?
+  landlordRespondedAt          DateTime?
+  /** Mieter über ausbleibende Vermieter-Rückmeldung informiert (Cron). */
+  landlordNoResponseNotifiedAt DateTime?
 
   listing   RentalListing @relation(fields: [rentalListingId], references: [id], onDelete: Cascade)
   applicant User          @relation("RentalApplicationApplicant", fields: [applicantUserId], references: [id], onDelete: Cascade)
