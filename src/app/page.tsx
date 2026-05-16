@@ -10,7 +10,11 @@ import { getFeaturedProducts } from '@/lib/products'
 import { prisma } from '@/lib/prisma'
 import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import { isWohnenMatchingHostFromHeaders } from '@/lib/tenant-host'
-import { deriveWohnenHomeCta } from '@/lib/wohnenTenantJourney'
+import {
+  deriveWohnenHomeCta,
+  deriveWohnenJourneyStage,
+  type WohnenJourneyStage,
+} from '@/lib/wohnenTenantJourney'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
@@ -92,6 +96,7 @@ export default async function Home() {
     let secondaryLabel: string | undefined
     let footerTenantHref: string | undefined
     let footerTenantLabel: string | undefined
+    let journeyStage: WohnenJourneyStage = 'anonymous'
 
     if (session?.user?.id) {
       const now = new Date()
@@ -122,6 +127,17 @@ export default async function Home() {
       secondaryLabel = cta.secondaryLabel
       footerTenantHref = cta.footerTenantHref
       footerTenantLabel = cta.footerTenantLabel
+      journeyStage = deriveWohnenJourneyStage({
+        signedIn: true,
+        profile: profile
+          ? {
+              isComplete: profile.isComplete,
+              creditCheckStatus: profile.creditCheckStatus,
+              creditCheckExpiresAt: profile.creditCheckExpiresAt,
+            }
+          : null,
+        hasActiveCertificate: Boolean(activeCert),
+      })
     }
 
     return (
@@ -159,6 +175,7 @@ export default async function Home() {
           footerTenantHref={footerTenantHref}
           footerTenantLabel={footerTenantLabel}
           signedIn={Boolean(session?.user?.id)}
+          journeyStage={journeyStage}
         />
       </div>
     )

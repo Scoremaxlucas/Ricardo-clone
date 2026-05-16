@@ -205,6 +205,15 @@ function ProfileIncompleteHint() {
   )
 }
 
+function ReadyApplyNudge() {
+  return (
+    <div className="mb-6 rounded-xl border border-[#bfe8d4] bg-[#e8f7f2] px-4 py-3 text-sm leading-relaxed text-[#0d2b1f] sm:px-5">
+      <span className="font-semibold">Bereit zum Bewerben.</span> Wähle eine passende Wohnung unten — mit einem Klick
+      sendest du dein verifiziertes Profil an den Vermieter.
+    </div>
+  )
+}
+
 function ZertifikatTeaserBanner() {
   return (
     <div className="mx-auto mb-6 flex max-w-4xl flex-col gap-3 rounded-xl border border-[#18a87c]/40 bg-[#e8f7f2] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
@@ -253,9 +262,9 @@ export default async function MeineMatchesPage() {
 
   const completionState = deriveCompletionState(profile)
   const firstApplication = applicationCount > 0
-  const steps = buildProgressSteps(profile, firstApplication, Boolean(activeCert))
-  /** Bis zur ersten Bewerbung: Fortschritt inkl. Qualitätsnachweis anzeigen, auch wenn Betreibungsregister schon frei ist. */
-  const showDashboard = completionState !== 'READY' || (completionState === 'READY' && !firstApplication)
+  /** Onboarding-Checkliste nur solange Profil/Register noch nicht fertig — nicht auf der Match-Seite für «ready» Nutzer. */
+  const showDashboard = completionState !== 'READY'
+  const steps = showDashboard ? buildProgressSteps(profile, firstApplication, Boolean(activeCert)) : []
 
   const relaxCredit =
     completionState === 'NO_CREDIT_CHECK' || completionState === 'PENDING_CREDIT_CHECK'
@@ -273,7 +282,9 @@ export default async function MeineMatchesPage() {
     completionState === 'NO_CREDIT_CHECK' || completionState === 'PENDING_CREDIT_CHECK'
   const showProfileHint =
     completionState === 'NO_PROFILE' || completionState === 'INCOMPLETE_PROFILE'
-  const showCertBanner = Boolean(creditApprovedValid(profile) && !activeCert && !showDashboard)
+  const showCertBanner = Boolean(creditApprovedValid(profile) && !activeCert && completionState === 'READY')
+  const showReadyNudge =
+    completionState === 'READY' && !firstApplication && !showProfileHint && matches.length > 0
 
   const greeting = dayGreeting(now)
 
@@ -308,21 +319,22 @@ export default async function MeineMatchesPage() {
               </p>
             : null}
           </section>
-        : showDashboard && !showProfileHint ?
+        : showDashboard && !showProfileHint && (matches.length > 0 || profile?.isComplete) ?
           <section className="pb-6">
-            {!showProfileHint && matches.length > 0 ?
+            {matches.length > 0 ?
               <p className="mt-2 text-base leading-relaxed text-slate-700 sm:text-[17px]">
                 Wir haben <span className="font-extrabold text-teal-700">{matches.length}</span> Wohnungen gefunden, die
                 zu dir passen.
               </p>
-            : null}
-            {!showProfileHint && matches.length === 0 && profile?.isComplete ?
+            : profile?.isComplete ?
               <p className="mt-2 text-base leading-relaxed text-slate-500 sm:text-[17px]">
                 Noch keine Wohnungen, die genau zu dir passen — wir suchen täglich weiter.
               </p>
             : null}
           </section>
         : null}
+
+        {showReadyNudge ? <ReadyApplyNudge /> : null}
 
         {showProfileHint ?
           <ProfileIncompleteHint />

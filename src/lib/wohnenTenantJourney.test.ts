@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { creditApprovedValid, deriveWohnenHomeCta } from './wohnenTenantJourney'
+import {
+  creditApprovedValid,
+  deriveWohnenHomeCta,
+  deriveWohnenHomeHero,
+  deriveWohnenJourneyStage,
+} from './wohnenTenantJourney'
 
 describe('creditApprovedValid', () => {
   it('returns false when not APPROVED', () => {
@@ -48,5 +53,36 @@ describe('deriveWohnenHomeCta', () => {
     })
     expect(cta.primaryHref).toBe('/meine-matches')
     expect(cta.footerTenantHref).toBe('/wohnungen')
+  })
+})
+
+describe('deriveWohnenJourneyStage', () => {
+  it('returns ready when profile complete, credit ok, certificate active', () => {
+    expect(
+      deriveWohnenJourneyStage({
+        signedIn: true,
+        profile: {
+          isComplete: true,
+          creditCheckStatus: 'APPROVED',
+          creditCheckExpiresAt: new Date('2027-01-01'),
+        },
+        hasActiveCertificate: true,
+      })
+    ).toBe('ready')
+  })
+})
+
+describe('deriveWohnenHomeHero', () => {
+  it('does not promise future listings when ready user has active inventory', () => {
+    const hero = deriveWohnenHomeHero({ stage: 'ready', activeCount: 2 })
+    expect(hero.line1).toBe('Passende Wohnungen.')
+    expect(hero.subtext).not.toMatch(/kommen dazu/i)
+    expect(hero.subtext).toMatch(/2/)
+  })
+
+  it('uses certificate-first headline for anonymous cold start', () => {
+    const hero = deriveWohnenHomeHero({ stage: 'anonymous', activeCount: 2 })
+    expect(hero.line1).toMatch(/Qualitätsnachweis/)
+    expect(hero.subtext).not.toMatch(/sobald sie live sind/i)
   })
 })

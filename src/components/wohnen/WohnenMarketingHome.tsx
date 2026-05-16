@@ -2,6 +2,12 @@ import { WohnenHomeHowItWorks } from '@/components/wohnen/WohnenHomeHowItWorks'
 import { WohnenHomeListingCards, type WohnenHomeListingSerialized } from '@/components/wohnen/WohnenHomeListingCards'
 import { loadWohnenHomeListings } from '@/lib/rental/wohnen-home-listings'
 import { prisma } from '@/lib/prisma'
+import {
+  deriveWohnenHomeFooterTenant,
+  deriveWohnenHomeHero,
+  deriveWohnenListingsSectionSub,
+  type WohnenJourneyStage,
+} from '@/lib/wohnenTenantJourney'
 import { RentalListingStatus } from '@prisma/client'
 import { Check, X } from 'lucide-react'
 import Link from 'next/link'
@@ -64,7 +70,11 @@ function StaticListingPlaceholders() {
               <Link href="/help/wohnungen-qualitaetsnachweis-pruefen" className="text-[13px] text-teal-800 underline-offset-2 hover:underline">
                 Qualitätsnachweis für ausserhalb von Helvenda
               </Link>
-            : 'Weitere Regionen folgen, sobald Inserate live sind.'}
+            : (
+                <Link href="/wohnungen" className="text-[13px] text-teal-800 underline-offset-2 hover:underline">
+                  Alle Wohnungen durchsuchen
+                </Link>
+              )}
           </p>
         </div>
       ))}
@@ -81,6 +91,7 @@ export async function WohnenMarketingHome({
   secondaryLabel,
   footerTenantHref,
   footerTenantLabel,
+  journeyStage = 'anonymous',
 }: {
   primaryHref?: string
   primaryLabel?: string
@@ -91,6 +102,7 @@ export async function WohnenMarketingHome({
   secondaryLabel?: string
   footerTenantHref?: string
   footerTenantLabel?: string
+  journeyStage?: WohnenJourneyStage
 }) {
   const tenantFooterHref = footerTenantHref ?? primaryHref
   const tenantFooterLabel = footerTenantLabel ?? 'Jetzt Wohnungen suchen →'
@@ -101,6 +113,10 @@ export async function WohnenMarketingHome({
 
   const serialized = serializeListingsForClient(listings)
   const inventoryNarrow = activeCount <= WOHNEN_CERT_FIRST_MAX_ACTIVE
+  const hero = deriveWohnenHomeHero({ stage: journeyStage, activeCount })
+  const footerTenant = deriveWohnenHomeFooterTenant({ stage: journeyStage })
+  const listingsSectionSub = deriveWohnenListingsSectionSub({ stage: journeyStage, activeCount })
+  const showCertFirstBlock = journeyStage !== 'ready'
 
   const comparisonRows: { tema: string; hg: string; hv: string }[] = [
     { tema: 'Inserat inserieren', hg: 'CHF 14–28 pro Tag', hv: 'Kostenlos' },
@@ -150,35 +166,13 @@ export async function WohnenMarketingHome({
             Schweizer Mietmarkt — fair für Mieter
           </p>
 
-          {inventoryNarrow ?
-            <h1 className="mx-auto mt-4 max-w-[22ch] text-[clamp(1.65rem,6.2vw,2rem)] font-black leading-[1.08] tracking-[-0.02em] text-slate-900 sm:max-w-none sm:text-[2.15rem] md:mt-5 md:text-[clamp(2.35rem,6.5vw,3.05rem)] md:leading-[1.05]">
-              <span className="block text-slate-900">Qualitätsnachweis, der mitgeht.</span>
-              <span className="mt-1.5 block text-[#18a87c] md:mt-2">
-                Fair mieten.
-                <br className="md:hidden" /> Ohne Abo-Pflicht.
-              </span>
-            </h1>
-          : <h1 className="mx-auto mt-4 max-w-[20ch] text-[clamp(1.75rem,6.5vw,2.1rem)] font-black leading-[1.06] tracking-[-0.02em] text-slate-900 sm:max-w-none sm:text-[2.25rem] md:mt-5 md:text-[clamp(2.5rem,7vw,3.25rem)] md:leading-[1.05]">
-              <span className="block text-slate-900">Wohnung finden.</span>
-              <span className="mt-1.5 block text-[#18a87c] md:mt-2">
-                Ohne Abo.
-                <br className="md:hidden" /> Ohne Abzocke.
-              </span>
-            </h1>
-          }
+          <h1 className="mx-auto mt-4 max-w-[22ch] text-[clamp(1.65rem,6.2vw,2rem)] font-black leading-[1.08] tracking-[-0.02em] text-slate-900 sm:max-w-none sm:text-[2.15rem] md:mt-5 md:text-[clamp(2.35rem,6.5vw,3.05rem)] md:leading-[1.05]">
+            <span className="block text-slate-900">{hero.line1}</span>
+            <span className="mt-1.5 block text-[#18a87c] md:mt-2">{hero.line2}</span>
+          </h1>
 
           <p className="mx-auto mt-5 max-w-[34rem] text-[0.9375rem] leading-relaxed text-[#5a7a6e] sm:mt-6 sm:text-[1.0625rem] md:text-[1.125rem] md:leading-[1.55]">
-            {inventoryNarrow ?
-              <>
-                Einmal Profil und Betreibungsregister — dann stellst du den{' '}
-                <strong className="font-semibold text-[#2d6a4f]">Helvenda-Qualitätsnachweis</strong> aus (PDF mit
-                Prüfcode). Passende Inserate auf Helvenda kommen dazu, sobald sie live sind.
-              </>
-            : <>
-                Einmal Profil und Betreibungsregister — dann passende Inserate und ein Nachweis, den du auch ausserhalb
-                von Helvenda nutzen kannst.
-              </>
-            }
+            {hero.subtext}
           </p>
 
           <div className="mx-auto mt-8 max-w-md sm:mt-9">
@@ -213,10 +207,7 @@ export async function WohnenMarketingHome({
 
           <div className="mx-auto mt-10 w-full max-w-lg sm:mt-11">
             <ul className="flex flex-col gap-2.5 sm:hidden" aria-label="Vorteile für Mieter">
-              {(inventoryNarrow ?
-                ['Qualitätsnachweis für ausserhalb', 'Kostenlos für Mieter', 'Kein Pflicht-Abo']
-              : ['Kostenlos für Mieter', 'Verifizierte Bewerbungen', 'Kein Pflicht-Abo']
-              ).map(line => (
+              {hero.bullets.map(line => (
                 <li
                   key={line}
                   className="flex items-start gap-3 rounded-xl border border-[#e8f7f2] bg-[#fafdfb] px-3.5 py-3 text-[13px] font-medium leading-snug text-[#2d4a3d]"
@@ -227,18 +218,8 @@ export async function WohnenMarketingHome({
               ))}
             </ul>
             <p className="hidden text-center text-[13px] leading-relaxed text-[#5a7a6e] sm:block sm:text-[13px]">
-              {inventoryNarrow ?
-                <>
-                  <Check className="mb-0.5 mr-1 inline h-3.5 w-3.5 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
-                  Qualitätsnachweis für ausserhalb <span className="text-slate-300">·</span> kostenlos für Mieter{' '}
-                  <span className="text-slate-300">·</span> kein Pflicht-Abo
-                </>
-              : <>
-                  <Check className="mb-0.5 mr-1 inline h-3.5 w-3.5 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
-                  Kostenlos für Mieter <span className="text-slate-300">·</span> verifizierte Bewerbungen{' '}
-                  <span className="text-slate-300">·</span> kein Pflicht-Abo
-                </>
-              }
+              <Check className="mb-0.5 mr-1 inline h-3.5 w-3.5 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
+              {hero.bullets.join(' · ')}
             </p>
             {activeCount > 0 ?
               <p className="mt-4 text-center text-[13px] text-[#5a7a6e] sm:mt-3">
@@ -254,9 +235,9 @@ export async function WohnenMarketingHome({
 
       {inventoryNarrow ?
         <>
-          {/* Cold start: Qualitätsnachweis vor Inserate-Block */}
-          <section
-            id="qualitaetsnachweis"
+          {showCertFirstBlock ?
+            <section
+              id="qualitaetsnachweis"
             className="whome-anim whome-d0 border-t border-slate-100 bg-gradient-to-b from-[#f8fdfb] to-white px-4 py-10 sm:px-6 sm:py-12 lg:px-8"
           >
             <div className="mx-auto max-w-6xl">
@@ -269,8 +250,9 @@ export async function WohnenMarketingHome({
                     PDF + Prüf-Link — auch für Bewerbungen ausserhalb von Helvenda
                   </p>
                   <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5a7a6e]">
-                    Das ist dein sofortiger Nutzen auf Helvenda: ein Nachweis, den du überall einsetzen kannst —
-                    unabhängig davon, wie viele Inserate heute live sind.
+                    {journeyStage === 'certificate_needed' ?
+                      'Als Nächstes stellst du den Nachweis aus — nutzbar bei Homegate, E-Mail oder direkt beim Vermieter.'
+                    : 'Ein Nachweis, den du überall einsetzen kannst — unabhängig davon, wie viele Inserate heute auf Helvenda sind.'}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col gap-2.5 sm:flex-row sm:items-center">
@@ -290,16 +272,20 @@ export async function WohnenMarketingHome({
               </div>
             </div>
           </section>
+          : null}
 
-          <section className="whome-anim whome-d1 border-t border-slate-100 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+          <section
+            className={`whome-anim border-t border-slate-100 px-4 py-12 sm:px-6 sm:py-16 lg:px-8 ${showCertFirstBlock ? 'whome-d1' : 'whome-d0'}`}
+          >
             <div className="mx-auto max-w-6xl">
               <h2 className="text-center text-[1.375rem] font-extrabold leading-tight tracking-[-0.03em] text-slate-900 sm:text-[1.75rem] sm:tracking-[-0.04em] md:text-[2.25rem] md:tracking-[-0.06em]">
                 Aktuelle Wohnungen
               </h2>
-              <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-[#5a7a6e]">
-                Das Angebot auf Helvenda wächst. Sobald etwas Passendes live ist, findest du es hier und unter Meine
-                Matches — sobald dein Profil steht.
-              </p>
+              {listingsSectionSub ?
+                <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-[#5a7a6e]">
+                  {listingsSectionSub}
+                </p>
+              : null}
               <div className="mt-10">
                 {listings.length === 0 ?
                   <StaticListingPlaceholders />
@@ -314,6 +300,11 @@ export async function WohnenMarketingHome({
               <h2 className="text-center text-[1.375rem] font-extrabold leading-tight tracking-[-0.03em] text-slate-900 sm:text-[1.75rem] sm:tracking-[-0.04em] md:text-[2.25rem] md:tracking-[-0.06em]">
                 Aktuelle Wohnungen
               </h2>
+              {listingsSectionSub ?
+                <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-[#5a7a6e]">
+                  {listingsSectionSub}
+                </p>
+              : null}
               <div className="mt-10">
                 {listings.length === 0 ?
                   <StaticListingPlaceholders />
@@ -322,11 +313,12 @@ export async function WohnenMarketingHome({
             </div>
           </section>
 
-          <section
-            id="qualitaetsnachweis"
-            className="whome-anim whome-d1 border-t border-slate-100 bg-gradient-to-b from-[#f8fdfb] to-white px-4 py-10 sm:px-6 sm:py-12 lg:px-8"
-          >
-            <div className="mx-auto max-w-6xl">
+          {showCertFirstBlock ?
+            <section
+              id="qualitaetsnachweis"
+              className="whome-anim whome-d1 border-t border-slate-100 bg-gradient-to-b from-[#f8fdfb] to-white px-4 py-10 sm:px-6 sm:py-12 lg:px-8"
+            >
+              <div className="mx-auto max-w-6xl">
               <div className="flex flex-col gap-5 rounded-2xl border border-[#bfe8d4] bg-white/95 px-5 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-7 sm:py-6">
                 <div className="min-w-0 flex-1 text-left">
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#18a87c]">Helvenda Qualitätsnachweis</p>
@@ -334,7 +326,9 @@ export async function WohnenMarketingHome({
                     PDF + Prüf-Link — auch für Bewerbungen ausserhalb von Helvenda
                   </p>
                   <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5a7a6e]">
-                    Sobald Profil und Betreibungsregister passen, stellst du den Nachweis in wenigen Klicks aus.
+                    {journeyStage === 'certificate_needed' ?
+                      'Als Nächstes stellst du den Nachweis aus — nutzbar bei Homegate, E-Mail oder direkt beim Vermieter.'
+                    : 'Sobald Profil und Betreibungsregister passen, stellst du den Nachweis in wenigen Klicks aus.'}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col gap-2.5 sm:flex-row sm:items-center">
@@ -354,6 +348,7 @@ export async function WohnenMarketingHome({
               </div>
             </div>
           </section>
+          : null}
         </>
       }
 
@@ -447,19 +442,8 @@ export async function WohnenMarketingHome({
                 <br />
                 Überall sofort bewerben.
               </h2>
-              <p className="mt-4 text-[15px] leading-relaxed text-white/75">
-                {inventoryNarrow ?
-                  <>
-                    Kein Formular. Kein Abo.
-                    <br />
-                    Zuerst der Nachweis — passende Inserate kommen dazu.
-                  </>
-                : <>
-                    Kein Formular. Kein Abo.
-                    <br />
-                    Nur echte Wohnungen.
-                  </>
-                }
+              <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-white/75">
+                {footerTenant.body}
               </p>
               <div className="mt-7">
                 <Link
