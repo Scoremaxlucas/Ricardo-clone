@@ -1858,8 +1858,10 @@ model RentalApplication {
   tenantProfile       TenantProfile?           @relation(fields: [tenantProfileId], references: [id], onDelete: SetNull)
   staleReportedAt     DateTime?
   staleReportNote     String?                  @db.Text
-  /** E-Mail-Adresse, an die die Vermieter-Benachrichtigung gesendet wurde (Audit). */
-  landlordLeadEmail   String?
+  /** E-Mail am Inserat / Auflösung — Zieladresse für den Vermieter (Audit). */
+  landlordLeadEmail           String?
+  /** Tatsächliche Zustelladresse der Vermieter-Mail (kann Test-Override sein). */
+  landlordLeadEmailDeliveredTo String?
 
   listing   RentalListing @relation(fields: [rentalListingId], references: [id], onDelete: Cascade)
   applicant User          @relation("RentalApplicationApplicant", fields: [applicantUserId], references: [id], onDelete: Cascade)

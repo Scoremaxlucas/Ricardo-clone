@@ -1,12 +1,11 @@
-import { CertificateStatus, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { enqueueTenantApplicationConfirmEmail } from '@/lib/wohnen/email-outbox'
-import { sendRentalApplicantSuccessEmail, sendRentalLandlordNewApplicationEmail } from '@/lib/rental/emails'
+import { sendRentalApplicantSuccessEmail } from '@/lib/rental/emails'
 import { prisma } from '@/lib/prisma'
-import { buildApplicantSummaryForLandlord } from '@/lib/rental/build-applicant-summary'
 import { formatRentalListingAddress } from '@/lib/rental/format-listing-address'
 import { qualifyTenant, type QualificationIssue } from '@/lib/rental/qualifyTenant'
 import { resolveLandlordApplicationNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
-import { resolveWohnenLeadDelivery } from '@/lib/rental/wohnen-lead-email-override'
+import { sendLandlordLeadNotificationForApplication } from '@/lib/rental/sendLandlordLeadNotification'
 
 const REJECTION_NOTE_LANDLORD_MAIL_FAILED =
   '[Helvenda] Automatisch abgewiesen: Vermieter-Benachrichtigung konnte nicht versendet werden. Du kannst dich erneut bewerben.'
@@ -192,27 +191,12 @@ export async function createQualifiedRentalApplication(params: {
     },
   })
 
-  const applicantDisplay = applicant.nickname?.trim() || applicant.name?.trim() || 'Helvenda-Nutzer'
-  const applicantFullName =
-    `${tenantProfile.firstName} ${tenantProfile.lastName}`.trim() || applicantDisplay
   const addressLine = formatRentalListingAddress({
     address: listing.address,
     zip: listing.zip,
     city: listing.city,
   })
-  const applicantSummary = buildApplicantSummaryForLandlord({
-    employmentStatus: tenantProfile.employmentStatus,
-    employer: tenantProfile.employer,
-    jobTitle: tenantProfile.jobTitle,
-    employedSince: tenantProfile.employedSince,
-    monthlyIncomeCategory: tenantProfile.monthlyIncomeCategory,
-    householdTotalPersons: tenantProfile.householdTotalPersons,
-    householdChildrenCount: tenantProfile.householdChildrenCount,
-    requiresCreditCheck: listing.requiresCreditCheck,
-    creditCheckResult: tenantProfile.creditCheckResult,
-  })
   const applicantContactEmail = tenantProfile.applicationEmail?.trim() || applicant.email
-  const applicantContactPhone = tenantProfile.contactPhone?.trim() || applicant.phone?.trim() || null
 
   let applicationId: string
   try {
@@ -234,49 +218,14 @@ export async function createQualifiedRentalApplication(params: {
     throw e
   }
 
-  const creditResult = tenantProfile.creditCheckResult
-
-  const activeCert = await prisma.helvendaCertificate.findFirst({
-    where: {
-      tenantProfileId: tenantProfile.id,
-      status: CertificateStatus.ACTIVE,
-      expiresAt: { gt: new Date() },
-    },
-    orderBy: { issuedAt: 'desc' },
-    select: { certificateCode: true },
-  })
-
-  const leadDelivery = resolveWohnenLeadDelivery(landlordNotifyTo)
-
-  try {
-    await sendRentalLandlordNewApplicationEmail({
-      landlordEmail: leadDelivery.to,
-      leadTestIntendedEmail: leadDelivery.isOverride ? leadDelivery.intendedEmail : null,
-      landlordUserId: listing.userId,
-      landlordFirst: listing.user,
-      listingId: listing.id,
-      listingTitle: listing.title,
-      applicantFullName,
-      applicantContactPhone,
-      applicantContactEmail,
-      applicantMessage: message,
-      applicantSummary,
-      requiresCreditCheck: listing.requiresCreditCheck,
-      creditCheckResult: creditResult,
-      employmentStatus: tenantProfile.employmentStatus,
-      employer: tenantProfile.employer,
-      monthlyIncomeCategory: tenantProfile.monthlyIncomeCategory,
-      referenceName: tenantProfile.referenceName,
-      referencePhone: tenantProfile.referencePhone,
-      certificateCode: activeCert?.certificateCode ?? null,
-    })
-  } catch (err) {
+  const leadNotify = await sendLandlordLeadNotificationForApplication(applicationId)
+  if (!leadNotify.ok) {
     await removeApplicationAfterFailedLandlordEmail({
       applicationId,
       rentalListingId,
       applicantUserId: userId,
     })
-    console.error('[createQualifiedRentalApplication] Vermieter-Benachrichtigung fehlgeschlagen', err)
+    console.error('[createQualifiedRentalApplication] Vermieter-Benachrichtigung fehlgeschlagen', leadNotify.message)
     return {
       ok: false,
       status: 503,

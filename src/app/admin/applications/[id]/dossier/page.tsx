@@ -38,10 +38,11 @@ export default async function AdminApplicationDossierPage({ params }: { params: 
   })
   if (!app || !app.tenantProfile) return notFound()
 
-  const leadEmail = landlordLeadEmailForApplication({
+  const intendedEmail = landlordLeadEmailForApplication({
     landlordLeadEmail: app.landlordLeadEmail,
     listing: app.listing,
   })
+  const deliveredEmail = app.landlordLeadEmailDeliveredTo?.trim() || null
 
   const q = qualifyTenant(app.tenantProfile, app.listing)
   const c = (app.tenantProfile.creditCheckResult as Record<string, unknown> | null) || {}
@@ -83,15 +84,16 @@ export default async function AdminApplicationDossierPage({ params }: { params: 
         <section className="section">
           <h3 className="font-bold">VERMIETER-BENACHRICHTIGUNG</h3>
           <p>
-            Lead gesendet an:{' '}
-            {leadEmail ?
-              <span className="font-mono font-semibold">{leadEmail}</span>
-            : '— (keine gültige Adresse am Inserat)'}
+            Lead tatsächlich gesendet an:{' '}
+            {deliveredEmail ?
+              <span className="font-mono font-semibold">{deliveredEmail}</span>
+            : '— (nicht protokolliert — Bewerbung vor Speicherung der Zustelladresse)'}
           </p>
-          {app.landlordLeadEmail ?
-            <p className="text-xs text-slate-500">Gespeichert beim Versand ({formatDate(app.createdAt)}).</p>
-          : leadEmail ?
-            <p className="text-xs text-slate-500">Aus aktuellem Inserat abgeleitet (ältere Bewerbung ohne gespeicherte Adresse).</p>
+          {intendedEmail ?
+            <p className="text-xs text-slate-500">
+              Inserat-Ziel (vorgesehen): <span className="font-mono">{intendedEmail}</span>
+              {deliveredEmail && deliveredEmail !== intendedEmail ? ' — abweichend (z. B. Test-Override)' : ''}
+            </p>
           : null}
         </section>
         <section className="section">

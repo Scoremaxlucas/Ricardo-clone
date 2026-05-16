@@ -9,6 +9,8 @@ import {
 } from '@/lib/matching/tenant-preferences-match'
 import { prisma } from '@/lib/prisma'
 import { qualifyTenant } from '@/lib/rental/qualifyTenant'
+import { resolveLandlordApplicationNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
+import { resolveWohnenLeadDelivery } from '@/lib/rental/wohnen-lead-email-override'
 import { incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { formatCHF } from '@/lib/utils/formatCurrency'
 import { formatDate } from '@/lib/utils/formatDate'
@@ -33,7 +35,15 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
     },
   })
   if (!app) return NextResponse.json({ message: 'Bewerbung nicht gefunden' }, { status: 404 })
-  if (!app.listing.user.email) return NextResponse.json({ message: 'Vermieter hat keine E-Mail' }, { status: 400 })
+  const intendedTo =
+    app.landlordLeadEmail?.trim() ||
+    resolveLandlordApplicationNotifyEmail({
+      landlordNotifyEmail: app.listing.landlordNotifyEmail,
+      landlordContactStored: app.listing.landlordContact,
+      ownerAccountEmail: app.listing.user.email,
+    })
+  if (!intendedTo) return NextResponse.json({ message: 'Keine gültige Vermieter-E-Mail' }, { status: 400 })
+  const delivery = resolveWohnenLeadDelivery(intendedTo)
   if (!app.tenantProfile) return NextResponse.json({ message: 'Kein Mieterprofil für Dossier' }, { status: 400 })
 
   const q = qualifyTenant(app.tenantProfile, app.listing)
@@ -78,9 +88,14 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
 <h3>MATCHING (MIETERWÜNSCHE)</h3>
 <p>${!hasPrefs ? '— Keine Suchpräferenzen hinterlegt.' : `${match?.hardFailed ? '❌ Harte Präferenzen nicht erfüllt' : '✅ Präferenzen erfüllt'}<br/>Match-Score: ${match?.score ?? 0}%<br/>Gründe: ${matchReasons}`}</p>`
 
+  const dossierSubject =
+    delivery.isOverride ?
+      `[TEST] Lead-Dossier: ${app.listing.title} (Ziel: ${delivery.intendedEmail})`
+    : `Lead-Dossier: ${app.listing.title}`
+
   await sendEmail({
-    to: app.listing.user.email,
-    subject: `Lead-Dossier: ${app.listing.title}`,
+    to: delivery.to,
+    subject: dossierSubject,
     html,
     text: html.replace(/<[^>]+>/g, ''),
     userId: app.listing.user.id,

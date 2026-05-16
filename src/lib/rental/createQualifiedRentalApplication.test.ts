@@ -10,7 +10,7 @@ const prisma = vi.hoisted(() => ({
     create: vi.fn(),
     delete: vi.fn(),
     findUnique: vi.fn(),
-    update: vi.fn(),
+    update: vi.fn().mockResolvedValue(undefined),
   },
   user: { findUnique: vi.fn() },
   helvendaCertificate: { findFirst: vi.fn() },
@@ -22,13 +22,17 @@ vi.mock('@/lib/prisma', () => ({
 }))
 
 vi.mock('@/lib/rental/emails', () => ({
-  sendRentalLandlordNewApplicationEmail: vi.fn(),
   sendRentalApplicantSuccessEmail: vi.fn(),
+}))
+
+vi.mock('@/lib/rental/sendLandlordLeadNotification', () => ({
+  sendLandlordLeadNotificationForApplication: vi.fn(),
 }))
 
 import { createQualifiedRentalApplication } from '@/lib/rental/createQualifiedRentalApplication'
 import { prisma as prismaClient } from '@/lib/prisma'
-import { sendRentalApplicantSuccessEmail, sendRentalLandlordNewApplicationEmail } from '@/lib/rental/emails'
+import { sendRentalApplicantSuccessEmail } from '@/lib/rental/emails'
+import { sendLandlordLeadNotificationForApplication } from '@/lib/rental/sendLandlordLeadNotification'
 
 const p = prismaClient as unknown as typeof prisma
 
@@ -91,7 +95,12 @@ describe('createQualifiedRentalApplication', () => {
     } as never)
     p.helvendaCertificate.findFirst.mockResolvedValue(null)
     p.wohnenEmailOutbox.create.mockResolvedValue({ id: 'obx1' } as never)
-    vi.mocked(sendRentalLandlordNewApplicationEmail).mockResolvedValue(undefined)
+    vi.mocked(sendLandlordLeadNotificationForApplication).mockResolvedValue({
+      ok: true,
+      deliveredTo: 'landlord-notify@example.com',
+      intendedTo: 'landlord-notify@example.com',
+      isOverride: false,
+    })
     vi.mocked(sendRentalApplicantSuccessEmail).mockResolvedValue(undefined)
   })
 
@@ -117,7 +126,7 @@ describe('createQualifiedRentalApplication', () => {
       message: null,
     })
     expect(result).toEqual({ ok: true, applicationId: 'app_new' })
-    expect(sendRentalLandlordNewApplicationEmail).toHaveBeenCalledTimes(1)
+    expect(sendLandlordLeadNotificationForApplication).toHaveBeenCalledWith('app_new')
     expect(sendRentalApplicantSuccessEmail).toHaveBeenCalledTimes(1)
     expect(p.rentalApplication.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -127,7 +136,10 @@ describe('createQualifiedRentalApplication', () => {
   })
 
   it('rolls back and returns LANDLORD_EMAIL_FAILED when landlord mail throws', async () => {
-    vi.mocked(sendRentalLandlordNewApplicationEmail).mockRejectedValueOnce(new Error('smtp down'))
+    vi.mocked(sendLandlordLeadNotificationForApplication).mockResolvedValueOnce({
+      ok: false,
+      message: 'smtp down',
+    })
     p.rentalApplication.delete.mockResolvedValue(undefined as never)
 
     const result = await createQualifiedRentalApplication({
@@ -146,7 +158,10 @@ describe('createQualifiedRentalApplication', () => {
   })
 
   it('marks application rejected when delete repeatedly fails', async () => {
-    vi.mocked(sendRentalLandlordNewApplicationEmail).mockRejectedValueOnce(new Error('smtp down'))
+    vi.mocked(sendLandlordLeadNotificationForApplication).mockResolvedValueOnce({
+      ok: false,
+      message: 'smtp down',
+    })
     p.rentalApplication.delete.mockRejectedValue(new Error('db'))
     p.rentalApplication.deleteMany.mockResolvedValue({ count: 0 } as never)
     p.rentalApplication.findUnique.mockResolvedValue({ id: 'app_new' } as never)

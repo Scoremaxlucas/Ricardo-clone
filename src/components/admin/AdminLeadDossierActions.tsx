@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AdminResendLeadEmailButton } from '@/components/admin/AdminResendLeadEmailButton'
 
 export function AdminLeadDossierActions({ applicationId }: { applicationId: string }) {
   const [sending, setSending] = useState(false)
@@ -36,8 +37,13 @@ export function AdminLeadDossierActions({ applicationId }: { applicationId: stri
         disabled={sending}
         className="rounded-lg bg-teal-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
       >
-        Per E-Mail an Vermieter senden
+        Dossier-Mail senden
       </button>
+      <AdminResendLeadEmailButton
+        applicationId={applicationId}
+        label="Lead-Mail erneut senden"
+        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+      />
       {info ? <p className="w-full text-sm text-slate-600">{info}</p> : null}
     </div>
   )

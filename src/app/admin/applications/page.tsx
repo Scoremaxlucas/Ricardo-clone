@@ -6,6 +6,7 @@ import { landlordLeadEmailForApplication } from '@/lib/rental/resolve-landlord-n
 import { getWohnenLeadEmailOverride, isWohnenLeadEmailOverrideActive } from '@/lib/rental/wohnen-lead-email-override'
 import { formatDate } from '@/lib/utils/formatDate'
 import { getServerSession } from 'next-auth/next'
+import { AdminResendLeadEmailButton } from '@/components/admin/AdminResendLeadEmailButton'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
@@ -48,6 +49,7 @@ export default async function AdminApplicationsPage({
         createdAt: true,
         status: true,
         landlordLeadEmail: true,
+        landlordLeadEmailDeliveredTo: true,
         applicant: { select: { name: true, firstName: true, lastName: true, email: true } },
         listing: {
           select: {
@@ -252,7 +254,7 @@ export default async function AdminApplicationsPage({
             <tr>
               <th className="px-4 py-3">Bewerber</th>
               <th className="px-4 py-3">Listing</th>
-              <th className="px-4 py-3">Lead an (E-Mail)</th>
+              <th className="px-4 py-3">Lead-Mail (gesendet)</th>
               <th className="px-4 py-3">Bewerbungsdatum</th>
               <th className="px-4 py-3">Betreibungsregisterauszug</th>
               <th className="px-4 py-3">Bewerbungs-Status</th>
@@ -262,23 +264,36 @@ export default async function AdminApplicationsPage({
           <tbody>
             {rows.map(r => {
               const name = r.applicant.name || [r.applicant.firstName, r.applicant.lastName].filter(Boolean).join(' ').trim() || '—'
-              const leadEmail = landlordLeadEmailForApplication({
+              const intendedEmail = landlordLeadEmailForApplication({
                 landlordLeadEmail: r.landlordLeadEmail,
                 listing: r.listing,
               })
+              const deliveredEmail = r.landlordLeadEmailDeliveredTo?.trim() || null
               return (
                 <tr key={r.id} className="border-t border-slate-100">
                   <td className="px-4 py-3"><p className="font-semibold">{name}</p><p className="text-xs text-slate-500">{r.applicant.email}</p></td>
                   <td className="px-4 py-3"><p className="font-semibold">{r.listing.title}</p><p className="text-xs text-slate-500">{r.listing.address}, {r.listing.city}</p></td>
                   <td className="px-4 py-3">
-                    {leadEmail ?
-                      <p className="font-mono text-xs font-medium text-[#0d4a38]">{leadEmail}</p>
+                    {deliveredEmail ?
+                      <>
+                        <p className="font-mono text-xs font-semibold text-[#0d4a38]">{deliveredEmail}</p>
+                        {intendedEmail && intendedEmail !== deliveredEmail ?
+                          <p className="mt-1 text-[10px] text-slate-500">
+                            Inserat-Ziel: <span className="font-mono">{intendedEmail}</span>
+                            {leadOverrideActive ? ' · Test-Override aktiv' : ''}
+                          </p>
+                        : null}
+                      </>
+                    : intendedEmail ?
+                      <>
+                        <p className="font-mono text-xs font-medium text-slate-700">{intendedEmail}</p>
+                        <p className="mt-1 text-[10px] text-amber-700">
+                          {leadOverrideActive ?
+                            'Versand nicht protokolliert — «Lead-Mail erneut senden» nutzen (Test-Override).'
+                          : 'Versand-Adresse nicht protokolliert — «Lead-Mail erneut senden»'}
+                        </p>
+                      </>
                     : <span className="text-xs text-rose-600">Keine gültige Adresse</span>}
-                    {r.landlordLeadEmail ?
-                      null
-                    : leadEmail ?
-                      <p className="mt-0.5 text-[10px] text-slate-400">aus Inserat abgeleitet</p>
-                    : null}
                   </td>
                   <td className="px-4 py-3">{formatDate(r.createdAt)}</td>
                   <td className="px-4 py-3">
@@ -292,7 +307,12 @@ export default async function AdminApplicationsPage({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link href={`/admin/applications/${r.id}/dossier`} className="font-semibold text-teal-700 hover:underline">Lead-Dossier</Link>
+                    <div className="flex flex-col items-end gap-2">
+                      <Link href={`/admin/applications/${r.id}/dossier`} className="font-semibold text-teal-700 hover:underline">
+                        Lead-Dossier
+                      </Link>
+                      <AdminResendLeadEmailButton applicationId={r.id} />
+                    </div>
                   </td>
                 </tr>
               )
