@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   extractBestEmailFromPlaintext,
+  landlordLeadEmailForApplication,
   normalizeAndValidateLandlordNotifyEmail,
   resolveLandlordApplicationNotifyEmail,
 } from '@/lib/rental/resolve-landlord-notify-email'
@@ -69,5 +70,16 @@ describe('resolveLandlordApplicationNotifyEmail', () => {
         ownerAccountEmail: null,
       }),
     ).toBe(null)
+  })
+})
+
+describe('landlordLeadEmailForApplication', () => {
+  it('prefers stored email from application', () => {
+    expect(
+      landlordLeadEmailForApplication({
+        landlordLeadEmail: 'sent@example.com',
+        listing: { landlordNotifyEmail: 'other@example.com', landlordContact: null, user: { email: 'x@y.ch' } },
+      }),
+    ).toBe('sent@example.com')
   })
 })

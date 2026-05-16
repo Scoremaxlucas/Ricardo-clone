@@ -119,6 +119,11 @@ describe('createQualifiedRentalApplication', () => {
     expect(result).toEqual({ ok: true, applicationId: 'app_new' })
     expect(sendRentalLandlordNewApplicationEmail).toHaveBeenCalledTimes(1)
     expect(sendRentalApplicantSuccessEmail).toHaveBeenCalledTimes(1)
+    expect(p.rentalApplication.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ landlordLeadEmail: 'landlord-notify@example.com' }),
+      })
+    )
   })
 
   it('rolls back and returns LANDLORD_EMAIL_FAILED when landlord mail throws', async () => {

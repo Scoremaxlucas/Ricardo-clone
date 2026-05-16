@@ -58,3 +58,21 @@ export function resolveLandlordApplicationNotifyEmail(input: {
 
   return normalizeAndValidateLandlordNotifyEmail(input.ownerAccountEmail ?? null)
 }
+
+/** Gespeicherte Lead-E-Mail oder aktuelle Auflösung vom Inserat (für ältere Bewerbungen). */
+export function landlordLeadEmailForApplication(args: {
+  landlordLeadEmail: string | null | undefined
+  listing: {
+    landlordNotifyEmail: string | null | undefined
+    landlordContact: string | null | undefined
+    user?: { email: string | null | undefined } | null
+  }
+}): string | null {
+  const stored = normalizeAndValidateLandlordNotifyEmail(args.landlordLeadEmail ?? null)
+  if (stored) return stored
+  return resolveLandlordApplicationNotifyEmail({
+    landlordNotifyEmail: args.listing.landlordNotifyEmail,
+    landlordContactStored: args.listing.landlordContact,
+    ownerAccountEmail: args.listing.user?.email,
+  })
+}

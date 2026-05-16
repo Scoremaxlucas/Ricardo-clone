@@ -2,6 +2,7 @@ import { authOptions } from '@/lib/auth'
 import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
+import { landlordLeadEmailForApplication } from '@/lib/rental/resolve-landlord-notify-email'
 import { formatDate } from '@/lib/utils/formatDate'
 import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
@@ -45,8 +46,19 @@ export default async function AdminApplicationsPage({
         id: true,
         createdAt: true,
         status: true,
+        landlordLeadEmail: true,
         applicant: { select: { name: true, firstName: true, lastName: true, email: true } },
-        listing: { select: { title: true, address: true, city: true, canton: true } },
+        listing: {
+          select: {
+            title: true,
+            address: true,
+            city: true,
+            canton: true,
+            landlordNotifyEmail: true,
+            landlordContact: true,
+            user: { select: { email: true } },
+          },
+        },
         tenantProfile: { select: { creditCheckStatus: true } },
       },
       take: 500,
@@ -226,6 +238,7 @@ export default async function AdminApplicationsPage({
             <tr>
               <th className="px-4 py-3">Bewerber</th>
               <th className="px-4 py-3">Listing</th>
+              <th className="px-4 py-3">Lead an (E-Mail)</th>
               <th className="px-4 py-3">Bewerbungsdatum</th>
               <th className="px-4 py-3">Betreibungsregisterauszug</th>
               <th className="px-4 py-3">Bewerbungs-Status</th>
@@ -235,10 +248,24 @@ export default async function AdminApplicationsPage({
           <tbody>
             {rows.map(r => {
               const name = r.applicant.name || [r.applicant.firstName, r.applicant.lastName].filter(Boolean).join(' ').trim() || '—'
+              const leadEmail = landlordLeadEmailForApplication({
+                landlordLeadEmail: r.landlordLeadEmail,
+                listing: r.listing,
+              })
               return (
                 <tr key={r.id} className="border-t border-slate-100">
                   <td className="px-4 py-3"><p className="font-semibold">{name}</p><p className="text-xs text-slate-500">{r.applicant.email}</p></td>
                   <td className="px-4 py-3"><p className="font-semibold">{r.listing.title}</p><p className="text-xs text-slate-500">{r.listing.address}, {r.listing.city}</p></td>
+                  <td className="px-4 py-3">
+                    {leadEmail ?
+                      <p className="font-mono text-xs font-medium text-[#0d4a38]">{leadEmail}</p>
+                    : <span className="text-xs text-rose-600">Keine gültige Adresse</span>}
+                    {r.landlordLeadEmail ?
+                      null
+                    : leadEmail ?
+                      <p className="mt-0.5 text-[10px] text-slate-400">aus Inserat abgeleitet</p>
+                    : null}
+                  </td>
                   <td className="px-4 py-3">{formatDate(r.createdAt)}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusBadge(r.tenantProfile?.creditCheckStatus || 'NONE')}`}>

@@ -222,6 +222,7 @@ export async function createQualifiedRentalApplication(params: {
         message,
         status: 'approved',
         tenantProfileId: tenantProfile.id,
+        landlordLeadEmail: landlordNotifyTo,
       },
     })
     applicationId = app.id

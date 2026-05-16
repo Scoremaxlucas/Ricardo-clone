@@ -9,6 +9,7 @@ import {
   tenantPreferencesToSeekerInput,
 } from '@/lib/matching/tenant-preferences-match'
 import { prisma } from '@/lib/prisma'
+import { landlordLeadEmailForApplication } from '@/lib/rental/resolve-landlord-notify-email'
 import { qualifyTenant } from '@/lib/rental/qualifyTenant'
 import { incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { formatCHF } from '@/lib/utils/formatCurrency'
@@ -31,11 +32,16 @@ export default async function AdminApplicationDossierPage({ params }: { params: 
   const app = await prisma.rentalApplication.findUnique({
     where: { id },
     include: {
-      listing: true,
+      listing: { include: { user: { select: { email: true } } } },
       tenantProfile: true,
     },
   })
   if (!app || !app.tenantProfile) return notFound()
+
+  const leadEmail = landlordLeadEmailForApplication({
+    landlordLeadEmail: app.landlordLeadEmail,
+    listing: app.listing,
+  })
 
   const q = qualifyTenant(app.tenantProfile, app.listing)
   const c = (app.tenantProfile.creditCheckResult as Record<string, unknown> | null) || {}
@@ -73,6 +79,20 @@ export default async function AdminApplicationDossierPage({ params }: { params: 
           <p>{app.listing.title}</p>
           <p>{app.listing.address}, {app.listing.zip} {app.listing.city}</p>
           <p>{formatCHF(app.listing.rentPerMonth)}/Monat + NK {formatCHF(app.listing.utilitiesPerMonth || 0)}/Monat</p>
+        </section>
+        <section className="section">
+          <h3 className="font-bold">VERMIETER-BENACHRICHTIGUNG</h3>
+          <p>
+            Lead gesendet an:{' '}
+            {leadEmail ?
+              <span className="font-mono font-semibold">{leadEmail}</span>
+            : '— (keine gültige Adresse am Inserat)'}
+          </p>
+          {app.landlordLeadEmail ?
+            <p className="text-xs text-slate-500">Gespeichert beim Versand ({formatDate(app.createdAt)}).</p>
+          : leadEmail ?
+            <p className="text-xs text-slate-500">Aus aktuellem Inserat abgeleitet (ältere Bewerbung ohne gespeicherte Adresse).</p>
+          : null}
         </section>
         <section className="section">
           <h3 className="font-bold">BEWERBER</h3>
