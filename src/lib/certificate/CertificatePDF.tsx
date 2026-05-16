@@ -1,7 +1,7 @@
 import {
-  CERTIFICATE_FOOTNOTE_DE,
-  CERTIFICATE_HERO_PROMISE_DE,
-  CERTIFICATE_LANDLORD_BANNER_DE,
+  CERTIFICATE_FOOTNOTE_PDF_DE,
+  CERTIFICATE_HERO_PROMISE_PDF_DE,
+  CERTIFICATE_LANDLORD_BANNER_PDF_DE,
   type CertificateFieldBadge,
 } from '@/lib/certificate/certificate-display'
 import type { CreditCertificateDisplayStatus } from '@/lib/certificate/issueCertificate'
@@ -29,8 +29,9 @@ const ORANGE = '#c45c12'
 const RED = '#a82828'
 const DISCLAIMER = '#5c6560'
 const FACTS_BG = '#fafbf9'
-const PAD_OUTER = 22
-const PAD = 40
+const PAD_OUTER = 18
+const PAD = 34
+const FOOTER_H = 26
 const HF = 'Helvetica'
 const HFB = 'Helvetica-Bold'
 const CF = 'Courier'
@@ -72,20 +73,18 @@ function daysRemainingFor(expiresAt: Date): number {
 const styles = StyleSheet.create({
   page: {
     width: '100%',
-    height: '100%',
     backgroundColor: PAPER,
     fontFamily: HF,
     color: INK,
     padding: PAD_OUTER,
-    paddingBottom: 52,
+    paddingBottom: PAD_OUTER,
   },
   sheet: {
-    flex: 1,
     backgroundColor: SHEET,
     borderWidth: 0.75,
     borderColor: SHEET_EDGE,
     position: 'relative',
-    paddingBottom: 38,
+    paddingBottom: FOOTER_H,
   },
   topRuleTeal: {
     height: 3,
@@ -102,8 +101,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     paddingHorizontal: PAD,
-    paddingTop: 26,
-    paddingBottom: 14,
+    paddingTop: 20,
+    paddingBottom: 10,
   },
   brandRow: {
     flexDirection: 'row',
@@ -188,7 +187,7 @@ const styles = StyleSheet.create({
   heroRow: {
     flexDirection: 'row',
     paddingHorizontal: PAD,
-    marginTop: 20,
+    marginTop: 12,
     alignItems: 'flex-start',
   },
   heroCol: {
@@ -225,8 +224,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   sealOuter: {
-    width: 100,
-    height: 100,
+    width: 86,
+    height: 86,
     borderRadius: 50,
     borderWidth: 2.25,
     borderColor: TEAL,
@@ -237,9 +236,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   sealInner: {
-    width: 82,
-    height: 82,
-    borderRadius: 41,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     borderWidth: 0.75,
     borderColor: TEAL,
     alignItems: 'center',
@@ -268,7 +267,7 @@ const styles = StyleSheet.create({
   },
   factsFrame: {
     marginHorizontal: PAD,
-    marginTop: 18,
+    marginTop: 10,
     borderWidth: 0.75,
     borderColor: LINE,
     backgroundColor: FACTS_BG,
@@ -278,9 +277,9 @@ const styles = StyleSheet.create({
   factPairRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    paddingVertical: 8,
+    paddingVertical: 6,
     paddingHorizontal: 8,
-    minHeight: 56,
+    minHeight: 48,
   },
   factPairHsep: {
     height: 0.5,
@@ -321,9 +320,9 @@ const styles = StyleSheet.create({
   },
   landlordBanner: {
     marginHorizontal: PAD,
-    marginTop: 10,
-    paddingVertical: 9,
-    paddingHorizontal: 11,
+    marginTop: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     backgroundColor: TEAL_LIGHT,
     borderLeftWidth: 3,
     borderLeftColor: TEAL_ACCENT,
@@ -362,18 +361,18 @@ const styles = StyleSheet.create({
   },
   verifyPanel: {
     marginHorizontal: PAD,
-    marginTop: 16,
+    marginTop: 10,
     borderWidth: 0.75,
     borderColor: LINE,
     backgroundColor: '#f3f6f3',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
   qrFrame: {
-    width: 76,
-    height: 76,
+    width: 64,
+    height: 64,
     borderWidth: 0.75,
     borderColor: INK,
     padding: 5,
@@ -383,11 +382,11 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   qrImg: {
-    width: 64,
-    height: 64,
+    width: 54,
+    height: 54,
   },
   qrCopy: {
-    marginLeft: 16,
+    marginLeft: 12,
     flex: 1,
     minWidth: 0,
   },
@@ -424,11 +423,11 @@ const styles = StyleSheet.create({
     height: 0.75,
     backgroundColor: LINE,
     marginHorizontal: PAD,
-    marginTop: 16,
-    marginBottom: 10,
+    marginTop: 8,
+    marginBottom: 6,
   },
   disclaimer: {
-    fontSize: 7.5,
+    fontSize: 7,
     fontFamily: HF,
     color: DISCLAIMER,
     paddingHorizontal: PAD,
@@ -441,13 +440,13 @@ const styles = StyleSheet.create({
     height: 0.75,
     backgroundColor: LINE,
     marginHorizontal: PAD,
-    marginTop: 14,
-    marginBottom: 11,
+    marginTop: 8,
+    marginBottom: 6,
   },
   decRow: {
     flexDirection: 'row',
     paddingHorizontal: PAD,
-    marginBottom: 11,
+    marginBottom: 4,
     alignItems: 'flex-start',
   },
   decColFirst: {
@@ -456,7 +455,7 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     borderRightWidth: 0.75,
     borderRightColor: LINE,
-    minHeight: 44,
+    minHeight: 36,
   },
   decColMid: {
     flex: 1,
@@ -464,13 +463,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRightWidth: 0.75,
     borderRightColor: LINE,
-    minHeight: 44,
+    minHeight: 36,
   },
   decColLast: {
     flex: 1,
     minWidth: 0,
     paddingLeft: 12,
-    minHeight: 44,
+    minHeight: 36,
   },
   decLab: {
     fontSize: 5.5,
@@ -492,21 +491,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
     width: '100%',
   },
-  decClose: {
-    fontSize: 6,
-    fontFamily: TFB,
-    color: '#5a6560',
-    letterSpacing: 2,
-    textAlign: 'center',
-    marginBottom: 18,
-    paddingHorizontal: PAD,
-  },
   bottomBand: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 28,
+    height: FOOTER_H,
     backgroundColor: FOOTER_BG,
     flexDirection: 'row',
     alignItems: 'center',
@@ -613,14 +603,14 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
   const expiryValueColor = daysRem > 30 ? INK : daysRem > 14 ? ORANGE : RED
   const verifyPath = verifyDisplayPath(verifyUrl)
 
-  const incomeSub = `3×-Regel · bis CHF ${formatNumber(incomeQualifiesUpTo)} Miete / Monat (inkl. NK-Anteil nach Profil)`
+  const incomeSub = `3×-Regel · max. CHF ${formatNumber(incomeQualifiesUpTo)} / Monat Miete`
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.sheet}>
-          <View style={styles.topRuleTeal} fixed />
-          <View style={styles.topRuleInk} fixed />
+          <View style={styles.topRuleTeal} />
+          <View style={styles.topRuleInk} />
 
           <View style={styles.header}>
             <View style={styles.brandRow}>
@@ -649,7 +639,7 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
             <View style={styles.heroCol}>
               <Text style={styles.heroKicker}>AUSGESTELLT FÜR</Text>
               <Text style={styles.heroName}>{holder}</Text>
-              <Text style={styles.heroPromise}>{CERTIFICATE_HERO_PROMISE_DE}</Text>
+              <Text style={styles.heroPromise}>{CERTIFICATE_HERO_PROMISE_PDF_DE}</Text>
             </View>
             <View style={styles.sealOuter}>
               <View style={styles.sealInner}>
@@ -662,7 +652,7 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
 
           <View style={styles.landlordBanner}>
             <Text style={styles.landlordBannerKicker}>FÜR VERMIETER</Text>
-            <Text style={styles.landlordBannerText}>{CERTIFICATE_LANDLORD_BANNER_DE}</Text>
+            <Text style={styles.landlordBannerText}>{CERTIFICATE_LANDLORD_BANNER_PDF_DE}</Text>
           </View>
 
           <View style={styles.factsFrame}>
@@ -726,14 +716,12 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
               <Text style={styles.qrHead}>ELEKTRONISCHE PRÜFUNG</Text>
               <Text style={styles.qrSub}>Für Vermieter: Echtheit, Gültigkeit und Registerstand online prüfen</Text>
               <Text style={styles.qrUrl}>{verifyPath}</Text>
-              <Text style={styles.qrFoot}>
-                QR-Code scannen oder Adresse eingeben. Der Code in der URL entspricht der Registriernummer oben.
-              </Text>
+              <Text style={styles.qrFoot}>QR scannen — Code entspricht der Registriernummer.</Text>
             </View>
           </View>
 
           <View style={styles.disclaimerSep} />
-          <Text style={styles.disclaimer}>{CERTIFICATE_FOOTNOTE_DE}</Text>
+          <Text style={styles.disclaimer}>{CERTIFICATE_FOOTNOTE_PDF_DE}</Text>
 
           <View style={styles.decSep} />
 
@@ -755,9 +743,7 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
             </View>
           </View>
 
-          <Text style={styles.decClose}>{`HELVENDA WOHNUNGEN  ·  QUALITÄTSNACHWEIS  ·  ${year}`}</Text>
-
-          <View style={styles.bottomBand} fixed>
+          <View style={styles.bottomBand}>
             <Text style={styles.bottomText}>
               {`${year} Helvenda Wohnungen · Score-Max GmbH · Zollikerberg · Schweiz`}
             </Text>
