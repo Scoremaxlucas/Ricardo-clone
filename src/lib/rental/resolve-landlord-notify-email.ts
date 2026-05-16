@@ -60,6 +60,7 @@ export function resolveLandlordApplicationNotifyEmail(input: {
 }
 
 const PHONE_LINE = /^(\+41|0\d|tel\.?|telefon|mobile|ruf|phone)\b/i
+const CONTACT_LABEL = /^(name|kontakt|contact|vermieter|ansprechpartner)\s*:\s*/i
 
 /** Erster sinnvoller Name aus Freitext-Kontakt (ohne E-Mail-/Telefonzeilen). */
 export function extractLandlordSalutationFromPlaintext(text: string): string | null {
@@ -68,8 +69,11 @@ export function extractLandlordSalutationFromPlaintext(text: string): string | n
 
   for (const line of lines) {
     if (PHONE_LINE.test(line)) continue
+    let withoutEmails = line.replace(EMAIL_IN_TEXT, '').trim()
+    const labelMatch = withoutEmails.match(CONTACT_LABEL)
+    if (labelMatch) withoutEmails = withoutEmails.slice(labelMatch[0].length).trim()
+    if (!withoutEmails || /^null$/i.test(withoutEmails)) continue
     const emails = line.match(EMAIL_IN_TEXT)
-    const withoutEmails = line.replace(EMAIL_IN_TEXT, '').trim()
     if (!withoutEmails && emails?.length) continue
 
     const parts = withoutEmails.split(/\s+/).filter(Boolean)

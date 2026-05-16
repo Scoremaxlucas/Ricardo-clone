@@ -83,6 +83,11 @@ describe('extractLandlordSalutationFromPlaintext', () => {
   it('skips title prefix', () => {
     expect(extractLandlordSalutationFromPlaintext('Frau Beispiel\nmail@x.ch')).toBe('Beispiel')
   })
+
+  it('parses Name: label from import contact', () => {
+    expect(extractLandlordSalutationFromPlaintext('Name: Tina Lo Conte')).toBe('Tina')
+    expect(extractLandlordSalutationFromPlaintext('Name: null\nKontakt: mk@lsp.ch')).toBe(null)
+  })
 })
 
 describe('resolveLandlordSalutationFirstName', () => {
