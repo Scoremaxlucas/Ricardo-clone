@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   extractBestEmailFromPlaintext,
+  extractLandlordSalutationFromPlaintext,
   landlordLeadEmailForApplication,
   normalizeAndValidateLandlordNotifyEmail,
   resolveLandlordApplicationNotifyEmail,
+  resolveLandlordSalutationFirstName,
 } from '@/lib/rental/resolve-landlord-notify-email'
 
 describe('normalizeAndValidateLandlordNotifyEmail', () => {
@@ -68,6 +70,38 @@ describe('resolveLandlordApplicationNotifyEmail', () => {
         landlordNotifyEmail: null,
         landlordContactStored: 'PLAIN1:keine mail',
         ownerAccountEmail: null,
+      }),
+    ).toBe(null)
+  })
+})
+
+describe('extractLandlordSalutationFromPlaintext', () => {
+  it('extracts name before phone and email lines', () => {
+    expect(extractLandlordSalutationFromPlaintext('Maria Müller\nRuf 079\nkontakt@landlord.ch')).toBe('Maria')
+  })
+
+  it('skips title prefix', () => {
+    expect(extractLandlordSalutationFromPlaintext('Frau Beispiel\nmail@x.ch')).toBe('Beispiel')
+  })
+})
+
+describe('resolveLandlordSalutationFirstName', () => {
+  it('ignores helvenda internal owner and uses contact name', () => {
+    expect(
+      resolveLandlordSalutationFirstName({
+        landlordNotifyEmail: 'mk@lsp.ch',
+        landlordContactStored: 'PLAIN1:Peter LSP\nmk@lsp.ch',
+        ownerAccount: { firstName: 'Admin', name: 'Admin', email: 'admin@helvenda.ch' },
+      }),
+    ).toBe('Peter')
+  })
+
+  it('returns null for internal owner without contact name', () => {
+    expect(
+      resolveLandlordSalutationFirstName({
+        landlordNotifyEmail: 'mk@lsp.ch',
+        landlordContactStored: null,
+        ownerAccount: { firstName: 'Admin', name: 'Admin', email: 'admin@helvenda.ch' },
       }),
     ).toBe(null)
   })

@@ -13,6 +13,12 @@ export function isWohnenLeadEmailOverrideActive(): boolean {
   return getWohnenLeadEmailOverride() !== null
 }
 
+/** Banner/Betreff-[TEST] nur wenn explizit gewünscht (Standard: stille Weiterleitung, authentische Mail). */
+export function isWohnenLeadEmailOverrideVerbose(): boolean {
+  const v = process.env.WOHNEN_LEAD_EMAIL_OVERRIDE_VERBOSE?.trim().toLowerCase()
+  return v === '1' || v === 'true' || v === 'yes'
+}
+
 export function resolveWohnenLeadDelivery(intendedEmail: string): {
   to: string
   intendedEmail: string

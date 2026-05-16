@@ -2,8 +2,14 @@ import { CertificateStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { buildApplicantSummaryForLandlord } from '@/lib/rental/build-applicant-summary'
 import { sendRentalLandlordNewApplicationEmail } from '@/lib/rental/emails'
-import { resolveLandlordApplicationNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
-import { resolveWohnenLeadDelivery } from '@/lib/rental/wohnen-lead-email-override'
+import {
+  resolveLandlordApplicationNotifyEmail,
+  resolveLandlordSalutationFirstName,
+} from '@/lib/rental/resolve-landlord-notify-email'
+import {
+  isWohnenLeadEmailOverrideVerbose,
+  resolveWohnenLeadDelivery,
+} from '@/lib/rental/wohnen-lead-email-override'
 
 export type SendLandlordLeadNotificationResult =
   | { ok: true; deliveredTo: string; intendedTo: string; isOverride: boolean }
@@ -85,12 +91,19 @@ export async function sendLandlordLeadNotificationForApplication(
     select: { certificateCode: true },
   })
 
+  const salutationFirst = resolveLandlordSalutationFirstName({
+    landlordNotifyEmail: app.listing.landlordNotifyEmail,
+    landlordContactStored: app.listing.landlordContact,
+    ownerAccount: app.listing.user,
+  })
+
   try {
     await sendRentalLandlordNewApplicationEmail({
       landlordEmail: delivery.to,
-      leadTestIntendedEmail: delivery.isOverride ? delivery.intendedEmail : null,
+      leadTestIntendedEmail:
+        delivery.isOverride && isWohnenLeadEmailOverrideVerbose() ? delivery.intendedEmail : null,
       landlordUserId: app.listing.userId,
-      landlordFirst: app.listing.user,
+      landlordSalutationFirstName: salutationFirst,
       listingId: app.listing.id,
       listingTitle: app.listing.title,
       applicantFullName,

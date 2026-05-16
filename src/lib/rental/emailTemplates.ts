@@ -117,7 +117,8 @@ function referenceLine(refName: string | null, refPhone: string | null): string 
 
 /** Template 1 — Neue Bewerbung (Vermieter) */
 export function templateLandlordNewApplication(input: {
-  landlordFirstName: string
+  /** Vorname für «Hallo …»; leer/null → neutrales «Guten Tag,» */
+  landlordFirstName: string | null
   listingTitle: string
   listingId: string
   applicantFullName: string
@@ -155,8 +156,13 @@ export function templateLandlordNewApplication(input: {
       `<div style="margin:16px 0;padding:14px 16px;background-color:#f9fafb;border-left:4px solid #94a3b8;border-radius:4px;color:#374151;font-size:14px;"><strong>Zusätzliche Nachricht:</strong><br>${escapeHtml(input.applicantMessage.trim())}</div>`
     : ''
 
+  const greetingLine =
+    input.landlordFirstName?.trim() ?
+      `Hallo ${escapeHtml(input.landlordFirstName.trim())},`
+    : 'Guten Tag,'
+
   const inner = `
-<p style="margin:0 0 14px 0;">Hallo ${escapeHtml(input.landlordFirstName)},</p>
+<p style="margin:0 0 14px 0;">${greetingLine}</p>
 <p style="margin:0 0 14px 0;">du hast eine neue Bewerbung für dein Inserat <strong>„${escapeHtml(input.listingTitle)}“</strong> erhalten.</p>
 <p style="margin:0 0 6px 0;"><strong>Bewerber:</strong> ${escapeHtml(input.applicantFullName)}</p>
 ${
@@ -180,8 +186,11 @@ ${buttonRow(link, 'Bewerbung ansehen')}
 `
 
   const subject = `Neue Bewerbung für „${input.listingTitle}“ — ${input.applicantFullName}`
+  const textGreeting =
+    input.landlordFirstName?.trim() ? `Hallo ${input.landlordFirstName.trim()},` : 'Guten Tag,'
+
   const text = [
-    `Hallo ${input.landlordFirstName},`,
+    textGreeting,
     '',
     `Du hast eine neue Bewerbung für dein Inserat „${input.listingTitle}“ erhalten.`,
     `Bewerber: ${input.applicantFullName}`,

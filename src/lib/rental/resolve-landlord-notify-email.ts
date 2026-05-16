@@ -59,6 +59,65 @@ export function resolveLandlordApplicationNotifyEmail(input: {
   return normalizeAndValidateLandlordNotifyEmail(input.ownerAccountEmail ?? null)
 }
 
+const PHONE_LINE = /^(\+41|0\d|tel\.?|telefon|mobile|ruf|phone)\b/i
+
+/** Erster sinnvoller Name aus Freitext-Kontakt (ohne E-Mail-/Telefonzeilen). */
+export function extractLandlordSalutationFromPlaintext(text: string): string | null {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+  const skipTitles = /^(frau|herr|mr|mrs|ms|dr|prof)\.?$/i
+
+  for (const line of lines) {
+    if (PHONE_LINE.test(line)) continue
+    const emails = line.match(EMAIL_IN_TEXT)
+    const withoutEmails = line.replace(EMAIL_IN_TEXT, '').trim()
+    if (!withoutEmails && emails?.length) continue
+
+    const parts = withoutEmails.split(/\s+/).filter(Boolean)
+    let i = 0
+    while (i < parts.length && skipTitles.test(parts[i] ?? '')) i++
+    const candidate = parts[i]
+    if (!candidate || candidate.length < 2 || candidate.includes('@')) continue
+    if (/^\d+$/.test(candidate)) continue
+    return candidate
+  }
+  return null
+}
+
+function isHelvendaInternalOwnerEmail(email: string | null | undefined): boolean {
+  const e = normalizeAndValidateLandlordNotifyEmail(email ?? null)
+  return e !== null && e.endsWith('@helvenda.ch')
+}
+
+/**
+ * Vorname für «Hallo …» in der Vermieter-Mail — nicht das Plattform-Admin-Konto bei importierten Inseraten.
+ */
+export function resolveLandlordSalutationFirstName(input: {
+  landlordNotifyEmail: string | null | undefined
+  landlordContactStored: string | null | undefined
+  ownerAccount: { firstName?: string | null; name?: string | null; email?: string | null } | null | undefined
+}): string | null {
+  const decrypted = decryptLandlordContactFromStorage(input.landlordContactStored ?? null)
+  if (decrypted) {
+    const fromContact = extractLandlordSalutationFromPlaintext(decrypted)
+    if (fromContact) return fromContact
+  }
+
+  if (isHelvendaInternalOwnerEmail(input.ownerAccount?.email)) {
+    return null
+  }
+
+  const fn = input.ownerAccount?.firstName?.trim()
+  if (fn && fn.toLowerCase() !== 'admin') return fn.split(/\s+/)[0] ?? fn
+
+  const full = input.ownerAccount?.name?.trim()
+  if (full && full.toLowerCase() !== 'admin') {
+    const first = full.split(/\s+/)[0]
+    if (first && first.length >= 2) return first
+  }
+
+  return null
+}
+
 /** Gespeicherte Lead-E-Mail oder aktuelle Auflösung vom Inserat (für ältere Bewerbungen). */
 export function landlordLeadEmailForApplication(args: {
   landlordLeadEmail: string | null | undefined

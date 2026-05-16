@@ -1,4 +1,5 @@
 import { sendEmail } from '@/lib/email/sender'
+import { isWohnenLeadEmailOverrideVerbose } from '@/lib/rental/wohnen-lead-email-override'
 
 function escapeHtml(s: string): string {
   return s
@@ -75,7 +76,7 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
   /** Gesetzt wenn WOHNEN_LEAD_EMAIL_OVERRIDE aktiv — für Betreff und Hinweis in der Mail. */
   leadTestIntendedEmail?: string | null
   landlordUserId: string
-  landlordFirst: { firstName?: string | null; name?: string | null }
+  landlordSalutationFirstName: string | null
   listingId: string
   listingTitle: string
   applicantFullName: string
@@ -94,7 +95,7 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
   certificateCode?: string | null
 }): Promise<void> {
   const payload = templateLandlordNewApplication({
-    landlordFirstName: firstName(opts.landlordFirst),
+    landlordFirstName: opts.landlordSalutationFirstName,
     listingTitle: opts.listingTitle,
     listingId: opts.listingId,
     applicantFullName: opts.applicantFullName,
@@ -112,9 +113,10 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
     certificateCode: opts.certificateCode ?? null,
   })
   const intended = opts.leadTestIntendedEmail?.trim()
-  const testPrefix = intended ? `[TEST · eigentlich ${intended}] ` : ''
+  const verbose = Boolean(intended && isWohnenLeadEmailOverrideVerbose())
+  const testPrefix = verbose ? `[TEST · eigentlich ${intended}] ` : ''
   const testBanner =
-    intended ?
+    verbose ?
       `<div style="margin:0 0 16px 0;padding:12px 14px;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;font-size:13px;line-height:1.5;color:#9a3412;"><strong>Test-Modus:</strong> Diese Lead-Mail wurde an <strong>${escapeHtml(opts.landlordEmail)}</strong> gesendet. Ursprünglich vorgesehen war <strong>${escapeHtml(intended)}</strong>. Entferne <code>WOHNEN_LEAD_EMAIL_OVERRIDE</code> in Vercel, um echte Vermieter zu benachrichtigen.</div>`
     : ''
 
@@ -122,10 +124,7 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
     to: opts.landlordEmail,
     subject: `${testPrefix}${payload.subject}`,
     html: testBanner ? `${testBanner}${payload.html}` : payload.html,
-    text:
-      intended ?
-        `[TEST — Lead eigentlich für ${intended}]\n\n${payload.text}`
-      : payload.text,
+    text: verbose ? `[TEST — Lead eigentlich für ${intended}]\n\n${payload.text}` : payload.text,
     userId: opts.landlordUserId,
   })
 }
