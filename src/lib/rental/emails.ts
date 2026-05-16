@@ -93,6 +93,7 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
   referencePhone: string | null
   /** Aktiver Helvenda-Qualitätsnachweis — Link in der Mail, kein PDF-Anhang. */
   certificateCode?: string | null
+  landlordCanViewOnPlatform: boolean
 }): Promise<void> {
   const payload = templateLandlordNewApplication({
     landlordFirstName: opts.landlordSalutationFirstName,
@@ -111,6 +112,7 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
     applicantMessage: opts.applicantMessage ?? null,
     applicantSummary: opts.applicantSummary ?? null,
     certificateCode: opts.certificateCode ?? null,
+    landlordCanViewOnPlatform: opts.landlordCanViewOnPlatform,
   })
   const intended = opts.leadTestIntendedEmail?.trim()
   const verbose = Boolean(intended && isWohnenLeadEmailOverrideVerbose())

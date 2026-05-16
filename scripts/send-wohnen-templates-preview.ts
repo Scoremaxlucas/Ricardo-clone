@@ -96,6 +96,7 @@ async function main() {
       applicantSummary:
         'Angestellt bei Muster AG · Haushalt: 2 Personen · Einkommen (Kategorie): CHF 4\'000 – 5\'500 · Betreibungsregister: keine Einträge',
       certificateCode: 'HLV-PREVIEW',
+      landlordCanViewOnPlatform: false,
     }) },
     { name: '2 Mieter — Bewerbung übermittelt', ...templateTenantApplicationSubmitted({
       tenantFirstName: 'Max',

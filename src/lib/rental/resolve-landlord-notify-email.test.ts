@@ -6,6 +6,7 @@ import {
   normalizeAndValidateLandlordNotifyEmail,
   resolveLandlordApplicationNotifyEmail,
   resolveLandlordSalutationFirstName,
+  isHelvendaInternalListingOwnerEmail,
 } from '@/lib/rental/resolve-landlord-notify-email'
 
 describe('normalizeAndValidateLandlordNotifyEmail', () => {
@@ -72,6 +73,13 @@ describe('resolveLandlordApplicationNotifyEmail', () => {
         ownerAccountEmail: null,
       }),
     ).toBe(null)
+  })
+})
+
+describe('isHelvendaInternalListingOwnerEmail', () => {
+  it('detects helvenda.ch owner accounts', () => {
+    expect(isHelvendaInternalListingOwnerEmail('admin@helvenda.ch')).toBe(true)
+    expect(isHelvendaInternalListingOwnerEmail('mk@lsp.ch')).toBe(false)
   })
 })
 

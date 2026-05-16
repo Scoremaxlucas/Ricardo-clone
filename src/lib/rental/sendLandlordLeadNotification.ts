@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { buildApplicantSummaryForLandlord } from '@/lib/rental/build-applicant-summary'
 import { sendRentalLandlordNewApplicationEmail } from '@/lib/rental/emails'
 import {
+  isHelvendaInternalListingOwnerEmail,
   resolveLandlordApplicationNotifyEmail,
   resolveLandlordSalutationFirstName,
 } from '@/lib/rental/resolve-landlord-notify-email'
@@ -119,6 +120,7 @@ export async function sendLandlordLeadNotificationForApplication(
       referenceName: app.tenantProfile.referenceName,
       referencePhone: app.tenantProfile.referencePhone,
       certificateCode: activeCert?.certificateCode ?? null,
+      landlordCanViewOnPlatform: !isHelvendaInternalListingOwnerEmail(app.listing.user?.email),
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'E-Mail-Versand fehlgeschlagen'

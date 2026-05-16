@@ -87,9 +87,14 @@ export function extractLandlordSalutationFromPlaintext(text: string): string | n
   return null
 }
 
-function isHelvendaInternalOwnerEmail(email: string | null | undefined): boolean {
+/** Inserat-Inhaber ist Helvenda-intern (Admin-Import) — kein Vermieter-Login auf /matching. */
+export function isHelvendaInternalListingOwnerEmail(email: string | null | undefined): boolean {
   const e = normalizeAndValidateLandlordNotifyEmail(email ?? null)
   return e !== null && e.endsWith('@helvenda.ch')
+}
+
+function isHelvendaInternalOwnerEmail(email: string | null | undefined): boolean {
+  return isHelvendaInternalListingOwnerEmail(email)
 }
 
 /**
