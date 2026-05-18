@@ -1,14 +1,11 @@
-import { Footer } from '@/components/layout/Footer'
-import { Header } from '@/components/layout/Header'
+import { LegalPageChrome } from '@/components/legal/LegalPageChrome'
 import { LegalPageWrapper } from '@/components/legal/LegalPageWrapper'
-import { legalMainBgClass, legalSurfaceFromHeaders } from '@/lib/legal-page-surface'
+import { legalSurfaceFromHeaders } from '@/lib/legal-page-surface'
 
 export default function TermsPage() {
   const surface = legalSurfaceFromHeaders()
   return (
-    <>
-      <Header />
-      <main className={legalMainBgClass(surface)}>
+    <LegalPageChrome surface={surface}>
         <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
           <LegalPageWrapper titleKey="terms" validSince="17.01.2025" surface={surface}>
 
@@ -646,8 +643,6 @@ export default function TermsPage() {
             </div>
           </LegalPageWrapper>
         </div>
-      </main>
-      <Footer />
-    </>
+    </LegalPageChrome>
   )
 }

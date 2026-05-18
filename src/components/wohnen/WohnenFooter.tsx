@@ -14,14 +14,9 @@ function WohnenFooterSlim() {
         <Link href="/imprint" className="font-medium hover:text-teal-800 hover:underline">
           Impressum
         </Link>
-        <a
-          href={`${MAIN_SHOP_ORIGIN}/privacy`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium hover:text-teal-800 hover:underline"
-        >
+        <Link href="/privacy" className="font-medium hover:text-teal-800 hover:underline">
           Datenschutz
-        </a>
+        </Link>
         <Link href="/contact" className="font-medium hover:text-teal-800 hover:underline">
           Kontakt
         </Link>
@@ -116,14 +111,9 @@ export function WohnenFooter() {
                 </Link>
               </li>
               <li>
-                <a
-                  href={`${MAIN_SHOP_ORIGIN}/`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline"
-                >
-                  Über Helvenda
-                </a>
+                <Link href="/imprint" className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline">
+                  Impressum
+                </Link>
               </li>
               <li>
                 <Link href="/#wie-es-funktioniert" className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline">
@@ -131,23 +121,23 @@ export function WohnenFooter() {
                 </Link>
               </li>
               <li>
-                <a
-                  href={`${MAIN_SHOP_ORIGIN}/privacy`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline"
-                >
+                <Link href="/privacy" className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline">
                   Datenschutz
-                </a>
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline">
+                  Nutzungsbedingungen
+                </Link>
               </li>
               <li>
                 <a
-                  href={`${MAIN_SHOP_ORIGIN}/terms`}
+                  href={`${MAIN_SHOP_ORIGIN}/`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-[44px] items-center text-white/90 hover:text-white hover:underline"
+                  className="inline-flex min-h-[44px] items-center text-white/70 hover:text-white hover:underline"
                 >
-                  Nutzungsbedingungen
+                  Helvenda Marktplatz
                 </a>
               </li>
             </ul>

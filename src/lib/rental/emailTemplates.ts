@@ -5,7 +5,7 @@
 
 import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
 import { employmentLabelDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
-import { MAIN_SHOP_ORIGIN, WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
+import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { isCreditCheckResult } from '@/lib/rental/types'
 import {
@@ -32,8 +32,8 @@ function wohnenOrigin(): string {
   return WOHNEN_SITE_ORIGIN.replace(/\/$/, '')
 }
 
-function mainOrigin(): string {
-  return MAIN_SHOP_ORIGIN.replace(/\/$/, '')
+function wohnenAdminListingEditLink(listingId: string): string {
+  return `${wohnenOrigin()}/admin/listings/${encodeURIComponent(listingId)}/bearbeiten`
 }
 
 function formatChf(n: number): string {
@@ -443,8 +443,7 @@ export function templateAdminCreditManualReview(input: {
   uploadedAt: Date
   encryptedFileRef: string
 }): WohnenEmailPayload {
-  const m = mainOrigin()
-  const adminLink = `${m}/admin`
+  const adminLink = `${wohnenOrigin()}/admin/wohnen`
   const uploaded = input.uploadedAt.toLocaleString('de-CH', {
     day: '2-digit',
     month: '2-digit',
@@ -652,8 +651,7 @@ export function templateAdminListingDeactivatedUrl404(input: {
   listingId: string
   deactivatedAt: Date
 }): WohnenEmailPayload {
-  const m = mainOrigin()
-  const adminLink = `${m}/admin/listings/${encodeURIComponent(input.listingId)}/bearbeiten`
+  const adminLink = wohnenAdminListingEditLink(input.listingId)
   const when = input.deactivatedAt.toLocaleString('de-CH', {
     day: '2-digit',
     month: '2-digit',
@@ -694,8 +692,7 @@ export function templateAdminListingDeactivatedUrlRented(input: {
   keyword: string
   deactivatedAt: Date
 }): WohnenEmailPayload {
-  const m = mainOrigin()
-  const adminLink = `${m}/admin/listings/${encodeURIComponent(input.listingId)}/bearbeiten`
+  const adminLink = wohnenAdminListingEditLink(input.listingId)
   const when = input.deactivatedAt.toLocaleString('de-CH', {
     day: '2-digit',
     month: '2-digit',
@@ -736,8 +733,7 @@ export function templateAdminListingDeactivatedStaleReports(input: {
   lastReportAt: Date
   notes: string[]
 }): WohnenEmailPayload {
-  const m = mainOrigin()
-  const adminLink = `${m}/admin/listings/${encodeURIComponent(input.listingId)}/bearbeiten`
+  const adminLink = wohnenAdminListingEditLink(input.listingId)
   const last = input.lastReportAt.toLocaleString('de-CH', {
     day: '2-digit',
     month: '2-digit',
@@ -784,8 +780,7 @@ export function templateAdminListingUrlUnreachableStreak(input: {
   importedFrom: string
   listingId: string
 }): WohnenEmailPayload {
-  const m = mainOrigin()
-  const adminLink = `${m}/admin/listings/${encodeURIComponent(input.listingId)}/bearbeiten`
+  const adminLink = wohnenAdminListingEditLink(input.listingId)
   const inner = `
 <p style="margin:0 0 14px 0;">Die Original-URL eines aktiven Inserats war bei <strong>3 aufeinanderfolgenden</strong> automatischen Prüfungen nicht erreichbar (Timeout oder Netzwerkfehler):</p>
 <p style="margin:0 0 6px 0;"><strong>Titel:</strong> ${escapeHtml(input.listingTitle)}</p>
@@ -857,8 +852,7 @@ export function templateAdminListingExpiredCalendar(input: {
   listingExpiresOn: string
   deactivatedAt: Date
 }): WohnenEmailPayload {
-  const m = mainOrigin()
-  const adminLink = `${m}/admin/listings/${encodeURIComponent(input.listingId)}/bearbeiten`
+  const adminLink = wohnenAdminListingEditLink(input.listingId)
   const when = input.deactivatedAt.toLocaleString('de-CH', {
     day: '2-digit',
     month: '2-digit',

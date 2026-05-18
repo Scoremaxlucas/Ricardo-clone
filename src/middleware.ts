@@ -104,6 +104,9 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname === '/help' || pathname.startsWith('/help/')) return true
   if (pathname === '/contact' || pathname.startsWith('/contact')) return true
   if (pathname === '/faq' || pathname.startsWith('/faq')) return true
+  if (pathname === '/terms') return true
+  if (pathname === '/privacy') return true
+  if (pathname === '/imprint') return true
   return false
 }
 

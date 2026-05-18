@@ -45,6 +45,13 @@ export function LegalPageWrapper({ titleKey, validSince, surface = 'default', ch
         </p>
       )}
 
+      {wohnen && (
+        <p className="mb-6 rounded-lg border border-[#d4eee4] bg-[#f5fdfb] px-4 py-3 text-sm leading-relaxed text-[#3d5c50]">
+          Diese Unterlagen gelten für Helvenda Wohnungen. Rechtlich sind sie mit den übrigen Helvenda-Diensten
+          verbunden; hier lesen Sie sie im Kontext des Mietangebots.
+        </p>
+      )}
+
       {isNonGerman && (
         <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
           <Globe className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
