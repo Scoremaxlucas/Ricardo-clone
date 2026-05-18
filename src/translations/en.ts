@@ -1,4 +1,5 @@
 import { Translation } from './de'
+import { wohnenHelpArticlesEn, wohnenSupportEn } from './wohnen-support/en'
 
 export const en: Translation = {
   // Header
@@ -1930,7 +1931,10 @@ export const en: Translation = {
         '• Sending goods via field post.',
       ],
     },
+    ...wohnenHelpArticlesEn,
   },
+
+  wohnenSupport: wohnenSupportEn,
 
   // FAQ Questions
   faqQuestions: {

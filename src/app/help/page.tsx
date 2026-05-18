@@ -1,5 +1,7 @@
 'use client'
 
+import { WohnenHelpPage } from '@/components/wohnen/support/WohnenHelpPage'
+import { useWohnenUiBrand } from '@/contexts/WohnenUiBrandContext'
 import { useState } from 'react'
 import Link from 'next/link'
 import {
@@ -17,8 +19,11 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function HelpPage() {
+  const wohnen = useWohnenUiBrand()
   const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState('')
+
+  if (wohnen) return <WohnenHelpPage />
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   // Load help categories from translations

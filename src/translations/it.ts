@@ -1,4 +1,5 @@
 import { Translation } from './de'
+import { wohnenHelpArticlesEn, wohnenSupportEn } from './wohnen-support/en'
 
 export const it: Translation = {
   header: {
@@ -1927,7 +1928,10 @@ export const it: Translation = {
         '',
       ],
     },
+    ...wohnenHelpArticlesEn,
   },
+
+  wohnenSupport: wohnenSupportEn,
 
   // FAQ Questions
   faqQuestions: {

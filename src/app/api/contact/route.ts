@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { WOHNEN_CONTACT_CATEGORY_LABELS } from '@/lib/wohnen-support/help-categories'
 
 const CONTACT_EMAIL =
   process.env.CONTACT_EMAIL || process.env.RESEND_FROM_EMAIL || 'support@helvenda.ch'
@@ -53,7 +54,8 @@ export async function POST(request: NextRequest) {
       other: 'Sonstiges',
     }
 
-    const categoryLabel = categoryLabels[category] || category
+    const categoryLabel =
+      WOHNEN_CONTACT_CATEGORY_LABELS[category] || categoryLabels[category] || category
 
     // Kontaktanfrage in Datenbank speichern
     let contactRequest = null

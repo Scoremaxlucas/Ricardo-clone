@@ -1,5 +1,6 @@
 import { LegalPageChrome } from '@/components/legal/LegalPageChrome'
 import { LegalPageWrapper } from '@/components/legal/LegalPageWrapper'
+import { WohnenTermsJump } from '@/components/legal/WohnenTermsJump'
 import { legalSurfaceFromHeaders } from '@/lib/legal-page-surface'
 
 export default function TermsPage() {
@@ -8,6 +9,7 @@ export default function TermsPage() {
     <LegalPageChrome surface={surface}>
         <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
           <LegalPageWrapper titleKey="terms" validSince="17.01.2025" surface={surface}>
+            <WohnenTermsJump surface={surface} />
 
             <div className="prose prose-sm sm:prose-base lg:prose-lg max-w-none">
               <div className="space-y-6 sm:space-y-8 text-gray-700">
@@ -89,7 +91,7 @@ export default function TermsPage() {
                     </p>
                   </div>
 
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 mt-6 sm:mt-8">1.5 Helvenda Wohnungen (Mietwohnungen)</h3>
+                  <h3 id="helvenda-wohnungen" className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 mt-6 sm:mt-8 scroll-mt-24">1.5 Helvenda Wohnungen (Mietwohnungen)</h3>
 
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.1 Zweck und Begriffe</h4>
                   <p className="text-sm sm:text-base mb-3 sm:mb-4">

@@ -1,5 +1,6 @@
 import { LegalPageChrome } from '@/components/legal/LegalPageChrome'
 import { LegalPageWrapper } from '@/components/legal/LegalPageWrapper'
+import { WohnenImprintIntro } from '@/components/legal/WohnenImprintIntro'
 import { legalSurfaceFromHeaders } from '@/lib/legal-page-surface'
 
 export default function ImprintPage() {
@@ -8,6 +9,7 @@ export default function ImprintPage() {
     <LegalPageChrome surface={surface}>
         <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
           <LegalPageWrapper titleKey="imprint" surface={surface}>
+            <WohnenImprintIntro surface={surface} />
 
             <div className="prose prose-sm max-w-none sm:prose-base lg:prose-lg">
               <div className="space-y-4 text-gray-700 sm:space-y-6">

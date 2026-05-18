@@ -1,3 +1,5 @@
+import { wohnenHelpArticlesDe, wohnenSupportDe } from './wohnen-support/de'
+
 export const de = {
   // Header
   header: {
@@ -1919,7 +1921,10 @@ export const de = {
         '• Versenden von Waren via Feldpost.',
       ],
     },
+    ...wohnenHelpArticlesDe,
   },
+
+  wohnenSupport: wohnenSupportDe,
 
   // FAQ Questions
   faqQuestions: {

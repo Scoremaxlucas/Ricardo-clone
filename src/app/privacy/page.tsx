@@ -1,5 +1,6 @@
 import { LegalPageChrome } from '@/components/legal/LegalPageChrome'
 import { LegalPageWrapper } from '@/components/legal/LegalPageWrapper'
+import { WohnenPrivacySection } from '@/components/legal/WohnenPrivacySection'
 import { legalSurfaceFromHeaders } from '@/lib/legal-page-surface'
 
 export default function PrivacyPage() {
@@ -8,6 +9,7 @@ export default function PrivacyPage() {
     <LegalPageChrome surface={surface}>
         <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
           <LegalPageWrapper titleKey="privacy" validSince="09.05.2026" surface={surface}>
+            <WohnenPrivacySection surface={surface} />
 
             <div className="prose prose-sm max-w-none sm:prose-base lg:prose-lg">
               <div className="space-y-6 text-gray-700 sm:space-y-8">

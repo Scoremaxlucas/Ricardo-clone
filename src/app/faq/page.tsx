@@ -1,5 +1,7 @@
 'use client'
 
+import { WohnenFaqPage } from '@/components/wohnen/support/WohnenFaqPage'
+import { useWohnenUiBrand } from '@/contexts/WohnenUiBrandContext'
 import { useState } from 'react'
 import Link from 'next/link'
 import { Search, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react'
@@ -8,10 +10,13 @@ import { useLanguage } from '@/contexts/LanguageContext'
 // FAQ categories will be loaded from translations
 
 export default function FAQPage() {
+  const wohnen = useWohnenUiBrand()
   const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState('')
   const [openQuestions, setOpenQuestions] = useState<Set<string>>(new Set())
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+
+  if (wohnen) return <WohnenFaqPage />
 
   // Load FAQ categories from translations
   const faqCategories = [

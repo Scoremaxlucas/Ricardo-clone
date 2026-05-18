@@ -1,5 +1,7 @@
 'use client'
 
+import { WohnenContactPage } from '@/components/wohnen/support/WohnenContactPage'
+import { useWohnenUiBrand } from '@/contexts/WohnenUiBrandContext'
 import { useState } from 'react'
 import Link from 'next/link'
 import { Mail, MessageCircle, Phone, Send, CheckCircle, AlertCircle } from 'lucide-react'
@@ -7,6 +9,7 @@ import { toast } from 'react-hot-toast'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function ContactPage() {
+  const wohnen = useWohnenUiBrand()
   const { t } = useLanguage()
   const [formData, setFormData] = useState({
     category: '',
@@ -16,6 +19,8 @@ export default function ContactPage() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+
+  if (wohnen) return <WohnenContactPage />
 
   const contactCategories = [
     { value: 'technical', label: t.contact.technical },
