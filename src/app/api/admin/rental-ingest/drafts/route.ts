@@ -13,15 +13,23 @@ export async function GET() {
   }
 
   const rows = await prisma.rentalListingIngestDraft.findMany({
-    where: { createdByUserId: session.user.id, status: 'PENDING' },
+    where: { status: 'PENDING' },
     orderBy: { createdAt: 'desc' },
-    take: 100,
+    take: 150,
     select: {
       id: true,
       createdAt: true,
       sourceUrl: true,
       lastError: true,
       status: true,
+      createdBy: {
+        select: {
+          name: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
     },
   })
 

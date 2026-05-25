@@ -2,6 +2,7 @@ import { authOptions } from '@/lib/auth'
 import { ensureExternalLandlordForListingInput } from '@/lib/external-landlords/crm'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
+import { rentalImportSourcePolicyMessage } from '@/lib/rental/ingest-source-policy'
 import { encryptLandlordContactForStorage } from '@/lib/rental/pdf-crypto'
 import {
   parseListingExpiresOnFromBody,
@@ -127,6 +128,10 @@ export async function POST(request: Request) {
     }
     if (importSource === ImportSource.SELF) {
       importedFrom = null
+    }
+    const sourcePolicyError = importedFrom ? rentalImportSourcePolicyMessage(importedFrom) : null
+    if (sourcePolicyError) {
+      return NextResponse.json({ message: sourcePolicyError }, { status: 400 })
     }
 
     const landlordContact =

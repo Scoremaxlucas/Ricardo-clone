@@ -1,37 +1,41 @@
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
-import { logAdminAudit } from '@/lib/admin/auditLog'
 import { prisma } from '@/lib/prisma'
-import { ExternalLandlordEvidenceSource } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
+import { ExternalLandlordEvidenceSource } from '@prisma/client'
+import { logAdminAudit } from '@/lib/admin/auditLog'
 
 export const dynamic = 'force-dynamic'
 
 const SOURCE_VALUES = new Set<string>(Object.values(ExternalLandlordEvidenceSource))
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; attachmentId: string }> }
+) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !(await isAdmin(session))) {
     return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
   }
 
-  const { id } = await params
+  const { id, attachmentId } = await params
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null
-  if (!id || !body) {
+  if (!id || !attachmentId || !body) {
     return NextResponse.json({ message: 'Ungültige Anfrage' }, { status: 400 })
   }
 
-  const landlord = await prisma.externalLandlord.findUnique({ where: { id }, select: { id: true } })
-  if (!landlord) {
-    return NextResponse.json({ message: 'Vermieter nicht gefunden' }, { status: 404 })
+  const attachment = await prisma.externalLandlordAttachment.findFirst({
+    where: { id: attachmentId, externalLandlordId: id },
+    select: { id: true },
+  })
+  if (!attachment) {
+    return NextResponse.json({ message: 'Anhang nicht gefunden' }, { status: 404 })
   }
 
-  const fileUrl = typeof body.fileUrl === 'string' ? body.fileUrl.trim() : ''
-  if (!/^https?:\/\//i.test(fileUrl)) {
-    return NextResponse.json({ message: 'Ungültige Datei-URL' }, { status: 400 })
+  if (typeof body.source === 'string' && !SOURCE_VALUES.has(body.source)) {
+    return NextResponse.json({ message: 'Ungültige Quelle' }, { status: 400 })
   }
-
   const source =
     typeof body.source === 'string' && SOURCE_VALUES.has(body.source) ?
       (body.source as ExternalLandlordEvidenceSource)
@@ -61,26 +65,60 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
   }
 
-  const created = await prisma.externalLandlordAttachment.create({
+  await prisma.externalLandlordAttachment.update({
+    where: { id: attachment.id },
     data: {
-      externalLandlordId: id,
       rentalListingId,
       permissionId,
       source,
       label: typeof body.label === 'string' && body.label.trim() ? body.label.trim() : null,
-      fileName: typeof body.fileName === 'string' && body.fileName.trim() ? body.fileName.trim() : null,
-      mimeType: typeof body.mimeType === 'string' && body.mimeType.trim() ? body.mimeType.trim() : null,
-      fileUrl,
       note: typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null,
     },
   })
 
   await logAdminAudit({
     adminUserId: session.user.id,
-    action: 'EXTERNAL_LANDLORD_ATTACHMENT_CREATE',
+    action: 'EXTERNAL_LANDLORD_ATTACHMENT_PATCH',
     entityType: 'ExternalLandlordAttachment',
-    entityId: created.id,
+    entityId: attachment.id,
     metadata: { landlordId: id, rentalListingId, permissionId, source },
+  })
+
+  return NextResponse.json({ success: true })
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string; attachmentId: string }> }
+) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !(await isAdmin(session))) {
+    return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
+  }
+
+  const { id, attachmentId } = await params
+  if (!id || !attachmentId) {
+    return NextResponse.json({ message: 'Ungültige Anfrage' }, { status: 400 })
+  }
+
+  const attachment = await prisma.externalLandlordAttachment.findFirst({
+    where: { id: attachmentId, externalLandlordId: id },
+    select: { id: true },
+  })
+  if (!attachment) {
+    return NextResponse.json({ message: 'Anhang nicht gefunden' }, { status: 404 })
+  }
+
+  await prisma.externalLandlordAttachment.delete({
+    where: { id: attachment.id },
+  })
+
+  await logAdminAudit({
+    adminUserId: session.user.id,
+    action: 'EXTERNAL_LANDLORD_ATTACHMENT_DELETE',
+    entityType: 'ExternalLandlordAttachment',
+    entityId: attachment.id,
+    metadata: { landlordId: id },
   })
 
   return NextResponse.json({ success: true })

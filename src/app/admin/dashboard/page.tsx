@@ -54,6 +54,7 @@ export default function AdminDashboard() {
   const router = useRouter()
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [hasAdminAccess, setHasAdminAccess] = useState<boolean | null>(null)
 
   const loadStats = async () => {
     setLoading(true)
@@ -120,6 +121,7 @@ export default function AdminDashboard() {
     // Prüfe Admin-Status und lade Statistiken
     const checkAdminAndLoad = async () => {
       if (!session?.user) {
+        setHasAdminAccess(false)
         if (status === 'unauthenticated') {
           setLoading(false)
           const currentPath = window.location.pathname
@@ -133,6 +135,7 @@ export default function AdminDashboard() {
       const isAdminInSession = (session?.user as { isAdmin?: boolean })?.isAdmin === true
 
       if (isAdminInSession) {
+        setHasAdminAccess(true)
         await loadStats()
         clearTimeout(timeoutId)
         return
@@ -143,14 +146,17 @@ export default function AdminDashboard() {
         const res = await fetch('/api/user/admin-status')
         const data = await res.json()
         if (data.isAdmin) {
+          setHasAdminAccess(true)
           await loadStats()
         } else {
+          setHasAdminAccess(false)
           setLoading(false)
           router.push('/')
         }
         clearTimeout(timeoutId)
       } catch (error) {
         console.error('Error checking admin status:', error)
+        setHasAdminAccess(false)
         setLoading(false)
         router.push('/')
         clearTimeout(timeoutId)
@@ -192,9 +198,6 @@ export default function AdminDashboard() {
     )
   }
 
-  // Prüfe Admin-Status nur aus Session
-  const isAdminInSession = (session?.user as { isAdmin?: boolean })?.isAdmin === true
-
   // Wenn keine Session, zeige Fehlermeldung (redirect sollte bereits passiert sein)
   if (!session?.user) {
     return (
@@ -210,7 +213,7 @@ export default function AdminDashboard() {
   }
 
   // Wenn nicht Admin, zeige Fehlermeldung (redirect sollte bereits passiert sein)
-  if (!isAdminInSession) {
+  if (hasAdminAccess === false) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">

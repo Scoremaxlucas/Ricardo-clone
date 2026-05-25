@@ -132,6 +132,7 @@ export function ExternalLandlordDetailClient(props: Props) {
   const [contactNote, setContactNote] = useState('')
   const [contactPrimary, setContactPrimary] = useState(false)
   const [savingContact, setSavingContact] = useState(false)
+  const [editingContactId, setEditingContactId] = useState<string | null>(null)
 
   const [permissionKind, setPermissionKind] = useState<ExternalLandlordPermissionKind>('listing_publication')
   const [permissionSource, setPermissionSource] = useState<ExternalLandlordEvidenceSource>('manual')
@@ -139,6 +140,7 @@ export function ExternalLandlordDetailClient(props: Props) {
   const [permissionDate, setPermissionDate] = useState(new Date().toISOString().slice(0, 10))
   const [permissionListingId, setPermissionListingId] = useState('')
   const [savingPermission, setSavingPermission] = useState(false)
+  const [editingPermissionId, setEditingPermissionId] = useState<string | null>(null)
 
   const [attachmentLabel, setAttachmentLabel] = useState('')
   const [attachmentSource, setAttachmentSource] = useState<ExternalLandlordEvidenceSource>('manual')
@@ -146,7 +148,10 @@ export function ExternalLandlordDetailClient(props: Props) {
   const [attachmentListingId, setAttachmentListingId] = useState('')
   const [attachmentPermissionId, setAttachmentPermissionId] = useState('')
   const [uploadingAttachment, setUploadingAttachment] = useState(false)
+  const [editingAttachmentId, setEditingAttachmentId] = useState<string | null>(null)
+  const [selectedAttachmentFile, setSelectedAttachmentFile] = useState<File | null>(null)
   const [mergingDuplicateId, setMergingDuplicateId] = useState<string | null>(null)
+  const [deletingEntryKey, setDeletingEntryKey] = useState<string | null>(null)
 
   const listingOptions = useMemo(
     () => props.linkedListings.map(listing => ({ value: listing.id, label: listing.title })),
@@ -172,6 +177,79 @@ export function ExternalLandlordDetailClient(props: Props) {
     } finally {
       setMergingDuplicateId(null)
     }
+  }
+
+  const deleteEntry = async (entryKey: string, path: string, confirmText: string, successText: string) => {
+    if (!window.confirm(confirmText)) return
+    setDeletingEntryKey(entryKey)
+    try {
+      const res = await fetch(path, { method: 'DELETE' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error((data as { message?: string }).message || 'Löschen fehlgeschlagen')
+        return
+      }
+      toast.success(successText)
+      router.refresh()
+    } finally {
+      setDeletingEntryKey(null)
+    }
+  }
+
+  const resetContactForm = () => {
+    setEditingContactId(null)
+    setContactKind('email')
+    setContactLabel('')
+    setContactValue('')
+    setContactNote('')
+    setContactPrimary(false)
+  }
+
+  const resetPermissionForm = () => {
+    setEditingPermissionId(null)
+    setPermissionKind('listing_publication')
+    setPermissionSource('manual')
+    setPermissionSummary('')
+    setPermissionDate(new Date().toISOString().slice(0, 10))
+    setPermissionListingId('')
+  }
+
+  const resetAttachmentForm = () => {
+    setEditingAttachmentId(null)
+    setAttachmentLabel('')
+    setAttachmentSource('manual')
+    setAttachmentNote('')
+    setAttachmentListingId('')
+    setAttachmentPermissionId('')
+    setSelectedAttachmentFile(null)
+  }
+
+  const startEditContact = (contact: ContactRow) => {
+    setEditingContactId(contact.id)
+    setContactKind(contact.kind)
+    setContactLabel(contact.label ?? '')
+    setContactValue(contact.value ?? '')
+    setContactNote(contact.note ?? '')
+    setContactPrimary(contact.isPrimary)
+  }
+
+  const startEditPermission = (permission: PermissionRow) => {
+    setEditingPermissionId(permission.id)
+    setPermissionKind(permission.kind)
+    setPermissionSource(permission.source)
+    setPermissionSummary(permission.summary)
+    setPermissionDate(permission.grantedAt.slice(0, 10))
+    setPermissionListingId(permission.rentalListingId ?? '')
+  }
+
+  const startEditAttachment = (attachment: AttachmentRow) => {
+    setEditingAttachmentId(attachment.id)
+    setAttachmentLabel(attachment.label ?? '')
+    setAttachmentSource(attachment.source ?? 'manual')
+    setAttachmentNote(attachment.note ?? '')
+    setAttachmentListingId(attachment.rentalListingId ?? '')
+    setAttachmentPermissionId(attachment.permissionId ?? '')
+    setSelectedAttachmentFile(null)
   }
 
   const saveProfile = async () => {
@@ -200,11 +278,15 @@ export function ExternalLandlordDetailClient(props: Props) {
     }
   }
 
-  const addContact = async () => {
+  const saveContact = async () => {
     setSavingContact(true)
     try {
-      const res = await fetch(`/api/admin/external-landlords/${props.landlordId}/contacts`, {
-        method: 'POST',
+      const path =
+        editingContactId ?
+          `/api/admin/external-landlords/${props.landlordId}/contacts/${editingContactId}`
+        : `/api/admin/external-landlords/${props.landlordId}/contacts`
+      const res = await fetch(path, {
+        method: editingContactId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           kind: contactKind,
@@ -219,22 +301,23 @@ export function ExternalLandlordDetailClient(props: Props) {
         toast.error((data as { message?: string }).message || 'Kontakt konnte nicht gespeichert werden')
         return
       }
-      toast.success('Kontakt gespeichert')
-      setContactLabel('')
-      setContactValue('')
-      setContactNote('')
-      setContactPrimary(false)
+      toast.success(editingContactId ? 'Kontakt aktualisiert' : 'Kontakt gespeichert')
+      resetContactForm()
       router.refresh()
     } finally {
       setSavingContact(false)
     }
   }
 
-  const addPermission = async () => {
+  const savePermission = async () => {
     setSavingPermission(true)
     try {
-      const res = await fetch(`/api/admin/external-landlords/${props.landlordId}/permissions`, {
-        method: 'POST',
+      const path =
+        editingPermissionId ?
+          `/api/admin/external-landlords/${props.landlordId}/permissions/${editingPermissionId}`
+        : `/api/admin/external-landlords/${props.landlordId}/permissions`
+      const res = await fetch(path, {
+        method: editingPermissionId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           kind: permissionKind,
@@ -249,8 +332,8 @@ export function ExternalLandlordDetailClient(props: Props) {
         toast.error((data as { message?: string }).message || 'Berechtigung konnte nicht gespeichert werden')
         return
       }
-      toast.success('Berechtigung gespeichert')
-      setPermissionSummary('')
+      toast.success(editingPermissionId ? 'Berechtigung aktualisiert' : 'Berechtigung gespeichert')
+      resetPermissionForm()
       router.refresh()
     } finally {
       setSavingPermission(false)
@@ -291,14 +374,47 @@ export function ExternalLandlordDetailClient(props: Props) {
         return
       }
       toast.success('Anhang gespeichert')
-      setAttachmentLabel('')
-      setAttachmentNote('')
-      setAttachmentListingId('')
-      setAttachmentPermissionId('')
+      resetAttachmentForm()
       router.refresh()
     } finally {
       setUploadingAttachment(false)
     }
+  }
+
+  const saveAttachment = async () => {
+    if (editingAttachmentId) {
+      setUploadingAttachment(true)
+      try {
+        const res = await fetch(`/api/admin/external-landlords/${props.landlordId}/attachments/${editingAttachmentId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            label: attachmentLabel,
+            source: attachmentSource,
+            note: attachmentNote,
+            rentalListingId: attachmentListingId || null,
+            permissionId: attachmentPermissionId || null,
+          }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          toast.error((data as { message?: string }).message || 'Anhang konnte nicht gespeichert werden')
+          return
+        }
+        toast.success('Anhang aktualisiert')
+        resetAttachmentForm()
+        router.refresh()
+      } finally {
+        setUploadingAttachment(false)
+      }
+      return
+    }
+
+    if (!selectedAttachmentFile) {
+      toast.error('Bitte zuerst eine Datei auswählen')
+      return
+    }
+    await uploadAttachment(selectedAttachmentFile)
   }
 
   return (
@@ -388,18 +504,46 @@ export function ExternalLandlordDetailClient(props: Props) {
               <p className="text-sm text-slate-600">Noch keine Kontakte gespeichert.</p>
             : props.contacts.map(contact => (
                 <div key={contact.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-slate-900">{contact.value || '—'}</p>
-                    {contact.isPrimary ?
-                      <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[11px] font-bold text-teal-800">
-                        Primär
-                      </span>
-                    : null}
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-slate-900">{contact.value || '—'}</p>
+                        {contact.isPrimary ?
+                          <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[11px] font-bold text-teal-800">
+                            Primär
+                          </span>
+                        : null}
+                      </div>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {contact.kind}
+                        {contact.label ? ` · ${contact.label}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => startEditContact(contact)}
+                        className="text-xs font-semibold text-slate-500 underline hover:text-teal-700"
+                      >
+                        Bearbeiten
+                      </button>
+                      <button
+                        type="button"
+                        disabled={deletingEntryKey === `contact:${contact.id}`}
+                        onClick={() =>
+                          void deleteEntry(
+                            `contact:${contact.id}`,
+                            `/api/admin/external-landlords/${props.landlordId}/contacts/${contact.id}`,
+                            'Diesen Kontakt wirklich löschen?',
+                            'Kontakt gelöscht'
+                          )
+                        }
+                        className="text-xs font-semibold text-slate-500 underline hover:text-red-700 disabled:opacity-50"
+                      >
+                        Löschen
+                      </button>
+                    </div>
                   </div>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {contact.kind}
-                    {contact.label ? ` · ${contact.label}` : ''}
-                  </p>
                   {contact.note ? <p className="mt-2 text-sm text-slate-700">{contact.note}</p> : null}
                 </div>
               ))
@@ -407,12 +551,26 @@ export function ExternalLandlordDetailClient(props: Props) {
           </div>
 
           <div className="mt-6 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="font-semibold text-slate-900">Kontakt hinzufügen</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-semibold text-slate-900">
+                {editingContactId ? 'Kontakt bearbeiten' : 'Kontakt hinzufügen'}
+              </p>
+              {editingContactId ?
+                <button
+                  type="button"
+                  onClick={resetContactForm}
+                  className="text-xs font-semibold text-slate-500 underline hover:text-slate-700"
+                >
+                  Abbrechen
+                </button>
+              : null}
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <select
                 aria-label="Kontakt-Art"
                 value={contactKind}
                 onChange={e => setContactKind(e.target.value as ExternalLandlordContactKind)}
+                disabled={Boolean(editingContactId)}
                 className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
               >
                 {CONTACT_OPTIONS.map(option => (
@@ -445,16 +603,21 @@ export function ExternalLandlordDetailClient(props: Props) {
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
             <label className="flex items-center gap-2 text-sm text-slate-700">
-              <input type="checkbox" checked={contactPrimary} onChange={e => setContactPrimary(e.target.checked)} />
+              <input
+                aria-label="Primärkontakt markieren"
+                type="checkbox"
+                checked={contactPrimary}
+                onChange={e => setContactPrimary(e.target.checked)}
+              />
               Als Primärkontakt markieren
             </label>
             <button
               type="button"
-              onClick={() => void addContact()}
+              onClick={() => void saveContact()}
               disabled={savingContact}
               className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
             >
-              Kontakt speichern
+              {editingContactId ? 'Kontakt aktualisieren' : 'Kontakt speichern'}
             </button>
           </div>
         </div>
@@ -466,16 +629,44 @@ export function ExternalLandlordDetailClient(props: Props) {
               <p className="text-sm text-slate-600">Noch keine Berechtigungen erfasst.</p>
             : props.permissions.map(permission => (
                 <div key={permission.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-slate-900">{permission.kind}</p>
-                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700">
-                      {permission.source}
-                    </span>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-slate-900">{permission.kind}</p>
+                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700">
+                          {permission.source}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {new Date(permission.grantedAt).toLocaleDateString('de-CH')}
+                        {permission.rentalListingId && permission.rentalListingTitle ? ` · ${permission.rentalListingTitle}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => startEditPermission(permission)}
+                        className="text-xs font-semibold text-slate-500 underline hover:text-teal-700"
+                      >
+                        Bearbeiten
+                      </button>
+                      <button
+                        type="button"
+                        disabled={deletingEntryKey === `permission:${permission.id}`}
+                        onClick={() =>
+                          void deleteEntry(
+                            `permission:${permission.id}`,
+                            `/api/admin/external-landlords/${props.landlordId}/permissions/${permission.id}`,
+                            'Diese Berechtigung wirklich löschen?',
+                            'Berechtigung gelöscht'
+                          )
+                        }
+                        className="text-xs font-semibold text-slate-500 underline hover:text-red-700 disabled:opacity-50"
+                      >
+                        Löschen
+                      </button>
+                    </div>
                   </div>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {new Date(permission.grantedAt).toLocaleDateString('de-CH')}
-                    {permission.rentalListingId && permission.rentalListingTitle ? ` · ${permission.rentalListingTitle}` : ''}
-                  </p>
                   <p className="mt-2 text-sm text-slate-700">{permission.summary}</p>
                 </div>
               ))
@@ -483,7 +674,20 @@ export function ExternalLandlordDetailClient(props: Props) {
           </div>
 
           <div className="mt-6 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="font-semibold text-slate-900">Berechtigung erfassen</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-semibold text-slate-900">
+                {editingPermissionId ? 'Berechtigung bearbeiten' : 'Berechtigung erfassen'}
+              </p>
+              {editingPermissionId ?
+                <button
+                  type="button"
+                  onClick={resetPermissionForm}
+                  className="text-xs font-semibold text-slate-500 underline hover:text-slate-700"
+                >
+                  Abbrechen
+                </button>
+              : null}
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <select
                 aria-label="Berechtigungs-Art"
@@ -542,11 +746,11 @@ export function ExternalLandlordDetailClient(props: Props) {
             />
             <button
               type="button"
-              onClick={() => void addPermission()}
+              onClick={() => void savePermission()}
               disabled={savingPermission}
               className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
             >
-              Berechtigung speichern
+              {editingPermissionId ? 'Berechtigung aktualisieren' : 'Berechtigung speichern'}
             </button>
           </div>
         </div>
@@ -559,22 +763,50 @@ export function ExternalLandlordDetailClient(props: Props) {
             <p className="text-sm text-slate-600">Noch keine Anhänge hochgeladen.</p>
           : props.attachments.map(attachment => (
               <div key={attachment.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link href={attachment.fileUrl} target="_blank" className="font-semibold text-teal-800 hover:underline">
-                    {attachment.label || attachment.fileName || 'Datei öffnen'}
-                  </Link>
-                  {attachment.source ?
-                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700">
-                      {attachment.source}
-                    </span>
-                  : null}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link href={attachment.fileUrl} target="_blank" className="font-semibold text-teal-800 hover:underline">
+                        {attachment.label || attachment.fileName || 'Datei öffnen'}
+                      </Link>
+                      {attachment.source ?
+                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700">
+                          {attachment.source}
+                        </span>
+                      : null}
+                    </div>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {attachment.fileName || 'Datei'}
+                      {attachment.mimeType ? ` · ${attachment.mimeType}` : ''}
+                      {' · '}
+                      {new Date(attachment.createdAt).toLocaleString('de-CH')}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => startEditAttachment(attachment)}
+                      className="text-xs font-semibold text-slate-500 underline hover:text-teal-700"
+                    >
+                      Bearbeiten
+                    </button>
+                    <button
+                      type="button"
+                      disabled={deletingEntryKey === `attachment:${attachment.id}`}
+                      onClick={() =>
+                        void deleteEntry(
+                          `attachment:${attachment.id}`,
+                          `/api/admin/external-landlords/${props.landlordId}/attachments/${attachment.id}`,
+                          'Diesen Anhang wirklich löschen?',
+                          'Anhang gelöscht'
+                        )
+                      }
+                      className="text-xs font-semibold text-slate-500 underline hover:text-red-700 disabled:opacity-50"
+                    >
+                      Löschen
+                    </button>
+                  </div>
                 </div>
-                <p className="mt-1 text-sm text-slate-600">
-                  {attachment.fileName || 'Datei'}
-                  {attachment.mimeType ? ` · ${attachment.mimeType}` : ''}
-                  {' · '}
-                  {new Date(attachment.createdAt).toLocaleString('de-CH')}
-                </p>
                 {attachment.note ? <p className="mt-2 text-sm text-slate-700">{attachment.note}</p> : null}
               </div>
             ))
@@ -582,7 +814,20 @@ export function ExternalLandlordDetailClient(props: Props) {
         </div>
 
         <div className="mt-6 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <p className="font-semibold text-slate-900">Nachweis hochladen</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="font-semibold text-slate-900">
+              {editingAttachmentId ? 'Anhang bearbeiten' : 'Nachweis hochladen'}
+            </p>
+            {editingAttachmentId ?
+              <button
+                type="button"
+                onClick={resetAttachmentForm}
+                className="text-xs font-semibold text-slate-500 underline hover:text-slate-700"
+              >
+                Abbrechen
+              </button>
+            : null}
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <input
               aria-label="Anhang-Label"
@@ -640,14 +885,32 @@ export function ExternalLandlordDetailClient(props: Props) {
             placeholder="Kurze Beschreibung"
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
           />
-          <input
-            aria-label="Anhang-Datei"
-            type="file"
-            accept="image/*,.pdf"
-            onChange={e => void uploadAttachment(e.target.files?.[0] ?? null)}
+          {!editingAttachmentId ?
+            <>
+              <input
+                aria-label="Anhang-Datei"
+                type="file"
+                accept="image/*,.pdf"
+                onChange={e => setSelectedAttachmentFile(e.target.files?.[0] ?? null)}
+                disabled={uploadingAttachment}
+                className="block w-full text-sm text-slate-700"
+              />
+              {selectedAttachmentFile ?
+                <p className="text-xs text-slate-600">Ausgewählt: {selectedAttachmentFile.name}</p>
+              : null}
+            </>
+          : null}
+          {editingAttachmentId ?
+            <p className="text-xs text-slate-500">Beim Bearbeiten werden nur Metadaten geändert, nicht die Datei selbst.</p>
+          : null}
+          <button
+            type="button"
+            onClick={() => void saveAttachment()}
             disabled={uploadingAttachment}
-            className="block w-full text-sm text-slate-700"
-          />
+            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+          >
+            {editingAttachmentId ? 'Anhang aktualisieren' : 'Anhang speichern'}
+          </button>
         </div>
       </section>
 

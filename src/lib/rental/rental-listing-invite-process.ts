@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import type { AdminIngestOrchestratorResult } from '@/lib/rental/listing-ingest-orchestrator'
+import { rentalImportSourcePolicyMessage } from '@/lib/rental/ingest-source-policy'
 import { runAdminListingIngest } from '@/lib/rental/listing-ingest-orchestrator'
 import { createRentalListingFromIngestOrchestrator } from '@/lib/rental/rental-listing-auto-create'
 import { assertUrlSafeForServerFetch } from '@/lib/rental/listing-url-import-server'
@@ -27,6 +28,20 @@ export async function processRentalListingInviteUrl(params: {
   }
 
   let safeUrl: string
+  const sourcePolicyError = rentalImportSourcePolicyMessage(params.rawUrl)
+  if (sourcePolicyError) {
+    await prisma.rentalListingInvite.update({
+      where: { id: invite.id },
+      data: {
+        status: 'NEEDS_ADMIN',
+        sourceUrl: params.rawUrl.trim().slice(0, 2000),
+        urlSubmittedAt: new Date(),
+        lastError: sourcePolicyError,
+        draftPayload: { sourceUrl: params.rawUrl.trim(), inviteEmail: invite.email } as object,
+      },
+    })
+    return { status: 'NEEDS_ADMIN', error: sourcePolicyError }
+  }
   try {
     safeUrl = (await assertUrlSafeForServerFetch(params.rawUrl)).toString()
   } catch {

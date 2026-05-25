@@ -30,9 +30,6 @@ export async function checkAdminAuth(): Promise<AdminCheckResult> {
       }
     }
 
-    // Prüfe Admin-Status aus Session
-    const isAdminInSession = session?.user?.isAdmin === true
-
     // Prüfe ob User Admin ist (per ID oder E-Mail)
     let user = null
     if (session.user.id) {
@@ -50,11 +47,9 @@ export async function checkAdminAuth(): Promise<AdminCheckResult> {
       })
     }
 
-    // Prüfe Admin-Status: Session ODER Datenbank
     const isAdminInDb = user?.isAdmin === true
-    const isAdmin = isAdminInSession || isAdminInDb
 
-    if (!isAdmin) {
+    if (!isAdminInDb) {
       return {
         isAdmin: false,
         userId: user?.id || session.user.id || null,

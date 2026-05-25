@@ -2,6 +2,7 @@
 
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
 import { ingestOptionalText } from '@/lib/rental/ingest-optional-text'
+import { rentalImportSourcePolicyMessage } from '@/lib/rental/ingest-source-policy'
 import { mapAiImportToRentalLandlordInitial } from '@/lib/rental/listing-ai-to-rental-initial'
 import type { ImportListingAiResult } from '@/lib/rental/listing-url-import-types'
 import Link from 'next/link'
@@ -487,6 +488,11 @@ export function IngestClient() {
         toast.error('Bitte eine URL einfügen.')
         return
       }
+      const sourcePolicyError = rentalImportSourcePolicyMessage(url)
+      if (sourcePolicyError) {
+        toast.error(sourcePolicyError)
+        return
+      }
     } else if (card === 'text') {
       mode = 'text'
       text = textInput.trim()
@@ -513,6 +519,11 @@ export function IngestClient() {
       imageUrls = clientImageUrls
       if (!url) {
         toast.error('Bitte eine URL einfügen.')
+        return
+      }
+      const sourcePolicyError = rentalImportSourcePolicyMessage(url)
+      if (sourcePolicyError) {
+        toast.error(sourcePolicyError)
         return
       }
       if (clientImageUrls.length === 0) {
@@ -892,7 +903,7 @@ export function IngestClient() {
                 automatischen Zugriff blockiert.
               </span>
               <span className="mt-3 text-xs text-slate-500">
-                Geeignet für: Tutti, Homegate, Facebook & Co., wenn URL-Import scheitert
+                Geeignet für: direkte Vermieter-Screenshots, WhatsApp oder erlaubte Quellen wie Tutti
               </span>
             </button>
           </div>
@@ -948,6 +959,7 @@ export function IngestClient() {
                 Screenshots (JPG, PNG, WebP; max. {SCREENSHOT_MAX}, je max. 10 MB — HEIC bitte vorher als JPG exportieren)
               </p>
               <input
+                aria-label="Screenshots hochladen"
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
                 multiple
@@ -1004,6 +1016,7 @@ export function IngestClient() {
                 Aus Zwischenablage: Bereich anklicken, dann ⌘V / Strg+V (nur Bilder, kein reiner Text).
               </p>
               <input
+                aria-label="Bilder hochladen"
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 multiple
@@ -1180,6 +1193,7 @@ export function IngestClient() {
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Titel *</label>
               <input
+                aria-label="Titel des Inserats"
                 required
                 value={title}
                 onChange={e => setTitle(e.target.value)}
@@ -1193,12 +1207,18 @@ export function IngestClient() {
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Adresse (optional)</label>
-              <input value={address} onChange={e => setAddress(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" />
+              <input
+                aria-label="Adresse"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">PLZ *</label>
                 <input
+                  aria-label="PLZ"
                   required
                   value={zip}
                   onChange={e => setZip(e.target.value.replace(/\D/g, '').slice(0, 4))}
@@ -1213,6 +1233,7 @@ export function IngestClient() {
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">Ort *</label>
                 <input
+                  aria-label="Ort"
                   required
                   value={city}
                   onChange={e => setCity(e.target.value)}
@@ -1228,6 +1249,7 @@ export function IngestClient() {
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Kanton *</label>
               <select
+                aria-label="Kanton"
                 required
                 value={canton}
                 onChange={e => setCanton(e.target.value)}
@@ -1250,6 +1272,7 @@ export function IngestClient() {
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">Zimmer *</label>
                 <select
+                  aria-label="Zimmer"
                   required
                   value={rooms}
                   onChange={e => setRooms(e.target.value)}
@@ -1265,6 +1288,7 @@ export function IngestClient() {
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">Fläche m² *</label>
                 <input
+                  aria-label="Fläche in Quadratmetern"
                   required
                   type="number"
                   min={1}
@@ -1284,6 +1308,7 @@ export function IngestClient() {
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Etage (optional)</label>
               <input
+                aria-label="Etage"
                 type="number"
                 value={floor}
                 onChange={e => setFloor(e.target.value)}
@@ -1294,6 +1319,7 @@ export function IngestClient() {
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">Miete CHF *</label>
                 <input
+                  aria-label="Miete in CHF"
                   required
                   type="number"
                   min={0}
@@ -1312,6 +1338,7 @@ export function IngestClient() {
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">Nebenkosten (optional)</label>
                 <input
+                  aria-label="Nebenkosten"
                   type="number"
                   min={0}
                   value={utilitiesPerMonth}
@@ -1323,6 +1350,7 @@ export function IngestClient() {
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Kaution (optional)</label>
               <input
+                aria-label="Kaution"
                 type="number"
                 min={0}
                 value={depositAmount}
@@ -1333,6 +1361,7 @@ export function IngestClient() {
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Verfügbar ab *</label>
               <input
+                aria-label="Verfügbar ab"
                 required
                 type="date"
                 value={availableFrom}
@@ -1355,6 +1384,7 @@ export function IngestClient() {
                 : null}
               </label>
               <textarea
+                aria-label="Beschreibung"
                 required
                 minLength={50}
                 rows={6}
@@ -1391,6 +1421,7 @@ export function IngestClient() {
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-800">Erkannte Quelle / URL</label>
               <input
+                aria-label="Quellenangabe"
                 type="text"
                 value={recognizedSource}
                 onChange={e => setRecognizedSource(e.target.value)}
@@ -1401,6 +1432,7 @@ export function IngestClient() {
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-800">Erlaubnis-Basis</label>
               <select
+                aria-label="Erlaubnis-Basis"
                 value={ingestBasis}
                 onChange={e => setIngestBasis(e.target.value as IngestPermissionBasis)}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -1429,6 +1461,7 @@ export function IngestClient() {
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Name</label>
               <input
+                aria-label="Name des Vermieters"
                 value={landlordName}
                 onChange={e => setLandlordName(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -1437,6 +1470,7 @@ export function IngestClient() {
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Telefon oder E-Mail</label>
               <input
+                aria-label="Telefon oder E-Mail des Vermieters"
                 value={landlordContact}
                 onChange={e => setLandlordContact(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"

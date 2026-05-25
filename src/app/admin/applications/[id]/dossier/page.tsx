@@ -140,8 +140,8 @@ export default async function AdminApplicationDossierPage({ params }: { params: 
               '❌ Betreibungsregisterauszug fehlt oder abgelaufen'
             : '✅ Betreibungsregisterauszug in Ordnung'}
           </p>
-          <p>{q.reasons.some(i => i.code === 'INCOME_TOO_LOW') ? '❌ Einkommen erfüllt 3x-Regel' : '✅ Einkommen erfüllt 3x-Regel'}</p>
-          <p>{q.reasons.some(i => i.code === 'PROFILE_INCOMPLETE') ? '❌ Profil vollständig' : '✅ Profil vollständig'}</p>
+          <p>{q.reasons.some(i => i.code === 'INCOME_TOO_LOW') ? '❌ Einkommen erfüllt 3x-Regel nicht' : '✅ Einkommen erfüllt 3x-Regel'}</p>
+          <p>{q.reasons.some(i => i.code === 'PROFILE_INCOMPLETE') ? '❌ Profil ist unvollständig' : '✅ Profil vollständig'}</p>
           <p>{q.qualified ? '✅ Alle Anforderungen erfüllt' : '⚠️ Anforderungen noch nicht vollständig erfüllt'}</p>
         </section>
         <section className="section">

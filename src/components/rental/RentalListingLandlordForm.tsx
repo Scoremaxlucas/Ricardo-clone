@@ -3,6 +3,7 @@
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
 import type { ExternalLandlordOption } from '@/lib/external-landlords/admin-options'
 import type { RentalListingLandlordInitial } from '@/lib/rental/rental-landlord-initial'
+import { rentalImportSourcePolicyMessage } from '@/lib/rental/ingest-source-policy'
 import { rentalListingHasMonitoringHttpUrl } from '@/lib/rental/rental-listing-expiry-on'
 import type { RentalListingStatus } from '@prisma/client'
 import Link from 'next/link'
@@ -275,6 +276,11 @@ export function RentalListingLandlordForm({
       if (acquisition === 'imported') {
         if (!originalUrl.trim()) {
           toast.error('Bitte die Original-URL angeben.')
+          return
+        }
+        const sourcePolicyError = rentalImportSourcePolicyMessage(originalUrl.trim())
+        if (sourcePolicyError) {
+          toast.error(sourcePolicyError)
           return
         }
         if (!importPermissionAck) {

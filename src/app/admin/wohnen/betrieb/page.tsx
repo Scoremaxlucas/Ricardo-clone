@@ -1,3 +1,4 @@
+import { WohnenBetriebClient } from '@/components/admin/WohnenBetriebClient'
 import { getWohnenAdminOverview } from '@/lib/admin/wohnen-admin-overview'
 import { authOptions } from '@/lib/auth'
 import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
@@ -103,84 +104,27 @@ export default async function AdminWohnenBetriebPage() {
         ))}
       </section>
 
-      <section className="mb-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
-        <h2 className="text-lg font-bold text-slate-900">E-Mail-Outbox (neueste)</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Mieter-Bestätigung nach Bewerbung wird bei Fehler hier eingetragen und per Cron erneut versendet.
-        </p>
-        {outboxRows.length === 0 ?
-          <p className="mt-4 text-sm text-slate-500">Keine Einträge.</p>
-        : <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-xs font-semibold uppercase text-slate-500">
-                  <th className="py-2 pr-3">Zeit</th>
-                  <th className="py-2 pr-3">Art</th>
-                  <th className="py-2 pr-3">Status</th>
-                  <th className="py-2 pr-3">Versuche</th>
-                  <th className="py-2 pr-3">Nächster Versuch</th>
-                  <th className="py-2 pr-3">Fehler</th>
-                </tr>
-              </thead>
-              <tbody>
-                {outboxRows.map(r => (
-                  <tr key={r.id} className="border-b border-slate-100">
-                    <td className="py-2 pr-3 whitespace-nowrap text-slate-700">
-                      {r.createdAt.toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' })}
-                    </td>
-                    <td className="py-2 pr-3 font-mono text-xs text-slate-800">{r.kind}</td>
-                    <td className="py-2 pr-3 font-semibold text-slate-900">{r.status}</td>
-                    <td className="py-2 pr-3">{r.attempts}</td>
-                    <td className="py-2 pr-3 whitespace-nowrap text-slate-600">
-                      {r.status === 'sent' || r.status === 'cancelled' ?
-                        '—'
-                      : r.nextAttemptAt.toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' })}
-                    </td>
-                    <td className="max-w-xs truncate py-2 pr-3 text-xs text-red-800" title={r.lastError ?? ''}>
-                      {r.lastError ?? '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        }
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
-        <h2 className="text-lg font-bold text-slate-900">Aktive Inserate mit URL-Auffälligkeit</h2>
-        <p className="mt-1 text-sm text-slate-600">Cron «check-listing-urls» setzt Status; hier zur schnellen Übersicht.</p>
-        {urlConcernListings.length === 0 ?
-          <p className="mt-4 text-sm text-slate-500">Keine Treffer.</p>
-        : <ul className="mt-4 divide-y divide-slate-100">
-            {urlConcernListings.map(l => (
-              <li key={l.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <Link
-                    href={`/admin/listings/${l.id}/bearbeiten`}
-                    className="font-semibold text-teal-800 hover:underline"
-                  >
-                    {l.title}
-                  </Link>
-                  <p className="text-xs text-slate-600">
-                    {l.city} · Status {l.lastCheckStatus} · Streak {l.urlUnreachableStreak}
-                  </p>
-                  {l.importedFrom ?
-                    <p className="mt-0.5 truncate text-[11px] text-slate-500" title={l.importedFrom}>
-                      {l.importedFrom}
-                    </p>
-                  : null}
-                </div>
-                <p className="shrink-0 text-xs text-slate-500">
-                  {l.lastCheckedAt ?
-                    `Geprüft: ${l.lastCheckedAt.toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' })}`
-                  : '—'}
-                </p>
-              </li>
-            ))}
-          </ul>
-        }
-      </section>
+      <WohnenBetriebClient
+        outboxRows={outboxRows.map(row => ({
+          id: row.id,
+          createdAt: row.createdAt.toISOString(),
+          kind: row.kind,
+          status: row.status,
+          attempts: row.attempts,
+          lastError: row.lastError,
+          sentAt: row.sentAt?.toISOString() ?? null,
+          nextAttemptAt: row.nextAttemptAt?.toISOString() ?? null,
+        }))}
+        urlConcernListings={urlConcernListings.map(row => ({
+          id: row.id,
+          title: row.title,
+          city: row.city,
+          lastCheckStatus: row.lastCheckStatus,
+          urlUnreachableStreak: row.urlUnreachableStreak,
+          importedFrom: row.importedFrom,
+          lastCheckedAt: row.lastCheckedAt?.toISOString() ?? null,
+        }))}
+      />
     </main>
   )
 }

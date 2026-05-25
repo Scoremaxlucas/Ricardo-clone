@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { isAdmin } from '@/lib/auth/isAdmin'
+import { logAdminAudit } from '@/lib/admin/auditLog'
 import { prisma } from '@/lib/prisma'
 
-export async function POST(request: NextRequest, { params }: { params: { userId: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -11,20 +13,14 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Prüfe ob User Admin ist
-    const admin = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isAdmin: true },
-    })
-
-    if (!admin?.isAdmin) {
+    if (!(await isAdmin(session))) {
       return NextResponse.json(
         { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },
         { status: 403 }
       )
     }
 
-    const userId = params.userId
+    const { userId } = await params
     const body = await request.json()
     const { reason } = body
 
@@ -77,6 +73,14 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
     } catch (notifError) {
       console.error('[notifications] Fehler bei Ablehnungs-Benachrichtigung:', notifError)
     }
+
+    await logAdminAudit({
+      adminUserId: session.user.id,
+      action: 'USER_VERIFICATION_REJECT',
+      entityType: 'User',
+      entityId: userId,
+      metadata: { reason: typeof reason === 'string' ? reason.slice(0, 300) : null },
+    })
 
     return NextResponse.json({ message: 'Verifizierung wurde abgelehnt' })
   } catch (error: any) {

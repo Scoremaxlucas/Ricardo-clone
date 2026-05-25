@@ -58,49 +58,97 @@ export async function processWohnenEmailOutboxBatch(limit = 20): Promise<{
   let failed = 0
 
   for (const row of rows) {
-    try {
-      await prisma.wohnenEmailOutbox.update({
-        where: { id: row.id },
-        data: { status: 'sending' },
-      })
-
-      if (row.kind === 'TENANT_APPLICATION_CONFIRM') {
-        const p = row.payload as TenantApplicationConfirmPayload
-        await sendRentalApplicantSuccessEmail({
-          applicantEmail: p.applicantEmail,
-          applicantUserId: p.applicantUserId,
-          applicantFirst: p.applicantFirst,
-          listingTitle: p.listingTitle,
-          addressLine: p.addressLine,
-          rooms: p.rooms,
-          rentPerMonth: p.rentPerMonth,
-        })
-      }
-
-      await prisma.wohnenEmailOutbox.update({
-        where: { id: row.id },
-        data: {
-          status: 'sent',
-          sentAt: new Date(),
-          lastError: null,
-        },
-      })
-      processed += 1
-    } catch (e) {
-      failed += 1
-      const msg = e instanceof Error ? e.message.slice(0, 900) : 'unknown'
-      const backoffMs = Math.min(3_600_000, 45_000 * Math.pow(2, row.attempts))
-      await prisma.wohnenEmailOutbox.update({
-        where: { id: row.id },
-        data: {
-          status: 'failed',
-          attempts: { increment: 1 },
-          lastError: msg,
-          nextAttemptAt: new Date(Date.now() + backoffMs),
-        },
-      })
-    }
+    const result = await processWohnenEmailOutboxRow(row)
+    if (result.ok) processed += 1
+    else failed += 1
   }
 
   return { processed, failed }
+}
+
+async function processWohnenEmailOutboxRow(row: {
+  id: string
+  kind: string
+  payload: unknown
+  attempts: number
+}) {
+  try {
+    await prisma.wohnenEmailOutbox.update({
+      where: { id: row.id },
+      data: { status: 'sending' },
+    })
+
+    if (row.kind === 'TENANT_APPLICATION_CONFIRM') {
+      const p = row.payload as TenantApplicationConfirmPayload
+      await sendRentalApplicantSuccessEmail({
+        applicantEmail: p.applicantEmail,
+        applicantUserId: p.applicantUserId,
+        applicantFirst: p.applicantFirst,
+        listingTitle: p.listingTitle,
+        addressLine: p.addressLine,
+        rooms: p.rooms,
+        rentPerMonth: p.rentPerMonth,
+      })
+    }
+
+    await prisma.wohnenEmailOutbox.update({
+      where: { id: row.id },
+      data: {
+        status: 'sent',
+        sentAt: new Date(),
+        lastError: null,
+      },
+    })
+    return { ok: true as const }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message.slice(0, 900) : 'unknown'
+    const backoffMs = Math.min(3_600_000, 45_000 * Math.pow(2, row.attempts))
+    await prisma.wohnenEmailOutbox.update({
+      where: { id: row.id },
+      data: {
+        status: 'failed',
+        attempts: { increment: 1 },
+        lastError: msg,
+        nextAttemptAt: new Date(Date.now() + backoffMs),
+      },
+    })
+    return { ok: false as const, error: msg }
+  }
+}
+
+export async function processWohnenEmailOutboxRowNow(id: string): Promise<
+  | { ok: true; status: 'sent' }
+  | { ok: false; status: 'not_found' | 'terminal' | 'failed'; error?: string }
+> {
+  const row = await prisma.wohnenEmailOutbox.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      kind: true,
+      payload: true,
+      attempts: true,
+      status: true,
+    },
+  })
+  if (!row) return { ok: false, status: 'not_found' }
+  if (row.status === 'sent' || row.status === 'cancelled') {
+    return { ok: false, status: 'terminal' }
+  }
+
+  await prisma.wohnenEmailOutbox.update({
+    where: { id: row.id },
+    data: {
+      status: 'pending',
+      nextAttemptAt: new Date(),
+    },
+  })
+
+  const result = await processWohnenEmailOutboxRow({
+    id: row.id,
+    kind: row.kind,
+    payload: row.payload,
+    attempts: row.attempts,
+  })
+  if (result.ok) return { ok: true, status: 'sent' }
+  return { ok: false, status: 'failed', error: result.error }
 }

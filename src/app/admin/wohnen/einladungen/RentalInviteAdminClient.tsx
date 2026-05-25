@@ -13,6 +13,12 @@ type Row = {
   rentalListingId: string | null
   lastError: string | null
   draftPayload: unknown | null
+  createdBy: {
+    name: string | null
+    firstName: string | null
+    lastName: string | null
+    email: string | null
+  }
 }
 
 export function RentalInviteAdminClient() {
@@ -78,6 +84,11 @@ export function RentalInviteAdminClient() {
     }
   }
 
+  const creatorLabel = (row: Row) => {
+    const fullName = [row.createdBy.firstName, row.createdBy.lastName].filter(Boolean).join(' ').trim()
+    return row.createdBy.name || fullName || row.createdBy.email || 'Admin'
+  }
+
   return (
     <div className="space-y-10">
       <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm ring-1 ring-slate-100 sm:p-8">
@@ -122,7 +133,9 @@ export function RentalInviteAdminClient() {
             <table className="w-full min-w-[640px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500">
+                  <th className="py-2 pr-3">Zeit</th>
                   <th className="py-2 pr-3">E-Mail</th>
+                  <th className="py-2 pr-3">Erstellt von</th>
                   <th className="py-2 pr-3">Status</th>
                   <th className="py-2 pr-3">Quell-URL</th>
                   <th className="py-2 pr-3">Inserat</th>
@@ -132,8 +145,18 @@ export function RentalInviteAdminClient() {
               <tbody>
                 {rows.map(r => (
                   <tr key={r.id} className="border-b border-slate-100 align-top">
+                    <td className="py-3 pr-3 whitespace-nowrap text-slate-700">
+                      <div>{new Date(r.createdAt).toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' })}</div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        Ablauf {new Date(r.expiresAt).toLocaleDateString('de-CH')}
+                      </div>
+                    </td>
                     <td className="py-3 pr-3 font-medium text-slate-900">{r.email}</td>
-                    <td className="py-3 pr-3 text-slate-700">{statusDe(r.status)}</td>
+                    <td className="py-3 pr-3 text-slate-700">{creatorLabel(r)}</td>
+                    <td className="py-3 pr-3 text-slate-700">
+                      <div>{statusDe(r.status)}</div>
+                      {r.lastError ? <div className="mt-1 max-w-xs text-xs text-amber-900">{r.lastError}</div> : null}
+                    </td>
                     <td className="py-3 pr-3">
                       {r.sourceUrl ?
                         <a
@@ -193,7 +216,7 @@ export function RentalInviteAdminClient() {
                     : null}
                     <p className="mt-4 font-bold">Nächste Schritte</p>
                     <p className="mt-1">
-                      URL-Ingest öffnen und Daten manuell ergänzen:{' '}
+                      URL-Ingest öffnen und Daten manuell ergänzen. Dieser Fall ist für alle Admins sichtbar:{' '}
                       <Link href="/admin/listings/ingest" className="font-semibold underline">
                         URL-Ingest
                       </Link>

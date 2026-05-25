@@ -11,6 +11,12 @@ type DraftRow = {
   sourceUrl: string
   lastError: string | null
   status: string
+  createdBy: {
+    name: string | null
+    firstName: string | null
+    lastName: string | null
+    email: string | null
+  }
 }
 
 export function IngestDraftsClient() {
@@ -52,6 +58,11 @@ export function IngestDraftsClient() {
     void load()
   }
 
+  const creatorLabel = (row: DraftRow) => {
+    const fullName = [row.createdBy.firstName, row.createdBy.lastName].filter(Boolean).join(' ').trim()
+    return row.createdBy.name || fullName || row.createdBy.email || 'Admin'
+  }
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:py-10">
       <div className="mb-4 flex flex-wrap gap-3">
@@ -69,7 +80,8 @@ export function IngestDraftsClient() {
       <h1 className="mt-1 text-2xl font-bold text-slate-900">Import-Entwürfe</h1>
       <p className="mt-2 text-sm text-slate-600">
         Offene Entwürfe aus dem Bulk-Import (oder fehlgeschlagene Auto-Erstellung). Die Original-URL steht in der
-        Tabelle und wird im Import-Assistenten übernommen.
+        Tabelle und wird im Import-Assistenten übernommen. Entwürfe sind teamweit sichtbar, damit ein anderer Admin
+        Fälle übernehmen kann.
       </p>
 
       {loading ?
@@ -83,6 +95,8 @@ export function IngestDraftsClient() {
             <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-600">
               <tr>
                 <th className="px-4 py-3">Datum</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Admin</th>
                 <th className="px-4 py-3">Original-URL</th>
                 <th className="px-4 py-3">Hinweis</th>
                 <th className="px-4 py-3">Aktionen</th>
@@ -94,6 +108,8 @@ export function IngestDraftsClient() {
                   <td className="whitespace-nowrap px-4 py-3 text-slate-700">
                     {new Date(r.createdAt).toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' })}
                   </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-700">{r.status}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-700">{creatorLabel(r)}</td>
                   <td className="max-w-md px-4 py-3">
                     <a
                       href={r.sourceUrl}

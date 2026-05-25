@@ -1,6 +1,7 @@
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
+import { rentalImportSourcePolicyMessage } from '@/lib/rental/ingest-source-policy'
 import { createRentalListingFromIngestOrchestrator } from '@/lib/rental/rental-listing-auto-create'
 import {
   RENTAL_LISTING_INGEST_DRAFT_VERSION,
@@ -70,6 +71,26 @@ export async function POST(request: NextRequest) {
   > = []
 
   for (const rawUrl of urls) {
+    const sourcePolicyError = rentalImportSourcePolicyMessage(rawUrl)
+    if (sourcePolicyError) {
+      const payload: RentalListingIngestDraftPayloadV1 = {
+        version: RENTAL_LISTING_INGEST_DRAFT_VERSION,
+        kind: 'url_invalid',
+        sourceUrl: rawUrl.trim().slice(0, 4000),
+        message: sourcePolicyError,
+      }
+      const row = await prisma.rentalListingIngestDraft.create({
+        data: {
+          createdByUserId: session.user.id,
+          sourceUrl: rawUrl.trim().slice(0, 4000),
+          lastError: sourcePolicyError,
+          draftPayload: payload as object,
+        },
+      })
+      results.push({ url: rawUrl.trim(), ok: false, draftId: row.id, reason: sourcePolicyError })
+      continue
+    }
+
     let safeUrl: string
     try {
       safeUrl = (await assertUrlSafeForServerFetch(rawUrl)).toString()

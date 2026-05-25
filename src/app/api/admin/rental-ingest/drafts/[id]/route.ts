@@ -6,11 +6,20 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-async function assertOwnDraft(sessionUserId: string, id: string) {
-  const row = await prisma.rentalListingIngestDraft.findFirst({
-    where: { id, createdByUserId: sessionUserId },
+async function getAccessibleDraft(id: string) {
+  return await prisma.rentalListingIngestDraft.findUnique({
+    where: { id },
+    include: {
+      createdBy: {
+        select: {
+          name: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+    },
   })
-  return row
 }
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -19,7 +28,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
   }
   const { id } = await params
-  const row = await assertOwnDraft(session.user.id, id)
+  const row = await getAccessibleDraft(id)
   if (!row) return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 })
 
   return NextResponse.json({
@@ -29,6 +38,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       lastError: row.lastError,
       status: row.status,
       draftPayload: row.draftPayload,
+      createdBy: row.createdBy,
     },
   })
 }
@@ -39,7 +49,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
   }
   const { id } = await params
-  const row = await assertOwnDraft(session.user.id, id)
+  const row = await getAccessibleDraft(id)
   if (!row) return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 })
 
   let body: { status?: string; resolvedListingId?: string }
@@ -78,7 +88,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
   }
   const { id } = await params
-  const row = await assertOwnDraft(session.user.id, id)
+  const row = await getAccessibleDraft(id)
   if (!row) return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 })
 
   await prisma.rentalListingIngestDraft.update({

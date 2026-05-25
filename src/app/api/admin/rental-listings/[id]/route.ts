@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { ensureExternalLandlordForListingInput } from '@/lib/external-landlords/crm'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
+import { rentalImportSourcePolicyMessage } from '@/lib/rental/ingest-source-policy'
 import { encryptLandlordContactForStorage } from '@/lib/rental/pdf-crypto'
 import {
   parseListingExpiresOnFromBody,
@@ -160,6 +161,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         : typeof body.importedFrom === 'string' ?
           body.importedFrom.trim().slice(0, 2000)
         : existing.importedFrom
+    }
+    const shouldValidateSourcePolicy =
+      body.importedFrom !== undefined ||
+      body.importSource !== undefined ||
+      (typeof body.status === 'string' && body.status === 'active')
+    if (shouldValidateSourcePolicy) {
+      const sourcePolicyError = mergedImportedFrom ? rentalImportSourcePolicyMessage(mergedImportedFrom) : null
+      if (sourcePolicyError) {
+        return NextResponse.json({ message: sourcePolicyError }, { status: 400 })
+      }
     }
 
     const onlyNeedsExpiryReviewDismiss =

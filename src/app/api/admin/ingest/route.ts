@@ -13,6 +13,7 @@ import {
   rewriteContextFromUnknown,
   rewriteDescriptionInHelvendarVoice,
 } from '@/lib/rental/rewriteDescription'
+import { rentalImportSourcePolicyMessage } from '@/lib/rental/ingest-source-policy'
 import { htmlToListingPlainText } from '@/lib/rental/listing-url-import-html'
 import { assertUrlSafeForServerFetch } from '@/lib/rental/listing-url-import-server'
 import { getServerSession } from 'next-auth/next'
@@ -534,6 +535,17 @@ export async function POST(request: NextRequest) {
     if (!url) {
       return NextResponse.json({ error: 'URL fehlt' }, { status: 400 })
     }
+    const sourcePolicyError = rentalImportSourcePolicyMessage(url)
+    if (sourcePolicyError) {
+      return NextResponse.json({
+        success: false,
+        error: 'SOURCE_POLICY_BLOCKED',
+        message: sourcePolicyError,
+        blocked: true,
+        urlDetected: url,
+        fallback: true,
+      })
+    }
     console.log('[INGEST] URL flow started:', url)
 
     let pageText = ''
@@ -626,10 +638,28 @@ export async function POST(request: NextRequest) {
   // ——— Legacy: Bild+Text / URL+Bild (Orchestrator) ———
   const mode = body.mode
   if (typeof mode === 'string' && (mode === 'images_text' || mode === 'combined')) {
+    const rawUrl = typeof body.url === 'string' ? body.url.trim() : ''
+    const sourcePolicyError =
+      rawUrl && (mode === 'combined' || mode === 'images_text')
+        ? rentalImportSourcePolicyMessage(rawUrl)
+        : null
+    if (sourcePolicyError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'SOURCE_POLICY_BLOCKED',
+          message: sourcePolicyError,
+          blocked: true,
+          urlDetected: rawUrl,
+          fallback: true,
+        },
+        { status: 200 }
+      )
+    }
     try {
       const result = await runAdminListingIngest(session.user.id, {
         mode: mode as AdminIngestMode,
-        url: typeof body.url === 'string' ? body.url : undefined,
+        url: rawUrl || undefined,
         text: typeof body.text === 'string' ? body.text : undefined,
         imageUrls: Array.isArray(body.imageUrls)
           ? body.imageUrls.filter((x): x is string => typeof x === 'string')

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
 import { shouldShowDetailedErrors } from '@/lib/env'
 
@@ -11,8 +12,11 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
+    }
+    if (!(await isAdmin(session))) {
+      return NextResponse.json({ error: 'Zugriff verweigert' }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -65,8 +69,11 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
+    }
+    if (!(await isAdmin(session))) {
+      return NextResponse.json({ error: 'Zugriff verweigert' }, { status: 403 })
     }
 
     const body = await request.json()

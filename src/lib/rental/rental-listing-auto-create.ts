@@ -1,5 +1,6 @@
 import { ensureExternalLandlordForListingInput } from '@/lib/external-landlords/crm'
 import { prisma } from '@/lib/prisma'
+import { rentalImportSourcePolicyMessage } from '@/lib/rental/ingest-source-policy'
 import { encryptLandlordContactForStorage } from '@/lib/rental/pdf-crypto'
 import type { AdminIngestOrchestratorResult } from '@/lib/rental/listing-ingest-orchestrator'
 import { resolveLandlordApplicationNotifyEmail } from '@/lib/rental/resolve-landlord-notify-email'
@@ -38,6 +39,8 @@ export function validateIngestForAutoCreate(
     return { ok: false, reason: 'Miete fehlt oder 0' }
   }
   if (!sourceUrl.trim()) return { ok: false, reason: 'Quell-URL fehlt' }
+  const sourcePolicyError = rentalImportSourcePolicyMessage(sourceUrl)
+  if (sourcePolicyError) return { ok: false, reason: sourcePolicyError }
   return { ok: true }
 }
 

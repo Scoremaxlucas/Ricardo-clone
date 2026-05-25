@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
+import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
 
 /**
@@ -11,9 +12,20 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
 
-    // Check admin access
-    if (!session?.user || !(session.user as any).isAdmin) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (!(await isAdmin(session))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    if (process.env.ALLOW_ADMIN_DDL_MIGRATIONS !== 'true') {
+      return NextResponse.json(
+        {
+          error:
+            'This endpoint is disabled by default. Use proper Prisma migrations or explicitly set ALLOW_ADMIN_DDL_MIGRATIONS=true for a controlled maintenance window.',
+        },
+        { status: 403 }
+      )
     }
 
     const results: string[] = []

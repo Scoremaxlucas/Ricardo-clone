@@ -17,9 +17,8 @@ export async function GET() {
   }
 
   const rows = await prisma.rentalListingInvite.findMany({
-    where: { createdByUserId: session.user.id },
     orderBy: { createdAt: 'desc' },
-    take: 80,
+    take: 120,
     select: {
       id: true,
       email: true,
@@ -30,6 +29,14 @@ export async function GET() {
       rentalListingId: true,
       lastError: true,
       draftPayload: true,
+      createdBy: {
+        select: {
+          name: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
     },
   })
 

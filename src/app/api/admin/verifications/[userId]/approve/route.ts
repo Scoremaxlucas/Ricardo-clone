@@ -1,9 +1,11 @@
 import { authOptions } from '@/lib/auth'
+import { isAdmin } from '@/lib/auth/isAdmin'
+import { logAdminAudit } from '@/lib/admin/auditLog'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function POST(request: NextRequest, { params }: { params: { userId: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -11,20 +13,14 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Prüfe ob User Admin ist
-    const admin = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isAdmin: true },
-    })
-
-    if (!admin?.isAdmin) {
+    if (!(await isAdmin(session))) {
       return NextResponse.json(
         { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },
         { status: 403 }
       )
     }
 
-    const userId = params.userId
+    const { userId } = await params
 
     // Hole User-Daten vor der Aktualisierung
     const user = await prisma.user.findUnique({
@@ -60,6 +56,14 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
         idDocumentPage1: null,
         idDocumentPage2: null,
       },
+    })
+
+    await logAdminAudit({
+      adminUserId: session.user.id,
+      action: 'USER_VERIFICATION_APPROVE',
+      entityType: 'User',
+      entityId: userId,
+      metadata: {},
     })
 
     // Intentionally silent: approval should not notify users in the new flow.

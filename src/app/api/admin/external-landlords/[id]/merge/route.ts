@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
+import { logAdminAudit } from '@/lib/admin/auditLog'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -117,6 +118,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await tx.externalLandlord.delete({
       where: { id: sourceId },
     })
+  })
+
+  await logAdminAudit({
+    adminUserId: session.user.id,
+    action: 'EXTERNAL_LANDLORD_MERGE',
+    entityType: 'ExternalLandlord',
+    entityId: targetLandlordId,
+    metadata: {
+      sourceLandlordId: sourceId,
+      sharedKeys: overlaps,
+    },
   })
 
   return NextResponse.json({ success: true, targetLandlordId })

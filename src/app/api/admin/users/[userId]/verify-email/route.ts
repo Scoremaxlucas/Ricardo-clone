@@ -1,4 +1,6 @@
 import { authOptions } from '@/lib/auth'
+import { isAdmin } from '@/lib/auth/isAdmin'
+import { logAdminAudit } from '@/lib/admin/auditLog'
 import { getVerificationApprovalEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { parseSignupIntent } from '@/lib/signup-intent'
@@ -16,8 +18,11 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
+    }
+    if (!(await isAdmin(session))) {
+      return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
     }
 
     const { userId } = await params
@@ -99,6 +104,14 @@ export async function POST(
         message:
           'Ihr Konto wurde von unserem Team verifiziert. Sie können nun alle Funktionen nutzen.',
       },
+    })
+
+    await logAdminAudit({
+      adminUserId: session.user.id,
+      action: 'USER_EMAIL_VERIFY_MANUAL',
+      entityType: 'User',
+      entityId: userId,
+      metadata: { signupIntent },
     })
 
     console.log(`[admin/verify-email] Admin ${session.user.id} verified email for user ${userId}`)

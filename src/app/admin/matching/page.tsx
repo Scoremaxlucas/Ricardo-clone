@@ -1,6 +1,6 @@
 import { authOptions } from '@/lib/auth'
+import { isAdmin } from '@/lib/auth/isAdmin'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
-import { prisma } from '@/lib/prisma'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
@@ -18,12 +18,7 @@ export default async function AdminMatchingOpsEntryPage() {
     redirect('/login?callbackUrl=' + encodeURIComponent('/admin/matching'))
   }
 
-  const u = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isAdmin: true },
-  })
-  const isAdmin = u?.isAdmin === true || session.user?.isAdmin === true
-  if (!isAdmin) {
+  if (!(await isAdmin(session))) {
     redirect('/admin/dashboard')
   }
 

@@ -4,6 +4,7 @@ import {
   normalizeExternalLandlordEmail,
   normalizeExternalLandlordPhone,
 } from '@/lib/external-landlords/crm'
+import { logAdminAudit } from '@/lib/admin/auditLog'
 import { prisma } from '@/lib/prisma'
 import { ExternalLandlordKind } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
@@ -73,6 +74,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   await prisma.externalLandlord.update({
     where: { id },
     data,
+  })
+
+  await logAdminAudit({
+    adminUserId: session.user.id,
+    action: 'EXTERNAL_LANDLORD_PATCH',
+    entityType: 'ExternalLandlord',
+    entityId: id,
+    metadata: { patchedFields: Object.keys(data) },
   })
 
   return NextResponse.json({ success: true })

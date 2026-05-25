@@ -2,52 +2,14 @@
  * Täglich (Vercel Cron): aktive Miet-Inserate mit Original-URL prüfen (404 / „vergeben“ / Erreichbarkeit).
  */
 
-import {
-  sendAdminListingDeactivatedUrl404Email,
-  sendAdminListingDeactivatedUrlRentedEmail,
-  sendAdminListingUrlUnreachableStreakEmail,
-} from '@/lib/rental/emails'
-import { htmlToListingPlainText } from '@/lib/rental/listing-url-import-html'
-import { assertUrlSafeForServerFetch } from '@/lib/rental/listing-url-import-server'
-import { findFirstRentedKeywordInPlainText } from '@/lib/rental/listing-url-rented-keywords'
+import { processRentalListingUrlCheckRow } from '@/lib/rental/listing-url-check'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-const USER_AGENT =
-  'Mozilla/5.0 (compatible; HelvendarBot/1.0; +https://wohnen.helvenda.ch)'
-const FETCH_TIMEOUT_MS = 8000
 const BATCH_LIMIT = 50
-
-function isHttpListingUrl(raw: string | null): boolean {
-  if (!raw?.trim()) return false
-  const t = raw.trim().toLowerCase()
-  return t.startsWith('http://') || t.startsWith('https://')
-}
-
-async function fetchUrlForListingCheck(url: URL): Promise<{ status: number; html: string }> {
-  const ac = new AbortController()
-  const t = setTimeout(() => ac.abort(), FETCH_TIMEOUT_MS)
-  try {
-    const res = await fetch(url.toString(), {
-      method: 'GET',
-      redirect: 'follow',
-      signal: ac.signal,
-      headers: {
-        'User-Agent': USER_AGENT,
-        Accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'de-CH,de;q=0.9,fr;q=0.8,en;q=0.7',
-      },
-    })
-    const buf = await res.arrayBuffer()
-    const html = new TextDecoder('utf-8', { fatal: false }).decode(buf)
-    return { status: res.status, html }
-  } finally {
-    clearTimeout(t)
-  }
-}
 
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET
@@ -102,167 +64,11 @@ export async function GET(request: NextRequest) {
 
     for (const row of listings) {
       checked += 1
-      const rawUrl = row.importedFrom
       try {
-        if (!isHttpListingUrl(rawUrl)) {
-          await prisma.rentalListing.update({
-            where: { id: row.id },
-            data: {
-              lastCheckStatus: 'MANUAL',
-              lastCheckedAt: now,
-              urlUnreachableStreak: 0,
-            },
-          })
-          continue
-        }
-
-        let safe: URL
-        try {
-          safe = await assertUrlSafeForServerFetch(rawUrl!)
-        } catch (e) {
-          console.error('[check-listing-urls] unsichere URL', row.id, e)
-          await prisma.rentalListing.update({
-            where: { id: row.id },
-            data: {
-              lastCheckStatus: 'MANUAL',
-              lastCheckedAt: now,
-              urlUnreachableStreak: 0,
-            },
-          })
-          continue
-        }
-
-        let status = 0
-        let html = ''
-        try {
-          const got = await fetchUrlForListingCheck(safe)
-          status = got.status
-          html = got.html
-        } catch (e) {
-          console.error('[check-listing-urls] fetch', row.id, e)
-          const streak = row.urlUnreachableStreak + 1
-          await prisma.rentalListing.update({
-            where: { id: row.id },
-            data: {
-              lastCheckStatus: 'UNREACHABLE',
-              lastCheckedAt: now,
-              urlUnreachableStreak: streak >= 3 ? 0 : streak,
-            },
-          })
-          unreachable += 1
-          if (streak >= 3) {
-            try {
-              await sendAdminListingUrlUnreachableStreakEmail({
-                listingId: row.id,
-                listingTitle: row.title,
-                address: row.address,
-                importedFrom: rawUrl!,
-              })
-            } catch (mailErr) {
-              console.error('[check-listing-urls] E-Mail unreachable', row.id, mailErr)
-            }
-          }
-          continue
-        }
-
-        if (status === 404 || status === 410) {
-          await prisma.rentalListing.update({
-            where: { id: row.id },
-            data: {
-              lastCheckStatus: 'GONE',
-              lastCheckedAt: now,
-              status: 'archived',
-              autoDeactivatedAt: now,
-              autoDeactivatedReason: 'URL_404',
-              urlUnreachableStreak: 0,
-            },
-          })
-          deactivated += 1
-          try {
-            await sendAdminListingDeactivatedUrl404Email({
-              listingId: row.id,
-              listingTitle: row.title,
-              address: row.address,
-              importedFrom: rawUrl!,
-              deactivatedAt: now,
-            })
-          } catch (mailErr) {
-            console.error('[check-listing-urls] E-Mail 404', row.id, mailErr)
-          }
-          continue
-        }
-
-        if (status !== 200) {
-          const streak = row.urlUnreachableStreak + 1
-          await prisma.rentalListing.update({
-            where: { id: row.id },
-            data: {
-              lastCheckStatus: 'UNREACHABLE',
-              lastCheckedAt: now,
-              urlUnreachableStreak: streak >= 3 ? 0 : streak,
-            },
-          })
-          unreachable += 1
-          if (streak >= 3) {
-            try {
-              await sendAdminListingUrlUnreachableStreakEmail({
-                listingId: row.id,
-                listingTitle: row.title,
-                address: row.address,
-                importedFrom: rawUrl!,
-              })
-            } catch (mailErr) {
-              console.error('[check-listing-urls] E-Mail unreachable', row.id, mailErr)
-            }
-          }
-          continue
-        }
-
-        let keyword: string | null = null
-        try {
-          const plain = htmlToListingPlainText(html, 120_000)
-          keyword = findFirstRentedKeywordInPlainText(plain)
-        } catch (parseErr) {
-          console.error('[check-listing-urls] HTML/Text', row.id, parseErr)
-        }
-
-        if (keyword) {
-          await prisma.rentalListing.update({
-            where: { id: row.id },
-            data: {
-              lastCheckStatus: 'RENTED',
-              lastCheckedAt: now,
-              status: 'archived',
-              autoDeactivatedAt: now,
-              autoDeactivatedReason: 'URL_RENTED',
-              urlUnreachableStreak: 0,
-            },
-          })
-          deactivated += 1
-          try {
-            await sendAdminListingDeactivatedUrlRentedEmail({
-              listingId: row.id,
-              listingTitle: row.title,
-              address: row.address,
-              importedFrom: rawUrl!,
-              keyword,
-              deactivatedAt: now,
-            })
-          } catch (mailErr) {
-            console.error('[check-listing-urls] E-Mail rented', row.id, mailErr)
-          }
-          continue
-        }
-
-        await prisma.rentalListing.update({
-          where: { id: row.id },
-          data: {
-            lastCheckStatus: 'ACTIVE',
-            lastCheckedAt: now,
-            urlUnreachableStreak: 0,
-          },
-        })
-        active += 1
+        const result = await processRentalListingUrlCheckRow(row)
+        if (result.outcome === 'unreachable') unreachable += 1
+        else if (result.outcome === 'gone' || result.outcome === 'rented') deactivated += 1
+        else if (result.outcome === 'active') active += 1
       } catch (loopErr) {
         console.error('[check-listing-urls] listing', row.id, loopErr)
       }

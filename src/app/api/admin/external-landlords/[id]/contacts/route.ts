@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
+import { logAdminAudit } from '@/lib/admin/auditLog'
 import {
   normalizeExternalLandlordEmail,
   normalizeExternalLandlordPhone,
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ message: 'Kontakt existiert bereits' }, { status: 409 })
   }
 
-  await prisma.$transaction(async tx => {
+  const created = await prisma.$transaction(async tx => {
     if (isPrimary && (kind === 'email' || kind === 'phone' || kind === 'whatsapp')) {
       await tx.externalLandlordContact.updateMany({
         where: { externalLandlordId: id, kind: kind as ExternalLandlordContactKind, isPrimary: true },
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       })
     }
 
-    await tx.externalLandlordContact.create({
+    const contact = await tx.externalLandlordContact.create({
       data: {
         externalLandlordId: id,
         kind: kind as ExternalLandlordContactKind,
@@ -98,6 +99,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         },
       })
     }
+    return contact
+  })
+
+  await logAdminAudit({
+    adminUserId: session.user.id,
+    action: 'EXTERNAL_LANDLORD_CONTACT_CREATE',
+    entityType: 'ExternalLandlordContact',
+    entityId: created.id,
+    metadata: { landlordId: id, kind, isPrimary },
   })
 
   return NextResponse.json({ success: true })
