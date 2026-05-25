@@ -3,6 +3,12 @@
  * (Startseiten-CTA, Navbar, Fortschritt) — eine Quelle der Wahrheit für „was ist der nächste sinnvolle Schritt?“.
  */
 
+import { formatTenantBonusChf } from '@/lib/wohnen/pricing'
+
+const TENANT_BONUS = formatTenantBonusChf()
+const TENANT_BONUS_BULLET = `${TENANT_BONUS} Einzugsbonus bei Einzug`
+const TENANT_BONUS_SHORT_BULLET = `${TENANT_BONUS} Einzugsbonus`
+
 export type WohnenHomeCta = {
   primaryHref: string
   primaryLabel: string
@@ -90,20 +96,20 @@ export function deriveWohnenHomeHero(args: {
         : ' Auf Helvenda findest du passende Inserate und bewirbst dich mit einem Klick.'
       : ''
     return {
-      line1: 'Qualitätsnachweis, der mitgeht.',
+      line1: 'Dein Helvenda-Zertifikat ist aktiv.',
       line2: 'Fair mieten. Ohne Abo-Pflicht.',
-      subtext: `Dein Helvenda-Qualitätsnachweis ist aktiv (PDF mit Prüfcode) — für Bewerbungen bei Homegate, per E-Mail oder direkt beim Vermieter.${helvendaZusatz}`,
-      bullets: ['Qualitätsnachweis bereit', 'PDF + Online-Prüfung', 'Kein Pflicht-Abo'],
+      subtext: `Mit deinem Zertifikat bewirbst du dich auch ausserhalb von Helvenda — bei Homegate, per E-Mail oder direkt beim Vermieter.${helvendaZusatz}`,
+      bullets: ['Zertifikat aktiv', TENANT_BONUS_BULLET, 'Kein Pflicht-Abo'],
     }
   }
 
   if (stage === 'certificate_needed') {
     return {
-      line1: 'Qualitätsnachweis ausstellen.',
+      line1: 'Dein Helvenda-Zertifikat.',
       line2: 'Überall einsetzbar.',
       subtext:
-        'PDF mit Prüfcode für Bewerbungen auch ausserhalb von Helvenda — in wenigen Klicks, mit deinem geprüften Betreibungsregister.',
-      bullets: ['Register geprüft', 'PDF + Online-Prüfung', 'Kein Pflicht-Abo'],
+        'Mit deinem geprüften Betreibungsregister stellst du das Helvenda-Zertifikat aus — und nutzt es auch für Bewerbungen ausserhalb von Helvenda.',
+      bullets: ['Register geprüft', 'Auch für externe Bewerbungen', TENANT_BONUS_SHORT_BULLET],
     }
   }
 
@@ -112,8 +118,8 @@ export function deriveWohnenHomeHero(args: {
       line1: 'Fast geschafft.',
       line2: 'Register wird geprüft.',
       subtext:
-        'Dein Betreibungsregisterauszug ist in Prüfung. Inserate kannst du schon ansehen — bewerben und den Nachweis gehen nach Freigabe.',
-      bullets: ['Profil erfasst', 'Prüfung läuft', 'Kein Pflicht-Abo'],
+        'Dein Betreibungsregisterauszug ist in Prüfung. Inserate kannst du schon ansehen — bewerben und das Helvenda-Zertifikat folgen nach Freigabe.',
+      bullets: ['Profil erfasst', 'Prüfung läuft', TENANT_BONUS_SHORT_BULLET],
     }
   }
 
@@ -122,8 +128,8 @@ export function deriveWohnenHomeHero(args: {
       line1: 'Verifiziert bewerben.',
       line2: 'Register hochladen.',
       subtext:
-        'Lade deinen Betreibungsregisterauszug hoch — Basis für den Helvenda-Qualitätsnachweis und Bewerbungen mit einem Klick.',
-      bullets: ['Kostenlos für Mieter', 'Geprüfter Auszug', 'Kein Pflicht-Abo'],
+        'Lade deinen Betreibungsregisterauszug hoch — Basis für das Helvenda-Zertifikat und Bewerbungen mit einem Klick.',
+      bullets: ['Kostenlos für Mieter', 'Geprüfter Auszug', TENANT_BONUS_SHORT_BULLET],
     }
   }
 
@@ -133,20 +139,20 @@ export function deriveWohnenHomeHero(args: {
       line2: 'Der nächste Schritt.',
       subtext:
         'Mit vollständigem Profil und Suchpräferenzen siehst du passende Inserate — und kannst dich später verifiziert bewerben.',
-      bullets: ['Kostenlos für Mieter', 'Suchpräferenzen', 'Kein Pflicht-Abo'],
+      bullets: ['Kostenlos für Mieter', 'Suchpräferenzen', TENANT_BONUS_SHORT_BULLET],
     }
   }
 
   // anonymous
   if (inventoryNarrow) {
     return {
-      line1: 'Qualitätsnachweis, der mitgeht.',
+      line1: 'Dein Helvenda-Zertifikat.',
       line2: 'Fair mieten. Ohne Abo-Pflicht.',
       subtext:
         activeCount > 0 ?
-          `Einmal Profil und Betreibungsregister — dann der Helvenda-Qualitätsnachweis (PDF mit Prüfcode) und Bewerbungen mit einem Klick auf passende Inserate${activeCount <= 14 ? ` — aktuell ${activeCount.toLocaleString('de-CH')} auf Helvenda` : ''}.`
-        : 'Einmal Profil und Betreibungsregister — dann der Helvenda-Qualitätsnachweis (PDF mit Prüfcode), nutzbar auch ausserhalb von Helvenda.',
-      bullets: ['Qualitätsnachweis für ausserhalb', 'Kostenlos für Mieter', 'Kein Pflicht-Abo'],
+          `Erhalte das Helvenda-Zertifikat für Bewerbungen — auch ausserhalb von Helvenda${activeCount <= 14 ? `. Aktuell ${activeCount.toLocaleString('de-CH')} Inserate auf Helvenda` : ''}.`
+        : 'Erhalte das Helvenda-Zertifikat für Bewerbungen — auch ausserhalb von Helvenda.',
+      bullets: [TENANT_BONUS_BULLET, 'Zertifikat für externe Bewerbungen', 'Kein Pflicht-Abo'],
     }
   }
 
@@ -154,8 +160,8 @@ export function deriveWohnenHomeHero(args: {
     line1: 'Wohnung finden.',
     line2: 'Ohne Abo. Ohne Abzocke.',
     subtext:
-      'Einmal Profil und Betreibungsregister — dann passende Inserate und ein Nachweis, den du auch ausserhalb von Helvenda nutzen kannst.',
-    bullets: ['Kostenlos für Mieter', 'Verifizierte Bewerbungen', 'Kein Pflicht-Abo'],
+      'Erhalte das Helvenda-Zertifikat für Bewerbungen — auch ausserhalb von Helvenda — und bewirb dich verifiziert mit einem Klick.',
+    bullets: [TENANT_BONUS_BULLET, 'Verifizierte Bewerbungen', 'Kein Pflicht-Abo'],
   }
 }
 
@@ -239,7 +245,7 @@ export function deriveWohnenHomeCta(args: {
       primaryHref: '/profil/betreibungsregister',
       primaryLabel: 'Betreibungsregister hochladen',
       primaryHint:
-        'Damit prüfen wir deine Bonität — Voraussetzung für verifizierte Bewerbungen und den Helvenda-Qualitätsnachweis.',
+        'Damit prüfen wir deine Bonität — Voraussetzung für verifizierte Bewerbungen und das Helvenda-Zertifikat.',
       secondaryHref: '/wohnungen',
       secondaryLabel: 'Wohnungen durchsuchen',
       footerTenantHref: '/wohnungen',
@@ -250,9 +256,9 @@ export function deriveWohnenHomeCta(args: {
   if (!hasActiveCertificate) {
     return {
       primaryHref: '/zertifikat',
-      primaryLabel: 'Qualitätsnachweis ausstellen',
+      primaryLabel: 'Zertifikat ausstellen',
       primaryHint:
-        'PDF mit Prüfcode — für Bewerbungen auch bei anderen Portalen oder direkt beim Vermieter.',
+        'Dein Helvenda-Zertifikat — auch für Bewerbungen bei anderen Portalen oder direkt beim Vermieter.',
       secondaryHref: '/meine-matches',
       secondaryLabel: 'Zu meinen Matches',
       footerTenantHref: '/meine-matches',
@@ -262,9 +268,9 @@ export function deriveWohnenHomeCta(args: {
 
   return {
     primaryHref: '/zertifikat',
-    primaryLabel: 'Zum Qualitätsnachweis',
+    primaryLabel: 'Zum Helvenda-Zertifikat',
     primaryHint:
-      'PDF herunterladen oder Prüf-Link teilen — dein Vorteil bei jeder Bewerbung, auch ausserhalb von Helvenda.',
+      'Dein Vorteil bei jeder Bewerbung — auch ausserhalb von Helvenda.',
     secondaryHref: '/meine-matches',
     secondaryLabel: 'Meine Matches',
     footerTenantHref: '/zertifikat',

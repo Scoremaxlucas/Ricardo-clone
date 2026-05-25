@@ -55,7 +55,7 @@ const TENANT_STEPS: Step[] = [
     n: 3,
     icon: <IconRocket className="h-6 w-6 text-[#18a87c]" />,
     title: 'Überall überzeugen — auch ausserhalb Helvenda',
-    text: 'Mit dem Helvenda Qualitätsnachweis (PDF + öffentlicher Prüf-Link) wirken Bewerbungen auf anderen Portalen und per E-Mail genauso seriös. Auf Helvenda reicht danach ein Klick pro Inserat.',
+    text: 'Mit dem Helvenda-Zertifikat wirken Bewerbungen auf anderen Portalen und per E-Mail genauso seriös wie auf Helvenda. Auf Helvenda reicht danach ein Klick pro Inserat.',
   },
   {
     n: 4,

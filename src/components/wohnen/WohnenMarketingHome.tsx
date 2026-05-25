@@ -14,7 +14,7 @@ import {
   WOHNEN_LANDLORD_COMMISSION_PERCENT,
 } from '@/lib/wohnen/pricing'
 import { RentalListingStatus } from '@prisma/client'
-import { Check, X } from 'lucide-react'
+import { Check, Sparkles, X } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
@@ -131,7 +131,7 @@ export async function WohnenMarketingHome({
     {
       tema: 'Nachweis für externe Bewerbungen',
       hg: 'Kein standardisierter Nachweis',
-      hv: 'Helvenda Qualitätsnachweis (PDF + Online-Prüfung)',
+      hv: 'Helvenda Zertifikat — auch ausserhalb von Helvenda einsetzbar',
     },
     { tema: 'Login', hg: 'Separates Konto pro Plattform', hv: 'Ein Helvenda-Konto für alles' },
     { tema: 'Inserate-Qualität', hg: 'Keine Vorprüfung', hv: 'Betreibungsregisterauszug inklusive' },
@@ -191,7 +191,12 @@ export async function WohnenMarketingHome({
             {hero.subtext}
           </p>
 
-          <div className="mx-auto mt-8 max-w-md sm:mt-9">
+          <div className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full border border-[#bfe8d4] bg-white/90 px-4 py-1.5 text-[12px] font-bold uppercase tracking-[0.08em] text-[#107a5a] shadow-sm sm:text-[13px]">
+            <Sparkles className="h-3.5 w-3.5 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
+            <span>{formatTenantBonusChf()} Einzugsbonus, wenn du über Helvenda einziehst</span>
+          </div>
+
+          <div className="mx-auto mt-7 max-w-md sm:mt-8">
             <Link
               href={primaryHref}
               className="inline-flex h-[52px] w-full items-center justify-center rounded-xl bg-[#18a87c] px-6 text-base font-semibold text-white shadow-md shadow-[#18a87c]/25 transition hover:opacity-95 md:h-[54px] md:text-[1.0625rem]"
@@ -260,17 +265,17 @@ export async function WohnenMarketingHome({
               <div className="flex flex-col gap-5 rounded-2xl border border-[#bfe8d4] bg-white/95 px-5 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-7 sm:py-6">
                 <div className="min-w-0 flex-1 text-left">
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#18a87c]">
-                    Helvenda Qualitätsnachweis
+                    Helvenda Zertifikat
                   </p>
                   <p className="mt-1.5 text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
-                    PDF + Prüf-Link — auch für Bewerbungen ausserhalb von Helvenda
+                    Auch für Bewerbungen ausserhalb von Helvenda
                   </p>
                   <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5a7a6e]">
                     {journeyStage === 'ready' ?
-                      'Dein Nachweis ist aktiv — nutzbar bei Homegate, E-Mail oder direkt beim Vermieter, unabhängig vom Inserate-Bestand auf Helvenda.'
+                      'Dein Zertifikat ist aktiv — nutzbar bei Homegate, per E-Mail oder direkt beim Vermieter.'
                     : journeyStage === 'certificate_needed' ?
-                      'Als Nächstes stellst du den Nachweis aus — nutzbar bei Homegate, E-Mail oder direkt beim Vermieter.'
-                    : 'Ein Nachweis, den du überall einsetzen kannst — unabhängig davon, wie viele Inserate heute auf Helvenda sind.'}
+                      'Als Nächstes stellst du dein Zertifikat aus — nutzbar bei Homegate, per E-Mail oder direkt beim Vermieter.'
+                    : 'Ein Zertifikat, das du überall einsetzen kannst — unabhängig davon, wie viele Inserate heute auf Helvenda sind.'}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col gap-2.5 sm:flex-row sm:items-center">
@@ -345,14 +350,14 @@ export async function WohnenMarketingHome({
               <div className="mx-auto max-w-6xl">
               <div className="flex flex-col gap-5 rounded-2xl border border-[#bfe8d4] bg-white/95 px-5 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-7 sm:py-6">
                 <div className="min-w-0 flex-1 text-left">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#18a87c]">Helvenda Qualitätsnachweis</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#18a87c]">Helvenda Zertifikat</p>
                   <p className="mt-1.5 text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
-                    PDF + Prüf-Link — auch für Bewerbungen ausserhalb von Helvenda
+                    Auch für Bewerbungen ausserhalb von Helvenda
                   </p>
                   <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5a7a6e]">
                     {journeyStage === 'certificate_needed' ?
-                      'Als Nächstes stellst du den Nachweis aus — nutzbar bei Homegate, E-Mail oder direkt beim Vermieter.'
-                    : 'Sobald Profil und Betreibungsregister passen, stellst du den Nachweis in wenigen Klicks aus.'}
+                      'Als Nächstes stellst du dein Zertifikat aus — nutzbar bei Homegate, per E-Mail oder direkt beim Vermieter.'
+                    : 'Sobald Profil und Betreibungsregister passen, stellst du dein Zertifikat in wenigen Klicks aus.'}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col gap-2.5 sm:flex-row sm:items-center">
