@@ -3,11 +3,10 @@
  * (Startseiten-CTA, Navbar, Fortschritt) — eine Quelle der Wahrheit für „was ist der nächste sinnvolle Schritt?“.
  */
 
-import { formatTenantBonusChf } from '@/lib/wohnen/pricing'
-
-const TENANT_BONUS = formatTenantBonusChf()
-const TENANT_BONUS_BULLET = `${TENANT_BONUS} Einzugsbonus bei Einzug`
-const TENANT_BONUS_SHORT_BULLET = `${TENANT_BONUS} Einzugsbonus`
+// Hinweis: Der Einzugsbonus wird im Hero als prominent platzierte Pill direkt
+// zwischen Subtext und CTA kommuniziert (siehe WohnenMarketingHome.tsx). Die
+// Hero-Bullets bleiben deshalb bewusst Trust-/Differenzierungs-Signale
+// (Register, Verifizierung, Abo-Verzicht), damit keine Botschaft doppelt steht.
 
 export type WohnenHomeCta = {
   primaryHref: string
@@ -99,7 +98,7 @@ export function deriveWohnenHomeHero(args: {
       line1: 'Dein Helvenda-Zertifikat ist aktiv.',
       line2: 'Fair mieten. Ohne Abo-Pflicht.',
       subtext: `Mit deinem Zertifikat bewirbst du dich auch ausserhalb von Helvenda — bei Homegate, per E-Mail oder direkt beim Vermieter.${helvendaZusatz}`,
-      bullets: ['Zertifikat aktiv', TENANT_BONUS_BULLET, 'Kein Pflicht-Abo'],
+      bullets: ['Zertifikat aktiv', 'Verifizierte Bewerbungen', 'Kein Pflicht-Abo'],
     }
   }
 
@@ -109,7 +108,7 @@ export function deriveWohnenHomeHero(args: {
       line2: 'Überall einsetzbar.',
       subtext:
         'Mit deinem geprüften Betreibungsregister stellst du das Helvenda-Zertifikat aus — und nutzt es auch für Bewerbungen ausserhalb von Helvenda.',
-      bullets: ['Register geprüft', 'Auch für externe Bewerbungen', TENANT_BONUS_SHORT_BULLET],
+      bullets: ['Register geprüft', 'Auch für externe Bewerbungen', 'Kein Pflicht-Abo'],
     }
   }
 
@@ -119,7 +118,7 @@ export function deriveWohnenHomeHero(args: {
       line2: 'Register wird geprüft.',
       subtext:
         'Dein Betreibungsregisterauszug ist in Prüfung. Inserate kannst du schon ansehen — bewerben und das Helvenda-Zertifikat folgen nach Freigabe.',
-      bullets: ['Profil erfasst', 'Prüfung läuft', TENANT_BONUS_SHORT_BULLET],
+      bullets: ['Profil erfasst', 'Prüfung läuft', 'Kein Pflicht-Abo'],
     }
   }
 
@@ -129,7 +128,7 @@ export function deriveWohnenHomeHero(args: {
       line2: 'Register hochladen.',
       subtext:
         'Lade deinen Betreibungsregisterauszug hoch — Basis für das Helvenda-Zertifikat und Bewerbungen mit einem Klick.',
-      bullets: ['Kostenlos für Mieter', 'Geprüfter Auszug', TENANT_BONUS_SHORT_BULLET],
+      bullets: ['Kostenlos für Mieter', 'Geprüfter Auszug', 'Kein Pflicht-Abo'],
     }
   }
 
@@ -139,29 +138,28 @@ export function deriveWohnenHomeHero(args: {
       line2: 'Der nächste Schritt.',
       subtext:
         'Mit vollständigem Profil und Suchpräferenzen siehst du passende Inserate — und kannst dich später verifiziert bewerben.',
-      bullets: ['Kostenlos für Mieter', 'Suchpräferenzen', TENANT_BONUS_SHORT_BULLET],
+      bullets: ['Kostenlos für Mieter', 'Suchpräferenzen', 'Kein Pflicht-Abo'],
     }
   }
 
-  // anonymous
+  // anonymous — Cold-Start: Zertifikat trägt, Inserate folgen.
   if (inventoryNarrow) {
     return {
       line1: 'Dein Helvenda-Zertifikat.',
-      line2: 'Fair mieten. Ohne Abo-Pflicht.',
+      line2: 'Auch ausserhalb von Helvenda.',
       subtext:
-        activeCount > 0 ?
-          `Erhalte das Helvenda-Zertifikat für Bewerbungen — auch ausserhalb von Helvenda${activeCount <= 14 ? `. Aktuell ${activeCount.toLocaleString('de-CH')} Inserate auf Helvenda` : ''}.`
-        : 'Erhalte das Helvenda-Zertifikat für Bewerbungen — auch ausserhalb von Helvenda.',
-      bullets: [TENANT_BONUS_BULLET, 'Zertifikat für externe Bewerbungen', 'Kein Pflicht-Abo'],
+        'Mit deinem Zertifikat bewirbst du dich überall — bei Homegate, per E-Mail oder direkt beim Vermieter. Auf Helvenda wächst das Angebot laufend.',
+      bullets: ['Auch für externe Bewerbungen', 'Geprüftes Register', 'Kein Pflicht-Abo'],
     }
   }
 
+  // anonymous — Standard: Bedarf zuerst, Zertifikat als Hebel direkt mitgenannt.
   return {
     line1: 'Wohnung finden.',
-    line2: 'Ohne Abo. Ohne Abzocke.',
+    line2: 'Mit dem Helvenda-Zertifikat.',
     subtext:
-      'Erhalte das Helvenda-Zertifikat für Bewerbungen — auch ausserhalb von Helvenda — und bewirb dich verifiziert mit einem Klick.',
-    bullets: [TENANT_BONUS_BULLET, 'Verifizierte Bewerbungen', 'Kein Pflicht-Abo'],
+      'Verifiziert bewerben mit einem Klick — und mit deinem Zertifikat überzeugst du auch Vermieter ausserhalb von Helvenda.',
+    bullets: ['Geprüftes Register', 'Verifizierte Bewerbungen', 'Kein Pflicht-Abo'],
   }
 }
 

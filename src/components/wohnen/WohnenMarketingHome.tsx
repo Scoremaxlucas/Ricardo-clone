@@ -121,8 +121,14 @@ export async function WohnenMarketingHome({
   const hero = deriveWohnenHomeHero({ stage: journeyStage, activeCount })
   const footerTenant = deriveWohnenHomeFooterTenant({ stage: journeyStage })
   const listingsSectionSub = deriveWohnenListingsSectionSub({ stage: journeyStage, activeCount })
-  /** Cold Start: Qualitätsnachweis prominent — auch für «ready», dort ist er der Kernprodukt. */
-  const showCertFirstBlock = inventoryNarrow
+  /**
+   * Das Zertifikat ist strategischer Growth-Driver (Cross-Plattform-Asset, viraler B2B-Hook),
+   * deshalb erscheint der Cert-Block immer:
+   *  - Cold-Start (wenig Inserate): vor den Listings — er trägt die Conversion.
+   *  - Standard: nach den Listings — als Reinforcer und Anker für externe Bewerbungen.
+   */
+  const showCertBlock = true
+  const certBlockBeforeListings = inventoryNarrow
 
   const comparisonRows: { tema: string; hg: string; hv: string }[] = [
     { tema: 'Inserat inserieren', hg: 'CHF 14–28 pro Tag', hv: 'Kostenlos' },
@@ -254,9 +260,9 @@ export async function WohnenMarketingHome({
         </div>
       </section>
 
-      {inventoryNarrow ?
+      {certBlockBeforeListings ?
         <>
-          {showCertFirstBlock ?
+          {showCertBlock ?
             <section
               id="qualitaetsnachweis"
             className="whome-anim whome-d0 border-t border-slate-100 bg-gradient-to-b from-[#f8fdfb] to-white px-4 py-10 sm:px-6 sm:py-12 lg:px-8"
@@ -304,7 +310,7 @@ export async function WohnenMarketingHome({
           : null}
 
           <section
-            className={`whome-anim border-t border-slate-100 px-4 py-12 sm:px-6 sm:py-16 lg:px-8 ${showCertFirstBlock ? 'whome-d1' : 'whome-d0'}`}
+            className={`whome-anim border-t border-slate-100 px-4 py-12 sm:px-6 sm:py-16 lg:px-8 ${showCertBlock ? 'whome-d1' : 'whome-d0'}`}
           >
             <div className="mx-auto max-w-6xl">
               <h2 className="text-center text-[1.375rem] font-extrabold leading-tight tracking-[-0.03em] text-slate-900 sm:text-[1.75rem] sm:tracking-[-0.04em] md:text-[2.25rem] md:tracking-[-0.06em]">
@@ -342,7 +348,7 @@ export async function WohnenMarketingHome({
             </div>
           </section>
 
-          {showCertFirstBlock ?
+          {showCertBlock ?
             <section
               id="qualitaetsnachweis"
               className="whome-anim whome-d1 border-t border-slate-100 bg-gradient-to-b from-[#f8fdfb] to-white px-4 py-10 sm:px-6 sm:py-12 lg:px-8"
@@ -355,8 +361,12 @@ export async function WohnenMarketingHome({
                     Auch für Bewerbungen ausserhalb von Helvenda
                   </p>
                   <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5a7a6e]">
-                    {journeyStage === 'certificate_needed' ?
+                    {journeyStage === 'ready' ?
+                      'Dein Zertifikat ist aktiv — nutzbar bei Homegate, per E-Mail oder direkt beim Vermieter.'
+                    : journeyStage === 'certificate_needed' ?
                       'Als Nächstes stellst du dein Zertifikat aus — nutzbar bei Homegate, per E-Mail oder direkt beim Vermieter.'
+                    : journeyStage === 'anonymous' ?
+                      'Ein Zertifikat, das du überall einsetzt — bei Homegate, per E-Mail oder direkt beim Vermieter.'
                     : 'Sobald Profil und Betreibungsregister passen, stellst du dein Zertifikat in wenigen Klicks aus.'}
                   </p>
                 </div>
