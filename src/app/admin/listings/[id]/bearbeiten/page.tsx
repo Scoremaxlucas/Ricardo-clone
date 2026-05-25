@@ -2,11 +2,14 @@ import { RentalListingLandlordForm } from '@/components/rental/RentalListingLand
 import type { RentalListingLandlordInitial } from '@/lib/rental/rental-landlord-initial'
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
+import { loadExternalLandlordOptions } from '@/lib/external-landlords/admin-options'
+import { parseStoredLandlordContact } from '@/lib/external-landlords/crm'
 import { prisma } from '@/lib/prisma'
 import { parseRentalListingPhotosJson } from '@/lib/rental/rental-listings-public'
 import { getServerSession } from 'next-auth/next'
 import type { Metadata } from 'next'
 import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
+import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
@@ -39,10 +42,16 @@ export default async function AdminEditListingPage({ params }: PageProps) {
   const { id } = await params
   const listing = await prisma.rentalListing.findFirst({ where: { id } })
   if (!listing) notFound()
+  const landlordOptions = await loadExternalLandlordOptions()
+  const parsedLandlordContact = parseStoredLandlordContact(listing.landlordContact)
 
   const photos = parseRentalListingPhotosJson(listing.photos)
   const initial: RentalListingLandlordInitial = {
     title: listing.title,
+    externalLandlordId: listing.externalLandlordId,
+    landlordInternalName: parsedLandlordContact.name,
+    landlordInternalContact: parsedLandlordContact.contact,
+    landlordInternalNote: parsedLandlordContact.note,
     description: listing.description,
     address: listing.address,
     zip: listing.zip,
@@ -72,6 +81,13 @@ export default async function AdminEditListingPage({ params }: PageProps) {
         {listing.importedFrom && listing.importSource !== 'SELF' ?
           <p className="mt-1 break-all text-xs text-slate-600">{listing.importedFrom}</p>
         : null}
+        {listing.externalLandlordId ?
+          <p className="mt-3">
+            <Link href={`/admin/landlords/${listing.externalLandlordId}`} className="font-semibold text-teal-800 hover:underline">
+              Vermieter-CRM öffnen
+            </Link>
+          </p>
+        : null}
       </div>
       <RentalListingLandlordForm
         mode="edit"
@@ -80,6 +96,7 @@ export default async function AdminEditListingPage({ params }: PageProps) {
         variant="admin"
         minPhotos={0}
         adminShowAcquisitionFields={false}
+        adminExternalLandlordOptions={landlordOptions}
         submitApiPath="/api/admin/rental-listings"
         afterSaveRedirect="/admin/listings"
         backHref="/admin/listings"

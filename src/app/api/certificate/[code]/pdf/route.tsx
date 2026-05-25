@@ -1,10 +1,11 @@
 import { authOptions } from '@/lib/auth'
 import { CertificatePdfDocument } from '@/lib/certificate/CertificatePDF'
 import { certificateVerifyQrDataUrl } from '@/lib/certificate/qrDataUrl'
+import { housingSinceLabelDe, housingSituationLabelDe } from '@/lib/tenant-profile/housing'
 import { employmentSummaryDe, incomeCategoryMonthlyLabelDe } from '@/lib/tenant-profile/labels'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { prisma } from '@/lib/prisma'
-import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
+import type { CurrentHousingSituation, EmploymentStatus, IncomeCategory } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
@@ -60,6 +61,14 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
     null
   )
   const incomeLabel = incomeCategoryMonthlyLabelDe(certificate.verifiedIncomeCategory as IncomeCategory)
+  const housingSituationLabel =
+    certificate.verifiedHousingSituation ?
+      housingSituationLabelDe(certificate.verifiedHousingSituation as CurrentHousingSituation)
+    : null
+  const housingSinceLabel =
+    certificate.verifiedHousingSince ?
+      `An dieser Adresse seit ${housingSinceLabelDe(certificate.verifiedHousingSince)}`
+    : null
 
   const resolvedCanton = (() => {
     const stored = certificate.verifiedCreditCheckCanton
@@ -86,6 +95,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       zip={certificate.verifiedZip}
       city={certificate.verifiedCity}
       employmentLine={employmentLine}
+      housingSituationLabel={housingSituationLabel}
+      housingSinceLabel={housingSinceLabel}
       incomeLabel={incomeLabel}
       incomeQualifiesUpTo={certificate.incomeQualifiesUpTo}
       creditStatus={certificate.verifiedCreditCheckStatus as 'CLEAR' | 'ENTRIES_PRESENT'}

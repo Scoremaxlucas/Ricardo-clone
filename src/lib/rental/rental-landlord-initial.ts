@@ -3,6 +3,10 @@ import type { ImportSource, RentalListingStatus } from '@prisma/client'
 /** Initiale Werte für das Miet-Inserat-Formular (Server + Client). */
 export type RentalListingLandlordInitial = {
   title: string
+  externalLandlordId?: string | null
+  landlordInternalName?: string | null
+  landlordInternalContact?: string | null
+  landlordInternalNote?: string | null
   description: string
   address: string
   zip: string

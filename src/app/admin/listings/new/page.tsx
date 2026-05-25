@@ -1,6 +1,7 @@
 import { RentalListingLandlordForm } from '@/components/rental/RentalListingLandlordForm'
 import { authOptions } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth/isAdmin'
+import { loadExternalLandlordOptions } from '@/lib/external-landlords/admin-options'
 import { getServerSession } from 'next-auth/next'
 import type { Metadata } from 'next'
 import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
@@ -21,6 +22,7 @@ export default async function AdminNewListingPage() {
   if (!(await isAdmin(session))) {
     throwAdminForbidden()
   }
+  const landlordOptions = await loadExternalLandlordOptions()
 
   return (
     <RentalListingLandlordForm
@@ -28,6 +30,7 @@ export default async function AdminNewListingPage() {
       variant="admin"
       minPhotos={0}
       adminShowAcquisitionFields
+      adminExternalLandlordOptions={landlordOptions}
       submitApiPath="/api/admin/rental-listings"
       afterSaveRedirect="/admin/listings"
       backHref="/admin/listings"

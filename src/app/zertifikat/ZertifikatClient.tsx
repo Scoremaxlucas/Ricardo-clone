@@ -112,6 +112,16 @@ function gateMessageFromEligibility(
         cta: 'Neuen Auszug hochladen',
         footnote: 'So bleibt dein Nachweis für Vermieter und Portale nachvollziehbar aktuell.',
       }
+    case 'HOUSING_INCOMPLETE':
+      return {
+        tone: 'milestone',
+        eyebrow: 'Helvenda Qualitätsnachweis',
+        title: 'Wohnverhältnis ergänzen',
+        body: 'Bitte ergänze in deinem Profil, ob du zur Miete, im Eigentum oder in einem anderen Wohnverhältnis wohnst — und seit wann du an deiner aktuellen Adresse wohnhaft bist. Diese Angaben erscheinen auf deinem Qualitätsnachweis.',
+        href: '/profil/bearbeiten',
+        cta: 'Profil bearbeiten',
+        footnote: 'Selbstangabe für Vermieter — wie Beschäftigung und Einkommenskategorie.',
+      }
     default:
       return {
         tone: 'error',

@@ -1,10 +1,11 @@
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { isCreditCheckResult } from '@/lib/rental/types'
+import { housingSituationLineDe } from '@/lib/tenant-profile/housing'
 import {
   employmentSummaryDe,
   incomeCategoryLabelDe,
 } from '@/lib/tenant-profile/labels'
-import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
+import type { CurrentHousingSituation, EmploymentStatus, IncomeCategory } from '@prisma/client'
 
 function betreibungsSummary(requiresCreditCheck: boolean, creditCheckResult: unknown): string | null {
   if (!requiresCreditCheck) return null
@@ -26,6 +27,8 @@ export function buildApplicantSummaryForLandlord(params: {
   monthlyIncomeCategory: IncomeCategory
   householdTotalPersons: number
   householdChildrenCount: number
+  currentHousingSituation?: CurrentHousingSituation | null
+  currentHousingSince?: Date | null
   requiresCreditCheck: boolean
   creditCheckResult: unknown
 }): string {
@@ -43,6 +46,8 @@ export function buildApplicantSummaryForLandlord(params: {
     }`,
     `Einkommen (Kategorie): ${incomeCategoryLabelDe(params.monthlyIncomeCategory)}`,
   ]
+  const housing = housingSituationLineDe(params.currentHousingSituation, params.currentHousingSince)
+  if (housing) parts.push(housing)
   const credit = betreibungsSummary(params.requiresCreditCheck, params.creditCheckResult)
   if (credit) parts.push(credit)
   return parts.join(' · ')

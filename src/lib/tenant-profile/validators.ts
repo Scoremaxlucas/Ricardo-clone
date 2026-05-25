@@ -1,4 +1,5 @@
-import type { EmploymentStatus, HouseholdPets, IncomeCategory } from '@prisma/client'
+import type { CurrentHousingSituation, EmploymentStatus, HouseholdPets, IncomeCategory } from '@prisma/client'
+import { isCurrentHousingSituation } from '@/lib/tenant-profile/housing'
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
 
 const CANTON_CODES = new Set<string>(SWISS_CANTONS.map(c => c.code))
@@ -51,6 +52,9 @@ export type TenantProfilePayload = {
   currentAddress: string
   currentZip: string
   currentCity: string
+  currentHousingSituation: CurrentHousingSituation
+  currentHousingSinceYear: number
+  currentHousingSinceMonth: number
   contactPhone: string
   applicationEmail: string | null
   employmentStatus: EmploymentStatus
@@ -176,6 +180,45 @@ export function validateTenantProfilePayload(
   }
   if (!currentCity) return { ok: false, message: 'Ort fehlt', field: 'currentCity' }
 
+  const housingRaw = String(b.currentHousingSituation ?? '').trim()
+  if (!housingRaw || !isCurrentHousingSituation(housingRaw)) {
+    return { ok: false, message: 'Bitte dein Wohnverhältnis wählen', field: 'currentHousingSituation' }
+  }
+  const currentHousingSituation = housingRaw as CurrentHousingSituation
+
+  let currentHousingSinceYear: number | null = null
+  let currentHousingSinceMonth: number | null = null
+  if (b.currentHousingSinceYear != null && b.currentHousingSinceYear !== '') {
+    const y = Number(b.currentHousingSinceYear)
+    if (!Number.isFinite(y) || y < 1950 || y > new Date().getFullYear() + 1) {
+      return { ok: false, message: 'Jahr «Wohnhaft seit» ungültig', field: 'currentHousingSinceYear' }
+    }
+    currentHousingSinceYear = y
+  }
+  if (b.currentHousingSinceMonth != null && b.currentHousingSinceMonth !== '') {
+    const m = Number(b.currentHousingSinceMonth)
+    if (!Number.isFinite(m) || m < 1 || m > 12) {
+      return { ok: false, message: 'Monat «Wohnhaft seit» ungültig', field: 'currentHousingSinceMonth' }
+    }
+    currentHousingSinceMonth = m
+  }
+  if (currentHousingSinceYear == null || currentHousingSinceMonth == null) {
+    return {
+      ok: false,
+      message: 'Bitte Monat und Jahr angeben, seit wann du an dieser Adresse wohnst',
+      field: 'currentHousingSinceMonth',
+    }
+  }
+  const housingSinceStart = new Date(Date.UTC(currentHousingSinceYear, currentHousingSinceMonth - 1, 1))
+  const nowMonthStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1))
+  if (housingSinceStart.getTime() > nowMonthStart.getTime()) {
+    return {
+      ok: false,
+      message: '«Wohnhaft seit» darf nicht in der Zukunft liegen',
+      field: 'currentHousingSinceMonth',
+    }
+  }
+
   const contactPhone = String(b.contactPhone ?? '').trim()
   if (!contactPhone) {
     return { ok: false, message: 'Telefonnummer ist erforderlich', field: 'contactPhone' }
@@ -295,6 +338,9 @@ export function validateTenantProfilePayload(
       currentAddress,
       currentZip,
       currentCity,
+      currentHousingSituation,
+      currentHousingSinceYear,
+      currentHousingSinceMonth,
       contactPhone,
       applicationEmail,
       employmentStatus,
@@ -326,6 +372,14 @@ export function employedSinceDateFromParts(
   year: number | null,
   month: number | null
 ): Date | null {
+  return monthYearToUtcDate(year, month)
+}
+
+export function currentHousingSinceDateFromParts(year: number, month: number): Date {
+  return monthYearToUtcDate(year, month)!
+}
+
+function monthYearToUtcDate(year: number | null, month: number | null): Date | null {
   if (year == null || month == null) return null
   return new Date(Date.UTC(year, month - 1, 1))
 }

@@ -1,6 +1,8 @@
 import { authOptions } from '@/lib/auth'
+import { housingSituationLineDe } from '@/lib/tenant-profile/housing'
 import { employmentSummaryDe, householdPetsLabelDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import {
+  currentHousingSinceDateFromParts,
   employedSinceDateFromParts,
   validateTenantProfilePayload,
 } from '@/lib/tenant-profile/validators'
@@ -36,6 +38,9 @@ function serializeTenantProfile(row: TenantProfileWithUser) {
     currentAddress: row.currentAddress,
     currentZip: row.currentZip,
     currentCity: row.currentCity,
+    currentHousingSituation: row.currentHousingSituation,
+    currentHousingSince: row.currentHousingSince?.toISOString() ?? null,
+    housingSituationLineDe: housingSituationLineDe(row.currentHousingSituation, row.currentHousingSince),
     contactPhone: row.contactPhone ?? '',
     applicationEmail,
     accountEmail,
@@ -86,6 +91,9 @@ function existingProfileToPatchPayload(
     currentAddress: row.currentAddress,
     currentZip: row.currentZip,
     currentCity: row.currentCity,
+    currentHousingSituation: row.currentHousingSituation,
+    currentHousingSinceYear: row.currentHousingSince ? row.currentHousingSince.getUTCFullYear() : null,
+    currentHousingSinceMonth: row.currentHousingSince ? row.currentHousingSince.getUTCMonth() + 1 : null,
     contactPhone: row.contactPhone ?? '',
     applicationEmail: row.applicationEmail,
     employmentStatus: row.employmentStatus,
@@ -147,6 +155,10 @@ async function upsertProfileData(userId: string, body: unknown, setComplete: boo
   }
   const d = v.data
   const employedSince = employedSinceDateFromParts(d.employedSinceYear ?? null, d.employedSinceMonth ?? null)
+  const currentHousingSince = currentHousingSinceDateFromParts(
+    d.currentHousingSinceYear,
+    d.currentHousingSinceMonth
+  )
   const employer =
     d.employmentStatus === 'EMPLOYED' || d.employmentStatus === 'SELF_EMPLOYED' ? d.employer ?? null : null
 
@@ -160,6 +172,8 @@ async function upsertProfileData(userId: string, body: unknown, setComplete: boo
       currentAddress: d.currentAddress,
       currentZip: d.currentZip,
       currentCity: d.currentCity,
+      currentHousingSituation: d.currentHousingSituation,
+      currentHousingSince,
       contactPhone: d.contactPhone,
       applicationEmail: d.applicationEmail,
       employmentStatus: d.employmentStatus,
@@ -191,6 +205,8 @@ async function upsertProfileData(userId: string, body: unknown, setComplete: boo
       currentAddress: d.currentAddress,
       currentZip: d.currentZip,
       currentCity: d.currentCity,
+      currentHousingSituation: d.currentHousingSituation,
+      currentHousingSince,
       contactPhone: d.contactPhone,
       applicationEmail: d.applicationEmail,
       employmentStatus: d.employmentStatus,

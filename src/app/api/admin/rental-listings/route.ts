@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth'
+import { ensureExternalLandlordForListingInput } from '@/lib/external-landlords/crm'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
 import { encryptLandlordContactForStorage } from '@/lib/rental/pdf-crypto'
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
       importSource: rawSource,
       importedFrom: rawImported,
       landlordContactPlain,
+      externalLandlordId: rawExternalLandlordId,
       status: rawCreateStatus,
       ingestPermissionBasis: rawIngestBasis,
       landlordConsentAck,
@@ -132,6 +134,20 @@ export async function POST(request: Request) {
         ? encryptLandlordContactForStorage(landlordContactPlain.trim())
         : null
 
+    const externalLandlordId =
+      typeof rawExternalLandlordId === 'string' && rawExternalLandlordId.trim() ?
+        rawExternalLandlordId.trim()
+      : null
+    if (externalLandlordId) {
+      const landlordExists = await prisma.externalLandlord.findUnique({
+        where: { id: externalLandlordId },
+        select: { id: true },
+      })
+      if (!landlordExists) {
+        return NextResponse.json({ message: 'Ausgewählter Vermieter existiert nicht mehr.' }, { status: 400 })
+      }
+    }
+
     const createStatus = rawCreateStatus === 'archived' ? 'archived' : 'active'
 
     const hasMonitoringUrl = rentalListingHasMonitoringHttpUrl(importedFrom)
@@ -171,32 +187,49 @@ export async function POST(request: Request) {
       }
     }
 
-    const listing = await prisma.rentalListing.create({
-      data: {
-        userId: session.user.id,
-        title: String(title).trim(),
-        description: String(description).trim(),
-        address: typeof address === 'string' ? address.trim() : '',
-        zip: String(zip).trim(),
-        city: String(city).trim(),
-        canton: String(canton).trim().toUpperCase(),
-        rooms: roomsN,
-        areaSqm: areaN,
-        floor: floorN,
-        rentPerMonth: rentN,
-        utilitiesPerMonth: utilN,
-        depositAmount: depN,
-        availableFrom: avail,
-        requiresCreditCheck: true,
-        photos: JSON.stringify(photoArr),
-        status: createStatus,
-        importSource,
-        importedFrom,
-        landlordContact,
-        ingestPermissionBasis,
-        listingExpiresOn: expiryCheck.value,
+    const listing = await prisma.$transaction(async tx => {
+      const created = await tx.rentalListing.create({
+        data: {
+          userId: session.user.id,
+          title: String(title).trim(),
+          description: String(description).trim(),
+          address: typeof address === 'string' ? address.trim() : '',
+          zip: String(zip).trim(),
+          city: String(city).trim(),
+          canton: String(canton).trim().toUpperCase(),
+          rooms: roomsN,
+          areaSqm: areaN,
+          floor: floorN,
+          rentPerMonth: rentN,
+          utilitiesPerMonth: utilN,
+          depositAmount: depN,
+          availableFrom: avail,
+          requiresCreditCheck: true,
+          photos: JSON.stringify(photoArr),
+          status: createStatus,
+          importSource,
+          importedFrom,
+          landlordContact,
+          ingestPermissionBasis,
+          listingExpiresOn: expiryCheck.value,
+          landlordNotifyEmail: landlordNotifyEmailParsed,
+        },
+      })
+
+      await ensureExternalLandlordForListingInput({
+        db: tx,
+        rentalListingId: created.id,
+        existingExternalLandlordId: externalLandlordId,
         landlordNotifyEmail: landlordNotifyEmailParsed,
-      },
+        landlordContactStored: landlordContact,
+        ingestPermissionBasis,
+        fallbackDisplayName:
+          typeof address === 'string' && address.trim() ?
+            `${address.trim()} · ${String(city).trim()}`
+          : String(title).trim(),
+      })
+
+      return created
     })
 
     revalidatePath('/admin/listings')

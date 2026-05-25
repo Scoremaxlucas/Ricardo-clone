@@ -1,4 +1,5 @@
-import type { EmploymentStatus, HouseholdPets, IncomeCategory } from '@prisma/client'
+import type { CurrentHousingSituation, EmploymentStatus, HouseholdPets, IncomeCategory } from '@prisma/client'
+import { isCurrentHousingSituation } from '@/lib/tenant-profile/housing'
 
 export type ProfilFormInitial = {
   firstName: string
@@ -7,6 +8,9 @@ export type ProfilFormInitial = {
   currentAddress: string
   currentZip: string
   currentCity: string
+  currentHousingSituation: CurrentHousingSituation | ''
+  currentHousingSinceYear: string
+  currentHousingSinceMonth: string
   contactPhone: string
   applicationEmail: string
   employmentStatus: EmploymentStatus
@@ -40,6 +44,9 @@ function defaultForm(): ProfilFormInitial {
     currentAddress: '',
     currentZip: '',
     currentCity: '',
+    currentHousingSituation: '',
+    currentHousingSinceYear: '',
+    currentHousingSinceMonth: '',
     contactPhone: '',
     applicationEmail: '',
     employmentStatus: 'EMPLOYED',
@@ -89,6 +96,19 @@ export function buildInitialFromApi(p: Record<string, unknown> | null | undefine
       employedSinceMonth = String(d.getUTCMonth() + 1)
     }
   }
+  const housingSince = p.currentHousingSince as string | null | undefined
+  let currentHousingSinceYear = ''
+  let currentHousingSinceMonth = ''
+  if (housingSince) {
+    const d = new Date(housingSince)
+    if (!Number.isNaN(d.getTime())) {
+      currentHousingSinceYear = String(d.getUTCFullYear())
+      currentHousingSinceMonth = String(d.getUTCMonth() + 1)
+    }
+  }
+  const hsRaw = String(p.currentHousingSituation ?? '').trim()
+  const currentHousingSituation =
+    hsRaw && isCurrentHousingSituation(hsRaw) ? (hsRaw as CurrentHousingSituation) : ''
   const pc = String(p.preferredCanton ?? '').trim()
   const preferredCantonCodes = pc
     ? pc
@@ -147,6 +167,9 @@ export function buildInitialFromApi(p: Record<string, unknown> | null | undefine
     currentAddress: String(p.currentAddress ?? ''),
     currentZip: String(p.currentZip ?? ''),
     currentCity: String(p.currentCity ?? ''),
+    currentHousingSituation,
+    currentHousingSinceYear,
+    currentHousingSinceMonth,
     contactPhone: String(p.contactPhone ?? '').trim(),
     applicationEmail: String(p.applicationEmail ?? '').trim(),
     employmentStatus: (p.employmentStatus as EmploymentStatus) || 'EMPLOYED',

@@ -88,6 +88,8 @@ export async function POST() {
           verifiedAddress: snap.verifiedAddress,
           verifiedCity: snap.verifiedCity,
           verifiedZip: snap.verifiedZip,
+          verifiedHousingSituation: snap.verifiedHousingSituation,
+          verifiedHousingSince: snap.verifiedHousingSince,
           verifiedEmploymentStatus: snap.verifiedEmploymentStatus,
           verifiedEmployer: snap.verifiedEmployer,
           verifiedIncomeCategory: snap.verifiedIncomeCategory,

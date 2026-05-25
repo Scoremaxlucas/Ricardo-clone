@@ -2,6 +2,7 @@ import { getWohnenAdminOverview } from '@/lib/admin/wohnen-admin-overview'
 import { authOptions } from '@/lib/auth'
 import { throwAdminForbidden } from '@/lib/auth/admin-forbidden-html'
 import { isAdmin } from '@/lib/auth/isAdmin'
+import { prisma } from '@/lib/prisma'
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 import { getServerSession } from 'next-auth/next'
 import type { Metadata } from 'next'
@@ -34,7 +35,10 @@ export default async function AdminWohnenDashboardPage() {
   if (!session?.user?.id) redirect('/login?callbackUrl=' + encodeURIComponent('/admin/wohnen'))
   if (!(await isAdmin(session))) throwAdminForbidden()
 
-  const overview = await getWohnenAdminOverview()
+  const [overview, externalLandlordCount] = await Promise.all([
+    getWohnenAdminOverview(),
+    prisma.externalLandlord.count(),
+  ])
   const shopAdminUrl = `${MAIN_SHOP_ORIGIN}/admin/dashboard`
 
   const pendingApps = overview.applicationsPendingReview + overview.applicationsPendingCredit
@@ -65,6 +69,14 @@ export default async function AdminWohnenDashboardPage() {
       icon: Building2,
       stat: overview.activeListings,
       statLabel: 'aktiv',
+    },
+    {
+      href: '/admin/landlords',
+      title: 'Vermieter-CRM',
+      desc: 'Externe Vermieter, Rechte, Nachweise, Dubletten',
+      icon: Users,
+      stat: externalLandlordCount,
+      statLabel: 'Vermieter',
     },
     {
       href: '/admin/listings/ingest',

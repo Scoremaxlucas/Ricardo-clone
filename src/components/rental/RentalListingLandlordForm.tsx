@@ -1,6 +1,7 @@
 'use client'
 
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
+import type { ExternalLandlordOption } from '@/lib/external-landlords/admin-options'
 import type { RentalListingLandlordInitial } from '@/lib/rental/rental-landlord-initial'
 import { rentalListingHasMonitoringHttpUrl } from '@/lib/rental/rental-listing-expiry-on'
 import type { RentalListingStatus } from '@prisma/client'
@@ -39,6 +40,8 @@ type Props = {
   adminShowAcquisitionFields?: boolean
   /** Admin: URL-Import — Quelle fix, nur Erlaubnis-Checkbox + interner Kontakt */
   importMetaLocked?: { importedFrom: string } | null
+  /** Admin: optionaler CRM-Override für externen Vermieter. */
+  adminExternalLandlordOptions?: ExternalLandlordOption[]
 }
 
 export function RentalListingLandlordForm({
@@ -52,6 +55,7 @@ export function RentalListingLandlordForm({
   submitApiPath,
   adminShowAcquisitionFields = false,
   importMetaLocked = null,
+  adminExternalLandlordOptions = [],
 }: Props) {
   const router = useRouter()
   const { data: session } = useSession()
@@ -89,6 +93,8 @@ export function RentalListingLandlordForm({
   const [partnerOther, setPartnerOther] = useState('')
   const [landlordNameInternal, setLandlordNameInternal] = useState('')
   const [landlordContactInternal, setLandlordContactInternal] = useState('')
+  const [landlordNoteInternal, setLandlordNoteInternal] = useState('')
+  const [selectedExternalLandlordId, setSelectedExternalLandlordId] = useState('')
 
   useEffect(() => {
     if (!initial) return
@@ -111,6 +117,10 @@ export function RentalListingLandlordForm({
     }
     setListingExpiresOn(initial.listingExpiresOn ?? '')
     setLandlordNotifyEmail(initial.landlordNotifyEmail ?? '')
+    setSelectedExternalLandlordId(initial.externalLandlordId ?? '')
+    setLandlordNameInternal(initial.landlordInternalName ?? '')
+    setLandlordContactInternal(initial.landlordInternalContact ?? '')
+    setLandlordNoteInternal(initial.landlordInternalNote ?? '')
   }, [initial, mode])
 
   useEffect(() => {
@@ -191,8 +201,13 @@ export function RentalListingLandlordForm({
   const landlordContactPlainValue = (): string | null => {
     const name = landlordNameInternal.trim()
     const contact = landlordContactInternal.trim()
-    if (!name && !contact) return null
-    return `${name ? `Name: ${name}` : ''}${name && contact ? '\n' : ''}${contact ? `Kontakt: ${contact}` : ''}`
+    const note = landlordNoteInternal.trim()
+    if (!name && !contact && !note) return null
+    const parts: string[] = []
+    if (name) parts.push(`Name: ${name}`)
+    if (contact) parts.push(`Kontakt: ${contact}`)
+    if (note) parts.push(`Notiz: ${note}`)
+    return parts.join('\n')
   }
 
   const buildAdminMeta = ():
@@ -299,6 +314,7 @@ export function RentalListingLandlordForm({
         ...(variant === 'landlord' || isAdminForm ?
           { landlordNotifyEmail: notifyTrim || null }
         : {}),
+        ...(isAdminForm ? { externalLandlordId: selectedExternalLandlordId || null } : {}),
         ...(mode === 'edit' ? { status: listingStatus } : {}),
       }
 
@@ -499,6 +515,7 @@ export function RentalListingLandlordForm({
               <div className="border-t border-rose-200 pt-3">
                 <label className="mb-1 block text-sm font-medium text-slate-800">Plattform *</label>
                 <select
+                  aria-label="Partnerplattform"
                   value={partnerChoice}
                   onChange={e => setPartnerChoice(e.target.value as 'tutti' | 'facebook' | 'other')}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -526,8 +543,39 @@ export function RentalListingLandlordForm({
             <p className="text-sm font-bold text-slate-900">Vermieter-Kontakt (intern)</p>
             <p className="text-xs text-slate-600">Nur für Admins sichtbar, nicht öffentlich.</p>
             <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">CRM-Zuordnung (optional)</label>
+              <select
+                aria-label="Externer Vermieter im CRM"
+                value={selectedExternalLandlordId}
+                onChange={e => setSelectedExternalLandlordId(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              >
+                <option value="">Automatisch zuordnen / neu anlegen</option>
+                {adminExternalLandlordOptions.map(option => (
+                  <option key={option.id} value={option.id}>
+                    {option.secondary ? `${option.label} · ${option.secondary}` : option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-slate-600">
+                Leer lassen: Helvenda matcht nach E-Mail / Telefon und erstellt bei Bedarf automatisch einen neuen
+                Vermieter-Datensatz.
+              </p>
+              {selectedExternalLandlordId ?
+                <p className="mt-2">
+                  <Link
+                    href={`/admin/landlords/${selectedExternalLandlordId}`}
+                    className="text-xs font-semibold text-teal-800 hover:underline"
+                  >
+                    CRM-Eintrag öffnen
+                  </Link>
+                </p>
+              : null}
+            </div>
+            <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Name des Vermieters</label>
               <input
+                aria-label="Name des Vermieters"
                 value={landlordNameInternal}
                 onChange={e => setLandlordNameInternal(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -536,8 +584,20 @@ export function RentalListingLandlordForm({
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Telefon oder E-Mail</label>
               <input
+                aria-label="Telefon oder E-Mail des Vermieters"
                 value={landlordContactInternal}
                 onChange={e => setLandlordContactInternal(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Interne Notiz</label>
+              <textarea
+                aria-label="Interne Notiz zum Vermieter"
+                value={landlordNoteInternal}
+                onChange={e => setLandlordNoteInternal(e.target.value)}
+                rows={3}
+                placeholder="z. B. Erlaubnis per WhatsApp am 25.05 erhalten"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
               />
             </div>
@@ -562,6 +622,7 @@ export function RentalListingLandlordForm({
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Titel *</label>
           <input
+            aria-label="Titel"
             required
             value={title}
             onChange={e => setTitle(e.target.value)}
@@ -571,6 +632,7 @@ export function RentalListingLandlordForm({
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Adresse (Strasse, Nr.) *</label>
           <input
+            aria-label="Adresse"
             required
             value={address}
             onChange={e => setAddress(e.target.value)}
@@ -581,6 +643,7 @@ export function RentalListingLandlordForm({
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">PLZ *</label>
             <input
+              aria-label="PLZ"
               required
               value={zip}
               onChange={e => setZip(e.target.value.replace(/\D/g, '').slice(0, 4))}
@@ -590,6 +653,7 @@ export function RentalListingLandlordForm({
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Ort *</label>
             <input
+              aria-label="Ort"
               required
               value={city}
               onChange={e => setCity(e.target.value)}
@@ -600,6 +664,7 @@ export function RentalListingLandlordForm({
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Kanton *</label>
           <select
+            aria-label="Kanton"
             required
             value={canton}
             onChange={e => setCanton(e.target.value)}
@@ -617,6 +682,7 @@ export function RentalListingLandlordForm({
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Anzahl Zimmer *</label>
             <select
+              aria-label="Anzahl Zimmer"
               required
               value={rooms}
               onChange={e => setRooms(e.target.value)}
@@ -632,6 +698,7 @@ export function RentalListingLandlordForm({
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Wohnfläche m² *</label>
             <input
+              aria-label="Wohnfläche in Quadratmetern"
               required
               type="number"
               min={1}
@@ -656,6 +723,7 @@ export function RentalListingLandlordForm({
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Monatsmiete CHF *</label>
             <input
+              aria-label="Monatsmiete in CHF"
               required
               type="number"
               min={0}
@@ -668,6 +736,7 @@ export function RentalListingLandlordForm({
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Nebenkosten CHF (optional)</label>
             <input
+              aria-label="Nebenkosten in CHF"
               type="number"
               min={0}
               step={1}
@@ -680,6 +749,7 @@ export function RentalListingLandlordForm({
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Kaution CHF (optional)</label>
           <input
+            aria-label="Kaution in CHF"
             type="number"
             min={0}
             step={1}
@@ -691,6 +761,7 @@ export function RentalListingLandlordForm({
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Verfügbar ab *</label>
           <input
+            aria-label="Verfügbar ab"
             required
             type="date"
             value={availableFrom}
@@ -703,6 +774,7 @@ export function RentalListingLandlordForm({
             Gültig bis (Kalendertag, Schweiz){hasMonitoringHttpUrl ? ' (optional)' : ' *'}
           </label>
           <input
+            aria-label="Gültig bis"
             required={!hasMonitoringHttpUrl}
             type="date"
             min={minExpireYmd}
@@ -722,6 +794,7 @@ export function RentalListingLandlordForm({
             Fotos * ({photoHint})
           </label>
           <input
+            aria-label="Fotos hochladen"
             type="file"
             accept="image/*"
             multiple
@@ -759,6 +832,7 @@ export function RentalListingLandlordForm({
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Beschreibung * (min. 50 Zeichen)</label>
           <textarea
+            aria-label="Beschreibung"
             required
             minLength={50}
             rows={6}

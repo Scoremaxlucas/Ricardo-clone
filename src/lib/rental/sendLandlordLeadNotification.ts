@@ -78,6 +78,8 @@ export async function sendLandlordLeadNotificationForApplication(
     monthlyIncomeCategory: app.tenantProfile.monthlyIncomeCategory,
     householdTotalPersons: app.tenantProfile.householdTotalPersons,
     householdChildrenCount: app.tenantProfile.householdChildrenCount,
+    currentHousingSituation: app.tenantProfile.currentHousingSituation,
+    currentHousingSince: app.tenantProfile.currentHousingSince,
     requiresCreditCheck: app.listing.requiresCreditCheck,
     creditCheckResult: app.tenantProfile.creditCheckResult,
   })

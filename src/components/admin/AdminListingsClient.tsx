@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 
 export type AdminListingRow = {
   id: string
+  externalLandlordId: string | null
   title: string
   address: string
   canton: string
@@ -269,6 +270,7 @@ export function AdminListingsClient({
         <div>
           <label className="block text-xs font-medium text-slate-600">Kanton</label>
           <select
+            aria-label="Kanton filtern"
             value={cantonFilter}
             onChange={e => setCantonFilter(e.target.value)}
             className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -284,6 +286,7 @@ export function AdminListingsClient({
         <div>
           <label className="block text-xs font-medium text-slate-600">Status</label>
           <select
+            aria-label="Status filtern"
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value as 'all' | RentalListingStatus)}
             className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -297,6 +300,7 @@ export function AdminListingsClient({
         <div>
           <label className="block text-xs font-medium text-slate-600">Quelle</label>
           <select
+            aria-label="Quelle filtern"
             value={sourceFilter}
             onChange={e => setSourceFilter(e.target.value as typeof sourceFilter)}
             className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -308,6 +312,12 @@ export function AdminListingsClient({
           </select>
         </div>
         <div className="flex flex-wrap gap-2 sm:ml-auto">
+          <Link
+            href="/admin/landlords"
+            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+          >
+            Vermieter-CRM
+          </Link>
           <Link
             href="/admin/listings/ingest"
             className="inline-flex items-center justify-center rounded-lg bg-[#18a87c] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95"
@@ -365,6 +375,14 @@ export function AdminListingsClient({
                     >
                       Bearbeiten
                     </Link>
+                    {row.externalLandlordId ?
+                      <Link
+                        href={`/admin/landlords/${row.externalLandlordId}`}
+                        className="rounded border border-slate-200 px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+                      >
+                        CRM
+                      </Link>
+                    : null}
                     <button
                       type="button"
                       disabled={busyId === row.id || row.status === 'rented'}

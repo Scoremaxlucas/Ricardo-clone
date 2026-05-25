@@ -1700,6 +1700,37 @@ enum ImportSource {
   PARTNER // Partnerplattform (Kennzeichnung in importedFrom)
 }
 
+enum ExternalLandlordKind {
+  private
+  agency
+  unknown
+}
+
+enum ExternalLandlordContactKind {
+  email
+  phone
+  whatsapp
+  other
+}
+
+enum ExternalLandlordPermissionKind {
+  listing_publication
+  photo_use
+  text_use
+  other
+}
+
+enum ExternalLandlordEvidenceSource {
+  email
+  whatsapp
+  phone
+  sms
+  form
+  manual
+  import_url
+  other
+}
+
 enum RentalApplicationStatus {
   pending_credit_check
   pending_manual_review
@@ -1747,6 +1778,7 @@ model RentalListing {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   userId              String
+  externalLandlordId  String?
   title               String
   description         String               @db.Text
   address             String
@@ -1785,10 +1817,14 @@ model RentalListing {
   needsExpiryReview   Boolean @default(false)
 
   user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  externalLandlord ExternalLandlord? @relation(fields: [externalLandlordId], references: [id], onDelete: SetNull)
   applications  RentalApplication[]
   sourceInvites RentalListingInvite[]
+  externalLandlordPermissions ExternalLandlordPermission[]
+  externalLandlordAttachments ExternalLandlordAttachment[]
 
   @@index([userId])
+  @@index([externalLandlordId])
   @@index([canton, status])
   @@index([rentPerMonth])
   @@index([availableFrom])
@@ -1839,6 +1875,90 @@ model RentalListingIngestDraft {
   @@index([createdByUserId])
   @@index([status])
   @@map("rental_listing_ingest_drafts")
+}
+
+model ExternalLandlord {
+  id                     String               @id @default(cuid())
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  displayName            String?
+  kind                   ExternalLandlordKind @default(unknown)
+  normalizedPrimaryEmail String?
+  normalizedPrimaryPhone String?
+  internalNotes          String?              @db.Text
+
+  listings     RentalListing[]
+  contacts     ExternalLandlordContact[]
+  permissions  ExternalLandlordPermission[]
+  attachments  ExternalLandlordAttachment[]
+
+  @@index([displayName])
+  @@index([normalizedPrimaryEmail])
+  @@index([normalizedPrimaryPhone])
+  @@map("external_landlords")
+}
+
+model ExternalLandlordContact {
+  id                 String                      @id @default(cuid())
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+  externalLandlordId String
+  kind               ExternalLandlordContactKind
+  label              String?
+  valueEncrypted     String
+  normalizedValue    String?
+  isPrimary          Boolean                     @default(false)
+  note               String?                     @db.Text
+
+  externalLandlord ExternalLandlord @relation(fields: [externalLandlordId], references: [id], onDelete: Cascade)
+
+  @@index([externalLandlordId])
+  @@index([normalizedValue])
+  @@map("external_landlord_contacts")
+}
+
+model ExternalLandlordPermission {
+  id                 String                         @id @default(cuid())
+  createdAt          DateTime                       @default(now())
+  updatedAt          DateTime                       @updatedAt
+  externalLandlordId String
+  rentalListingId    String?
+  kind               ExternalLandlordPermissionKind
+  source             ExternalLandlordEvidenceSource @default(manual)
+  grantedAt          DateTime                       @default(now())
+  summary            String                         @db.Text
+
+  externalLandlord ExternalLandlord @relation(fields: [externalLandlordId], references: [id], onDelete: Cascade)
+  rentalListing    RentalListing?   @relation(fields: [rentalListingId], references: [id], onDelete: SetNull)
+  attachments      ExternalLandlordAttachment[]
+
+  @@index([externalLandlordId])
+  @@index([rentalListingId])
+  @@map("external_landlord_permissions")
+}
+
+model ExternalLandlordAttachment {
+  id                 String                          @id @default(cuid())
+  createdAt          DateTime                        @default(now())
+  updatedAt          DateTime                        @updatedAt
+  externalLandlordId String
+  rentalListingId    String?
+  permissionId       String?
+  source             ExternalLandlordEvidenceSource?
+  label              String?
+  fileName           String?
+  mimeType           String?
+  fileUrl            String
+  note               String?                         @db.Text
+
+  externalLandlord ExternalLandlord          @relation(fields: [externalLandlordId], references: [id], onDelete: Cascade)
+  rentalListing    RentalListing?            @relation(fields: [rentalListingId], references: [id], onDelete: SetNull)
+  permission       ExternalLandlordPermission? @relation(fields: [permissionId], references: [id], onDelete: SetNull)
+
+  @@index([externalLandlordId])
+  @@index([rentalListingId])
+  @@index([permissionId])
+  @@map("external_landlord_attachments")
 }
 
 model RentalApplication {
@@ -1972,6 +2092,13 @@ enum HouseholdPets {
   HAS_PETS
 }
 
+enum CurrentHousingSituation {
+  RENTAL
+  OWNERSHIP
+  SUBLET
+  OTHER
+}
+
 enum CreditCheckStatus {
   NONE
   PENDING
@@ -1994,6 +2121,10 @@ model TenantProfile {
   currentAddress        String
   currentZip            String
   currentCity           String
+  /** Mietwohnung, Eigentum, Untermiete, Sonstiges — Selbstangabe im Mieterprofil. */
+  currentHousingSituation CurrentHousingSituation?
+  /** Erster Tag des Monats «an dieser Adresse seit» (UTC). */
+  currentHousingSince     DateTime?
 
   employmentStatus      EmploymentStatus
   employer              String?
@@ -2074,6 +2205,8 @@ model HelvendaCertificate {
   verifiedAddress           String
   verifiedCity              String
   verifiedZip               String
+  verifiedHousingSituation  CurrentHousingSituation?
+  verifiedHousingSince      DateTime?
   verifiedEmploymentStatus  String
   verifiedEmployer          String?
   verifiedIncomeCategory    String

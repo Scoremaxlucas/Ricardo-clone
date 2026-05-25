@@ -3,6 +3,7 @@ import { checkCertificateEligibility } from '@/lib/certificate/issueCertificate'
 import { authOptions } from '@/lib/auth'
 import { parsePostalCodesList } from '@/lib/matching/evaluate-match'
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
+import { housingSituationLineDe } from '@/lib/tenant-profile/housing'
 import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { prisma } from '@/lib/prisma'
 import type { CreditCheckResult } from '@/lib/rental/types'
@@ -131,6 +132,13 @@ export default async function ProfilPage({
       key: 'addr',
       label: 'Adresse',
       value: `${profile.currentAddress}, ${profile.currentZip} ${profile.currentCity}`,
+    },
+    {
+      key: 'housing',
+      label: 'Wohnverhältnis',
+      value:
+        housingSituationLineDe(profile.currentHousingSituation, profile.currentHousingSince) ??
+        'Bitte in «Profil bearbeiten» ergänzen',
     },
     {
       key: 'contact',

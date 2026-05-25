@@ -559,6 +559,8 @@ export type CertificatePdfProps = {
   zip: string
   city: string
   employmentLine: string
+  housingSituationLabel: string | null
+  housingSinceLabel: string | null
   incomeLabel: string
   incomeQualifiesUpTo: number
   creditStatus: CreditCertificateDisplayStatus
@@ -582,6 +584,8 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
     zip,
     city,
     employmentLine,
+    housingSituationLabel,
+    housingSinceLabel,
     incomeLabel,
     incomeQualifiesUpTo,
     creditStatus,
@@ -674,38 +678,88 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
               />
             </View>
             <View style={styles.factPairHsep} />
-            <View style={styles.factPairRow}>
-              <FactCell
-                label="BESCHÄFTIGUNG"
-                badge="captured"
-                value={employmentLine}
-                sub="Angabe aus Mieterprofil"
-              />
-              <View style={styles.factPairVline} />
-              <FactCell
-                label="WOHNADRESSE"
-                badge="captured"
-                value={address}
-                sub={`${zip} ${city}`.trim()}
-              />
-            </View>
-            <View style={styles.factPairHsep} />
-            <View style={styles.factPairRow}>
-              <View style={styles.factPairCell}>
-                <Text style={styles.factLabel}>AUSSTELLUNGSDATUM</Text>
-                <Text style={styles.factValue}>{formatPdfDate(issuedAt)}</Text>
-              </View>
-              <View style={styles.factPairVline} />
-              <View style={styles.factPairCell}>
-                <Text style={styles.factLabel}>GÜLTIG BIS</Text>
-                <Text style={[styles.factValue, { color: expiryValueColor }]}>
-                  {formatPdfDate(expiresAt)}
-                </Text>
-                {daysRem <= 30 ?
-                  <Text style={[styles.factSub, { color: ORANGE }]}>{`${daysRem} Tage verbleibend`}</Text>
-                : null}
-              </View>
-            </View>
+            {housingSituationLabel ?
+              <>
+                <View style={styles.factPairRow}>
+                  <FactCell
+                    label="WOHNVERHÄLTNIS"
+                    badge="captured"
+                    value={housingSituationLabel}
+                    sub={housingSinceLabel ?? 'Angabe aus Mieterprofil'}
+                  />
+                  <View style={styles.factPairVline} />
+                  <FactCell
+                    label="WOHNADRESSE"
+                    badge="captured"
+                    value={address}
+                    sub={`${zip} ${city}`.trim()}
+                  />
+                </View>
+                <View style={styles.factPairHsep} />
+                <View style={styles.factPairRow}>
+                  <FactCell
+                    label="BESCHÄFTIGUNG"
+                    badge="captured"
+                    value={employmentLine}
+                    sub="Angabe aus Mieterprofil"
+                  />
+                  <View style={styles.factPairVline} />
+                  <View style={styles.factPairCell}>
+                    <Text style={styles.factLabel}>AUSSTELLUNGSDATUM</Text>
+                    <Text style={styles.factValue}>{formatPdfDate(issuedAt)}</Text>
+                  </View>
+                </View>
+                <View style={styles.factPairHsep} />
+                <View style={styles.factPairRow}>
+                  <View style={styles.factPairCell}>
+                    <Text style={styles.factLabel}>GÜLTIG BIS</Text>
+                    <Text style={[styles.factValue, { color: expiryValueColor }]}>
+                      {formatPdfDate(expiresAt)}
+                    </Text>
+                    {daysRem <= 30 ?
+                      <Text style={[styles.factSub, { color: ORANGE }]}>{`${daysRem} Tage verbleibend`}</Text>
+                    : null}
+                  </View>
+                  <View style={styles.factPairVline} />
+                  <View style={styles.factPairCell} />
+                </View>
+              </>
+            : (
+              <>
+                <View style={styles.factPairRow}>
+                  <FactCell
+                    label="BESCHÄFTIGUNG"
+                    badge="captured"
+                    value={employmentLine}
+                    sub="Angabe aus Mieterprofil"
+                  />
+                  <View style={styles.factPairVline} />
+                  <FactCell
+                    label="WOHNADRESSE"
+                    badge="captured"
+                    value={address}
+                    sub={`${zip} ${city}`.trim()}
+                  />
+                </View>
+                <View style={styles.factPairHsep} />
+                <View style={styles.factPairRow}>
+                  <View style={styles.factPairCell}>
+                    <Text style={styles.factLabel}>AUSSTELLUNGSDATUM</Text>
+                    <Text style={styles.factValue}>{formatPdfDate(issuedAt)}</Text>
+                  </View>
+                  <View style={styles.factPairVline} />
+                  <View style={styles.factPairCell}>
+                    <Text style={styles.factLabel}>GÜLTIG BIS</Text>
+                    <Text style={[styles.factValue, { color: expiryValueColor }]}>
+                      {formatPdfDate(expiresAt)}
+                    </Text>
+                    {daysRem <= 30 ?
+                      <Text style={[styles.factSub, { color: ORANGE }]}>{`${daysRem} Tage verbleibend`}</Text>
+                    : null}
+                  </View>
+                </View>
+              </>
+            )}
           </View>
 
           <View style={styles.verifyPanel}>

@@ -20,6 +20,8 @@ export type VerifyCertificatePayload = {
   expiresAt: string
   holderName: string
   employmentLine: string
+  housingLine: string | null
+  addressLine: string | null
   incomeCategory: string
   incomeQualifiesUpTo: number
   creditCheckStatus: string
@@ -78,8 +80,8 @@ export function VerifyPageClient({ code }: { code: string }) {
               <strong className="text-teal-950">Geprüft:</strong> Betreibungsregisterauszug (Stichtag, Einträge).
             </li>
             <li>
-              <strong className="text-teal-950">Erfasst:</strong> Haushaltsnetto (Kategorie / Monat), Beschäftigung,
-              3×-Mietempfehlung aus dem Mieterprofil.
+              <strong className="text-teal-950">Erfasst:</strong> Haushaltsnetto (Kategorie / Monat), Wohnverhältnis und
+              Adresse, Beschäftigung, 3×-Mietempfehlung aus dem Mieterprofil.
             </li>
           </ul>
           <p className="mt-3 flex flex-col gap-2 text-teal-900 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
@@ -240,6 +242,12 @@ function CertificateCard({ cert }: { cert: VerifyCertificatePayload }) {
         }
       />
       <Row k="Beschäftigung" badge="captured" v={cert.employmentLine} />
+      {cert.housingLine ?
+        <Row k="Wohnverhältnis" badge="captured" v={cert.housingLine} />
+      : null}
+      {cert.addressLine ?
+        <Row k="Wohnadresse" badge="captured" v={cert.addressLine} />
+      : null}
       <Row k="Inhaberin / Inhaber" badge="captured" v={cert.holderName} />
       <Row k="Ausgestellt am" v={formatDate(cert.issuedAt)} />
       <Row

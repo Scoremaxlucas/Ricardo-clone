@@ -6,8 +6,9 @@ import { StepperBar } from '@/components/profil/StepperBar'
 import { StepperInput } from '@/components/profil/StepperInput'
 import { Toggle } from '@/components/profil/Toggle'
 import type { ProfilFormInitial } from '@/lib/tenant-profile/profil-form-initial'
+import { housingSituationLabelDe } from '@/lib/tenant-profile/housing'
 import { employmentLabelDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
-import type { EmploymentStatus, HouseholdPets, IncomeCategory } from '@prisma/client'
+import type { CurrentHousingSituation, EmploymentStatus, HouseholdPets, IncomeCategory } from '@prisma/client'
 import { dispatchWohnenNavRefresh } from '@/lib/wohnen-nav-refresh'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -16,6 +17,13 @@ const INPUT_CLASS =
   'h-14 min-h-[56px] w-full rounded-[14px] border-[1.5px] border-[#e8e8e8] bg-white px-5 text-base font-medium text-[#0d2b1f] shadow-[0_1px_4px_rgba(0,0,0,0.04)] outline-none transition-[border-color,box-shadow] duration-150 placeholder:font-normal placeholder:text-[#c0c0c0] focus:border-[#18a87c] focus:shadow-[0_0_0_4px_rgba(24,168,124,0.1)]'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const HOUSING: { situation: CurrentHousingSituation; label: string }[] = [
+  { situation: 'RENTAL', label: 'Mietwohnung' },
+  { situation: 'OWNERSHIP', label: 'Eigentum' },
+  { situation: 'SUBLET', label: 'Untermiete bei Dritten' },
+  { situation: 'OTHER', label: 'Sonstiges' },
+]
 
 const EMPLOYMENT: { status: EmploymentStatus; label: string }[] = [
   { status: 'EMPLOYED', label: 'Angestellt' },
@@ -85,6 +93,14 @@ function yearOpts(): DropdownOption<string>[] {
   })
 }
 
+function housingSinceYearOpts(): DropdownOption<string>[] {
+  const y = new Date().getFullYear()
+  return Array.from({ length: 80 }, (_, i) => {
+    const yr = String(y - i)
+    return { value: yr, label: yr }
+  })
+}
+
 function isoYmdToDisplay(ymd: string): string {
   if (!ymd) return ''
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd.trim())
@@ -144,6 +160,9 @@ type FormState = {
   currentAddress: string
   currentZip: string
   currentCity: string
+  currentHousingSituation: CurrentHousingSituation | ''
+  currentHousingSinceMonth: string
+  currentHousingSinceYear: string
   applicationEmail: string
   contactPhone: string
   employmentStatus: EmploymentStatus | ''
@@ -173,6 +192,9 @@ function initialFromProfil(p: ProfilFormInitial, accountEmail: string): FormStat
     currentAddress: p.currentAddress,
     currentZip: p.currentZip,
     currentCity: p.currentCity,
+    currentHousingSituation: p.currentHousingSituation,
+    currentHousingSinceMonth: p.currentHousingSinceMonth,
+    currentHousingSinceYear: p.currentHousingSinceYear,
     applicationEmail: p.applicationEmail || accountEmail,
     contactPhone: p.contactPhone,
     employmentStatus: p.employmentStatus,
@@ -247,7 +269,14 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
         return Boolean(dt && minAge18(dt))
       }
       case 3:
-        return Boolean(form.currentAddress.trim() && /^\d{4}$/.test(form.currentZip.trim()) && form.currentCity.trim())
+        return Boolean(
+          form.currentAddress.trim() &&
+            /^\d{4}$/.test(form.currentZip.trim()) &&
+            form.currentCity.trim() &&
+            form.currentHousingSituation &&
+            form.currentHousingSinceMonth &&
+            form.currentHousingSinceYear
+        )
       case 4: {
         const mail = form.applicationEmail.trim()
         return Boolean(EMAIL_RE.test(mail) && phoneOk(form.contactPhone))
@@ -321,6 +350,9 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
       currentAddress: form.currentAddress.trim(),
       currentZip: form.currentZip.trim(),
       currentCity: form.currentCity.trim(),
+      currentHousingSituation: form.currentHousingSituation,
+      currentHousingSinceMonth: Number(form.currentHousingSinceMonth),
+      currentHousingSinceYear: Number(form.currentHousingSinceYear),
       contactPhone: form.contactPhone.trim(),
       applicationEmail,
       employmentStatus: form.employmentStatus as EmploymentStatus,
@@ -379,6 +411,10 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
     const dt = parseSwissDob(form.dateDisplay)
     const dobStr = dt ? dt.toLocaleDateString('de-CH') : '—'
     const addr = `${form.currentAddress.trim()}, ${form.currentZip.trim()} ${form.currentCity.trim()}`
+    const housing =
+      form.currentHousingSituation ?
+        `${housingSituationLabelDe(form.currentHousingSituation)} · seit ${MONTH_OPTS.find(m => m.value === form.currentHousingSinceMonth)?.label ?? form.currentHousingSinceMonth} ${form.currentHousingSinceYear}`
+      : '—'
     const mail = form.applicationEmail.trim()
     const tel = form.contactPhone.trim()
     const emp = form.employmentStatus ?
@@ -403,14 +439,15 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
           .join(' · ')
       : '—'
     return [
-      { key: 1, label: 'Name', value: `${form.firstName.trim()} ${form.lastName.trim()}`.trim() },
-      { key: 2, label: 'Geburtsdatum', value: dobStr },
-      { key: 3, label: 'Adresse', value: addr },
-      { key: 4, label: 'Kontakt', value: `${mail}\n${tel}`.trim() },
-      { key: 5, label: 'Beschäftigung', value: emp },
-      { key: 6, label: 'Einkommen', value: inc },
-      { key: 7, label: 'Haushalt', value: hh },
-      { key: 8, label: 'Referenz', value: ref },
+      { id: 'name', step: 1, label: 'Name', value: `${form.firstName.trim()} ${form.lastName.trim()}`.trim() },
+      { id: 'dob', step: 2, label: 'Geburtsdatum', value: dobStr },
+      { id: 'addr', step: 3, label: 'Adresse', value: addr },
+      { id: 'housing', step: 3, label: 'Wohnverhältnis', value: housing },
+      { id: 'contact', step: 4, label: 'Kontakt', value: `${mail}\n${tel}`.trim() },
+      { id: 'emp', step: 5, label: 'Beschäftigung', value: emp },
+      { id: 'inc', step: 6, label: 'Einkommen', value: inc },
+      { id: 'hh', step: 7, label: 'Haushalt', value: hh },
+      { id: 'ref', step: 8, label: 'Referenz', value: ref },
     ]
   }, [form, incomeCategory, needsEmployer])
 
@@ -505,6 +542,10 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                 <h1 className="mt-4 text-[26px] font-extrabold leading-[1.2] text-[#0d2b1f] sm:text-[32px]">
                   Wo wohnst du aktuell?
                 </h1>
+                <p className="mt-3 text-[15px] leading-relaxed text-[#8aa89e]">
+                  Adresse und Wohnverhältnis erscheinen auf deinem Helvenda-Qualitätsnachweis (Selbstangabe, Badge
+                  «Erfasst»).
+                </p>
                 <div className="mt-10 flex flex-col gap-4">
                   <input
                     ref={el => {
@@ -532,6 +573,36 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                       onChange={e => setForm(f => ({ ...f, currentCity: e.target.value }))}
                       autoComplete="address-level2"
                     />
+                  </div>
+                  <div>
+                    <p className="mb-3 text-[13px] font-semibold text-[#0d2b1f]">Wie wohnst du an dieser Adresse?</p>
+                    <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
+                      {HOUSING.map(row => (
+                        <OptionCard
+                          key={row.situation}
+                          label={row.label}
+                          selected={form.currentHousingSituation === row.situation}
+                          onClick={() => setForm(f => ({ ...f, currentHousingSituation: row.situation }))}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-3 text-[13px] font-medium text-[#8aa89e]">An dieser Adresse seit</p>
+                    <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
+                      <CustomDropdown
+                        value={form.currentHousingSinceMonth}
+                        options={MONTH_OPTS}
+                        onChange={v => setForm(f => ({ ...f, currentHousingSinceMonth: v }))}
+                        placeholder="Monat"
+                      />
+                      <CustomDropdown
+                        value={form.currentHousingSinceYear}
+                        options={housingSinceYearOpts()}
+                        onChange={v => setForm(f => ({ ...f, currentHousingSinceYear: v }))}
+                        placeholder="Jahr"
+                      />
+                    </div>
                   </div>
                 </div>
               </>
@@ -752,7 +823,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                 <div className="mt-10 w-full">
                   {summaryRows.map(row => (
                     <div
-                      key={row.key}
+                      key={row.id}
                       className="flex flex-col gap-2 border-b border-[#f0f0f0] py-3 min-[520px]:flex-row min-[520px]:items-start min-[520px]:gap-4"
                     >
                       <span className="min-w-[7.5rem] shrink-0 text-[13px] font-semibold text-[#5a7a6e]">{row.label}</span>
@@ -763,7 +834,7 @@ export function OnboardingFlow({ mode, accountEmail, redirectAfterSave, initial 
                         <button
                           type="button"
                           className="shrink-0 self-start rounded-lg px-0 py-1 text-left text-[13px] font-semibold text-[#18a87c] underline decoration-[#18a87c]/40 underline-offset-2 hover:decoration-[#18a87c] min-[520px]:self-center min-[520px]:px-2 min-[520px]:py-1.5 min-[520px]:no-underline min-[520px]:hover:bg-[#f0faf7]"
-                          onClick={() => goStep(row.key, 'back')}
+                          onClick={() => goStep(row.step, 'back')}
                         >
                           Ändern
                         </button>

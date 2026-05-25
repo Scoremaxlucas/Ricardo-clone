@@ -1,3 +1,4 @@
+import { ensureExternalLandlordForListingInput } from '@/lib/external-landlords/crm'
 import { prisma } from '@/lib/prisma'
 import { encryptLandlordContactForStorage } from '@/lib/rental/pdf-crypto'
 import type { AdminIngestOrchestratorResult } from '@/lib/rental/listing-ingest-orchestrator'
@@ -102,33 +103,48 @@ export async function createRentalListingFromIngestOrchestrator(params: {
   const listingStatus = canNotifyLandlord ? ('active' as const) : ('archived' as const)
 
   try {
-    const row = await prisma.rentalListing.create({
-      data: {
-        userId: params.adminUserId,
-        title: (listing.title || '').trim().slice(0, 200),
-        description,
-        address: (listing.address || '').trim().slice(0, 500),
-        zip: (listing.zip || '').replace(/\D/g, '').slice(0, 4),
-        city: (listing.city || '').trim().slice(0, 120),
-        canton: (listing.canton || '').trim().toUpperCase().slice(0, 2),
-        rooms: roomsN,
-        areaSqm: areaN,
-        floor: floorN,
-        rentPerMonth: rentN,
-        utilitiesPerMonth: utilN,
-        depositAmount: depN,
-        availableFrom: avail,
-        requiresCreditCheck: true,
-        photos: JSON.stringify(photoArr),
-        status: listingStatus,
-        importSource,
-        importedFrom,
-        landlordContact,
+    const row = await prisma.$transaction(async tx => {
+      const created = await tx.rentalListing.create({
+        data: {
+          userId: params.adminUserId,
+          title: (listing.title || '').trim().slice(0, 200),
+          description,
+          address: (listing.address || '').trim().slice(0, 500),
+          zip: (listing.zip || '').replace(/\D/g, '').slice(0, 4),
+          city: (listing.city || '').trim().slice(0, 120),
+          canton: (listing.canton || '').trim().toUpperCase().slice(0, 2),
+          rooms: roomsN,
+          areaSqm: areaN,
+          floor: floorN,
+          rentPerMonth: rentN,
+          utilitiesPerMonth: utilN,
+          depositAmount: depN,
+          availableFrom: avail,
+          requiresCreditCheck: true,
+          photos: JSON.stringify(photoArr),
+          status: listingStatus,
+          importSource,
+          importedFrom,
+          landlordContact,
+          ingestPermissionBasis,
+          listingExpiresOn: null,
+          needsExpiryReview: false,
+          landlordNotifyEmail: null,
+        },
+      })
+
+      await ensureExternalLandlordForListingInput({
+        db: tx,
+        rentalListingId: created.id,
+        landlordContactStored: landlordContact,
         ingestPermissionBasis,
-        listingExpiresOn: null,
-        needsExpiryReview: false,
-        landlordNotifyEmail: null,
-      },
+        fallbackDisplayName:
+          (listing.address || '').trim() ?
+            `${(listing.address || '').trim()} · ${(listing.city || '').trim()}`
+          : (listing.title || '').trim(),
+      })
+
+      return created
     })
     revalidatePath('/admin/listings')
     revalidatePath('/wohnungen')

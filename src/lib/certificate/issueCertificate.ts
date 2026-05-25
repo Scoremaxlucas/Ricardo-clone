@@ -1,4 +1,4 @@
-import type { IncomeCategory, TenantProfile } from '@prisma/client'
+import type { CurrentHousingSituation, IncomeCategory, TenantProfile } from '@prisma/client'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { isCreditCheckResult } from '@/lib/rental/types'
 
@@ -44,6 +44,9 @@ export function checkCertificateEligibility(profile: TenantProfile): { eligible:
   }
   if (!profile.creditCheckExpiresAt || new Date(profile.creditCheckExpiresAt) < new Date()) {
     return { eligible: false, reason: 'CREDIT_CHECK_EXPIRED' }
+  }
+  if (!profile.currentHousingSituation || !profile.currentHousingSince) {
+    return { eligible: false, reason: 'HOUSING_INCOMPLETE' }
   }
   return { eligible: true }
 }
@@ -99,6 +102,8 @@ export function buildCertificateSnapshotFields(input: CertificateSnapshotInput) 
     verifiedAddress: profile.currentAddress.trim(),
     verifiedCity: profile.currentCity.trim(),
     verifiedZip: profile.currentZip.trim(),
+    verifiedHousingSituation: profile.currentHousingSituation as CurrentHousingSituation,
+    verifiedHousingSince: profile.currentHousingSince!,
     verifiedEmploymentStatus: profile.employmentStatus,
     verifiedEmployer: profile.employer?.trim() || null,
     verifiedIncomeCategory: profile.monthlyIncomeCategory,

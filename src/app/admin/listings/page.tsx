@@ -95,6 +95,7 @@ export default async function AdminListingsPage() {
       orderBy: { createdAt: 'desc' },
       take: 500,
       include: {
+        externalLandlord: { select: { id: true } },
         user: {
           select: {
             isAdmin: true,
@@ -210,6 +211,7 @@ export default async function AdminListingsPage() {
     const cr = buildCreator(l.importSource, l.importedFrom, l.user)
     return {
       id: l.id,
+      externalLandlordId: l.externalLandlord?.id ?? null,
       title: l.title,
       address: l.address,
       canton: l.canton,

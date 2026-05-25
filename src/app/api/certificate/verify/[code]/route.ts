@@ -1,7 +1,8 @@
 import { isBotUserAgent } from '@/lib/http/is-bot'
+import { housingSinceLabelDe, housingSituationLabelDe } from '@/lib/tenant-profile/housing'
 import { employmentSummaryDe, incomeCategoryMonthlyLabelDe } from '@/lib/tenant-profile/labels'
 import { prisma } from '@/lib/prisma'
-import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
+import type { CurrentHousingSituation, EmploymentStatus, IncomeCategory } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -62,31 +63,12 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ code: strin
   const expiredByStatus = row.status === 'EXPIRED'
 
   if (expiredByStatus || expiredByDate) {
-    const incomeCategory = row.verifiedIncomeCategory as IncomeCategory
-    const incomeLabel = incomeCategoryMonthlyLabelDe(incomeCategory)
-    const empLine = employmentSummaryDe(
-      row.verifiedEmploymentStatus as EmploymentStatus,
-      row.verifiedEmployer,
-      null,
-      null
-    )
     noteVerifyApiOutcome(req, 'EXPIRED')
     return NextResponse.json({
       valid: false,
       reason: 'EXPIRED' as const,
       expiredAt: row.expiresAt.toISOString(),
-      certificate: {
-        certificateCode: row.certificateCode,
-        issuedAt: row.issuedAt.toISOString(),
-        expiresAt: row.expiresAt.toISOString(),
-        holderName: `${row.verifiedFirstName} ${row.verifiedLastName}`.trim(),
-        employmentLine: empLine,
-        incomeCategory: incomeLabel,
-        incomeQualifiesUpTo: row.incomeQualifiesUpTo,
-        creditCheckStatus: row.verifiedCreditCheckStatus,
-        creditCheckDate: row.verifiedCreditCheckDate.toISOString(),
-        creditCheckCanton: row.verifiedCreditCheckCanton,
-      },
+      certificate: serializeVerifyCertificate(row),
     })
   }
 
@@ -100,6 +82,31 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ code: strin
 
   noteVerifyApiOutcome(req, 'VALID')
 
+  return NextResponse.json({
+    valid: true,
+    certificate: serializeVerifyCertificate(row),
+  })
+}
+
+function serializeVerifyCertificate(row: {
+  certificateCode: string
+  issuedAt: Date
+  expiresAt: Date
+  verifiedFirstName: string
+  verifiedLastName: string
+  verifiedAddress: string
+  verifiedZip: string
+  verifiedCity: string
+  verifiedHousingSituation: CurrentHousingSituation | null
+  verifiedHousingSince: Date | null
+  verifiedEmploymentStatus: string
+  verifiedEmployer: string | null
+  verifiedIncomeCategory: string
+  incomeQualifiesUpTo: number
+  verifiedCreditCheckStatus: string
+  verifiedCreditCheckDate: Date
+  verifiedCreditCheckCanton: string
+}) {
   const incomeCategory = row.verifiedIncomeCategory as IncomeCategory
   const incomeLabel = incomeCategoryMonthlyLabelDe(incomeCategory)
   const empLine = employmentSummaryDe(
@@ -108,20 +115,29 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ code: strin
     null,
     null
   )
+  const housingSituation = row.verifiedHousingSituation
+  const housingLine =
+    housingSituation ?
+      `${housingSituationLabelDe(housingSituation)}${
+        row.verifiedHousingSince ?
+          ` · an dieser Adresse seit ${housingSinceLabelDe(row.verifiedHousingSince)}`
+        : ''
+      }`
+    : null
+  const addressLine = `${row.verifiedAddress}, ${row.verifiedZip} ${row.verifiedCity}`.trim()
 
-  return NextResponse.json({
-    valid: true,
-    certificate: {
-      certificateCode: row.certificateCode,
-      issuedAt: row.issuedAt.toISOString(),
-      expiresAt: row.expiresAt.toISOString(),
-      holderName: `${row.verifiedFirstName} ${row.verifiedLastName}`.trim(),
-      employmentLine: empLine,
-      incomeCategory: incomeLabel,
-      incomeQualifiesUpTo: row.incomeQualifiesUpTo,
-      creditCheckStatus: row.verifiedCreditCheckStatus,
-      creditCheckDate: row.verifiedCreditCheckDate.toISOString(),
-      creditCheckCanton: row.verifiedCreditCheckCanton,
-    },
-  })
+  return {
+    certificateCode: row.certificateCode,
+    issuedAt: row.issuedAt.toISOString(),
+    expiresAt: row.expiresAt.toISOString(),
+    holderName: `${row.verifiedFirstName} ${row.verifiedLastName}`.trim(),
+    employmentLine: empLine,
+    housingLine,
+    addressLine,
+    incomeCategory: incomeLabel,
+    incomeQualifiesUpTo: row.incomeQualifiesUpTo,
+    creditCheckStatus: row.verifiedCreditCheckStatus,
+    creditCheckDate: row.verifiedCreditCheckDate.toISOString(),
+    creditCheckCanton: row.verifiedCreditCheckCanton,
+  }
 }

@@ -1,5 +1,6 @@
 import { logAdminAudit } from '@/lib/admin/auditLog'
 import { authOptions } from '@/lib/auth'
+import { ensureExternalLandlordForListingInput } from '@/lib/external-landlords/crm'
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
 import { encryptLandlordContactForStorage } from '@/lib/rental/pdf-crypto'
@@ -222,6 +223,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       data.landlordContact = t ? encryptLandlordContactForStorage(t) : null
     }
 
+    let externalLandlordOverride: string | null | undefined = undefined
+    if ('externalLandlordId' in body) {
+      if (body.externalLandlordId === '' || body.externalLandlordId === null) {
+        externalLandlordOverride = null
+      } else if (typeof body.externalLandlordId === 'string') {
+        const candidate = body.externalLandlordId.trim()
+        const landlordExists = await prisma.externalLandlord.findUnique({
+          where: { id: candidate },
+          select: { id: true },
+        })
+        if (!landlordExists) {
+          return NextResponse.json({ message: 'Ausgewählter Vermieter existiert nicht mehr.' }, { status: 400 })
+        }
+        externalLandlordOverride = candidate
+      }
+    }
+
     if (Object.keys(data).length === 0) {
       return NextResponse.json({ message: 'Keine Felder zum Aktualisieren' }, { status: 400 })
     }
@@ -262,9 +280,44 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
-    const updated = await prisma.rentalListing.update({
-      where: { id },
-      data,
+    const nextNotifyForCrm = (() => {
+      if ('landlordNotifyEmail' in data) {
+        return typeof data.landlordNotifyEmail === 'string' ? data.landlordNotifyEmail : null
+      }
+      return existing.landlordNotifyEmail
+    })()
+    const nextContactStoredForCrm = (() => {
+      if (typeof body.landlordContactPlain === 'string') {
+        const t = body.landlordContactPlain.trim()
+        return t ? encryptLandlordContactForStorage(t) : null
+      }
+      return existing.landlordContact
+    })()
+    const nextTitleForCrm = typeof data.title === 'string' ? data.title : existing.title
+    const nextAddressForCrm = typeof data.address === 'string' ? data.address : existing.address
+    const nextCityForCrm = typeof data.city === 'string' ? data.city : existing.city
+
+    const updated = await prisma.$transaction(async tx => {
+      const row = await tx.rentalListing.update({
+        where: { id },
+        data,
+      })
+
+      await ensureExternalLandlordForListingInput({
+        db: tx,
+        rentalListingId: row.id,
+        existingExternalLandlordId:
+          externalLandlordOverride === undefined ? existing.externalLandlordId : externalLandlordOverride,
+        landlordNotifyEmail: nextNotifyForCrm,
+        landlordContactStored: nextContactStoredForCrm,
+        ingestPermissionBasis: existing.ingestPermissionBasis,
+        fallbackDisplayName:
+          nextAddressForCrm?.trim() ?
+            `${nextAddressForCrm.trim()} · ${nextCityForCrm.trim()}`
+          : nextTitleForCrm.trim(),
+      })
+
+      return row
     })
 
     if (session.user?.id) {
