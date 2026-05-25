@@ -319,6 +319,216 @@ export default function FeesPage() {
                   </p>
                 </section>
 
+                {/* Helvenda Wohnungen — Erfolgsmodell */}
+                <section id="wohnen-erfolgsmodell" className="scroll-mt-24">
+                  <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">
+                    2.4 Helvenda Wohnungen — Vermittlungsentgelt und Mieter-Einzugsbonus
+                  </h2>
+
+                  <p className="mb-3 text-sm sm:mb-4 sm:text-base">
+                    Für Mietwohnungs-Inserate auf der Subdomain wohnen.helvenda.ch gilt ein eigenes
+                    Erfolgsmodell. Helvenda verdient nur, wenn ein Mietverhältnis tatsächlich
+                    zustande kommt und beginnt. Inserieren, Suchen, Bewerben und das Helvenda-Zertifikat
+                    bleiben für Mietinteressierte kostenlos.
+                  </p>
+
+                  <h3 className="mb-2 mt-3 text-base font-semibold text-gray-900 sm:mt-4 sm:text-lg">
+                    2.4.1 Vermittlungsentgelt der Vermieter
+                  </h3>
+
+                  {/* Mobile: Karten-Layout */}
+                  <div className="space-y-3 sm:hidden">
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Berechnungsbasis</div>
+                      <div className="mt-1 text-base font-semibold text-gray-900">
+                        Erster monatlicher Nettomietzins (ohne Nebenkosten)
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Provision</div>
+                      <div className="mt-1 text-base font-semibold text-gray-900">33 % des ersten Nettomietzinses</div>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Mindestbetrag</div>
+                      <div className="mt-1 text-base font-semibold text-gray-900">CHF 290.00</div>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Höchstbetrag (Cap)</div>
+                      <div className="mt-1 text-base font-semibold text-gray-900">CHF 990.00</div>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">MwSt</div>
+                      <div className="mt-1 text-base text-gray-700">wird zusätzlich ausgewiesen</div>
+                    </div>
+                  </div>
+
+                  {/* Desktop: Tabelle */}
+                  <div className="hidden overflow-hidden rounded-lg border border-gray-200 sm:block">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 md:px-6">
+                            Position
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 md:px-6">
+                            Betrag
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        <tr>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">Berechnungsbasis</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 md:px-6 md:py-4">
+                            Erster monatlicher Nettomietzins (ohne Nebenkosten, Heiz-, Garagen-, Mobiliar- und ähnliche Zusatzentgelte)
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">Erfolgsprovision</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 md:px-6 md:py-4">
+                            33 % des ersten Nettomietzinses
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">Mindestbetrag</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 md:px-6 md:py-4">
+                            CHF 290.00
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">Höchstbetrag (Plafonierung)</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 md:px-6 md:py-4">
+                            CHF 990.00
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">
+                            Mehrwertsteuer (8.1 %)
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">
+                            wird zusätzlich ausgewiesen und verrechnet
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <p className="mt-3 text-xs text-gray-600 sm:mt-4 sm:text-sm">
+                    Das Vermittlungsentgelt ist erfolgsabhängig und wird mit Beginn des vermittelten
+                    Mietverhältnisses fällig. Wird der Mietvertrag aus Gründen, die der Vermieter
+                    nicht zu vertreten hat, vor Mietbeginn aufgehoben und kommt das Mietverhältnis
+                    effektiv nie zustande, entfällt die Provision oder wird auf Antrag rückerstattet.
+                    Eine Schutzfrist von sechs Monaten verhindert Umgehungen durch nachträglichen
+                    Direktabschluss mit über Helvenda vorgestellten Personen (vgl. AGB Ziff.&nbsp;1.5.8).
+                  </p>
+
+                  <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 sm:mt-4 sm:p-4">
+                    <h4 className="mb-1 text-sm font-semibold text-blue-800 sm:mb-2 sm:text-base">Beispiele</h4>
+                    <ul className="space-y-1 text-xs text-blue-700 sm:text-sm">
+                      <li>Nettomiete CHF 1’500 → 33 % = CHF 495 (über Mindestbetrag, unter Cap)</li>
+                      <li>Nettomiete CHF 2’000 → 33 % = CHF 660</li>
+                      <li>Nettomiete CHF 2’500 → 33 % = CHF 825</li>
+                      <li>Nettomiete CHF 3’000 → 33 % = CHF 990 (Cap erreicht)</li>
+                      <li>Nettomiete CHF 4’500 → gedeckelt auf CHF 990</li>
+                      <li>Nettomiete CHF 800 → Mindestbetrag CHF 290 (anstelle von CHF 264)</li>
+                    </ul>
+                    <p className="mt-2 text-[11px] text-blue-700/80 sm:text-xs">
+                      Beträge in Schweizer Franken, exkl. MwSt.
+                    </p>
+                  </div>
+
+                  <h3 className="mb-2 mt-4 text-base font-semibold text-gray-900 sm:mt-6 sm:text-lg">
+                    2.4.2 Mieter-Einzugsbonus
+                  </h3>
+
+                  <p className="mb-3 text-sm sm:mb-4 sm:text-base">
+                    Wer über Helvenda Wohnungen erfolgreich vermittelt wird und in das Mietobjekt
+                    einzieht, erhält von Helvenda einen freiwilligen einmaligen Einzugsbonus.
+                    Voraussetzungen, Höhe und Auszahlung sind in den AGB Ziff.&nbsp;1.5.9 geregelt.
+                  </p>
+
+                  {/* Mobile: Karten-Layout */}
+                  <div className="space-y-3 sm:hidden">
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Höhe Einzugsbonus</div>
+                      <div className="mt-1 text-base font-semibold text-gray-900">CHF 250.00</div>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Auszahlung</div>
+                      <div className="mt-1 text-base font-semibold text-gray-900">
+                        Frühestens 30 Tage nach Mietbeginn auf Schweizer IBAN
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Häufigkeit</div>
+                      <div className="mt-1 text-base font-semibold text-gray-900">
+                        Einmal je vermitteltem Mietverhältnis
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desktop: Tabelle */}
+                  <div className="hidden overflow-hidden rounded-lg border border-gray-200 sm:block">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 md:px-6">
+                            Position
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 md:px-6">
+                            Bedingung
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        <tr>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">Höhe</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 md:px-6 md:py-4">
+                            CHF 250.00 einmalig je vermitteltem Mietverhältnis
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">Profil</td>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">
+                            Vollständig verifiziertes Mieterprofil zum Zeitpunkt der Bewerbung
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">Vermittlung</td>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">
+                            Bewerbung über Helvenda Wohnungen und kausaler Mietvertragsabschluss
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">Einzug</td>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">
+                            Tatsächlicher Mietbeginn und ungekündigtes Mietverhältnis nach 30 Tagen
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">Vermieterzahlung</td>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">
+                            Vermittlungsentgelt vom Vermieter vollständig bezahlt
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">Auszahlung</td>
+                          <td className="px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">
+                            Frühestens 30 Tage nach Mietbeginn auf eine auf das Mitglied lautende Schweizer IBAN
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <p className="mt-3 text-xs text-gray-600 sm:mt-4 sm:text-sm">
+                    Der Einzugsbonus ist eine freiwillige Leistung von Helvenda und keine Beteiligung
+                    an einem Maklerlohn. Mietverhältnisse zwischen nahestehenden Personen, Eigengeschäfte
+                    sowie Konstellationen ohne kausale Vermittlung durch Helvenda sind ausgeschlossen
+                    (vgl. AGB Ziff.&nbsp;1.5.9). Helvenda kann Höhe und Voraussetzungen für künftige
+                    Vermittlungen anpassen oder den Bonus einstellen.
+                  </p>
+                </section>
+
                 {/* Fälligkeit */}
                 <section>
                   <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">3. Fälligkeit und Zahlung</h2>
@@ -388,9 +598,12 @@ export default function FeesPage() {
                   </p>
                 </section>
 
-                <div className="mt-6 border-t border-gray-200 pt-4 sm:mt-8 sm:pt-6">
+                <div className="mt-6 border-t border-gray-200 pt-4 sm:mt-8 sm:pt-6 space-y-1">
                   <p className="text-xs text-gray-600 sm:text-sm">
                     <strong>Gebührenreglement gültig seit 18.01.2026</strong>
+                  </p>
+                  <p className="text-xs text-gray-600 sm:text-sm">
+                    <strong>Ergänzung «Helvenda Wohnungen» (Abschnitt 2.4): Stand 25.05.2026</strong>
                   </p>
                 </div>
               </div>

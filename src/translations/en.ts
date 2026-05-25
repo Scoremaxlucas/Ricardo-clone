@@ -1494,6 +1494,25 @@ export const en: Translation = {
         'Browse current rental listings anytime on Helvenda Wohnungen.',
       ],
     },
+    'wohnungen-einzugsbonus': {
+      title: 'Move-in bonus from Helvenda — CHF 250 after a successful move-in',
+      category: 'Renting',
+      content: [
+        'Helvenda Wohnungen is free of charge for tenants. In addition, Helvenda pays tenants who were matched via the platform and actually move in a one-off move-in bonus of CHF 250 as a welcome to their new home.',
+        'Who receives it: the bonus is paid to the person who applied through the platform from a complete, verified Helvenda tenant profile and who subsequently signs a valid rental contract with the landlord.',
+        'When it is paid out: at the earliest 30 days after the actual start of the rental, provided the contract remains in force. This makes sure the move-in really happened.',
+        'What you need: a fully verified tenant profile with a valid debt collection register status and income band at the time of application, and a Swiss IBAN in your name for payout.',
+        'How much: CHF 250 once per matched rental — regardless of how many people move in together. It is free for you; nothing to advance, nothing to book.',
+        'When it does not apply: rentals between closely related persons (for example family), self-rentals, or situations where Helvenda was not causal for the match. If the contract is terminated within 30 days of move-in, the bonus is forfeited or reclaimed.',
+        'Relationship to the landlord commission: the bonus is a voluntary benefit from Helvenda to the tenant and is not part of a brokerage fee. For the landlord, the match is settled via the landlord commission; the tenant bonus is unrelated.',
+        'Legal basis: the exact conditions are set out in the Terms section 1.5.9 and the fee schedule section 2.4. The version communicated at the time of your application is decisive.',
+      ],
+      tips: [
+        'Make sure your profile is complete and your debt collection register status is valid before your first application — that is a precondition for the bonus.',
+        'Add your Swiss IBAN to your profile early so the payout can be processed without delay after move-in.',
+        'Even without the bonus: a verified profile gives every application more weight — the bonus is the cherry on top.',
+      ],
+    },
     'prohibited-items': {
       title: 'Prohibited Items List',
       category: 'General',

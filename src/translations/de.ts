@@ -1484,6 +1484,25 @@ export const de = {
         'Aktuelle Mietinserate finden Sie jederzeit auf Helvenda Wohnungen.',
       ],
     },
+    'wohnungen-einzugsbonus': {
+      title: 'Einzugsbonus von Helvenda — CHF 250 nach erfolgreichem Einzug',
+      category: 'Mieten',
+      content: [
+        'Helvenda Wohnungen ist für Mietende kostenlos. Zusätzlich zahlt Helvenda Mieterinnen und Mietern, die über die Plattform vermittelt wurden und einziehen, einen einmaligen Einzugsbonus von CHF 250 als Begrüssung in das neue Zuhause.',
+        'Wer den Bonus erhält: Der Bonus geht an die Person, die sich aus einem vollständigen, verifizierten Helvenda-Mieterprofil heraus über die Plattform beworben hat und mit der Vermieterseite anschliessend einen rechtsgültigen Mietvertrag abschliesst.',
+        'Wann er ausbezahlt wird: Frühestens 30 Tage nach tatsächlichem Mietbeginn, sobald das Mietverhältnis ungekündigt fortbesteht. Damit ist sichergestellt, dass der Einzug auch wirklich stattgefunden hat.',
+        'Was du dafür brauchst: Ein vollständig verifiziertes Mieterprofil mit gültigem Betreibungsregister-Status und Einkommenskategorie zum Zeitpunkt der Bewerbung sowie eine Schweizer IBAN auf deinen Namen für die Auszahlung.',
+        'Wie viel: CHF 250 einmalig je vermitteltem Mietverhältnis — unabhängig davon, wie viele Personen mitziehen. Der Betrag ist für dich kostenlos, du musst nichts vorstrecken und nichts buchen.',
+        'Wann er nicht greift: Bei Mietverhältnissen zwischen nahestehenden Personen (z. B. Familie), bei Selbstanmietung oder wenn Helvenda nicht kausal für das Zustandekommen war. Wird der Vertrag innert 30 Tagen nach Mietbeginn aufgehoben, entfällt der Bonus oder wird zurückgefordert.',
+        'Verhältnis zur Vermieter-Provision: Der Bonus ist eine freiwillige Leistung von Helvenda an die Mieterseite und nicht Teil eines Maklerlohns. Für den Vermieter ist die Vermittlung mit dem Vermittlungsentgelt abgegolten; mit dem Mieter-Bonus hat der Vermieter nichts zu tun.',
+        'Rechtliche Grundlage: Die genauen Bedingungen stehen in den AGB unter Ziff. 1.5.9 sowie im Gebührenreglement Ziff. 2.4. Massgeblich ist der zum Zeitpunkt deiner Bewerbung kommunizierte Stand.',
+      ],
+      tips: [
+        'Sorge dafür, dass dein Profil vor der ersten Bewerbung vollständig und der Betreibungsregister-Status gültig ist — das ist Voraussetzung für den Bonus.',
+        'Hinterlege deine Schweizer IBAN frühzeitig im Profil, damit die Auszahlung nach Einzug ohne Verzögerung erfolgt.',
+        'Auch ohne Bonus: Mit verifiziertem Profil hast du in jeder Bewerbung mehr Gewicht — der Bonus ist die Krönung obendrauf.',
+      ],
+    },
     'prohibited-items': {
       title: 'Verbotsliste',
       category: 'Allgemein',

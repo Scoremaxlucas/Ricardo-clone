@@ -36,6 +36,7 @@ export const WOHNEN_HELP_CATEGORIES: WohnenHelpCategory[] = [
       { slug: 'wohnen-profil-und-suchprofil' },
       { slug: 'wohnen-betreibungsregister-hochladen' },
       { slug: 'wohnen-bewerbung-abgeben' },
+      { slug: 'wohnungen-einzugsbonus' },
     ],
   },
   {

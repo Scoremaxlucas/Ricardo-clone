@@ -1,6 +1,11 @@
 'use client'
 
 import { IconDocument, IconHandshake, IconListing, IconProfile, IconRocket, IconShield } from '@/components/icons/WohnenHowItWorksIcons'
+import {
+  formatLandlordCapChf,
+  formatTenantBonusChf,
+  WOHNEN_LANDLORD_COMMISSION_PERCENT,
+} from '@/lib/wohnen/pricing'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 
@@ -25,6 +30,12 @@ const LANDLORD_STEPS: Step[] = [
     title: 'Direkt zum richtigen Mieter',
     text: 'Wähle aus verifizierten Profilen und vereinbare die Besichtigung — alles auf der Plattform.',
   },
+  {
+    n: 4,
+    icon: <IconRocket className="h-6 w-6 text-[#18a87c]" />,
+    title: 'Erst zahlen, wenn Sie vermieten',
+    text: `Inserieren bleibt kostenlos. Bei erfolgreicher Vermittlung zahlen Sie ${WOHNEN_LANDLORD_COMMISSION_PERCENT}% der ersten Nettomiete, höchstens ${formatLandlordCapChf()}. Nichts vorab, nichts ohne Erfolg.`,
+  },
 ]
 
 const TENANT_STEPS: Step[] = [
@@ -45,6 +56,12 @@ const TENANT_STEPS: Step[] = [
     icon: <IconRocket className="h-6 w-6 text-[#18a87c]" />,
     title: 'Überall überzeugen — auch ausserhalb Helvenda',
     text: 'Mit dem Helvenda Qualitätsnachweis (PDF + öffentlicher Prüf-Link) wirken Bewerbungen auf anderen Portalen und per E-Mail genauso seriös. Auf Helvenda reicht danach ein Klick pro Inserat.',
+  },
+  {
+    n: 4,
+    icon: <IconHandshake className="h-6 w-6 text-[#18a87c]" />,
+    title: `${formatTenantBonusChf()} Einzugsbonus von Helvenda`,
+    text: `Wenn du über Helvenda eine Wohnung findest und einziehst, erhältst du einmalig ${formatTenantBonusChf()} von uns — als Helvenda-Begrüssung in dein neues Zuhause. Auszahlung nach erfolgtem Einzug, Details siehe Hilfe-Center.`,
   },
 ]
 

@@ -128,14 +128,59 @@ export default function TermsPage() {
                     Etwaige Mietverträge, Vorverträge, Untermieten oder andere Vereinbarungen schliessen ausschliesslich die beteiligten Mitglieder untereinander ab. Helvenda übernimmt keine Gewähr für die Richtigkeit von Objektangaben, keine Prüfung der Vertragskonformität mit öffentlichem Recht (z.&nbsp;B. Mietzinsbildung, Kündigungsschutz, Meldepflichten) und keine Haftung für Schäden aus dem zwischen Mitgliedern geschlossenen oder nicht geschlossenen Mietverhältnis.
                   </p>
 
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.8 Entgelte</h4>
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.8 Vermittlungsentgelt der Vermieter (Erfolgsprovision)</h4>
                   <p className="text-sm sm:text-base mb-3 sm:mb-4">
-                    Soweit für Helvenda Wohnungen Entgelte oder Gebühren erhoben werden, ergeben sich diese aus dem jeweils auf Helvenda publizierten Gebührenreglement und/oder den beim Erwerb der Leistung angezeigten Bedingungen. Soweit dort nichts Abweichendes festgehalten ist, bleiben die allgemeinen Regeln dieser AGB zur Rechnungsstellung und Zahlung sinngemäss anwendbar.
+                    Mit der Aufschaltung eines Mietwohnungs-Inserats über Helvenda Wohnungen oder mit der Annahme einer von Helvenda vermittelten Bewerbung schliesst der Vermieter mit Helvenda einen Mäklervertrag im Sinne von Art.&nbsp;412&nbsp;ff. OR. Helvenda erbringt dabei Nachweis- und Vermittlungsleistungen, insbesondere die Bereitstellung der Plattform, die Vorprüfung der Mietinteressierten (z.&nbsp;B. Plausibilisierung von Betreibungsregisterauszug und Einkommenskategorie) sowie die Übermittlung qualifizierter Bewerbungen.
+                  </p>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Das Vermittlungsentgelt ist erfolgsabhängig: Es ist nur geschuldet, wenn zwischen dem Vermieter und einer über Helvenda Wohnungen nachgewiesenen oder vermittelten Person ein rechtsgültiger Mietvertrag über das inserierte Objekt zustande kommt und das Mietverhältnis tatsächlich beginnt. Helvenda gilt insbesondere dann als kausal vermittelnd, wenn die mietvertragliche Partei dem Vermieter über die Plattform vorgestellt wurde, sich auf das Inserat über Helvenda Wohnungen beworben hat oder ihre Identität, Kontaktdaten oder Bewerbungsunterlagen über Funktionen von Helvenda dem Vermieter zugänglich gemacht wurden.
+                  </p>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Die Höhe des Vermittlungsentgelts beträgt <strong>33&nbsp;% des ersten monatlichen Nettomietzinses</strong> des vermittelten Mietverhältnisses, mindestens jedoch <strong>CHF&nbsp;290.00</strong> und höchstens <strong>CHF&nbsp;990.00</strong> (Plafonierung). Berechnungsbasis ist ausschliesslich der vereinbarte Nettomietzins ohne Nebenkosten, Heiz-, Garagen-, Mobiliar-, Parkplatz- oder ähnliche Zusatzentgelte. Die Mehrwertsteuer wird gesondert ausgewiesen und zusätzlich verrechnet.
+                  </p>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Schliesst der Vermieter mit einer Person, die ihm zuvor über Helvenda Wohnungen nachgewiesen oder vorgestellt wurde, innert <strong>sechs Monaten</strong> nach dem letzten Kontakt über Helvenda direkt oder über Dritte einen Mietvertrag ab, gilt das Vermittlungsentgelt ebenfalls als verdient (Schutzfrist gegen Umgehung). Helvenda kann den Vermieter zur Auskunft verpflichten und einen Nachweis über das zustande gekommene Mietverhältnis verlangen.
+                  </p>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Das Vermittlungsentgelt wird mit Beginn des Mietverhältnisses fällig. Die Rechnungsstellung erfolgt elektronisch; offene Beträge sind innert 14 Tagen nach Zustellung der Zahlungsaufforderung zu begleichen. Im Übrigen gelten die Regeln zur Rechnungsstellung, Mahnung und Zahlung gemäss diesen AGB sinngemäss.
+                  </p>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Das Vermittlungsentgelt entfällt oder wird auf Antrag rückerstattet, wenn der Mietvertrag aus Gründen, die der Vermieter nicht zu vertreten hat, vor dem vereinbarten Mietbeginn aufgehoben wird und das Mietverhältnis effektiv nie zustande kommt. Bei Vertragsauflösungen nach Mietbeginn bleibt das Entgelt geschuldet. Das Recht der vermittelten Person auf den Mieter-Einzugsbonus gemäss Ziff.&nbsp;1.5.9 entfällt in diesen Fällen entsprechend.
+                  </p>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Eine Überwälzung des Vermittlungsentgelts auf die Mieterin oder den Mieter ist unzulässig. Auf Helvenda Wohnungen wird ausschliesslich der Vermieter zum Vermittlungsentgelt verpflichtet; Mietinteressierte schulden Helvenda im Zusammenhang mit der Vermittlung keine Provision oder vergleichbare Vergütung.
+                  </p>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Aktuelle Beträge, Berechnungsbeispiele und allfällige Anpassungen ergeben sich aus dem jeweils auf Helvenda publizierten Gebührenreglement.
                   </p>
 
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.9 Verhältnis zu den übrigen AGB</h4>
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.9 Mieter-Einzugsbonus</h4>
                   <p className="text-sm sm:text-base mb-3 sm:mb-4">
-                    Soweit spezifische Bestimmungen des Marktplatzes (z.&nbsp;B. Auktionslogik, klassische Käufer-Verkäufer-Mechanik) auf Helvenda Wohnungen schlichtweg nicht passen, finden sie auf diesen Teil des Angebots keine Anwendung. Im Übrigen gelten sämtliche allgemeinen Pflichten der Mitglieder (z.&nbsp;B. zu Immaterialgüterrechten, Persönlichkeitsrechten, Missbrauchsverboten, technischen Eingriffen und Haftungsbeschränkungen) sinngemäss auch im Wohnen-Bereich. Bei Widersprüchen zwischen den allgemeinen Marktplatz-Regeln und den vorstehenden Ziffern 1.5.1–1.5.8 gehen die Regeln zu Helvenda Wohnungen für diesen Funktionsbereich vor.
+                    Helvenda kann der Person, die über Helvenda Wohnungen erfolgreich an einen Vermieter vermittelt wurde und in das vermittelte Mietobjekt einzieht, einen freiwilligen einmaligen Einzugsbonus ausrichten (nachfolgend „Mieter-Einzugsbonus"). Es handelt sich um eine freiwillige Leistung von Helvenda; ein Rechtsanspruch des Mitglieds auf Auszahlung besteht nur, wenn und soweit die nachfolgenden Voraussetzungen kumulativ erfüllt sind.
+                  </p>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Der Mieter-Einzugsbonus beträgt <strong>CHF&nbsp;250.00</strong> und wird je vermitteltem Mietverhältnis nur einmal ausbezahlt, unabhängig von der Zahl der mitziehenden Personen oder Mitmieter. Voraussetzung sind kumulativ:
+                  </p>
+                  <ul className="list-disc list-inside text-sm sm:text-base mb-3 sm:mb-4 ml-2 sm:ml-4 space-y-1 sm:space-y-2">
+                    <li>die Bewerbung erfolgte über die Helvenda-Plattform aus einem zum Zeitpunkt der Bewerbung vollständigen und verifizierten Mieterprofil heraus (insbesondere mit gültigem Betreibungsregisterauszug-Status und Einkommenskategorie);</li>
+                    <li>zwischen Vermieter und Mitglied wurde aufgrund der Vermittlung durch Helvenda ein rechtsgültiger Mietvertrag abgeschlossen;</li>
+                    <li>das Mietverhältnis hat tatsächlich begonnen und besteht zum Zeitpunkt der Auszahlung mindestens 30&nbsp;Tage ungekündigt fort;</li>
+                    <li>das Vermittlungsentgelt gemäss Ziff.&nbsp;1.5.8 wurde vom Vermieter vollständig bezahlt;</li>
+                    <li>das Mitglied hat Helvenda eine auf seinen Namen lautende Schweizer IBAN sowie die zur Auszahlung erforderlichen Angaben übermittelt.</li>
+                  </ul>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Die Auszahlung erfolgt frühestens 30&nbsp;Tage nach Mietbeginn auf das vom Mitglied bezeichnete Schweizer Konto. Helvenda kann die Auszahlung verweigern oder bereits ausbezahlte Beträge zurückfordern, wenn das Mietverhältnis innert 30&nbsp;Tagen nach Mietbeginn aufgehoben wird, das Mitglied unrichtige oder unvollständige Angaben gemacht hat, eine Umgehung der vorstehenden Voraussetzungen vorliegt oder das Vermittlungsentgelt vom Vermieter nicht oder nicht vollständig bezahlt wird.
+                  </p>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Vom Mieter-Einzugsbonus ausgeschlossen sind insbesondere Mietverhältnisse zwischen nahestehenden Personen (z.&nbsp;B. Ehegatten, eingetragenen Partnern, Verwandten in gerader Linie, Geschwistern), Mietverhältnisse, an denen das Mitglied selbst als Vermieter, Verwaltung oder wirtschaftlich Berechtigter beteiligt ist, sowie Konstellationen, in denen Helvenda nicht kausal für das Zustandekommen des Mietverhältnisses war. Der Mieter-Einzugsbonus stellt keine Beteiligung an einem Maklerlohn dar; das Mitglied ist nicht Partei des Mäklervertrags zwischen Helvenda und dem Vermieter.
+                  </p>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Helvenda kann Höhe und Voraussetzungen des Mieter-Einzugsbonus für künftige Vermittlungen jederzeit anpassen oder den Bonus einstellen. Massgeblich ist der zum Zeitpunkt der Bewerbung über Helvenda Wohnungen kommunizierte Stand. Aktuelle Beträge ergeben sich aus dem jeweils auf Helvenda publizierten Gebührenreglement und/oder den auf der Plattform angezeigten Bedingungen.
+                  </p>
+
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 mt-3 sm:mt-4">1.5.10 Verhältnis zu den übrigen AGB</h4>
+                  <p className="text-sm sm:text-base mb-3 sm:mb-4">
+                    Soweit spezifische Bestimmungen des Marktplatzes (z.&nbsp;B. Auktionslogik, klassische Käufer-Verkäufer-Mechanik) auf Helvenda Wohnungen schlichtweg nicht passen, finden sie auf diesen Teil des Angebots keine Anwendung. Im Übrigen gelten sämtliche allgemeinen Pflichten der Mitglieder (z.&nbsp;B. zu Immaterialgüterrechten, Persönlichkeitsrechten, Missbrauchsverboten, technischen Eingriffen und Haftungsbeschränkungen) sinngemäss auch im Wohnen-Bereich. Bei Widersprüchen zwischen den allgemeinen Marktplatz-Regeln und den vorstehenden Ziffern 1.5.1–1.5.9 gehen die Regeln zu Helvenda Wohnungen für diesen Funktionsbereich vor.
                   </p>
                 </section>
 
@@ -638,7 +683,7 @@ export default function TermsPage() {
                     <strong>AGB gültig seit 17.01.2025</strong>
                   </p>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <strong>Ergänzung «Helvenda Wohnungen» (Abschnitt 1.5): Stand 01.05.2026</strong>
+                    <strong>Ergänzung «Helvenda Wohnungen» (Abschnitt 1.5): Stand 25.05.2026</strong>
                   </p>
                 </div>
               </div>

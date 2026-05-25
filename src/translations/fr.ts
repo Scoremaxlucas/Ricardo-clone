@@ -1472,6 +1472,25 @@ export const fr: Translation = {
         'Les annonces de location actuelles sont sur Helvenda Wohnungen.',
       ],
     },
+    'wohnungen-einzugsbonus': {
+      title: "Prime d'emménagement Helvenda — CHF 250 après emménagement réussi",
+      category: 'Location',
+      content: [
+        "Helvenda Wohnungen est gratuit pour les locataires. En plus, Helvenda verse aux locataires placés via la plateforme et qui emménagent réellement une prime d'emménagement unique de CHF 250 en guise de bienvenue dans leur nouveau logement.",
+        "Qui la perçoit : la prime est versée à la personne qui a postulé via la plateforme depuis un profil locataire Helvenda complet et vérifié, et qui conclut ensuite un bail valide avec le bailleur.",
+        "Quand elle est versée : au plus tôt 30 jours après le début effectif du bail, à condition que le contrat reste en vigueur. Cela garantit que l'emménagement a bien eu lieu.",
+        "Ce qu'il vous faut : un profil locataire entièrement vérifié avec un statut d'extrait du registre des poursuites valable et une tranche de revenu au moment de la candidature, ainsi qu'un IBAN suisse à votre nom pour le versement.",
+        "Montant : CHF 250 une seule fois par bail conclu — indépendamment du nombre de personnes qui emménagent ensemble. C'est gratuit pour vous ; rien à avancer, rien à réserver.",
+        "Cas exclus : baux entre proches (par exemple famille), location à soi-même, ou situations où Helvenda n'a pas été déterminant pour la mise en relation. Si le contrat est résilié dans les 30 jours suivant l'emménagement, la prime est perdue ou récupérée.",
+        "Lien avec la commission du bailleur : la prime est une prestation volontaire d'Helvenda envers la partie locataire et ne fait pas partie d'un courtage. Pour le bailleur, la mise en relation est réglée par la commission ; la prime locataire n'a aucun lien avec lui.",
+        "Base juridique : les conditions exactes figurent dans les CGU au chiffre 1.5.9 et dans le règlement des frais au chiffre 2.4. La version communiquée au moment de votre candidature fait foi.",
+      ],
+      tips: [
+        "Veillez à ce que votre profil soit complet et que le statut du registre des poursuites soit valable avant votre première candidature — c'est une condition pour la prime.",
+        "Saisissez tôt votre IBAN suisse dans votre profil afin que le versement se fasse sans retard après l'emménagement.",
+        "Même sans prime : un profil vérifié donne plus de poids à chaque candidature — la prime n'en est que la cerise sur le gâteau.",
+      ],
+    },
     'system-outages': {
       title: 'Principes en cas de pannes système',
       category: 'Général',

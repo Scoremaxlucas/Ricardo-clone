@@ -8,6 +8,11 @@ import {
   deriveWohnenListingsSectionSub,
   type WohnenJourneyStage,
 } from '@/lib/wohnenTenantJourney'
+import {
+  formatLandlordCapChf,
+  formatTenantBonusChf,
+  WOHNEN_LANDLORD_COMMISSION_PERCENT,
+} from '@/lib/wohnen/pricing'
 import { RentalListingStatus } from '@prisma/client'
 import { Check, X } from 'lucide-react'
 import Link from 'next/link'
@@ -131,6 +136,16 @@ export async function WohnenMarketingHome({
     { tema: 'Login', hg: 'Separates Konto pro Plattform', hv: 'Ein Helvenda-Konto für alles' },
     { tema: 'Inserate-Qualität', hg: 'Keine Vorprüfung', hv: 'Betreibungsregisterauszug inklusive' },
     { tema: 'Mieterplus-Abo', hg: 'CHF 39.95/Monat Pflicht', hv: 'Nie — kostenlos für alle' },
+    {
+      tema: 'Bonus bei Einzug für Mietende',
+      hg: 'Kein Bonus',
+      hv: `${formatTenantBonusChf()} Einzugsbonus von Helvenda`,
+    },
+    {
+      tema: 'Vermieter-Provision',
+      hg: 'Kosten unabhängig vom Erfolg',
+      hv: `${WOHNEN_LANDLORD_COMMISSION_PERCENT}% der ersten Nettomiete, max. ${formatLandlordCapChf()} — nur bei Erfolg`,
+    },
   ]
 
   return (
@@ -460,7 +475,11 @@ export async function WohnenMarketingHome({
               <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-white/75">
                 {footerTenant.body}
               </p>
-              <div className="mt-7">
+              <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-white/90 ring-1 ring-white/25">
+                <span aria-hidden>+</span>
+                {formatTenantBonusChf()} Einzugsbonus, wenn du über Helvenda einziehst
+              </div>
+              <div className="mt-6">
                 <Link
                   href={tenantFooterHref}
                   className="inline-flex min-h-[46px] w-full items-center justify-center rounded-[10px] bg-white px-6 py-3 text-base font-bold text-[#18a87c] shadow-sm transition hover:bg-white/95 sm:w-auto"
@@ -482,7 +501,11 @@ export async function WohnenMarketingHome({
                 <br />
                 Nur verifizierte Bewerber.
               </p>
-              <div className="mt-7">
+              <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-white/90 ring-1 ring-white/25">
+                <span aria-hidden>%</span>
+                Provision nur bei Vermittlung — max. {formatLandlordCapChf()}
+              </div>
+              <div className="mt-6">
                 <Link
                   href="/matching/properties/new"
                   className="inline-flex min-h-[46px] w-full items-center justify-center rounded-[10px] border border-white bg-transparent px-6 py-3 text-base font-bold text-white transition hover:bg-white/10 sm:w-auto"

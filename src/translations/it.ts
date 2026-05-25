@@ -1472,6 +1472,25 @@ export const it: Translation = {
         'Gli annunci di affitto attuali sono su Helvenda Wohnungen.',
       ],
     },
+    'wohnungen-einzugsbonus': {
+      title: 'Bonus di trasloco Helvenda — CHF 250 dopo un trasloco riuscito',
+      category: 'Affittare',
+      content: [
+        'Helvenda Wohnungen è gratuito per gli inquilini. In aggiunta, Helvenda versa agli inquilini intermediati tramite la piattaforma che traslocano effettivamente un bonus una tantum di CHF 250 come benvenuto nella nuova casa.',
+        'Chi lo riceve: il bonus va alla persona che si è candidata tramite la piattaforma da un profilo inquilino Helvenda completo e verificato e che conclude poi un contratto di locazione valido con la parte locatrice.',
+        'Quando viene pagato: al più presto 30 giorni dopo l’inizio effettivo della locazione, a condizione che il contratto resti in essere. Così è garantito che il trasloco sia davvero avvenuto.',
+        'Cosa serve: un profilo inquilino completamente verificato con stato dell’estratto del registro delle esecuzioni valido e fascia di reddito al momento della candidatura, e un IBAN svizzero a vostro nome per il versamento.',
+        'Importo: CHF 250 una sola volta per contratto intermediato — indipendentemente dal numero di persone che traslocano insieme. È gratuito per voi; niente da anticipare, niente da prenotare.',
+        'Quando non si applica: locazioni tra persone vicine (ad esempio familiari), autolocazioni o situazioni in cui Helvenda non è stato determinante per l’intermediazione. Se il contratto viene sciolto entro 30 giorni dal trasloco, il bonus decade o viene richiesto indietro.',
+        'Rapporto con la commissione del locatore: il bonus è una prestazione volontaria di Helvenda alla parte conduttrice e non fa parte di un compenso di intermediazione. Per il locatore l’intermediazione è regolata dalla commissione; il bonus inquilino non lo riguarda.',
+        'Base giuridica: le condizioni esatte sono nelle CGU al punto 1.5.9 e nel regolamento delle tasse al punto 2.4. Fa fede la versione comunicata al momento della candidatura.',
+      ],
+      tips: [
+        'Assicuratevi che il profilo sia completo e lo stato del registro delle esecuzioni valido prima della prima candidatura — è un requisito per il bonus.',
+        'Inserite per tempo il vostro IBAN svizzero nel profilo, così il versamento dopo il trasloco avviene senza ritardi.',
+        'Anche senza bonus: un profilo verificato dà più peso a ogni candidatura — il bonus è la ciliegina sulla torta.',
+      ],
+    },
     'system-outages': {
       title: 'Principi in caso di interruzioni del sistema',
       category: 'Generale',

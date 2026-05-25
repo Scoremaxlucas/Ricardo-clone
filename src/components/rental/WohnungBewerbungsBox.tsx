@@ -2,7 +2,8 @@
 
 import { wohnenToast } from '@/lib/wohnen-toast'
 import type { QualificationIssue } from '@/lib/rental/qualifyTenant'
-import { Check, CheckCircle2, FileText, Lock, ShieldCheck } from 'lucide-react'
+import { formatTenantBonusChf } from '@/lib/wohnen/pricing'
+import { Check, CheckCircle2, FileText, Lock, ShieldCheck, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -294,8 +295,19 @@ export function WohnungBewerbungsBox({
           </p>
         : null}
 
+        {!compact && !isOwner ?
+          <Link
+            href="/help/wohnungen-einzugsbonus"
+            className="mt-4 flex items-start gap-2 rounded-xl border border-[#bfe8d4] bg-[#f5fdfb] px-3 py-2.5 text-left text-[12px] leading-snug text-[#1f5b46] transition hover:border-[#18a87c] hover:bg-[#eefaf4]"
+          >
+            <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#18a87c]" aria-hidden />
+            <span>
+              <span className="font-semibold">{formatTenantBonusChf()} Einzugsbonus</span> von Helvenda, wenn du über uns einziehst — Bedingungen ansehen.
+            </span>
+          </Link>
+        : null}
         {!compact ?
-          <p className="mt-4 flex items-center justify-center gap-1 text-center text-[11px] text-slate-500">
+          <p className="mt-3 flex items-center justify-center gap-1 text-center text-[11px] text-slate-500">
             <Lock className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
             <span>Deine Daten werden verschlüsselt übertragen</span>
           </p>
@@ -351,6 +363,16 @@ export function WohnungBewerbungsBox({
                     Der Vermieter wurde mit deinem verifizierten Profil benachrichtigt und kann sich bei dir melden.
                   </p>
                 </div>
+                <Link
+                  href="/help/wohnungen-einzugsbonus"
+                  className="mt-5 flex items-start gap-2 rounded-xl border border-[#bfe8d4] bg-[#f5fdfb] px-3 py-3 text-left text-[13px] leading-snug text-[#1f5b46] transition hover:border-[#18a87c] hover:bg-[#eefaf4]"
+                  onClick={() => setApplyOpen(false)}
+                >
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#18a87c]" aria-hidden />
+                  <span>
+                    <span className="font-semibold">{formatTenantBonusChf()} Einzugsbonus:</span> Wenn dieses oder ein anderes Helvenda-Inserat zum Einzug führt, bekommst du den Bonus von uns. So funktioniert&apos;s →
+                  </span>
+                </Link>
                 <div className="mt-6 flex flex-col gap-2">
                   <Link
                     href="/meine-bewerbungen"
