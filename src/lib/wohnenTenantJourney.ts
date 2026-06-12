@@ -3,10 +3,7 @@
  * (Startseiten-CTA, Navbar, Fortschritt) — eine Quelle der Wahrheit für „was ist der nächste sinnvolle Schritt?“.
  */
 
-// Hinweis: Der Einzugsbonus wird im Hero als prominent platzierte Pill direkt
-// zwischen Subtext und CTA kommuniziert (siehe WohnenMarketingHome.tsx). Die
-// Hero-Bullets bleiben deshalb bewusst Trust-/Differenzierungs-Signale
-// (Register, Verifizierung, Abo-Verzicht), damit keine Botschaft doppelt steht.
+import { formatTenantBonusChf } from '@/lib/wohnen/pricing'
 
 export type WohnenHomeCta = {
   primaryHref: string
@@ -39,8 +36,15 @@ export type WohnenHomeHero = {
   line1: string
   line2: string
   subtext: string
-  /** Mobile-Vorteilszeilen unter dem CTA */
+  /** Nur für anonyme Besucher — sonst leer, um Redundanz zu vermeiden. */
   bullets: string[]
+  /** Bonus-Pill im Hero; bei ready steckt der Bonus im Subtext. */
+  showBonusPill: boolean
+}
+
+/** Cert-Block unter dem Hero: bei ready redundant (Zertifikat ist schon aktiv). */
+export function shouldShowCertBlockOnHome(stage: WohnenJourneyStage): boolean {
+  return stage !== 'ready'
 }
 
 export type WohnenHomeFooterTenant = {
@@ -87,18 +91,19 @@ export function deriveWohnenHomeHero(args: {
   const { stage, activeCount } = args
   const inventoryNarrow = activeCount <= 14
 
+  const bonus = formatTenantBonusChf()
+
   if (stage === 'ready') {
-    const helvendaZusatz =
+    const matchTeil =
       activeCount > 0 ?
-        inventoryNarrow ?
-          ` Zusätzlich auf Helvenda: ${activeCount.toLocaleString('de-CH')} passende Inserate unter Meine Matches — dort bewirbst du dich mit einem Klick.`
-        : ' Auf Helvenda findest du passende Inserate und bewirbst dich mit einem Klick.'
-      : ''
+        `${activeCount.toLocaleString('de-CH')} passende Inserate unter Meine Matches.`
+      : 'Sobald etwas passt, findest du es unter Meine Matches.'
     return {
-      line1: 'Dein Helvenda-Zertifikat ist aktiv.',
-      line2: 'Fair mieten. Ohne Abo-Pflicht.',
-      subtext: `Mit deinem Zertifikat bewirbst du dich auch ausserhalb von Helvenda — bei Homegate, per E-Mail oder direkt beim Vermieter.${helvendaZusatz}`,
-      bullets: ['Zertifikat aktiv', 'Verifizierte Bewerbungen', 'Kein Pflicht-Abo'],
+      line1: 'Du bist bereit.',
+      line2: 'Jetzt die passende Wohnung finden.',
+      subtext: `Bewirb dich mit einem Klick — bei Einzug über Helvenda erhältst du ${bonus} von uns. ${matchTeil}`,
+      bullets: [],
+      showBonusPill: false,
     }
   }
 
@@ -108,7 +113,8 @@ export function deriveWohnenHomeHero(args: {
       line2: 'Überall einsetzbar.',
       subtext:
         'Mit deinem geprüften Betreibungsregister stellst du das Helvenda-Zertifikat aus — und nutzt es auch für Bewerbungen ausserhalb von Helvenda.',
-      bullets: ['Register geprüft', 'Auch für externe Bewerbungen', 'Kein Pflicht-Abo'],
+      bullets: [],
+      showBonusPill: true,
     }
   }
 
@@ -118,7 +124,8 @@ export function deriveWohnenHomeHero(args: {
       line2: 'Register wird geprüft.',
       subtext:
         'Dein Betreibungsregisterauszug ist in Prüfung. Inserate kannst du schon ansehen — bewerben und das Helvenda-Zertifikat folgen nach Freigabe.',
-      bullets: ['Profil erfasst', 'Prüfung läuft', 'Kein Pflicht-Abo'],
+      bullets: [],
+      showBonusPill: true,
     }
   }
 
@@ -128,7 +135,8 @@ export function deriveWohnenHomeHero(args: {
       line2: 'Register hochladen.',
       subtext:
         'Lade deinen Betreibungsregisterauszug hoch — Basis für das Helvenda-Zertifikat und Bewerbungen mit einem Klick.',
-      bullets: ['Kostenlos für Mieter', 'Geprüfter Auszug', 'Kein Pflicht-Abo'],
+      bullets: [],
+      showBonusPill: true,
     }
   }
 
@@ -138,7 +146,8 @@ export function deriveWohnenHomeHero(args: {
       line2: 'Der nächste Schritt.',
       subtext:
         'Mit vollständigem Profil und Suchpräferenzen siehst du passende Inserate — und kannst dich später verifiziert bewerben.',
-      bullets: ['Kostenlos für Mieter', 'Suchpräferenzen', 'Kein Pflicht-Abo'],
+      bullets: [],
+      showBonusPill: true,
     }
   }
 
@@ -149,7 +158,8 @@ export function deriveWohnenHomeHero(args: {
       line2: 'Auch ausserhalb von Helvenda.',
       subtext:
         'Mit deinem Zertifikat bewirbst du dich überall — bei Homegate, per E-Mail oder direkt beim Vermieter. Auf Helvenda wächst das Angebot laufend.',
-      bullets: ['Auch für externe Bewerbungen', 'Geprüftes Register', 'Kein Pflicht-Abo'],
+      bullets: ['Geprüftes Register', 'Kein Pflicht-Abo'],
+      showBonusPill: true,
     }
   }
 
@@ -159,14 +169,17 @@ export function deriveWohnenHomeHero(args: {
     line2: 'Mit dem Helvenda-Zertifikat.',
     subtext:
       'Verifiziert bewerben mit einem Klick — und mit deinem Zertifikat überzeugst du auch Vermieter ausserhalb von Helvenda.',
-    bullets: ['Geprüftes Register', 'Verifizierte Bewerbungen', 'Kein Pflicht-Abo'],
+    bullets: ['Geprüftes Register', 'Kein Pflicht-Abo'],
+    showBonusPill: true,
   }
 }
 
 export function deriveWohnenHomeFooterTenant(args: { stage: WohnenJourneyStage }): WohnenHomeFooterTenant {
   switch (args.stage) {
     case 'ready':
-      return { body: 'Kein Formular. Kein Abo.\nDein Nachweis gilt überall — unabhängig vom Inserate-Bestand.' }
+      return {
+        body: `Bewirb dich auf Helvenda — bei Einzug ${formatTenantBonusChf()} von uns.\nDein Zertifikat gilt auch ausserhalb von Helvenda.`,
+      }
     case 'certificate_needed':
       return { body: 'Kein Formular. Kein Abo.\nNachweis ausstellen — dann überall bewerben.' }
     case 'credit_pending':
@@ -265,13 +278,11 @@ export function deriveWohnenHomeCta(args: {
   }
 
   return {
-    primaryHref: '/zertifikat',
-    primaryLabel: 'Zum Helvenda-Zertifikat',
-    primaryHint:
-      'Dein Vorteil bei jeder Bewerbung — auch ausserhalb von Helvenda.',
-    secondaryHref: '/meine-matches',
-    secondaryLabel: 'Meine Matches',
-    footerTenantHref: '/zertifikat',
-    footerTenantLabel: 'Qualitätsnachweis öffnen →',
+    primaryHref: '/meine-matches',
+    primaryLabel: 'Meine Matches ansehen',
+    secondaryHref: '/zertifikat',
+    secondaryLabel: 'Zertifikat anzeigen',
+    footerTenantHref: '/meine-matches',
+    footerTenantLabel: 'Zu meinen Matches →',
   }
 }

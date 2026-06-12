@@ -6,6 +6,7 @@ import {
   deriveWohnenHomeFooterTenant,
   deriveWohnenHomeHero,
   deriveWohnenListingsSectionSub,
+  shouldShowCertBlockOnHome,
   type WohnenJourneyStage,
 } from '@/lib/wohnenTenantJourney'
 import {
@@ -122,12 +123,10 @@ export async function WohnenMarketingHome({
   const footerTenant = deriveWohnenHomeFooterTenant({ stage: journeyStage })
   const listingsSectionSub = deriveWohnenListingsSectionSub({ stage: journeyStage, activeCount })
   /**
-   * Das Zertifikat ist strategischer Growth-Driver (Cross-Plattform-Asset, viraler B2B-Hook),
-   * deshalb erscheint der Cert-Block immer:
-   *  - Cold-Start (wenig Inserate): vor den Listings — er trägt die Conversion.
-   *  - Standard: nach den Listings — als Reinforcer und Anker für externe Bewerbungen.
+   * Cert-Block: Growth-Driver für Akquisition — bei ready ausblenden (Zertifikat aktiv, Hero redundant).
+   * Position: Cold-Start vor Listings, Standard danach.
    */
-  const showCertBlock = true
+  const showCertBlock = shouldShowCertBlockOnHome(journeyStage)
   const certBlockBeforeListings = inventoryNarrow
 
   const comparisonRows: { tema: string; hg: string; hv: string }[] = [
@@ -197,12 +196,14 @@ export async function WohnenMarketingHome({
             {hero.subtext}
           </p>
 
-          <div className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full border border-[#bfe8d4] bg-white/90 px-4 py-1.5 text-[12px] font-bold uppercase tracking-[0.08em] text-[#107a5a] shadow-sm sm:text-[13px]">
-            <Sparkles className="h-3.5 w-3.5 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
-            <span>{formatTenantBonusChf()} Einzugsbonus, wenn du über Helvenda einziehst</span>
-          </div>
+          {hero.showBonusPill ?
+            <div className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full border border-[#bfe8d4] bg-white/90 px-4 py-1.5 text-[12px] font-bold uppercase tracking-[0.08em] text-[#107a5a] shadow-sm sm:text-[13px]">
+              <Sparkles className="h-3.5 w-3.5 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
+              <span>{formatTenantBonusChf()} Einzugsbonus, wenn du über Helvenda einziehst</span>
+            </div>
+          : null}
 
-          <div className="mx-auto mt-7 max-w-md sm:mt-8">
+          <div className={`mx-auto max-w-md ${hero.showBonusPill ? 'mt-7 sm:mt-8' : 'mt-6 sm:mt-7'}`}>
             <Link
               href={primaryHref}
               className="inline-flex h-[52px] w-full items-center justify-center rounded-xl bg-[#18a87c] px-6 text-base font-semibold text-white shadow-md shadow-[#18a87c]/25 transition hover:opacity-95 md:h-[54px] md:text-[1.0625rem]"
@@ -232,31 +233,37 @@ export async function WohnenMarketingHome({
             </p>
           </div>
 
-          <div className="mx-auto mt-10 w-full max-w-lg sm:mt-11">
-            <ul className="flex flex-col gap-2.5 sm:hidden" aria-label="Vorteile für Mieter">
-              {hero.bullets.map(line => (
-                <li
-                  key={line}
-                  className="flex items-start gap-3 rounded-xl border border-[#e8f7f2] bg-[#fafdfb] px-3.5 py-3 text-[13px] font-medium leading-snug text-[#2d4a3d]"
-                >
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="hidden text-center text-[13px] leading-relaxed text-[#5a7a6e] sm:block sm:text-[13px]">
-              <Check className="mb-0.5 mr-1 inline h-3.5 w-3.5 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
-              {hero.bullets.join(' · ')}
-            </p>
-            {activeCount > 0 ?
-              <p className="mt-4 text-center text-[13px] text-[#5a7a6e] sm:mt-3">
-                <span className="whome-pulse-dot font-semibold text-[#18a87c]" aria-hidden>
-                  ●
-                </span>{' '}
-                <span className="font-medium text-[#2d6a4f]">{activeCount.toLocaleString('de-CH')} Inserate online</span>
-              </p>
-            : null}
-          </div>
+          {hero.bullets.length > 0 || (activeCount > 0 && journeyStage !== 'ready') ?
+            <div className="mx-auto mt-10 w-full max-w-lg sm:mt-11">
+              {hero.bullets.length > 0 ?
+                <>
+                  <ul className="flex flex-col gap-2.5 sm:hidden" aria-label="Vorteile für Mieter">
+                    {hero.bullets.map(line => (
+                      <li
+                        key={line}
+                        className="flex items-start gap-3 rounded-xl border border-[#e8f7f2] bg-[#fafdfb] px-3.5 py-3 text-[13px] font-medium leading-snug text-[#2d4a3d]"
+                      >
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="hidden text-center text-[13px] leading-relaxed text-[#5a7a6e] sm:block sm:text-[13px]">
+                    <Check className="mb-0.5 mr-1 inline h-3.5 w-3.5 text-[#18a87c]" strokeWidth={2.5} aria-hidden />
+                    {hero.bullets.join(' · ')}
+                  </p>
+                </>
+              : null}
+              {activeCount > 0 && journeyStage !== 'ready' ?
+                <p className={`text-center text-[13px] text-[#5a7a6e] ${hero.bullets.length > 0 ? 'mt-4 sm:mt-3' : ''}`}>
+                  <span className="whome-pulse-dot font-semibold text-[#18a87c]" aria-hidden>
+                    ●
+                  </span>{' '}
+                  <span className="font-medium text-[#2d6a4f]">{activeCount.toLocaleString('de-CH')} Inserate online</span>
+                </p>
+              : null}
+            </div>
+          : null}
         </div>
       </section>
 

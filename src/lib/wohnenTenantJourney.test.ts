@@ -42,7 +42,7 @@ describe('deriveWohnenHomeCta', () => {
     expect(cta.secondaryHref).toBe('/meine-matches')
   })
 
-  it('prioritises certificate when active certificate exists', () => {
+  it('prioritises matches when active certificate exists', () => {
     const cta = deriveWohnenHomeCta({
       profile: {
         isComplete: true,
@@ -51,9 +51,9 @@ describe('deriveWohnenHomeCta', () => {
       },
       hasActiveCertificate: true,
     })
-    expect(cta.primaryHref).toBe('/zertifikat')
-    expect(cta.secondaryHref).toBe('/meine-matches')
-    expect(cta.footerTenantHref).toBe('/zertifikat')
+    expect(cta.primaryHref).toBe('/meine-matches')
+    expect(cta.secondaryHref).toBe('/zertifikat')
+    expect(cta.footerTenantHref).toBe('/meine-matches')
   })
 })
 
@@ -74,18 +74,20 @@ describe('deriveWohnenJourneyStage', () => {
 })
 
 describe('deriveWohnenHomeHero', () => {
-  it('keeps certificate-first hero for ready users with few listings', () => {
+  it('uses action-first hero for ready users with bonus in subtext', () => {
     const hero = deriveWohnenHomeHero({ stage: 'ready', activeCount: 2 })
-    expect(hero.line1).toMatch(/Qualitätsnachweis/)
-    expect(hero.line2).toMatch(/Ohne Abo/)
-    expect(hero.subtext).not.toMatch(/kommen dazu/i)
-    expect(hero.subtext).not.toMatch(/^Dein Profil ist verifiziert — unter Meine Matches/i)
-    expect(hero.subtext).toMatch(/Zusätzlich auf Helvenda.*2/)
+    expect(hero.line1).toBe('Du bist bereit.')
+    expect(hero.line2).toBe('Jetzt die passende Wohnung finden.')
+    expect(hero.subtext).toMatch(/CHF 250/)
+    expect(hero.subtext).toMatch(/2 passende Inserate/)
+    expect(hero.bullets).toEqual([])
+    expect(hero.showBonusPill).toBe(false)
   })
 
   it('uses certificate-first headline for anonymous cold start', () => {
     const hero = deriveWohnenHomeHero({ stage: 'anonymous', activeCount: 2 })
-    expect(hero.line1).toMatch(/Qualitätsnachweis/)
+    expect(hero.line1).toMatch(/Helvenda-Zertifikat/)
     expect(hero.subtext).not.toMatch(/sobald sie live sind/i)
+    expect(hero.showBonusPill).toBe(true)
   })
 })
