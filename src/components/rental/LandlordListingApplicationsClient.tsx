@@ -114,11 +114,13 @@ function LandlordApplicationCard({
   busyId,
   onOpenView,
   onOpenReject,
+  onOpenContact,
 }: {
   row: LandlordApplicationRow
   busyId: string | null
   onOpenView: (r: LandlordApplicationRow) => void
   onOpenReject: (r: LandlordApplicationRow) => void
+  onOpenContact: (r: LandlordApplicationRow) => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const rejected = row.status === 'rejected' || row.rejectedAt != null
@@ -225,6 +227,14 @@ function LandlordApplicationCard({
         <button
           type="button"
           disabled={Boolean(busyId) || rejected || hasViewing}
+          onClick={() => onOpenContact(row)}
+          className="min-h-[48px] w-full rounded-xl border border-teal-700 px-3 py-2.5 text-sm font-semibold text-teal-900 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-40 lg:w-auto"
+        >
+          Direkt kontaktieren
+        </button>
+        <button
+          type="button"
+          disabled={Boolean(busyId) || rejected || hasViewing}
           onClick={() => onOpenReject(row)}
           className="min-h-[48px] w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 lg:w-auto"
         >
@@ -248,6 +258,8 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
 
   const [viewModal, setViewModal] = useState<LandlordApplicationRow | null>(null)
   const [rejectModal, setRejectModal] = useState<LandlordApplicationRow | null>(null)
+  const [contactModal, setContactModal] = useState<LandlordApplicationRow | null>(null)
+  const [contactNote, setContactNote] = useState('')
   const [viewDate, setViewDate] = useState('')
   const [viewTime, setViewTime] = useState('10:00')
   const [viewNote, setViewNote] = useState('')
@@ -301,6 +313,8 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
           wohnenToast.viewingRequested()
         } else if (body.action === 'reject') {
           wohnenToast.applicationRejected()
+        } else if (body.action === 'contact_directly') {
+          toast.success('Der Bewerber wurde informiert.')
         } else {
           toast.success('Gespeichert')
         }
@@ -312,6 +326,7 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
         setBusyId(null)
         setViewModal(null)
         setRejectModal(null)
+        setContactModal(null)
       }
     },
     [rows, router]
@@ -338,6 +353,15 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
         viewingRequestedAt: new Date().toISOString(),
         viewingDate: dt.toISOString(),
       })
+    )
+  }
+
+  const onConfirmContact = () => {
+    if (!contactModal) return
+    void patchApp(
+      contactModal.id,
+      { action: 'contact_directly', directContactNote: contactNote.trim() || undefined },
+      r => r
     )
   }
 
@@ -421,6 +445,10 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
               setViewModal(r)
             }}
             onOpenReject={setRejectModal}
+            onOpenContact={r => {
+              setContactNote('')
+              setContactModal(r)
+            }}
           />
             ))}
           </ul>
@@ -493,6 +521,46 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
         </div>
       : null}
 
+      {contactModal ?
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 pt-[max(0px,env(safe-area-inset-top,0px))] pl-[max(0px,env(safe-area-inset-left,0px))] pr-[max(0px,env(safe-area-inset-right,0px))] sm:items-center sm:p-4 sm:pl-[max(1rem,env(safe-area-inset-left,0px))] sm:pr-[max(1rem,env(safe-area-inset-right,0px))] sm:pt-[max(1rem,env(safe-area-inset-top,0px))] sm:pb-[max(1rem,env(safe-area-inset-bottom,0px))]"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="wohnen-bottom-sheet-panel max-h-[min(90vh,calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-0.5rem))] w-full max-w-md overflow-y-auto rounded-t-[20px] bg-white pt-2 pl-[max(1.25rem,env(safe-area-inset-left,0px))] pr-[max(1.25rem,env(safe-area-inset-right,0px))] pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] shadow-xl sm:max-h-[min(90vh,calc(100dvh-2rem))] sm:rounded-2xl sm:pt-6 sm:pl-[max(1.5rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.5rem,env(safe-area-inset-right,0px))] sm:pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#e0e0e0] sm:hidden" aria-hidden />
+            <h2 className="text-lg font-bold text-slate-900">Direktkontakt bestätigen</h2>
+            <p className="mt-3 text-sm text-slate-600">
+              Der Bewerber erhält eine E-Mail, dass du dich direkt bei ihm meldest.
+            </p>
+            <textarea
+              value={contactNote}
+              onChange={e => setContactNote(e.target.value)}
+              rows={3}
+              placeholder="Optionale Notiz für den Bewerber"
+              className="mt-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            />
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <button
+                type="button"
+                onClick={() => setContactModal(null)}
+                className="min-h-[44px] w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-800 sm:w-auto"
+              >
+                Abbrechen
+              </button>
+              <button
+                type="button"
+                onClick={onConfirmContact}
+                disabled={Boolean(busyId)}
+                className="min-h-[44px] w-full rounded-xl bg-[#18a87c] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50 sm:w-auto"
+              >
+                Bestätigen
+              </button>
+            </div>
+          </div>
+        </div>
+      : null}
+
       {rejectModal ?
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 pt-[max(0px,env(safe-area-inset-top,0px))] pl-[max(0px,env(safe-area-inset-left,0px))] pr-[max(0px,env(safe-area-inset-right,0px))] sm:items-center sm:p-4 sm:pl-[max(1rem,env(safe-area-inset-left,0px))] sm:pr-[max(1rem,env(safe-area-inset-right,0px))] sm:pt-[max(1rem,env(safe-area-inset-top,0px))] sm:pb-[max(1rem,env(safe-area-inset-bottom,0px))]"
@@ -503,7 +571,7 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#e0e0e0] sm:hidden" aria-hidden />
             <h2 className="text-lg font-bold text-slate-900">Bewerbung ablehnen</h2>
             <p className="mt-3 text-sm text-slate-600">
-              Der Bewerber wird nicht benachrichtigt — die Ablehnung ist nur intern sichtbar.
+              Der Bewerber wird per E-Mail informiert, dass die Bewerbung nicht weiterverfolgt wird.
             </p>
             <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <button

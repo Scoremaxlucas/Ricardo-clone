@@ -42,6 +42,7 @@ export function WohnungBewerbungsBox({
   const [loginOpen, setLoginOpen] = useState(false)
   const [applyOpen, setApplyOpen] = useState(false)
   const [applyConfirm, setApplyConfirm] = useState(false)
+  const [applyMessage, setApplyMessage] = useState('')
   const [applySubmitting, setApplySubmitting] = useState(false)
   const [applyError, setApplyError] = useState<string | null>(null)
   const [applyDone, setApplyDone] = useState(false)
@@ -117,6 +118,7 @@ export function WohnungBewerbungsBox({
 
   const openApplyModal = useCallback(() => {
     setApplyConfirm(false)
+    setApplyMessage('')
     setApplyError(null)
     setApplyDone(false)
     setApplyOpen(true)
@@ -133,7 +135,10 @@ export function WohnungBewerbungsBox({
       const res = await fetch('/api/rental-applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rentalListingId: listingId }),
+        body: JSON.stringify({
+          rentalListingId: listingId,
+          message: applyMessage.trim() || undefined,
+        }),
       })
       const data = (await res.json().catch(() => ({}))) as { code?: string; message?: string }
       if (!res.ok) {
@@ -169,7 +174,7 @@ export function WohnungBewerbungsBox({
     } finally {
       setApplySubmitting(false)
     }
-  }, [applyConfirm, listingId, router])
+  }, [applyConfirm, applyMessage, listingId, router])
 
   const onPrimaryClick = () => {
     if (isOwner) return
@@ -410,6 +415,17 @@ export function WohnungBewerbungsBox({
                     : 'Deine Profilangaben werden dem Vermieter mitgeteilt.'}
                   </span>
                 </div>
+                <label className="mt-5 block text-sm font-medium text-slate-800">
+                  Persönliche Nachricht (optional)
+                  <textarea
+                    value={applyMessage}
+                    onChange={e => setApplyMessage(e.target.value.slice(0, 500))}
+                    rows={3}
+                    placeholder="z. B. warum dir die Wohnung gefällt oder wann du einziehen könntest"
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm leading-relaxed text-slate-800 focus:border-[#18a87c] focus:outline-none focus:ring-2 focus:ring-[#18a87c]/20"
+                  />
+                  <span className="mt-1 block text-xs text-slate-500">{applyMessage.length} / 500</span>
+                </label>
                 <label className="mt-5 flex cursor-pointer items-start gap-2 text-sm text-slate-800">
                   <input
                     type="checkbox"

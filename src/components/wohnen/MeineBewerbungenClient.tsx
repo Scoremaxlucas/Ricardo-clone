@@ -24,6 +24,9 @@ export type MeineBewerbungRow = {
   status: RentalApplicationStatus
   message: string | null
   viewingRequestedAt: string | null
+  viewingDate: string | null
+  landlordRespondedAt: string | null
+  rejectedAt: string | null
   staleReportedAt: string | null
   listing: {
     id: string
@@ -44,11 +47,32 @@ type StatusVisual = {
 }
 
 function statusVisual(app: MeineBewerbungRow): StatusVisual {
+  if (app.rejectedAt || app.status === 'rejected') {
+    return {
+      label: 'Nicht berücksichtigt',
+      className: 'border-slate-200 bg-slate-100 text-slate-600',
+      Icon: Clock,
+    }
+  }
+  if (app.viewingRequestedAt && app.viewingDate) {
+    return {
+      label: 'Besichtigung geplant',
+      className: 'border-emerald-200/80 bg-emerald-50 text-emerald-900',
+      Icon: Clock,
+    }
+  }
   if (app.viewingRequestedAt) {
     return {
       label: 'Besichtigung angefragt',
       className: 'border-emerald-200/80 bg-emerald-50 text-emerald-900',
       Icon: Clock,
+    }
+  }
+  if (app.landlordRespondedAt) {
+    return {
+      label: 'Vermieter hat geantwortet',
+      className: 'border-teal-200 bg-teal-50 text-teal-900',
+      Icon: Send,
     }
   }
   switch (app.status) {
@@ -69,12 +93,6 @@ function statusVisual(app: MeineBewerbungRow): StatusVisual {
         label: 'Manuelle Prüfung',
         className: 'border-orange-200 bg-orange-50 text-orange-950',
         Icon: Search,
-      }
-    case 'rejected':
-      return {
-        label: 'Nicht berücksichtigt',
-        className: 'border-slate-200 bg-slate-100 text-slate-600',
-        Icon: Clock,
       }
     default:
       return {
@@ -173,6 +191,19 @@ function BewerbungCard({ app }: { app: MeineBewerbungRow }) {
               <p className="mt-1 text-sm font-medium text-slate-800">
                 {app.listing.rooms} Zi. · CHF {app.listing.rentPerMonth.toLocaleString('de-CH')}.— / Monat
               </p>
+              {app.viewingDate ?
+                <p className="mt-2 text-sm font-medium text-emerald-800">
+                  Besichtigung:{' '}
+                  {new Date(app.viewingDate).toLocaleString('de-CH', {
+                    weekday: 'short',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              : null}
             </div>
           </div>
 

@@ -27,6 +27,7 @@ import {
   templateLandlordNewApplication,
   templateTenantApplicationRejectedByLandlord,
   templateTenantApplicationSubmitted,
+  templateTenantNewListingMatch,
   templateTenantLandlordDirectContact,
   templateTenantLandlordNoResponseYet,
   templateLandlordListingExpiredCalendar,
@@ -97,6 +98,7 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
   /** Aktiver Helvenda-Qualitätsnachweis — Link in der Mail, kein PDF-Anhang. */
   certificateCode?: string | null
   landlordCanViewOnPlatform: boolean
+  landlordMagicLinkUrl?: string | null
 }): Promise<void> {
   const payload = templateLandlordNewApplication({
     landlordFirstName: opts.landlordSalutationFirstName,
@@ -116,6 +118,7 @@ export async function sendRentalLandlordNewApplicationEmail(opts: {
     applicantSummary: opts.applicantSummary ?? null,
     certificateCode: opts.certificateCode ?? null,
     landlordCanViewOnPlatform: opts.landlordCanViewOnPlatform,
+    landlordMagicLinkUrl: opts.landlordMagicLinkUrl ?? null,
   })
   const intended = opts.leadTestIntendedEmail?.trim()
   const verbose = Boolean(intended && isWohnenLeadEmailOverrideVerbose())
@@ -173,6 +176,33 @@ export async function sendRentalApplicantSuccessEmail(opts: {
     html: payload.html,
     text: payload.text,
     userId: opts.applicantUserId,
+  })
+}
+
+export async function sendTenantNewListingMatchEmail(opts: {
+  tenantEmail: string
+  tenantUserId: string
+  tenantFirst: { firstName?: string | null; name?: string | null }
+  listingTitle: string
+  listingId: string
+  addressLine: string
+  rooms: number
+  rentPerMonth: number
+}): Promise<void> {
+  const payload = templateTenantNewListingMatch({
+    tenantFirstName: firstName(opts.tenantFirst),
+    listingTitle: opts.listingTitle,
+    listingId: opts.listingId,
+    addressLine: opts.addressLine,
+    rooms: opts.rooms,
+    rentPerMonth: opts.rentPerMonth,
+  })
+  await sendWohnenEmail({
+    to: opts.tenantEmail,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+    userId: opts.tenantUserId,
   })
 }
 

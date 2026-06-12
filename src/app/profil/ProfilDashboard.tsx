@@ -2,6 +2,7 @@
 
 import { CertificateProfilSection } from '@/app/profil/CertificateProfilSection'
 import { OnboardingCompleteOverlay } from '@/app/profil/OnboardingCompleteOverlay'
+import { ProfilBonusSettings } from '@/components/wohnen/ProfilBonusSettings'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { formatDate } from '@/lib/utils/formatDate'
 import type { CreditCheckStatus } from '@prisma/client'
@@ -24,6 +25,8 @@ export type ProfilDashboardProps = {
     eligible: boolean
     checklist: { profileComplete: boolean; creditOk: boolean }
   }
+  bonusPayoutIban: string | null
+  listingMatchAlertsEnabled: boolean
 }
 
 function creditApprovedValid(status: CreditCheckStatus, expiresAt: string | null): boolean {
@@ -44,6 +47,8 @@ export function ProfilDashboard({
   personalRows,
   preferenceRows,
   certificate,
+  bonusPayoutIban,
+  listingMatchAlertsEnabled,
 }: ProfilDashboardProps) {
   const initials = `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase() || '?'
   const approvedValid = creditApprovedValid(creditCheckStatus, creditCheckExpiresAt)
@@ -217,6 +222,13 @@ export function ProfilDashboard({
               <p className="text-[15px] font-medium text-[#0d2b1f]">Wird geprüft — wir melden uns kurz.</p>
             </div>
           : null}
+        </div>
+
+        <div className="mt-14">
+          <ProfilBonusSettings
+            initialIban={bonusPayoutIban}
+            initialAlertsEnabled={listingMatchAlertsEnabled}
+          />
         </div>
       </main>
     </>

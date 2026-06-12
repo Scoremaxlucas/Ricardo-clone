@@ -70,9 +70,11 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/api/admin/stats')) return true
   if (pathname.startsWith('/api/admin/credit-check')) return true
   if (pathname.startsWith('/api/admin/applications')) return true
+  if (pathname.startsWith('/api/admin/wohnen/placements')) return true
   if (pathname.startsWith('/api/admin/rental-listing-invites')) return true
   if (pathname.startsWith('/api/admin/rental-ingest')) return true
   if (pathname.startsWith('/api/public/rental-listing-invite')) return true
+  if (pathname.startsWith('/api/public/landlord-lead')) return true
   if (pathname.startsWith('/api/rental-applications')) return true
   if (pathname.startsWith('/api/contact')) return true
   if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
@@ -100,8 +102,8 @@ function isAllowedOnWohnen(pathname: string): boolean {
     return true
   }
   if (pathname === '/verify' || pathname.startsWith('/verify/')) return true
+  if (pathname.startsWith('/vermieter/')) return true
   if (pathname === '/zertifikat') return true
-  if (pathname === '/help' || pathname.startsWith('/help/')) return true
   if (pathname === '/contact' || pathname.startsWith('/contact')) return true
   if (pathname === '/faq' || pathname.startsWith('/faq')) return true
   if (pathname === '/terms') return true
@@ -159,6 +161,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/admin/stats') ||
     pathname.startsWith('/api/admin/credit-check') ||
     pathname.startsWith('/api/admin/applications') ||
+    pathname.startsWith('/api/admin/wohnen/placements') ||
     pathname.startsWith('/api/admin/rental-listing-invites') ||
     pathname.startsWith('/api/admin/rental-ingest')
   ) {

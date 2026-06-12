@@ -5,9 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import toast from 'react-hot-toast'
 import { RentalListingLandlordForm } from '@/components/rental/RentalListingLandlordForm'
-import { MatchingPropertyWizard, type UrlImportReviewMeta } from '@/components/matching/MatchingPropertyWizard'
 import { mapAiImportToRentalLandlordInitial } from '@/lib/rental/listing-ai-to-rental-initial'
-import { mapAiImportToWizardSnapshot } from '@/lib/rental/listing-url-import-map'
 import type { ImportListingAiResult } from '@/lib/rental/listing-url-import-types'
 
 type Props = {
@@ -30,13 +28,10 @@ export function MatchingPropertyImportHub({ forAdminRental = false }: Props) {
   const [url, setUrl] = useState('')
   const [analyzing, setAnalyzing] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [review, setReview] = useState<{
-    snapshot: import('@/lib/matching/landlord-matching-properties').MatchingPropertyWizardSnapshot
-    meta: UrlImportReviewMeta
-  } | null>(null)
-  const [adminRentalReview, setAdminRentalReview] = useState<{
+  const [rentalReview, setRentalReview] = useState<{
     initial: import('@/lib/rental/rental-landlord-initial').RentalListingLandlordInitial
     sourceUrl: string
+    variant: 'landlord' | 'admin'
   } | null>(null)
 
   const runAnalyze = useCallback(async () => {
@@ -80,25 +75,13 @@ export function MatchingPropertyImportHub({ forAdminRental = false }: Props) {
         return
       }
 
-      if (forAdminRental) {
-        setAdminRentalReview({
-          initial: mapAiImportToRentalLandlordInitial(j.data),
-          sourceUrl: trimmed,
-        })
-        toast.success('Analyse abgeschlossen — bitte Daten und Quelle prüfen.')
-      } else {
-        const mapped = mapAiImportToWizardSnapshot(j.data)
-        setReview({
-          snapshot: mapped.snapshot,
-          meta: {
-            filledFieldCount: mapped.filledFieldCount,
-            confidence: j.data.confidence,
-            platformLabel: j.data.originalPlatform || 'Unbekannt',
-            cantonFromAi: mapped.cantonFromAi,
-          },
-        })
-        toast.success('Analyse abgeschlossen — bitte Daten prüfen.')
-      }
+      const initial = mapAiImportToRentalLandlordInitial(j.data)
+      setRentalReview({
+        initial,
+        sourceUrl: trimmed,
+        variant: forAdminRental ? 'admin' : 'landlord',
+      })
+      toast.success('Analyse abgeschlossen — bitte Daten und Quelle prüfen.')
     } catch {
       const msg = 'Seite nicht erreichbar. Ist die URL öffentlich zugänglich?'
       setErrorMsg(msg)
@@ -109,13 +92,13 @@ export function MatchingPropertyImportHub({ forAdminRental = false }: Props) {
   }, [router, url, forAdminRental])
 
   const resetUrlFlow = () => {
-    setReview(null)
-    setAdminRentalReview(null)
+    setRentalReview(null)
     setErrorMsg(null)
     setUrl('')
   }
 
-  if (adminRentalReview) {
+  if (rentalReview) {
+    const isAdmin = rentalReview.variant === 'admin'
     return (
       <div>
         <div className="mx-auto max-w-2xl px-4 pt-6">
@@ -129,35 +112,13 @@ export function MatchingPropertyImportHub({ forAdminRental = false }: Props) {
         </div>
         <RentalListingLandlordForm
           mode="create"
-          variant="admin"
+          variant={rentalReview.variant}
           minPhotos={0}
-          initial={adminRentalReview.initial}
-          importMetaLocked={{ importedFrom: adminRentalReview.sourceUrl }}
-          submitApiPath="/api/admin/rental-listings"
-          afterSaveRedirect="/admin/listings"
+          initial={rentalReview.initial}
+          importMetaLocked={{ importedFrom: rentalReview.sourceUrl }}
+          submitApiPath={isAdmin ? '/api/admin/rental-listings' : undefined}
+          afterSaveRedirect={isAdmin ? '/admin/listings' : '/matching/properties'}
           backHref="/matching/properties/import"
-        />
-      </div>
-    )
-  }
-
-  if (review) {
-    return (
-      <div>
-        <div className="mx-auto max-w-2xl px-4 pt-6">
-          <button
-            type="button"
-            onClick={resetUrlFlow}
-            className="text-sm font-medium text-teal-800 underline-offset-2 hover:underline"
-          >
-            ← Anderen Link analysieren
-          </button>
-        </div>
-        <MatchingPropertyWizard
-          mode="create"
-          initialSnapshot={review.snapshot}
-          urlImportReview={review.meta}
-          cancelHref="/matching/properties/import"
         />
       </div>
     )

@@ -103,6 +103,12 @@ export default async function AdminWohnenDashboardPage() {
       icon: Mail,
     },
     {
+      href: '/admin/wohnen/placements',
+      title: 'Vermittlungen',
+      desc: 'Erfolgsprovision & Einzugsbonus nach Einzug erfassen',
+      icon: ClipboardList,
+    },
+    {
       href: '/admin/applications',
       title: 'Bewerbungen',
       desc: 'Mietanfragen & Status',

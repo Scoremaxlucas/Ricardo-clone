@@ -108,13 +108,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const viewingNote =
       typeof body.viewingNote === 'string' ? body.viewingNote.trim() || null : null
 
-    if (body.action === 'reject' || body.action === 'request_viewing') {
+    if (body.action === 'reject' || body.action === 'request_viewing' || body.action === 'contact_directly') {
       const result = await applyLandlordApplicationDecision({
         applicationId: id,
         action: body.action,
         viewingDate: body.viewingDate != null ? String(body.viewingDate) : undefined,
         viewingNote,
         rejectionNote: typeof body.rejectionNote === 'string' ? body.rejectionNote : undefined,
+        directContactNote: typeof body.directContactNote === 'string' ? body.directContactNote : undefined,
       })
       if (!result.ok) {
         return NextResponse.json({ message: result.message }, { status: result.status })

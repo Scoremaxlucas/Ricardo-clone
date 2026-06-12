@@ -43,6 +43,9 @@ export default async function MeineBewerbungenPage() {
     status: a.status,
     message: a.message,
     viewingRequestedAt: a.viewingRequestedAt?.toISOString() ?? null,
+    viewingDate: a.viewingDate?.toISOString() ?? null,
+    landlordRespondedAt: a.landlordRespondedAt?.toISOString() ?? null,
+    rejectedAt: a.rejectedAt?.toISOString() ?? null,
     staleReportedAt: a.staleReportedAt?.toISOString() ?? null,
     listing: {
       id: a.listing.id,

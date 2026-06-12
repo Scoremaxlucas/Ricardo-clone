@@ -45,6 +45,7 @@ type Props = {
 export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) {
   const router = useRouter()
   const [confirm, setConfirm] = useState(false)
+  const [coverMessage, setCoverMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
@@ -79,7 +80,10 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
       const res = await fetch('/api/rental-applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rentalListingId: listing.id }),
+        body: JSON.stringify({
+          rentalListingId: listing.id,
+          message: coverMessage.trim() || undefined,
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -240,6 +244,18 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
                 : 'Deine Profilangaben werden dem Vermieter mitgeteilt.'}
               </span>
             </div>
+
+            <label className="mt-5 block text-sm font-medium text-slate-800">
+              Persönliche Nachricht (optional)
+              <textarea
+                value={coverMessage}
+                onChange={e => setCoverMessage(e.target.value.slice(0, 500))}
+                rows={4}
+                placeholder="z. B. warum dir die Wohnung gefällt"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm leading-relaxed focus:border-[#18a87c] focus:outline-none focus:ring-2 focus:ring-[#18a87c]/20"
+              />
+              <span className="mt-1 block text-xs text-slate-500">{coverMessage.length} / 500</span>
+            </label>
 
             <label className="mt-5 flex cursor-pointer items-start gap-2 text-sm text-slate-800">
               <input

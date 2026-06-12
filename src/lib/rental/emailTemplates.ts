@@ -6,6 +6,7 @@
 import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
 import { employmentLabelDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
+import { LANDLORD_LEAD_TOKEN_TTL_DAYS } from '@/lib/rental/landlord-lead-token'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { isCreditCheckResult } from '@/lib/rental/types'
 import {
@@ -137,9 +138,12 @@ export function templateLandlordNewApplication(input: {
   certificateCode: string | null
   /** false = Admin-Inserat / externer Vermieter ohne Helvenda-Konto */
   landlordCanViewOnPlatform: boolean
+  /** Magic-Link für externe Vermieter — Bewerbung ohne Konto verwalten */
+  landlordMagicLinkUrl?: string | null
 }): WohnenEmailPayload {
   const o = wohnenOrigin()
   const platformLink = `${o}/matching/properties/${encodeURIComponent(input.listingId)}/bewerbungen`
+  const magicLink = input.landlordMagicLinkUrl?.trim() || null
   const verifyLink =
     input.certificateCode?.trim() ?
       `${o}/verify/${encodeURIComponent(input.certificateCode.trim())}`
@@ -166,12 +170,18 @@ export function templateLandlordNewApplication(input: {
   const ctaBlock =
     input.landlordCanViewOnPlatform ?
       buttonRow(platformLink, 'Bewerbung ansehen')
+    : magicLink ?
+      `${buttonRow(magicLink, 'Bewerbung verwalten')}
+<p style="margin:12px 0 0 0;font-size:13px;line-height:1.55;color:#4b5563;">Über diesen Link kannst du Besichtigung anfragen, ablehnen oder dich direkt melden — ohne Helvenda-Konto. Der Link ist ${LANDLORD_LEAD_TOKEN_TTL_DAYS} Tage gültig.</p>
+${verifyLink ? `<p style="margin:14px 0 0 0;font-size:14px;line-height:1.55;color:#4b5563;">Qualitätsnachweis des Bewerbers: <a href="${escapeHtml(verifyLink)}" style="color:#0f766e;font-weight:600;">Prüfseite öffnen</a></p>` : ''}`
     : `${verifyLink ? buttonRow(verifyLink, 'Qualitätsnachweis prüfen') : ''}
 <p style="margin:${verifyLink ? '12px' : '18px'} 0 0 0;font-size:14px;line-height:1.55;color:#4b5563;">Telefon und E-Mail des Bewerbers stehen oben. Die Prüfseite ist öffentlich — kein Helvenda-Konto nötig.</p>`
 
   const textCtaLines =
     input.landlordCanViewOnPlatform ?
       [platformLink]
+    : magicLink ?
+      [magicLink, verifyLink ? `Qualitätsnachweis: ${verifyLink}` : ''].filter(Boolean)
     : [verifyLink ? `Qualitätsnachweis: ${verifyLink}` : ''].filter(Boolean)
 
   const inner = `
@@ -340,6 +350,39 @@ ${buttonRow(link, 'Meine Bewerbungen')}
     link,
     '',
     'Tipp: Beantworte Nachrichten des Vermieters schnell.',
+  ].join('\n')
+  return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
+}
+
+/** Neues Inserat passt zu Suchpräferenzen (Mieter, Cron) */
+export function templateTenantNewListingMatch(input: {
+  tenantFirstName: string
+  listingTitle: string
+  listingId: string
+  addressLine: string
+  rooms: number
+  rentPerMonth: number
+}): WohnenEmailPayload {
+  const o = wohnenOrigin()
+  const listingLink = `${o}/wohnungen/${encodeURIComponent(input.listingId)}`
+  const matchesLink = `${o}/meine-matches`
+  const inner = `
+<p style="margin:0 0 14px 0;">Hallo ${escapeHtml(input.tenantFirstName)},</p>
+<p style="margin:0 0 14px 0;">es gibt ein neues Inserat auf Helvenda Wohnungen, das zu deinen Suchkriterien passt:</p>
+<p style="margin:0 0 8px 0;"><strong>${escapeHtml(input.listingTitle)}</strong><br>
+<span style="color:#4b5563;">${escapeHtml(input.addressLine)} · ${escapeHtml(formatRoomsDe(input.rooms))} · CHF ${escapeHtml(formatChf(input.rentPerMonth))}/Monat</span></p>
+${buttonRow(listingLink, 'Inserat ansehen')}
+<p style="margin:16px 0 0 0;font-size:14px;color:#4b5563;">Mit deinem Helvenda-Profil kannst du dich in einem Klick bewerben. <a href="${escapeHtml(matchesLink)}" style="color:#18a87c;">Alle Matches</a></p>
+`
+  const subject = `Neue Wohnung: „${input.listingTitle}“`
+  const text = [
+    `Hallo ${input.tenantFirstName},`,
+    '',
+    'Neues Inserat, das zu deiner Suche passt:',
+    input.listingTitle,
+    `${input.addressLine} · ${formatRoomsDe(input.rooms)} · CHF ${formatChf(input.rentPerMonth)}/Monat`,
+    '',
+    listingLink,
   ].join('\n')
   return { subject, html: layout(inner), text: appendWohnenPublicNotice(text, true) }
 }

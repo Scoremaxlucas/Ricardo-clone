@@ -170,6 +170,8 @@ model User {
   rentalApplicationsAsApplicant RentalApplication[]   @relation("RentalApplicationApplicant")
   tenantProfile                 TenantProfile?
   certificates                  HelvendaCertificate[]
+  wohnenPlacementsAsApplicant   WohnenRentalPlacement[] @relation("WohnenPlacementApplicant")
+  wohnenPlacementsRecorded      WohnenRentalPlacement[] @relation("WohnenPlacementRecordedBy")
 
   // === HELVENDA MATCHING (eigenes Datenmodell, nicht RentalListing) ===
   landlordMemberships              LandlordMembership[]
@@ -1819,6 +1821,8 @@ model RentalListing {
   user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   externalLandlord ExternalLandlord? @relation(fields: [externalLandlordId], references: [id], onDelete: SetNull)
   applications  RentalApplication[]
+  placements    WohnenRentalPlacement[]
+  listingMatchAlerts WohnenListingMatchAlert[]
   sourceInvites RentalListingInvite[]
   externalLandlordPermissions ExternalLandlordPermission[]
   externalLandlordAttachments ExternalLandlordAttachment[]
@@ -1991,6 +1995,7 @@ model RentalApplication {
 
   listing   RentalListing @relation(fields: [rentalListingId], references: [id], onDelete: Cascade)
   applicant User          @relation("RentalApplicationApplicant", fields: [applicantUserId], references: [id], onDelete: Cascade)
+  placement WohnenRentalPlacement?
 
   @@unique([rentalListingId, applicantUserId])
   @@index([rentalListingId])
@@ -1998,6 +2003,74 @@ model RentalApplication {
   @@index([status])
   @@index([tenantProfileId])
   @@map("rental_applications")
+}
+
+enum WohnenCommissionStatus {
+  pending
+  invoiced
+  paid
+  waived
+  cancelled
+}
+
+enum WohnenTenantBonusStatus {
+  not_eligible
+  eligible
+  pending_payout
+  paid
+  excluded
+}
+
+/** Erfolgreiche Vermittlung — Grundlage für Vermittlungsentgelt und Mieter-Einzugsbonus. */
+model WohnenRentalPlacement {
+  id                   String                  @id @default(cuid())
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  rentalApplicationId  String                  @unique
+  rentalListingId      String
+  applicantUserId      String
+  netRentPerMonth      Int
+  commissionPercent    Int                     @default(33)
+  commissionAmountChf  Int
+  vatRate              Float                   @default(0.081)
+  vatAmountChf         Int
+  commissionTotalChf   Int
+  commissionStatus     WohnenCommissionStatus  @default(pending)
+  moveInDate           DateTime?
+  confirmedAt          DateTime?
+  commissionInvoicedAt DateTime?
+  commissionPaidAt     DateTime?
+  tenantBonusAmountChf Int                     @default(250)
+  tenantBonusStatus    WohnenTenantBonusStatus @default(eligible)
+  tenantBonusEligibleAt DateTime?
+  tenantBonusPaidAt    DateTime?
+  adminNotes           String?                 @db.Text
+  recordedByUserId     String?
+
+  rentalApplication RentalApplication @relation(fields: [rentalApplicationId], references: [id], onDelete: Cascade)
+  rentalListing     RentalListing     @relation(fields: [rentalListingId], references: [id], onDelete: Cascade)
+  applicant         User              @relation("WohnenPlacementApplicant", fields: [applicantUserId], references: [id], onDelete: Cascade)
+  recordedBy        User?             @relation("WohnenPlacementRecordedBy", fields: [recordedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([rentalListingId])
+  @@index([applicantUserId])
+  @@index([commissionStatus])
+  @@index([tenantBonusStatus])
+  @@map("wohnen_rental_placements")
+}
+
+/** Versendete «Neues Inserat passt zu deiner Suche»-Mails (Dedupe). */
+model WohnenListingMatchAlert {
+  id              String        @id @default(cuid())
+  sentAt          DateTime      @default(now())
+  tenantProfileId String
+  rentalListingId String
+  tenantProfile   TenantProfile @relation(fields: [tenantProfileId], references: [id], onDelete: Cascade)
+  rentalListing   RentalListing @relation(fields: [rentalListingId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantProfileId, rentalListingId])
+  @@index([rentalListingId])
+  @@map("wohnen_listing_match_alerts")
 }
 
 /** Wohnen: zuverlässiger E-Mail-Versand (Retry via Cron), z. B. Mieter-Bestätigung nach Bewerbung. */
@@ -2173,8 +2246,14 @@ model TenantProfile {
 
   isComplete            Boolean            @default(false)
 
+  /** IBAN für Auszahlung des Einzugsbonus (optional, manuelle Prüfung durch Admin). */
+  bonusPayoutIban       String?
+  /** E-Mail-Benachrichtigung bei neuen passenden Inseraten (Cron). */
+  listingMatchAlertsEnabled Boolean        @default(true)
+
   applications RentalApplication[]
   certificates         HelvendaCertificate[]
+  listingMatchAlerts   WohnenListingMatchAlert[]
 
   @@index([userId])
   @@map("tenant_profiles")

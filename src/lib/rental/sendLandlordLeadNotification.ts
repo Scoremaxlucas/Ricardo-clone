@@ -1,6 +1,7 @@
 import { CertificateStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { buildApplicantSummaryForLandlord } from '@/lib/rental/build-applicant-summary'
+import { ensureLandlordLeadToken } from '@/lib/rental/landlord-lead-token'
 import { sendRentalLandlordNewApplicationEmail } from '@/lib/rental/emails'
 import {
   isHelvendaInternalListingOwnerEmail,
@@ -102,6 +103,16 @@ export async function sendLandlordLeadNotificationForApplication(
 
   const canViewOnPlatform = !isHelvendaInternalListingOwnerEmail(app.listing.user?.email)
 
+  let landlordMagicLinkUrl: string | null = null
+  if (!canViewOnPlatform) {
+    try {
+      const lead = await ensureLandlordLeadToken(applicationId)
+      landlordMagicLinkUrl = lead.url
+    } catch (e) {
+      console.error('[sendLandlordLeadNotification] Magic-Link konnte nicht erstellt werden', e)
+    }
+  }
+
   try {
     await sendRentalLandlordNewApplicationEmail({
       landlordEmail: delivery.to,
@@ -125,6 +136,7 @@ export async function sendLandlordLeadNotificationForApplication(
       referencePhone: app.tenantProfile.referencePhone,
       certificateCode: activeCert?.certificateCode ?? null,
       landlordCanViewOnPlatform: canViewOnPlatform,
+      landlordMagicLinkUrl,
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'E-Mail-Versand fehlgeschlagen'

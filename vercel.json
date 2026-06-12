@@ -98,6 +98,10 @@
     {
       "path": "/api/cron/landlord-response-followup",
       "schedule": "30 9 * * *"
+    },
+    {
+      "path": "/api/cron/wohnen-listing-match-alerts",
+      "schedule": "0 8 * * *"
     }
   ]
 }

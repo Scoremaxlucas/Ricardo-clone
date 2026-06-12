@@ -185,6 +185,8 @@ export default async function ProfilPage({
         eligible: elig.eligible,
         checklist: { profileComplete: profile.isComplete, creditOk },
       }}
+      bonusPayoutIban={profile.bonusPayoutIban}
+      listingMatchAlertsEnabled={profile.listingMatchAlertsEnabled}
     />
   )
 }
