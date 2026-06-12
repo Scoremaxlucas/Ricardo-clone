@@ -1,41 +1,36 @@
-import {
-  CERTIFICATE_FOOTNOTE_PDF_DE,
-  CERTIFICATE_HERO_PROMISE_PDF_DE,
-  CERTIFICATE_LANDLORD_BANNER_PDF_DE,
-  type CertificateFieldBadge,
-} from '@/lib/certificate/certificate-display'
+import { CERTIFICATE_FOOTNOTE_PDF_DE } from '@/lib/certificate/certificate-display'
 import type { CreditCertificateDisplayStatus } from '@/lib/certificate/issueCertificate'
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import * as React from 'react'
 
 /**
- * Helvenda Wohnungen — Qualitätsnachweis PDF
- * Flagship: symmetrische Faktenzeilen, klassische Titelschrift, Umbruch für lange Texte.
- * Nur Standard-PDF-Schriften (Helvetica, Times, Courier).
+ * Helvenda Wohnungen — Qualitätsnachweis (PDF).
+ *
+ * Designhaltung:
+ *  - Eine Schriftfamilie (Helvetica), Courier nur für Code/URL.
+ *  - Hairlines und Whitespace tragen die Hierarchie, keine Boxen.
+ *  - Akzentfarbe sparsam (Top-Hairline, Logomark, ein Status-Wert).
+ *  - Keine Siegel-Ornamente, keine Vermieter-Kommunikationsbanner.
+ *  - A4 wird gefüllt; Footer am unteren Rand der Seite.
  */
 const TEAL = '#0d6b52'
-const TEAL_LIGHT = '#e8f4f0'
 const TEAL_ACCENT = '#18a87c'
-const INK = '#121814'
+const INK = '#0d1411'
 const INK_SOFT = '#2a322e'
-const LABEL = '#5a6560'
-const MUTED = '#4a524e'
-const LINE = '#d8dcd9'
-const LINE_STRONG = '#1a1f1c'
-const PAPER = '#e8e9e6'
-const SHEET = '#ffffff'
-const SHEET_EDGE = '#bfc4bf'
-const FOOTER_BG = '#0f1412'
-const ORANGE = '#c45c12'
-const RED = '#a82828'
-const DISCLAIMER = '#5c6560'
-const FACTS_BG = '#fafbf9'
-const PAD_OUTER = 18
-const PAD = 34
-const FOOTER_H = 26
+const MUTED = '#5b655f'
+const LABEL = '#7a847e'
+const HAIRLINE = '#d8ddd9'
+const HAIRLINE_SOFT = '#e6eae6'
+const ORANGE = '#b14a0e'
+const RED = '#9c2424'
+
 const HF = 'Helvetica'
 const HFB = 'Helvetica-Bold'
 const CF = 'Courier'
-const TFB = 'Times-Bold'
+
+const PAGE_PAD_X = 56
+const PAGE_PAD_TOP = 38
+const PAGE_PAD_BOTTOM = 44
 
 function formatNumber(n: number): string {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'")
@@ -72,482 +67,273 @@ function daysRemainingFor(expiresAt: Date): number {
 
 const styles = StyleSheet.create({
   page: {
-    width: '100%',
-    backgroundColor: PAPER,
+    backgroundColor: '#ffffff',
     fontFamily: HF,
     color: INK,
-    padding: PAD_OUTER,
-    paddingBottom: PAD_OUTER,
+    paddingHorizontal: PAGE_PAD_X,
+    paddingTop: PAGE_PAD_TOP,
+    paddingBottom: PAGE_PAD_BOTTOM,
+    flexDirection: 'column',
   },
-  sheet: {
-    backgroundColor: SHEET,
-    borderWidth: 0.75,
-    borderColor: SHEET_EDGE,
-    position: 'relative',
-    paddingBottom: FOOTER_H,
-  },
-  topRuleTeal: {
-    height: 3,
+
+  topStripe: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 5,
     backgroundColor: TEAL_ACCENT,
-    width: '100%',
   },
-  topRuleInk: {
-    height: 2,
-    backgroundColor: LINE_STRONG,
-    width: '100%',
-  },
+
+  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    paddingHorizontal: PAD,
-    paddingTop: 20,
-    paddingBottom: 10,
+    alignItems: 'flex-start',
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   logoBox: {
-    width: 30,
-    height: 30,
+    width: 26,
+    height: 26,
     backgroundColor: TEAL_ACCENT,
-    borderRadius: 4,
+    borderRadius: 3,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoLetter: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: HFB,
   },
-  brandCol: {
+  brandText: {
     marginLeft: 11,
   },
   brandName: {
     fontSize: 11,
     fontFamily: HFB,
     color: INK,
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
-  brandSub: {
-    fontSize: 6.5,
+  brandTagline: {
+    fontSize: 7.5,
     fontFamily: HF,
     color: LABEL,
-    marginTop: 2,
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
+    marginTop: 3,
   },
-  docTitleBlock: {
+  headerRight: {
     alignItems: 'flex-end',
   },
   docTitle: {
-    fontSize: 9,
-    fontFamily: TFB,
-    color: INK,
-    letterSpacing: 2.4,
-  },
-  docTitleRule: {
-    width: 120,
-    height: 1.5,
-    backgroundColor: TEAL_ACCENT,
-    marginTop: 6,
-  },
-  registryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    marginHorizontal: PAD,
-    marginTop: 4,
-    borderWidth: 0.75,
-    borderColor: LINE,
-    backgroundColor: FACTS_BG,
-  },
-  registryLabel: {
-    fontSize: 6.5,
+    fontSize: 11,
     fontFamily: HFB,
-    color: LABEL,
-    letterSpacing: 1.4,
-    flexShrink: 0,
-    paddingRight: 8,
+    color: INK,
+    letterSpacing: 0.2,
   },
-  registryCodeWrap: {
-    flex: 1,
-    minWidth: 0,
-    alignItems: 'flex-end',
-  },
-  registryCode: {
+  docCode: {
     fontSize: 8.5,
     fontFamily: CF,
-    color: INK,
-    letterSpacing: 0.35,
-    textAlign: 'right',
+    color: INK_SOFT,
+    letterSpacing: 0.4,
+    marginTop: 4,
   },
-  heroRow: {
-    flexDirection: 'row',
-    paddingHorizontal: PAD,
-    marginTop: 12,
-    alignItems: 'flex-start',
+  headerRule: {
+    height: 0.6,
+    backgroundColor: HAIRLINE,
+    marginTop: 14,
   },
-  heroCol: {
-    flex: 1,
-    minWidth: 0,
-    maxWidth: 398,
-    borderLeftWidth: 3,
-    borderLeftColor: TEAL_ACCENT,
-    paddingLeft: 14,
-    paddingVertical: 4,
-    paddingRight: 8,
+
+  // Holder
+  holder: {
+    marginTop: 32,
+    marginBottom: 32,
   },
-  heroKicker: {
-    fontSize: 6.5,
-    fontFamily: HFB,
-    color: LABEL,
-    letterSpacing: 2.2,
-    marginBottom: 6,
-  },
-  heroName: {
-    fontSize: 21,
-    fontFamily: HFB,
-    color: INK,
-    lineHeight: 1.12,
-    letterSpacing: -0.15,
-    width: '100%',
-  },
-  heroPromise: {
-    marginTop: 9,
+  eyebrow: {
     fontSize: 7.5,
-    fontFamily: HF,
-    color: MUTED,
-    lineHeight: 1.48,
-    width: '100%',
-  },
-  sealOuter: {
-    width: 86,
-    height: 86,
-    borderRadius: 50,
-    borderWidth: 2.25,
-    borderColor: TEAL,
-    backgroundColor: TEAL_LIGHT,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    marginTop: 2,
-  },
-  sealInner: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 0.75,
-    borderColor: TEAL,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 4,
-  },
-  sealMonogram: {
-    fontSize: 18,
-    fontFamily: HFB,
-    color: TEAL,
-    letterSpacing: 2,
-    marginBottom: 2,
-  },
-  sealLine: {
-    fontSize: 5.5,
-    fontFamily: HFB,
-    color: TEAL,
-    letterSpacing: 1.8,
-    marginBottom: 1,
-  },
-  sealYear: {
-    fontSize: 8,
-    fontFamily: HFB,
-    color: TEAL,
-    marginTop: 2,
-  },
-  factsFrame: {
-    marginHorizontal: PAD,
-    marginTop: 10,
-    borderWidth: 0.75,
-    borderColor: LINE,
-    backgroundColor: FACTS_BG,
-    paddingVertical: 4,
-    paddingHorizontal: 4,
-  },
-  factPairRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    minHeight: 48,
-  },
-  factPairHsep: {
-    height: 0.5,
-    backgroundColor: LINE,
-    marginHorizontal: 6,
-  },
-  factPairCell: {
-    flex: 1,
-    minWidth: 0,
-    paddingHorizontal: 8,
-    justifyContent: 'flex-start',
-  },
-  factPairVline: {
-    width: 0.75,
-    alignSelf: 'stretch',
-    backgroundColor: LINE,
-    flexShrink: 0,
-  },
-  factLabel: {
-    fontSize: 6,
     fontFamily: HFB,
     color: LABEL,
     letterSpacing: 1.6,
-    marginBottom: 3,
+  },
+  holderName: {
+    fontSize: 26,
+    fontFamily: HFB,
+    color: INK,
+    letterSpacing: -0.3,
+    marginTop: 10,
+    lineHeight: 1.1,
+  },
+  holderAddress: {
+    fontSize: 10.5,
+    fontFamily: HF,
+    color: MUTED,
+    marginTop: 8,
+    lineHeight: 1.4,
+  },
+
+  sectionRule: {
+    height: 0.6,
+    backgroundColor: HAIRLINE,
+  },
+
+  // Section
+  section: {
+    paddingTop: 22,
+    paddingBottom: 22,
+  },
+  sectionTitle: {
+    fontSize: 8,
+    fontFamily: HFB,
+    color: TEAL,
+    letterSpacing: 1.6,
+    marginBottom: 18,
+  },
+
+  // Verified single fact (Betreibungsregister)
+  factLabel: {
+    fontSize: 7.5,
+    fontFamily: HFB,
+    color: LABEL,
+    letterSpacing: 1.4,
+    marginBottom: 6,
   },
   factValue: {
     fontSize: 11,
     fontFamily: HFB,
     color: INK,
-    lineHeight: 1.22,
-    width: '100%',
+    lineHeight: 1.25,
   },
-  factValueSm: {
-    fontSize: 12,
+  factValueLg: {
+    fontSize: 15,
     fontFamily: HFB,
-    lineHeight: 1.18,
-    width: '100%',
+    color: INK,
+    lineHeight: 1.2,
   },
-  landlordBanner: {
-    marginHorizontal: PAD,
-    marginTop: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    backgroundColor: TEAL_LIGHT,
-    borderLeftWidth: 3,
-    borderLeftColor: TEAL_ACCENT,
-  },
-  landlordBannerKicker: {
-    fontSize: 6,
-    fontFamily: HFB,
-    color: TEAL,
-    letterSpacing: 1.4,
-    marginBottom: 4,
-  },
-  landlordBannerText: {
-    fontSize: 7.5,
-    fontFamily: HF,
-    color: INK_SOFT,
-    lineHeight: 1.45,
-  },
-  factLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 3,
-  },
-  factBadge: {
-    fontSize: 5.5,
-    fontFamily: HFB,
-    letterSpacing: 1,
-    marginLeft: 5,
-  },
-  factSub: {
-    fontSize: 7.5,
+  factCaption: {
+    fontSize: 9,
     fontFamily: HF,
     color: MUTED,
-    marginTop: 3,
-    lineHeight: 1.38,
-    width: '100%',
+    marginTop: 5,
+    lineHeight: 1.4,
   },
-  verifyPanel: {
-    marginHorizontal: PAD,
-    marginTop: 10,
-    borderWidth: 0.75,
-    borderColor: LINE,
-    backgroundColor: '#f3f6f3',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+
+  // 2-col grid
+  grid: {
+    flexDirection: 'row',
+  },
+  gridCell: {
+    flex: 1,
+    paddingRight: 18,
+  },
+  gridCellLast: {
+    flex: 1,
+    paddingLeft: 18,
+  },
+  gridSpacer: {
+    height: 22,
+  },
+
+  // Validity row
+  validity: {
+    flexDirection: 'row',
+    paddingTop: 22,
+    paddingBottom: 22,
+  },
+  validityCol: {
+    flex: 1,
+    paddingRight: 18,
+  },
+  validityColLast: {
+    flex: 1,
+  },
+
+  // Verify panel
+  verify: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    paddingTop: 22,
+    paddingBottom: 22,
   },
   qrFrame: {
-    width: 64,
-    height: 64,
-    borderWidth: 0.75,
-    borderColor: INK,
+    width: 70,
+    height: 70,
+    borderWidth: 0.6,
+    borderColor: HAIRLINE,
     padding: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: SHEET,
     flexShrink: 0,
   },
   qrImg: {
-    width: 54,
-    height: 54,
+    width: 60,
+    height: 60,
   },
-  qrCopy: {
-    marginLeft: 12,
+  verifyCopy: {
     flex: 1,
     minWidth: 0,
+    marginLeft: 18,
+    paddingTop: 2,
   },
-  qrHead: {
-    fontSize: 6.5,
+  verifyTitle: {
+    fontSize: 9,
     fontFamily: HFB,
     color: INK,
-    letterSpacing: 2,
-    marginBottom: 3,
+    letterSpacing: 1.4,
   },
-  qrSub: {
-    fontSize: 7,
-    fontFamily: HF,
-    color: LABEL,
-    marginBottom: 5,
-    width: '100%',
-  },
-  qrUrl: {
-    fontSize: 7.5,
+  verifyUrl: {
+    fontSize: 9.5,
     fontFamily: CF,
     color: INK_SOFT,
-    lineHeight: 1.38,
-    width: '100%',
+    marginTop: 7,
+    letterSpacing: 0.2,
   },
-  qrFoot: {
-    fontSize: 7,
+  verifyText: {
+    fontSize: 9,
     fontFamily: HF,
-    color: LABEL,
-    marginTop: 6,
+    color: MUTED,
+    marginTop: 9,
     lineHeight: 1.45,
     width: '100%',
   },
-  disclaimerSep: {
-    height: 0.75,
-    backgroundColor: LINE,
-    marginHorizontal: PAD,
-    marginTop: 8,
-    marginBottom: 6,
+
+  // Footer
+  spacer: {
+    flexGrow: 1,
   },
-  disclaimer: {
-    fontSize: 7,
-    fontFamily: HF,
-    color: DISCLAIMER,
-    paddingHorizontal: PAD,
-    lineHeight: 1.52,
-    width: '100%',
-    maxWidth: 515,
-    alignSelf: 'center',
+  footer: {
+    paddingTop: 16,
   },
-  decSep: {
-    height: 0.75,
-    backgroundColor: LINE,
-    marginHorizontal: PAD,
-    marginTop: 8,
-    marginBottom: 6,
+  footerRule: {
+    height: 0.6,
+    backgroundColor: HAIRLINE_SOFT,
+    marginBottom: 14,
   },
-  decRow: {
-    flexDirection: 'row',
-    paddingHorizontal: PAD,
-    marginBottom: 4,
-    alignItems: 'flex-start',
-  },
-  decColFirst: {
-    flex: 1,
-    minWidth: 0,
-    paddingRight: 12,
-    borderRightWidth: 0.75,
-    borderRightColor: LINE,
-    minHeight: 36,
-  },
-  decColMid: {
-    flex: 1,
-    minWidth: 0,
-    paddingHorizontal: 12,
-    borderRightWidth: 0.75,
-    borderRightColor: LINE,
-    minHeight: 36,
-  },
-  decColLast: {
-    flex: 1,
-    minWidth: 0,
-    paddingLeft: 12,
-    minHeight: 36,
-  },
-  decLab: {
-    fontSize: 5.5,
-    fontFamily: HFB,
-    color: LABEL,
-    letterSpacing: 1.4,
-    marginBottom: 3,
-  },
-  decVal: {
-    fontSize: 8.5,
-    fontFamily: HFB,
-    color: INK_SOFT,
-    width: '100%',
-  },
-  decSub: {
-    fontSize: 7,
+  footnote: {
+    fontSize: 7.5,
     fontFamily: HF,
     color: MUTED,
-    marginTop: 2,
+    lineHeight: 1.5,
+    marginBottom: 12,
     width: '100%',
   },
-  bottomBand: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: FOOTER_H,
-    backgroundColor: FOOTER_BG,
+  metaRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: PAD,
-    borderTopWidth: 0.75,
-    borderTopColor: '#2a3430',
+    alignItems: 'flex-end',
   },
-  bottomText: {
-    fontSize: 6.5,
+  metaLeft: {
+    fontSize: 7.5,
     fontFamily: HF,
-    color: 'rgba(255,255,255,0.72)',
-    maxWidth: 380,
+    color: LABEL,
+    lineHeight: 1.45,
   },
-  bottomTextRight: {
-    fontSize: 6.5,
-    fontFamily: HFB,
-    color: 'rgba(255,255,255,0.85)',
-    textAlign: 'right',
+  metaRight: {
+    fontSize: 7.5,
+    fontFamily: HF,
+    color: LABEL,
+    letterSpacing: 0.2,
   },
 })
-
-function FactCell({
-  label,
-  badge,
-  value,
-  valueColor,
-  valueLarge,
-  sub,
-}: {
-  label: string
-  badge: CertificateFieldBadge
-  value: string
-  valueColor?: string
-  valueLarge?: boolean
-  sub?: string
-}) {
-  const badgeColor = badge === 'verified' ? TEAL_ACCENT : LABEL
-  const badgeText = badge === 'verified' ? 'GEPRÜFT' : 'ERFASST'
-  const valueBase = valueLarge ? styles.factValueSm : styles.factValue
-  return (
-    <View style={styles.factPairCell}>
-      <View style={styles.factLabelRow}>
-        <Text style={styles.factLabel}>{label}</Text>
-        <Text style={[styles.factBadge, { color: badgeColor }]}>{badgeText}</Text>
-      </View>
-      <Text style={valueColor ? [valueBase, { color: valueColor }] : valueBase}>{value}</Text>
-      {sub ? <Text style={styles.factSub}>{sub}</Text> : null}
-    </View>
-  )
-}
 
 export type CertificatePdfProps = {
   certificateCode: string
@@ -601,207 +387,144 @@ export function CertificatePdfDocument(props: CertificatePdfProps) {
   const holder = `${firstName} ${lastName}`.trim()
   const brClear = creditStatus === 'CLEAR'
   const kantonSuffix = canton ? ` · Kanton ${canton}` : ''
-  const brSub = `Auszug geprüft · Stichtag ${formatPdfDate(creditCheckDate)}${kantonSuffix}`
+  const brCaption = `Auszug geprüft am ${formatPdfDate(creditCheckDate)}${kantonSuffix}`
 
   const daysRem = daysRemainingFor(expiresAt)
-  const expiryValueColor = daysRem > 30 ? INK : daysRem > 14 ? ORANGE : RED
+  const expiryColor = daysRem > 30 ? INK : daysRem > 14 ? ORANGE : RED
   const verifyPath = verifyDisplayPath(verifyUrl)
 
-  const incomeSub = `3×-Regel · max. CHF ${formatNumber(incomeQualifiesUpTo)} / Monat Miete`
+  const incomeCaption = `Zulässige Bruttomiete nach 3×-Regel: CHF ${formatNumber(incomeQualifiesUpTo)}`
+  const addressLine = `${address} · ${zip} ${city}`.trim()
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.sheet}>
-          <View style={styles.topRuleTeal} />
-          <View style={styles.topRuleInk} />
+        <View style={styles.topStripe} fixed />
 
-          <View style={styles.header}>
-            <View style={styles.brandRow}>
-              <View style={styles.logoBox}>
-                <Text style={styles.logoLetter}>H</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.brandRow}>
+            <View style={styles.logoBox}>
+              <Text style={styles.logoLetter}>H</Text>
+            </View>
+            <View style={styles.brandText}>
+              <Text style={styles.brandName}>Helvenda Wohnungen</Text>
+              <Text style={styles.brandTagline}>Schweizer Mietmarktplatz</Text>
+            </View>
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.docTitle}>Qualitätsnachweis</Text>
+            <Text style={styles.docCode}>{certificateCode}</Text>
+          </View>
+        </View>
+        <View style={styles.headerRule} />
+
+        {/* Holder */}
+        <View style={styles.holder}>
+          <Text style={styles.eyebrow}>AUSGESTELLT FÜR</Text>
+          <Text style={styles.holderName}>{holder}</Text>
+          <Text style={styles.holderAddress}>{addressLine}</Text>
+        </View>
+
+        <View style={styles.sectionRule} />
+
+        {/* Verifizierte Angaben */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>VERIFIZIERTE ANGABEN</Text>
+          <Text style={styles.factLabel}>Betreibungsregister</Text>
+          <Text style={[styles.factValueLg, { color: brClear ? TEAL : RED }]}>
+            {brClear ? 'Keine Einträge' : 'Einträge vorhanden'}
+          </Text>
+          <Text style={styles.factCaption}>{brCaption}</Text>
+        </View>
+
+        <View style={styles.sectionRule} />
+
+        {/* Angaben aus Mieterprofil */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>ANGABEN AUS MIETERPROFIL</Text>
+          <View style={styles.grid}>
+            <View style={styles.gridCell}>
+              <Text style={styles.factLabel}>Haushaltsnetto</Text>
+              <Text style={styles.factValue}>{incomeLabel}</Text>
+              <Text style={styles.factCaption}>{incomeCaption}</Text>
+            </View>
+            <View style={styles.gridCellLast}>
+              <Text style={styles.factLabel}>Beschäftigung</Text>
+              <Text style={styles.factValue}>{employmentLine}</Text>
+            </View>
+          </View>
+          {housingSituationLabel ?
+            <>
+              <View style={styles.gridSpacer} />
+              <View style={styles.grid}>
+                <View style={styles.gridCell}>
+                  <Text style={styles.factLabel}>Wohnverhältnis</Text>
+                  <Text style={styles.factValue}>{housingSituationLabel}</Text>
+                  {housingSinceLabel ?
+                    <Text style={styles.factCaption}>{housingSinceLabel}</Text>
+                  : null}
+                </View>
+                <View style={styles.gridCellLast}>
+                  <Text style={styles.factLabel}>Wohnadresse</Text>
+                  <Text style={styles.factValue}>{address}</Text>
+                  <Text style={styles.factCaption}>{`${zip} ${city}`.trim()}</Text>
+                </View>
               </View>
-              <View style={styles.brandCol}>
-                <Text style={styles.brandName}>Helvenda Wohnungen</Text>
-                <Text style={styles.brandSub}>SCHWEIZER MIETMARKTPLATZ</Text>
-              </View>
-            </View>
-            <View style={styles.docTitleBlock}>
-              <Text style={styles.docTitle}>QUALITÄTSNACHWEIS</Text>
-              <View style={styles.docTitleRule} />
-            </View>
+            </>
+          : null}
+        </View>
+
+        <View style={styles.sectionRule} />
+
+        {/* Validity */}
+        <View style={styles.validity}>
+          <View style={styles.validityCol}>
+            <Text style={styles.factLabel}>Ausgestellt</Text>
+            <Text style={styles.factValue}>{formatPdfDate(issuedAt)}</Text>
           </View>
-
-          <View style={styles.registryRow}>
-            <Text style={styles.registryLabel}>REGISTRIERNUMMER</Text>
-            <View style={styles.registryCodeWrap}>
-              <Text style={styles.registryCode}>{certificateCode}</Text>
-            </View>
+          <View style={styles.validityCol}>
+            <Text style={styles.factLabel}>Gültig bis</Text>
+            <Text style={[styles.factValue, { color: expiryColor }]}>{formatPdfDate(expiresAt)}</Text>
+            {daysRem <= 30 ?
+              <Text style={[styles.factCaption, { color: ORANGE }]}>{`${daysRem} Tage verbleibend`}</Text>
+            : null}
           </View>
-
-          <View style={styles.heroRow}>
-            <View style={styles.heroCol}>
-              <Text style={styles.heroKicker}>AUSGESTELLT FÜR</Text>
-              <Text style={styles.heroName}>{holder}</Text>
-              <Text style={styles.heroPromise}>{CERTIFICATE_HERO_PROMISE_PDF_DE}</Text>
-            </View>
-            <View style={styles.sealOuter}>
-              <View style={styles.sealInner}>
-                <Text style={styles.sealMonogram}>H</Text>
-                <Text style={styles.sealLine}>VERIFIZIERT</Text>
-                <Text style={styles.sealYear}>{String(year)}</Text>
-              </View>
-            </View>
+          <View style={styles.validityColLast}>
+            <Text style={styles.factLabel}>Gültigkeitsdauer</Text>
+            <Text style={styles.factValue}>90 Tage</Text>
           </View>
+        </View>
 
-          <View style={styles.landlordBanner}>
-            <Text style={styles.landlordBannerKicker}>FÜR VERMIETER</Text>
-            <Text style={styles.landlordBannerText}>{CERTIFICATE_LANDLORD_BANNER_PDF_DE}</Text>
+        <View style={styles.sectionRule} />
+
+        {/* Verify */}
+        <View style={styles.verify}>
+          <View style={styles.qrFrame}>
+            {qrDataUrl ? <Image src={qrDataUrl} style={styles.qrImg} /> : null}
           </View>
-
-          <View style={styles.factsFrame}>
-            <View style={styles.factPairRow}>
-              <FactCell
-                label="BETREIBUNGSREGISTER"
-                badge="verified"
-                value={brClear ? 'Keine Einträge' : 'Einträge vorhanden'}
-                valueColor={brClear ? TEAL_ACCENT : RED}
-                valueLarge
-                sub={brSub}
-              />
-              <View style={styles.factPairVline} />
-              <FactCell
-                label="HAUSHALTSNETTO"
-                badge="captured"
-                value={incomeLabel}
-                sub={incomeSub}
-              />
-            </View>
-            <View style={styles.factPairHsep} />
-            {housingSituationLabel ?
-              <>
-                <View style={styles.factPairRow}>
-                  <FactCell
-                    label="WOHNVERHÄLTNIS"
-                    badge="captured"
-                    value={housingSituationLabel}
-                    sub={housingSinceLabel ?? 'Angabe aus Mieterprofil'}
-                  />
-                  <View style={styles.factPairVline} />
-                  <FactCell
-                    label="WOHNADRESSE"
-                    badge="captured"
-                    value={address}
-                    sub={`${zip} ${city}`.trim()}
-                  />
-                </View>
-                <View style={styles.factPairHsep} />
-                <View style={styles.factPairRow}>
-                  <FactCell
-                    label="BESCHÄFTIGUNG"
-                    badge="captured"
-                    value={employmentLine}
-                    sub="Angabe aus Mieterprofil"
-                  />
-                  <View style={styles.factPairVline} />
-                  <View style={styles.factPairCell}>
-                    <Text style={styles.factLabel}>AUSSTELLUNGSDATUM</Text>
-                    <Text style={styles.factValue}>{formatPdfDate(issuedAt)}</Text>
-                  </View>
-                </View>
-                <View style={styles.factPairHsep} />
-                <View style={styles.factPairRow}>
-                  <View style={styles.factPairCell}>
-                    <Text style={styles.factLabel}>GÜLTIG BIS</Text>
-                    <Text style={[styles.factValue, { color: expiryValueColor }]}>
-                      {formatPdfDate(expiresAt)}
-                    </Text>
-                    {daysRem <= 30 ?
-                      <Text style={[styles.factSub, { color: ORANGE }]}>{`${daysRem} Tage verbleibend`}</Text>
-                    : null}
-                  </View>
-                  <View style={styles.factPairVline} />
-                  <View style={styles.factPairCell} />
-                </View>
-              </>
-            : (
-              <>
-                <View style={styles.factPairRow}>
-                  <FactCell
-                    label="BESCHÄFTIGUNG"
-                    badge="captured"
-                    value={employmentLine}
-                    sub="Angabe aus Mieterprofil"
-                  />
-                  <View style={styles.factPairVline} />
-                  <FactCell
-                    label="WOHNADRESSE"
-                    badge="captured"
-                    value={address}
-                    sub={`${zip} ${city}`.trim()}
-                  />
-                </View>
-                <View style={styles.factPairHsep} />
-                <View style={styles.factPairRow}>
-                  <View style={styles.factPairCell}>
-                    <Text style={styles.factLabel}>AUSSTELLUNGSDATUM</Text>
-                    <Text style={styles.factValue}>{formatPdfDate(issuedAt)}</Text>
-                  </View>
-                  <View style={styles.factPairVline} />
-                  <View style={styles.factPairCell}>
-                    <Text style={styles.factLabel}>GÜLTIG BIS</Text>
-                    <Text style={[styles.factValue, { color: expiryValueColor }]}>
-                      {formatPdfDate(expiresAt)}
-                    </Text>
-                    {daysRem <= 30 ?
-                      <Text style={[styles.factSub, { color: ORANGE }]}>{`${daysRem} Tage verbleibend`}</Text>
-                    : null}
-                  </View>
-                </View>
-              </>
-            )}
-          </View>
-
-          <View style={styles.verifyPanel}>
-            <View style={styles.qrFrame}>
-              {qrDataUrl ? <Image src={qrDataUrl} style={styles.qrImg} /> : null}
-            </View>
-            <View style={styles.qrCopy}>
-              <Text style={styles.qrHead}>ELEKTRONISCHE PRÜFUNG</Text>
-              <Text style={styles.qrSub}>Für Vermieter: Echtheit, Gültigkeit und Registerstand online prüfen</Text>
-              <Text style={styles.qrUrl}>{verifyPath}</Text>
-              <Text style={styles.qrFoot}>QR scannen — Code entspricht der Registriernummer.</Text>
-            </View>
-          </View>
-
-          <View style={styles.disclaimerSep} />
-          <Text style={styles.disclaimer}>{CERTIFICATE_FOOTNOTE_PDF_DE}</Text>
-
-          <View style={styles.decSep} />
-
-          <View style={styles.decRow}>
-            <View style={styles.decColFirst}>
-              <Text style={styles.decLab}>AUSGESTELLT DURCH</Text>
-              <Text style={styles.decVal}>Helvenda Wohnungen</Text>
-              <Text style={styles.decSub}>wohnen.helvenda.ch</Text>
-            </View>
-            <View style={styles.decColMid}>
-              <Text style={styles.decLab}>GÜLTIGKEITSDAUER</Text>
-              <Text style={styles.decVal}>90 Tage</Text>
-              <Text style={styles.decSub}>Ab Ausstellungsdatum</Text>
-            </View>
-            <View style={styles.decColLast}>
-              <Text style={styles.decLab}>VERIFIKATION</Text>
-              <Text style={styles.decVal}>Online prüfbar</Text>
-              <Text style={styles.decSub}>wohnen.helvenda.ch/verify</Text>
-            </View>
-          </View>
-
-          <View style={styles.bottomBand}>
-            <Text style={styles.bottomText}>
-              {`${year} Helvenda Wohnungen · Score-Max GmbH · Zollikerberg · Schweiz`}
+          <View style={styles.verifyCopy}>
+            <Text style={styles.verifyTitle}>ONLINE PRÜFEN</Text>
+            <Text style={styles.verifyUrl}>{verifyPath}</Text>
+            <Text style={styles.verifyText}>
+              Echtheit, Gültigkeit und Stand des Registerauszugs lassen sich online verifizieren —
+              über den QR-Code oder die Adresse oben.
             </Text>
-            <Text style={styles.bottomTextRight}>Rechtsgültig ohne Unterschrift</Text>
+          </View>
+        </View>
+
+        {/* Spacer pushes footer to bottom */}
+        <View style={styles.spacer} />
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <View style={styles.footerRule} />
+          <Text style={styles.footnote}>{CERTIFICATE_FOOTNOTE_PDF_DE}</Text>
+          <View style={styles.metaRow}>
+            <Text style={styles.metaLeft}>
+              {`Helvenda Wohnungen · Score-Max GmbH, Zollikerberg, Schweiz · ${year}`}
+            </Text>
+            <Text style={styles.metaRight}>Elektronisch erstellt</Text>
           </View>
         </View>
       </Page>

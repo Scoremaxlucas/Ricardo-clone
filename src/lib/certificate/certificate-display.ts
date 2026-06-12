@@ -5,15 +5,8 @@ export function formatMaxRentMonthlyChf(amount: number): string {
 export const CERTIFICATE_LANDLORD_BANNER_DE =
   'Für Vermieter: Betreibungsregisterauszug am Stichtag geprüft · Haushaltsnetto monatlich (Kategorie, Mieterprofil) · Wohnverhältnis und Adresse erfasst · Beschäftigung erfasst · Maximalmiete nach üblicher 3×-Regel · Echtheit und Gültigkeit per QR oder Link prüfen.'
 
-/** Kürzere Variante für einseitiges PDF. */
-export const CERTIFICATE_LANDLORD_BANNER_PDF_DE =
-  'Betreibung geprüft · Haushaltsnetto/Monat · Wohnverhältnis erfasst · 3×-Miete · Echtheit per QR prüfen.'
-
 export const CERTIFICATE_HERO_PROMISE_DE =
   'Nachweis für die Wohnungssuche: geprüfter Betreibungsauszug plus gebündeltes Mieterprofil — online verifizierbar, ohne Papierkrieg bei jeder Bewerbung.'
-
-export const CERTIFICATE_HERO_PROMISE_PDF_DE =
-  'Geprüfter Betreibungsauszug und gebündeltes Mieterprofil — online verifizierbar.'
 
 export const CERTIFICATE_FOOTNOTE_DE =
   'Stand zum Ausstellungsdatum. Betreibungsregister: Auszug durch Helvenda plausibilisiert. Haushaltsnetto, Wohnverhältnis, Adresse und Beschäftigung: Angaben aus dem verifizierten Mieterprofil (Selbstdeklaration, ausser Betreibungsregister). Bei Zweifeln aktuellen Auszug oder Kontakt zum Bewerber anfordern.'

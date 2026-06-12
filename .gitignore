@@ -62,3 +62,7 @@ mobile-app/.expo/
 # Lokale / generierte Artefakte (nicht versionieren)
 tsconfig.tsbuildinfo
 Seller-Outreach-Tracker.xlsx
+
+# Generated preview artifacts
+preview-certificate.pdf
+preview-certificate*.png
