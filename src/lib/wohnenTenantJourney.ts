@@ -94,14 +94,14 @@ export function deriveWohnenHomeHero(args: {
   const bonus = formatTenantBonusChf()
 
   if (stage === 'ready') {
-    const matchTeil =
+    const subtext =
       activeCount > 0 ?
-        `${activeCount.toLocaleString('de-CH')} passende Inserate unter Meine Matches.`
-      : 'Sobald etwas passt, findest du es unter Meine Matches.'
+        `Bewirb dich mit einem Klick auf Helvenda — oder nutze dein Zertifikat bei Homegate, per E-Mail oder direkt beim Vermieter. Bei Einzug: ${bonus} von uns.`
+      : `Dein Zertifikat ist aktiv und überall einsetzbar — auch wenn heute noch wenig auf Helvenda passt. Bei Einzug über Helvenda erhältst du ${bonus} von uns.`
     return {
       line1: 'Du bist bereit.',
       line2: 'Jetzt die passende Wohnung finden.',
-      subtext: `Bewirb dich mit einem Klick — bei Einzug über Helvenda erhältst du ${bonus} von uns. ${matchTeil}`,
+      subtext,
       bullets: [],
       showBonusPill: false,
     }

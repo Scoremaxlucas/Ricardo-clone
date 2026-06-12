@@ -74,14 +74,22 @@ describe('deriveWohnenJourneyStage', () => {
 })
 
 describe('deriveWohnenHomeHero', () => {
-  it('uses action-first hero for ready users with bonus in subtext', () => {
+  it('uses action-first hero for ready users with cert USP and bonus in subtext', () => {
     const hero = deriveWohnenHomeHero({ stage: 'ready', activeCount: 2 })
     expect(hero.line1).toBe('Du bist bereit.')
     expect(hero.line2).toBe('Jetzt die passende Wohnung finden.')
     expect(hero.subtext).toMatch(/CHF 250/)
-    expect(hero.subtext).toMatch(/2 passende Inserate/)
+    expect(hero.subtext).toMatch(/Homegate/)
+    expect(hero.subtext).not.toMatch(/passende Inserate/)
     expect(hero.bullets).toEqual([])
     expect(hero.showBonusPill).toBe(false)
+  })
+
+  it('emphasises cert portability for ready users with no matches yet', () => {
+    const hero = deriveWohnenHomeHero({ stage: 'ready', activeCount: 0 })
+    expect(hero.subtext).toMatch(/überall einsetzbar/)
+    expect(hero.subtext).toMatch(/CHF 250/)
+    expect(hero.subtext).not.toMatch(/Meine Matches/)
   })
 
   it('uses certificate-first headline for anonymous cold start', () => {
