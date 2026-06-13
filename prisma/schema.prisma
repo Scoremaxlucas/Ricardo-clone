@@ -1890,6 +1890,11 @@ model ExternalLandlord {
   normalizedPrimaryEmail String?
   normalizedPrimaryPhone String?
   internalNotes          String?              @db.Text
+  /** Strukturierte Postanschrift für Briefversand (CRM). */
+  postalStreet           String?
+  postalZip              String?
+  postalCity             String?
+  postalCountry          String?              @default("CH")
 
   listings     RentalListing[]
   contacts     ExternalLandlordContact[]

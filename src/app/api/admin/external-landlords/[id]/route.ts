@@ -66,6 +66,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     data.normalizedPrimaryPhone = phone
   }
+  const cleanText = (value: unknown): string | null => {
+    if (typeof value !== 'string') return null
+    const trimmed = value.trim()
+    return trimmed ? trimmed : null
+  }
+  if ('postalStreet' in body) data.postalStreet = cleanText(body.postalStreet)
+  if ('postalCity' in body) data.postalCity = cleanText(body.postalCity)
+  if ('postalCountry' in body) data.postalCountry = cleanText(body.postalCountry)
+  if ('postalZip' in body) {
+    const zip = cleanText(body.postalZip)
+    if (zip && !/^[A-Za-z0-9 -]{2,12}$/.test(zip)) {
+      return NextResponse.json({ message: 'Ungültige PLZ' }, { status: 400 })
+    }
+    data.postalZip = zip
+  }
 
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ message: 'Keine Änderungen' }, { status: 400 })

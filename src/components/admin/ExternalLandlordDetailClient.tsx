@@ -72,6 +72,10 @@ type Props = {
   normalizedPrimaryEmail: string | null
   normalizedPrimaryPhone: string | null
   internalNotes: string | null
+  postalStreet: string | null
+  postalZip: string | null
+  postalCity: string | null
+  postalCountry: string | null
   contacts: ContactRow[]
   permissions: PermissionRow[]
   attachments: AttachmentRow[]
@@ -124,7 +128,13 @@ export function ExternalLandlordDetailClient(props: Props) {
   const [primaryEmail, setPrimaryEmail] = useState(props.normalizedPrimaryEmail ?? '')
   const [primaryPhone, setPrimaryPhone] = useState(props.normalizedPrimaryPhone ?? '')
   const [internalNotes, setInternalNotes] = useState(props.internalNotes ?? '')
+  const [postalStreet, setPostalStreet] = useState(props.postalStreet ?? '')
+  const [postalZip, setPostalZip] = useState(props.postalZip ?? '')
+  const [postalCity, setPostalCity] = useState(props.postalCity ?? '')
+  const [postalCountry, setPostalCountry] = useState(props.postalCountry ?? 'CH')
   const [savingProfile, setSavingProfile] = useState(false)
+  const [savingNotes, setSavingNotes] = useState(false)
+  const [savingPostal, setSavingPostal] = useState(false)
 
   const [contactKind, setContactKind] = useState<ExternalLandlordContactKind>('email')
   const [contactLabel, setContactLabel] = useState('')
@@ -252,29 +262,66 @@ export function ExternalLandlordDetailClient(props: Props) {
     setSelectedAttachmentFile(null)
   }
 
+  const patchLandlord = async (payload: Record<string, unknown>): Promise<boolean> => {
+    const res = await fetch(`/api/admin/external-landlords/${props.landlordId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      toast.error((data as { message?: string }).message || 'Speichern fehlgeschlagen')
+      return false
+    }
+    return true
+  }
+
   const saveProfile = async () => {
     setSavingProfile(true)
     try {
-      const res = await fetch(`/api/admin/external-landlords/${props.landlordId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          displayName,
-          kind,
-          normalizedPrimaryEmail: primaryEmail,
-          normalizedPrimaryPhone: primaryPhone,
-          internalNotes,
-        }),
+      const ok = await patchLandlord({
+        displayName,
+        kind,
+        normalizedPrimaryEmail: primaryEmail,
+        normalizedPrimaryPhone: primaryPhone,
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        toast.error((data as { message?: string }).message || 'Speichern fehlgeschlagen')
-        return
+      if (ok) {
+        toast.success('Profil gespeichert')
+        router.refresh()
       }
-      toast.success('Profil gespeichert')
-      router.refresh()
     } finally {
       setSavingProfile(false)
+    }
+  }
+
+  const savePostalAddress = async () => {
+    setSavingPostal(true)
+    try {
+      const ok = await patchLandlord({
+        postalStreet,
+        postalZip,
+        postalCity,
+        postalCountry,
+      })
+      if (ok) {
+        toast.success('Postanschrift gespeichert')
+        router.refresh()
+      }
+    } finally {
+      setSavingPostal(false)
+    }
+  }
+
+  const saveInternalNotes = async () => {
+    setSavingNotes(true)
+    try {
+      const ok = await patchLandlord({ internalNotes })
+      if (ok) {
+        toast.success('Notizen gespeichert')
+        router.refresh()
+      }
+    } finally {
+      setSavingNotes(false)
     }
   }
 
@@ -464,16 +511,6 @@ export function ExternalLandlordDetailClient(props: Props) {
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
               />
             </div>
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-slate-800">Interne Notizen</label>
-              <textarea
-                aria-label="Interne Notizen"
-                value={internalNotes}
-                onChange={e => setInternalNotes(e.target.value)}
-                rows={4}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              />
-            </div>
           </div>
           <div className="w-full max-w-xs rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Verknüpfte Inserate</p>
@@ -493,6 +530,102 @@ export function ExternalLandlordDetailClient(props: Props) {
           >
             Profil speichern
           </button>
+        </div>
+      </section>
+
+      <section className="grid gap-8 xl:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="text-lg font-bold text-slate-900">Postanschrift</h2>
+            <p className="text-xs text-slate-500">Für Brief-Versand (Vertragsentwürfe, Mahnungen, Marketing).</p>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-sm font-medium text-slate-800">Strasse und Hausnummer</label>
+              <input
+                aria-label="Strasse"
+                value={postalStreet}
+                onChange={e => setPostalStreet(e.target.value)}
+                placeholder="z. B. Bahnhofstrasse 12"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-800">PLZ</label>
+              <input
+                aria-label="PLZ"
+                value={postalZip}
+                onChange={e => setPostalZip(e.target.value)}
+                placeholder="8001"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-800">Ort</label>
+              <input
+                aria-label="Ort"
+                value={postalCity}
+                onChange={e => setPostalCity(e.target.value)}
+                placeholder="Zürich"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-800">Land</label>
+              <input
+                aria-label="Land"
+                value={postalCountry}
+                onChange={e => setPostalCountry(e.target.value)}
+                placeholder="CH"
+                maxLength={3}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => void savePostalAddress()}
+              disabled={savingPostal}
+              className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Postanschrift speichern
+            </button>
+            {postalStreet || postalZip || postalCity ?
+              <p className="text-xs text-slate-500">
+                {[postalStreet, [postalZip, postalCity].filter(Boolean).join(' '), postalCountry]
+                  .filter(value => value && value.trim())
+                  .join(' · ')}
+              </p>
+            : null}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="text-lg font-bold text-slate-900">Interne Notizen</h2>
+            <p className="text-xs text-slate-500">Nur für dich sichtbar — nicht für den Vermieter.</p>
+          </div>
+          <textarea
+            aria-label="Interne Notizen"
+            value={internalNotes}
+            onChange={e => setInternalNotes(e.target.value)}
+            rows={10}
+            placeholder={
+              'Akquise-Verlauf, Gesprächsnotizen, Spezialwünsche …\n\nTipp: Datum voranstellen, z. B.:\n13.06.2026 · Telefonat, Inserat manuell freigegeben.'
+            }
+            className="mt-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm leading-relaxed"
+          />
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => void saveInternalNotes()}
+              disabled={savingNotes}
+              className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Notizen speichern
+            </button>
+          </div>
         </div>
       </section>
 

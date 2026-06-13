@@ -135,6 +135,10 @@ export default async function AdminExternalLandlordDetailPage({ params }: PagePr
           normalizedPrimaryEmail={row.normalizedPrimaryEmail}
           normalizedPrimaryPhone={row.normalizedPrimaryPhone}
           internalNotes={row.internalNotes}
+          postalStreet={row.postalStreet}
+          postalZip={row.postalZip}
+          postalCity={row.postalCity}
+          postalCountry={row.postalCountry}
           contacts={row.contacts.map(contact => ({
             id: contact.id,
             kind: contact.kind,
