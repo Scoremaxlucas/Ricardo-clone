@@ -1,14 +1,25 @@
 /**
- * Kalender-Gültigkeit für Miet-Inserate ohne überwachbare Original-URL (http/https).
+ * Kalender-Gültigkeit für Miet-Inserate ohne überwachbare Monitoring-URL.
  * Datumsvergleiche über ISO-Strings YYYY-MM-DD mit «heute» in Europe/Zurich.
  */
 
+import { rentalListingHasAutoMonitoring } from '@/lib/rental/listing-monitoring-url-policy'
+
 const YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/
 
-export function rentalListingHasMonitoringHttpUrl(importedFrom: string | null | undefined): boolean {
-  const t = importedFrom?.trim()
-  if (!t) return false
-  return /^https?:\/\//i.test(t)
+type MonitoringListingFields = {
+  monitoringUrl?: string | null
+  importedFrom?: string | null
+}
+
+/** @deprecated Prefer `rentalListingHasAutoMonitoring` — kept for call sites passing listing fields. */
+export function rentalListingHasMonitoringHttpUrl(
+  importedFromOrListing?: string | null | MonitoringListingFields
+): boolean {
+  if (importedFromOrListing && typeof importedFromOrListing === 'object') {
+    return rentalListingHasAutoMonitoring(importedFromOrListing)
+  }
+  return rentalListingHasAutoMonitoring({ importedFrom: importedFromOrListing ?? null })
 }
 
 export function todayYmdInZurich(now = new Date()): string {
@@ -62,7 +73,7 @@ export function validateListingExpiresOnForUpsert(opts: {
       return {
         ok: false,
         message:
-          'Ohne überwachbare Original-URL (https://…) ist ein Gültigkeitsdatum («Gültig bis») erforderlich.',
+          'Ohne überwachbare Monitoring-URL (Tutti, UrbanHome, Anibis, …) ist ein Gültigkeitsdatum («Gültig bis») erforderlich.',
       }
     }
     return { ok: true, value: null }

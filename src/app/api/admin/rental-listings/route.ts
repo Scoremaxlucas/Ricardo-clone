@@ -3,6 +3,11 @@ import { ensureExternalLandlordForListingInput } from '@/lib/external-landlords/
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
 import { rentalImportSourcePolicyMessage } from '@/lib/rental/ingest-source-policy'
+import {
+  normalizeListingHttpUrl,
+  rentalMonitoringUrlPolicyMessage,
+  rentalReferenceUrlPolicyMessage,
+} from '@/lib/rental/listing-monitoring-url-policy'
 import { encryptLandlordContactForStorage } from '@/lib/rental/pdf-crypto'
 import {
   parseListingExpiresOnFromBody,
@@ -55,6 +60,8 @@ export async function POST(request: Request) {
       status: rawCreateStatus,
       ingestPermissionBasis: rawIngestBasis,
       landlordConsentAck,
+      referenceUrl: rawReferenceUrl,
+      monitoringUrl: rawMonitoringUrl,
     } = body
 
     if (!title || !description || !zip || !city || !canton) {
@@ -134,6 +141,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: sourcePolicyError }, { status: 400 })
     }
 
+    const referenceUrlError = rentalReferenceUrlPolicyMessage(rawReferenceUrl)
+    if (referenceUrlError) {
+      return NextResponse.json({ message: referenceUrlError }, { status: 400 })
+    }
+    const monitoringUrlError = rentalMonitoringUrlPolicyMessage(rawMonitoringUrl)
+    if (monitoringUrlError) {
+      return NextResponse.json({ message: monitoringUrlError }, { status: 400 })
+    }
+    const referenceUrl = normalizeListingHttpUrl(rawReferenceUrl)
+    const monitoringUrl = normalizeListingHttpUrl(rawMonitoringUrl)
+
     const landlordContact =
       typeof landlordContactPlain === 'string' && landlordContactPlain.trim()
         ? encryptLandlordContactForStorage(landlordContactPlain.trim())
@@ -155,7 +173,7 @@ export async function POST(request: Request) {
 
     const createStatus = rawCreateStatus === 'archived' ? 'archived' : 'active'
 
-    const hasMonitoringUrl = rentalListingHasMonitoringHttpUrl(importedFrom)
+    const hasMonitoringUrl = rentalListingHasMonitoringHttpUrl({ monitoringUrl, importedFrom })
     const bodyRecord = body as Record<string, unknown>
     const parsedExpires = parseListingExpiresOnFromBody(bodyRecord)
     const expiryCheck = validateListingExpiresOnForUpsert({
@@ -214,6 +232,8 @@ export async function POST(request: Request) {
           status: createStatus,
           importSource,
           importedFrom,
+          referenceUrl,
+          monitoringUrl,
           landlordContact,
           ingestPermissionBasis,
           listingExpiresOn: expiryCheck.value,

@@ -33,12 +33,13 @@ export async function GET(request: NextRequest) {
   try {
     const baseWhere = {
       status: 'active' as const,
-      importedFrom: { not: null } as const,
+      OR: [{ monitoringUrl: { not: null } }, { importedFrom: { not: null } }],
     }
     const select = {
       id: true,
       title: true,
       address: true,
+      monitoringUrl: true,
       importedFrom: true,
       urlUnreachableStreak: true,
     } as const

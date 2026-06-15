@@ -59,6 +59,8 @@ export default async function BearbeitenLandlordRentalPage({ params }: PageProps
     landlordNotifyEmail: listing.landlordNotifyEmail ?? null,
     importedFrom: listing.importedFrom,
     importSource: listing.importSource,
+    referenceUrl: listing.referenceUrl ?? null,
+    monitoringUrl: listing.monitoringUrl ?? null,
   }
 
   return <RentalListingLandlordForm mode="edit" listingId={listing.id} initial={initial} />

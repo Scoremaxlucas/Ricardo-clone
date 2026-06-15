@@ -4,6 +4,7 @@ import { SWISS_CANTONS } from '@/lib/swiss-cantons'
 import type { ExternalLandlordOption } from '@/lib/external-landlords/admin-options'
 import type { RentalListingLandlordInitial } from '@/lib/rental/rental-landlord-initial'
 import { rentalImportSourcePolicyMessage } from '@/lib/rental/ingest-source-policy'
+import { allowedMonitoringHostLabels, rentalListingHasAutoMonitoring, rentalMonitoringUrlPolicyMessage, rentalReferenceUrlPolicyMessage } from '@/lib/rental/listing-monitoring-url-policy'
 import { rentalListingHasMonitoringHttpUrl } from '@/lib/rental/rental-listing-expiry-on'
 import type { RentalListingStatus } from '@prisma/client'
 import Link from 'next/link'
@@ -96,6 +97,8 @@ export function RentalListingLandlordForm({
   const [landlordContactInternal, setLandlordContactInternal] = useState('')
   const [landlordNoteInternal, setLandlordNoteInternal] = useState('')
   const [selectedExternalLandlordId, setSelectedExternalLandlordId] = useState('')
+  const [referenceUrl, setReferenceUrl] = useState('')
+  const [monitoringUrl, setMonitoringUrl] = useState('')
 
   useEffect(() => {
     if (!initial) return
@@ -122,6 +125,8 @@ export function RentalListingLandlordForm({
     setLandlordNameInternal(initial.landlordInternalName ?? '')
     setLandlordContactInternal(initial.landlordInternalContact ?? '')
     setLandlordNoteInternal(initial.landlordInternalNote ?? '')
+    setReferenceUrl(initial.referenceUrl ?? '')
+    setMonitoringUrl(initial.monitoringUrl ?? '')
   }, [initial, mode])
 
   useEffect(() => {
@@ -142,17 +147,32 @@ export function RentalListingLandlordForm({
   }, [mode, initial])
 
   const hasMonitoringHttpUrl = useMemo(() => {
-    if (importMetaLocked?.importedFrom) {
-      return rentalListingHasMonitoringHttpUrl(importMetaLocked.importedFrom)
+    if (monitoringUrl.trim()) {
+      return rentalListingHasAutoMonitoring({ monitoringUrl: monitoringUrl.trim() })
     }
-    if (initial?.importedFrom) {
-      return rentalListingHasMonitoringHttpUrl(initial.importedFrom)
+    if (importMetaLocked?.importedFrom) {
+      return rentalListingHasMonitoringHttpUrl({ importedFrom: importMetaLocked.importedFrom })
+    }
+    if (initial?.monitoringUrl || initial?.importedFrom) {
+      return rentalListingHasMonitoringHttpUrl({
+        monitoringUrl: initial.monitoringUrl,
+        importedFrom: initial.importedFrom,
+      })
     }
     if (isAdminForm && adminShowAcquisitionFields && acquisition === 'imported') {
-      return rentalListingHasMonitoringHttpUrl(originalUrl.trim())
+      return rentalListingHasMonitoringHttpUrl({ importedFrom: originalUrl.trim() })
     }
     return false
-  }, [importMetaLocked, initial?.importedFrom, isAdminForm, adminShowAcquisitionFields, acquisition, originalUrl])
+  }, [
+    monitoringUrl,
+    importMetaLocked,
+    initial?.monitoringUrl,
+    initial?.importedFrom,
+    isAdminForm,
+    adminShowAcquisitionFields,
+    acquisition,
+    originalUrl,
+  ])
 
   const minExpireYmd = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const maxExpireYmd = useMemo(() => {
@@ -262,8 +282,21 @@ export function RentalListingLandlordForm({
     }
 
     if (!hasMonitoringHttpUrl && !listingExpiresOn.trim()) {
-      toast.error('Bitte ein «Gültig bis»-Datum setzen (Pflicht ohne https-Original-URL).')
+      toast.error('Bitte «Gültig bis» setzen oder eine Monitoring-URL (Tutti/UrbanHome/…) angeben.')
       return
+    }
+
+    if (isAdminForm) {
+      const refErr = referenceUrl.trim() ? rentalReferenceUrlPolicyMessage(referenceUrl.trim()) : null
+      if (refErr) {
+        toast.error(refErr)
+        return
+      }
+      const monErr = monitoringUrl.trim() ? rentalMonitoringUrlPolicyMessage(monitoringUrl.trim()) : null
+      if (monErr) {
+        toast.error(monErr)
+        return
+      }
     }
 
     const notifyTrim = landlordNotifyEmail.trim()
@@ -321,6 +354,12 @@ export function RentalListingLandlordForm({
           { landlordNotifyEmail: notifyTrim || null }
         : {}),
         ...(isAdminForm ? { externalLandlordId: selectedExternalLandlordId || null } : {}),
+        ...(isAdminForm ?
+          {
+            referenceUrl: referenceUrl.trim() || null,
+            monitoringUrl: monitoringUrl.trim() || null,
+          }
+        : {}),
         ...(mode === 'edit' ? { status: listingStatus } : {}),
       }
 
@@ -625,6 +664,57 @@ export function RentalListingLandlordForm({
           </div>
         : null}
 
+        {isAdminForm ?
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-bold text-slate-900">URLs (intern)</p>
+            <p className="text-xs text-slate-600">
+              Referenz für dich (z. B. Homegate): nur sichtbar im Admin, keine automatische Prüfung. Monitoring-URL
+              löst die tägliche Frische-Prüfung aus ({allowedMonitoringHostLabels()}).
+            </p>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Referenz-URL (optional)</label>
+              <input
+                type="url"
+                aria-label="Referenz-URL"
+                value={referenceUrl}
+                onChange={e => setReferenceUrl(e.target.value)}
+                placeholder="https://www.homegate.ch/rent/…"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Zum manuellen Prüfen, ob das Original-Inserat noch live ist. Texte und Fotos nicht von dort übernehmen.
+              </p>
+              {referenceUrl.trim() ?
+                <p className="mt-2">
+                  <a
+                    href={referenceUrl.trim()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-teal-800 hover:underline"
+                  >
+                    Referenz im Browser öffnen
+                  </a>
+                </p>
+              : null}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Monitoring-URL (optional)</label>
+              <input
+                type="url"
+                aria-label="Monitoring-URL"
+                value={monitoringUrl}
+                onChange={e => setMonitoringUrl(e.target.value)}
+                placeholder="https://www.tutti.ch/…"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Mit gültiger Monitoring-URL ist «Gültig bis» optional — Helvenda prüft automatisch, ob das Inserat noch
+                erreichbar ist.
+              </p>
+            </div>
+          </div>
+        : null}
+
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Titel *</label>
           <input
@@ -791,8 +881,8 @@ export function RentalListingLandlordForm({
           />
           <p className="mt-1 text-xs text-slate-500">
             {hasMonitoringHttpUrl ?
-              'Mit überwachbarer Original-URL (https://…) ist kein Enddatum nötig — du kannst eines setzen, dann archivieren wir das Inserat automatisch an diesem Tag.'
-            : 'Ohne https-Original-URL ist ein Enddatum Pflicht. Ab diesem Tag wird das Inserat automatisch archiviert; du erhältst eine E-Mail und der Admin eine Prüf-Aufgabe.'}
+              'Mit Monitoring-URL ist kein Enddatum nötig — Helvenda prüft die Quelle automatisch.'
+            : 'Ohne Monitoring-URL ist ein Enddatum Pflicht. Referenz-URLs (z. B. Homegate) zählen nicht für die Automatik.'}
           </p>
         </div>
         <div>

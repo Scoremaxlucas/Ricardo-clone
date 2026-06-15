@@ -4,6 +4,11 @@ import { ensureExternalLandlordForListingInput } from '@/lib/external-landlords/
 import { isAdmin } from '@/lib/auth/isAdmin'
 import { prisma } from '@/lib/prisma'
 import { rentalImportSourcePolicyMessage } from '@/lib/rental/ingest-source-policy'
+import {
+  normalizeListingHttpUrl,
+  rentalMonitoringUrlPolicyMessage,
+  rentalReferenceUrlPolicyMessage,
+} from '@/lib/rental/listing-monitoring-url-policy'
 import { encryptLandlordContactForStorage } from '@/lib/rental/pdf-crypto'
 import {
   parseListingExpiresOnFromBody,
@@ -152,6 +157,22 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         data.importedFrom = body.importedFrom.trim().slice(0, 2000)
       }
     }
+    if (body.referenceUrl !== undefined) {
+      const refErr = rentalReferenceUrlPolicyMessage(body.referenceUrl)
+      if (refErr) return NextResponse.json({ message: refErr }, { status: 400 })
+      data.referenceUrl =
+        body.referenceUrl === null || body.referenceUrl === '' ?
+          null
+        : normalizeListingHttpUrl(body.referenceUrl)
+    }
+    if (body.monitoringUrl !== undefined) {
+      const monErr = rentalMonitoringUrlPolicyMessage(body.monitoringUrl)
+      if (monErr) return NextResponse.json({ message: monErr }, { status: 400 })
+      data.monitoringUrl =
+        body.monitoringUrl === null || body.monitoringUrl === '' ?
+          null
+        : normalizeListingHttpUrl(body.monitoringUrl)
+    }
 
     let mergedImportedFrom = existing.importedFrom
     if (body.importedFrom !== undefined) {
@@ -162,6 +183,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           body.importedFrom.trim().slice(0, 2000)
         : existing.importedFrom
     }
+    let mergedMonitoringUrl = existing.monitoringUrl
+    if (body.monitoringUrl !== undefined) {
+      mergedMonitoringUrl =
+        body.monitoringUrl === null || body.monitoringUrl === '' ?
+          null
+        : normalizeListingHttpUrl(body.monitoringUrl)
+    }
+
     const shouldValidateSourcePolicy =
       body.importedFrom !== undefined ||
       body.importSource !== undefined ||
@@ -177,7 +206,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       Object.keys(body).length === 1 && Object.prototype.hasOwnProperty.call(body, 'needsExpiryReview')
 
     if (!onlyNeedsExpiryReviewDismiss) {
-      const hasMonitoringUrl = rentalListingHasMonitoringHttpUrl(mergedImportedFrom)
+      const hasMonitoringUrl = rentalListingHasMonitoringHttpUrl({
+        monitoringUrl: mergedMonitoringUrl,
+        importedFrom: mergedImportedFrom,
+      })
       const nextListingExpiresOn =
         'listingExpiresOn' in body ? parseListingExpiresOnFromBody(body) : existing.listingExpiresOn
       const expiryVal = validateListingExpiresOnForUpsert({
@@ -197,7 +229,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         typeof body.status === 'string' &&
         body.status === 'active' &&
         existing.status === 'archived' &&
-        !rentalListingHasMonitoringHttpUrl(mergedImportedFrom)
+        !rentalListingHasMonitoringHttpUrl({
+          monitoringUrl: mergedMonitoringUrl,
+          importedFrom: mergedImportedFrom,
+        })
       ) {
         const effExpires = 'listingExpiresOn' in body ? expiryVal.value : existing.listingExpiresOn
         const today = todayYmdInZurich()

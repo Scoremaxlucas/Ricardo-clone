@@ -80,7 +80,10 @@ export async function loadLandlordRentalListingsDashboard(userId: string): Promi
       rentPerMonth: l.rentPerMonth,
       availableFrom: l.availableFrom.toISOString(),
       listingExpiresOn: l.listingExpiresOn ?? null,
-      hasMonitoringHttpUrl: rentalListingHasMonitoringHttpUrl(l.importedFrom),
+      hasMonitoringHttpUrl: rentalListingHasMonitoringHttpUrl({
+        monitoringUrl: l.monitoringUrl,
+        importedFrom: l.importedFrom,
+      }),
       status: l.status,
       thumbUrl: urls[0] ?? null,
       applicationCount: totalMap.get(l.id) ?? 0,

@@ -7,8 +7,11 @@ import {
 } from '@/lib/rental/rental-listing-expiry-on'
 
 describe('rentalListingHasMonitoringHttpUrl', () => {
-  it('accepts https', () => {
-    expect(rentalListingHasMonitoringHttpUrl('https://example.com/x')).toBe(true)
+  it('accepts allowlisted importedFrom', () => {
+    expect(rentalListingHasMonitoringHttpUrl({ importedFrom: 'https://www.tutti.ch/vi/x' })).toBe(true)
+  })
+  it('rejects homegate importedFrom', () => {
+    expect(rentalListingHasMonitoringHttpUrl({ importedFrom: 'https://www.homegate.ch/rent/x' })).toBe(false)
   })
   it('rejects tutti label', () => {
     expect(rentalListingHasMonitoringHttpUrl('Tutti.ch')).toBe(false)

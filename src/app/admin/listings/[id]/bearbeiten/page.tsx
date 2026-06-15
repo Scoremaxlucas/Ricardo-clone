@@ -71,6 +71,8 @@ export default async function AdminEditListingPage({ params }: PageProps) {
     landlordNotifyEmail: listing.landlordNotifyEmail ?? null,
     importedFrom: listing.importedFrom,
     importSource: listing.importSource,
+    referenceUrl: listing.referenceUrl ?? null,
+    monitoringUrl: listing.monitoringUrl ?? null,
   }
 
   return (
@@ -80,6 +82,20 @@ export default async function AdminEditListingPage({ params }: PageProps) {
         <p className="mt-1">{sourceDescription(listing.importSource, listing.importedFrom)}</p>
         {listing.importedFrom && listing.importSource !== 'SELF' ?
           <p className="mt-1 break-all text-xs text-slate-600">{listing.importedFrom}</p>
+        : null}
+        {listing.referenceUrl ?
+          <p className="mt-2 break-all text-xs text-slate-600">
+            <span className="font-medium text-slate-700">Referenz (intern):</span>{' '}
+            <a href={listing.referenceUrl} target="_blank" rel="noopener noreferrer" className="text-teal-800 hover:underline">
+              {listing.referenceUrl}
+            </a>
+            <span className="text-slate-500"> · nur manuell prüfen</span>
+          </p>
+        : null}
+        {listing.monitoringUrl ?
+          <p className="mt-1 break-all text-xs text-slate-600">
+            <span className="font-medium text-slate-700">Monitoring:</span> {listing.monitoringUrl}
+          </p>
         : null}
         {listing.externalLandlordId ?
           <p className="mt-3">

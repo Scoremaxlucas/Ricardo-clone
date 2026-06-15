@@ -1798,6 +1798,10 @@ model RentalListing {
   requiresCreditCheck Boolean              @default(true)
   status              RentalListingStatus  @default(active)
   importedFrom        String? // Original-URL oder Partner-Kennzeichnung
+  /** Interne Referenz (z. B. Homegate) — Admin-only, kein Cron-Fetch. */
+  referenceUrl        String?
+  /** Erlaubte Domains (Tutti, UrbanHome, …) — automatische Frische-Prüfung. */
+  monitoringUrl       String?
   importSource        ImportSource         @default(SELF)
   landlordContact     String? // AES-GCM (Base64) oder Klartext-Präfix nur ohne Key — nur intern
   /** Bewerbungs-Leads: E-Mail für Benachrichtigungen (optional; sonst Kontaktfeld / Inhaber-Konto). */

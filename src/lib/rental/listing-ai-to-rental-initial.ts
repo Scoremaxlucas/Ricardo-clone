@@ -78,5 +78,7 @@ export function mapAiImportToRentalLandlordInitial(ai: ImportListingAiResult): R
     landlordNotifyEmail: null,
     importedFrom: null,
     importSource: ImportSource.IMPORTED,
+    referenceUrl: null,
+    monitoringUrl: null,
   }
 }

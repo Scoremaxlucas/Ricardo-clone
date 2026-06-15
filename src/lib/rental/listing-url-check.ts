@@ -4,6 +4,7 @@ import {
   sendAdminListingUrlUnreachableStreakEmail,
 } from '@/lib/rental/emails'
 import { htmlToListingPlainText } from '@/lib/rental/listing-url-import-html'
+import { resolveListingMonitoringUrl } from '@/lib/rental/listing-monitoring-url-policy'
 import { assertUrlSafeForServerFetch } from '@/lib/rental/listing-url-import-server'
 import { findFirstRentedKeywordInPlainText } from '@/lib/rental/listing-url-rented-keywords'
 import { prisma } from '@/lib/prisma'
@@ -11,12 +12,6 @@ import { prisma } from '@/lib/prisma'
 const USER_AGENT =
   'Mozilla/5.0 (compatible; HelvendarBot/1.0; +https://wohnen.helvenda.ch)'
 const FETCH_TIMEOUT_MS = 8000
-
-function isHttpListingUrl(raw: string | null): boolean {
-  if (!raw?.trim()) return false
-  const t = raw.trim().toLowerCase()
-  return t.startsWith('http://') || t.startsWith('https://')
-}
 
 async function fetchUrlForListingCheck(url: URL): Promise<{ status: number; html: string }> {
   const ac = new AbortController()
@@ -44,6 +39,7 @@ type ListingCheckRow = {
   id: string
   title: string
   address: string
+  monitoringUrl: string | null
   importedFrom: string | null
   urlUnreachableStreak: number
 }
@@ -65,6 +61,7 @@ export async function runSingleRentalListingUrlCheck(
       id: true,
       title: true,
       address: true,
+      monitoringUrl: true,
       importedFrom: true,
       urlUnreachableStreak: true,
     },
@@ -80,9 +77,12 @@ export async function processRentalListingUrlCheckRow(row: ListingCheckRow): Pro
   detail?: string
 }> {
   const now = new Date()
-  const rawUrl = row.importedFrom
+  const rawUrl = resolveListingMonitoringUrl({
+    monitoringUrl: row.monitoringUrl,
+    importedFrom: row.importedFrom,
+  })
 
-  if (!isHttpListingUrl(rawUrl)) {
+  if (!rawUrl) {
     await prisma.rentalListing.update({
       where: { id: row.id },
       data: {

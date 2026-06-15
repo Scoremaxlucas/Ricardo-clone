@@ -28,4 +28,8 @@ export type RentalListingLandlordInitial = {
   landlordNotifyEmail: string | null
   importedFrom: string | null
   importSource: ImportSource
+  /** Interne Referenz (z. B. Homegate) — Admin-only. */
+  referenceUrl: string | null
+  /** Automatische Frische-Prüfung (Tutti, UrbanHome, …). */
+  monitoringUrl: string | null
 }
