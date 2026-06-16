@@ -13,6 +13,7 @@
 import { CookieSettingsButton } from '@/components/CookieConsent'
 import { Logo } from '@/components/ui/Logo'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import Link from 'next/link'
 
 export function Footer() {
@@ -47,6 +48,12 @@ export function Footer() {
             className="-mx-4 flex items-center gap-x-5 overflow-x-auto px-4 scrollbar-hide md:mx-0 md:flex-wrap md:gap-x-6 md:gap-y-2 md:overflow-visible md:px-0"
             aria-label="Hilfe-Links"
           >
+            <a
+              href={`${WOHNEN_SITE_ORIGIN}/`}
+              className="touch-target-exempt whitespace-nowrap rounded-md border border-white/30 px-2.5 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a] md:py-1.5"
+            >
+              Mietwohnungen Schweiz
+            </a>
             <Link href="/help" className={linkClass}>
               {t.footer.helpCenter}
             </Link>
