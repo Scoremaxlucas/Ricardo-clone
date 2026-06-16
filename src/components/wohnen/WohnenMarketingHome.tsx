@@ -233,7 +233,7 @@ export async function WohnenMarketingHome({
             </p>
           </div>
 
-          {hero.bullets.length > 0 || (activeCount > 0 && journeyStage !== 'ready') ?
+          {hero.bullets.length > 0 ?
             <div className="mx-auto mt-10 w-full max-w-lg sm:mt-11">
               {hero.bullets.length > 0 ?
                 <>
@@ -253,14 +253,6 @@ export async function WohnenMarketingHome({
                     {hero.bullets.join(' · ')}
                   </p>
                 </>
-              : null}
-              {activeCount > 0 && journeyStage !== 'ready' ?
-                <p className={`text-center text-[13px] text-[#5a7a6e] ${hero.bullets.length > 0 ? 'mt-4 sm:mt-3' : ''}`}>
-                  <span className="whome-pulse-dot font-semibold text-[#18a87c]" aria-hidden>
-                    ●
-                  </span>{' '}
-                  <span className="font-medium text-[#2d6a4f]">{activeCount.toLocaleString('de-CH')} Inserate online</span>
-                </p>
               : null}
             </div>
           : null}
