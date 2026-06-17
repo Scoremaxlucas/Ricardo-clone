@@ -1,4 +1,8 @@
 import { authOptions } from '@/lib/auth'
+import {
+  getForbiddenRentalImportSource,
+  rentalImportSourceBlockedFetchMessage,
+} from '@/lib/rental/ingest-source-policy'
 import { checkRentalListingImportRateLimit } from '@/lib/rental/listing-import-rate-limit'
 import {
   assertUrlSafeForServerFetch,
@@ -38,6 +42,19 @@ export async function POST(request: Request) {
   const rawUrl = typeof body.url === 'string' ? body.url : ''
   if (!rawUrl.trim()) {
     return NextResponse.json({ ok: false, message: 'Bitte eine URL angeben.' }, { status: 400 })
+  }
+
+  // Gesperrte Konkurrenz-Portale (Homegate, ImmoScout) niemals abrufen — vor jedem Fetch ablehnen.
+  const forbiddenSource = getForbiddenRentalImportSource(rawUrl)
+  if (forbiddenSource) {
+    return NextResponse.json(
+      {
+        ok: false,
+        code: 'forbidden_source',
+        message: rentalImportSourceBlockedFetchMessage(forbiddenSource.label),
+      },
+      { status: 422 }
+    )
   }
 
   let safeUrl: URL

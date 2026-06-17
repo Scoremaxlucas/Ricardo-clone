@@ -29,3 +29,12 @@ export function rentalImportSourcePolicyMessage(rawUrl: string): string | null {
   if (!blocked) return null
   return `${blocked.label} ist für Wohnen Helvenda keine erlaubte Importquelle. Verwende nur direkte Vermieter-Unterlagen, Tutti oder öffentliche Behördenquellen.`
 }
+
+/**
+ * Nutzer-Meldung, wenn der automatische URL-Import von einer gesperrten
+ * Plattform (z. B. Homegate) versucht wird. Erklärt den Grund und leitet zum
+ * manuellen Erfassen — die Texte werden ohnehin neu formuliert.
+ */
+export function rentalImportSourceBlockedFetchMessage(label: string): string {
+  return `${label} erlaubt keine automatische Übernahme von Inseraten. Bitte erfasse das Inserat manuell — wir formulieren die Texte ohnehin neu und die Bilder lädst du separat hoch.`
+}

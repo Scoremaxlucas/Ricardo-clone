@@ -55,7 +55,7 @@ export function MatchingPropertyImportHub({ forAdminRental = false }: Props) {
         data?: ImportListingAiResult
       }
 
-      if (res.status === 403 && j.code === 'blocked_http') {
+      if (j.code === 'forbidden_source' || (res.status === 403 && j.code === 'blocked_http')) {
         toast.error(
           j.message ||
             'Diese Plattform erlaubt keinen automatischen Zugriff. Bitte fülle das Formular manuell aus.'
@@ -141,13 +141,14 @@ export function MatchingPropertyImportHub({ forAdminRental = false }: Props) {
           type="url"
           value={url}
           onChange={e => setUrl(e.target.value)}
-          placeholder="https://www.homegate.ch/mieten/..."
+          placeholder="https://www.tutti.ch/de/li/..."
           className="mt-4 w-full rounded-xl border border-slate-300 px-4 py-4 text-lg text-slate-900 outline-none ring-teal-600/30 focus:border-teal-600 focus:ring-2 sm:py-5 sm:text-xl"
           autoComplete="url"
         />
         <p className="mt-5 text-sm leading-relaxed text-slate-500 sm:text-base">
           Wir importieren nur Inserate, für die du als Vermieter berechtigt bist. Durch das Importieren bestätigst du,
-          dass du der Eigentümer oder Verwalter dieses Objekts bist.
+          dass du der Eigentümer oder Verwalter dieses Objekts bist. Von Homegate und ImmoScout24 ist kein
+          automatischer Import möglich — erfasse solche Inserate bitte manuell.
         </p>
         <button
           type="button"
