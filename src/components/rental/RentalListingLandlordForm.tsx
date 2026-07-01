@@ -139,11 +139,14 @@ export function RentalListingLandlordForm({
   }, [mode, initial, variant, session?.user])
 
   useEffect(() => {
-    if (mode !== 'create' || initial != null || createDefaultExpirySeeded.current) return
+    if (mode !== 'create' || createDefaultExpirySeeded.current) return
     createDefaultExpirySeeded.current = true
     const d = new Date()
     d.setUTCDate(d.getUTCDate() + 90)
-    setListingExpiresOn(d.toISOString().slice(0, 10))
+    const def = d.toISOString().slice(0, 10)
+    // Auch beim Import (initial vorhanden) vorbelegen, wenn kein Datum mitkam — sonst
+    // blockiert die «Monitoring-URL ODER Gültig bis»-Regel das Erstellen unnötig.
+    setListingExpiresOn(prev => (prev.trim() ? prev : def))
   }, [mode, initial])
 
   const hasMonitoringHttpUrl = useMemo(() => {
