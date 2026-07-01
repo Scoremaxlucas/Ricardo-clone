@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth'
+import { isAdmin } from '@/lib/auth/isAdmin'
 import { uploadImageToBlob } from '@/lib/blob-storage'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { getServerSession } from 'next-auth/next'
@@ -70,10 +71,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // SECURITY: Rate limiting - max 20 uploads per user per hour
+    // Rate limiting pro Nutzer/Stunde. Inserate haben bis zu 10 Fotos, daher
+    // grosszügig; Admins erfassen Inserate in grösseren Mengen (Bulk-Onboarding).
+    const admin = await isAdmin(session)
     const rateLimitResult = await checkRateLimit({
       identifier: `upload:${session.user.id}`,
-      limit: 20,
+      limit: admin ? 500 : 100,
       window: 3600, // 1 hour
     })
     if (!rateLimitResult.allowed) {
