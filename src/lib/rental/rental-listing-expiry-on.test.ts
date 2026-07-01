@@ -56,6 +56,18 @@ describe('validateListingExpiresOnForUpsert', () => {
     })
     expect(r.ok).toBe(true)
   })
+  it('defaults expiry instead of blocking when defaultExpiresOnDays is set', () => {
+    const r = validateListingExpiresOnForUpsert({
+      hasMonitoringUrl: false,
+      listingExpiresOn: null,
+      intent: 'create',
+      defaultExpiresOnDays: 90,
+    })
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      expect(r.value).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    }
+  })
 })
 
 describe('isListingExpiredByChCalendar', () => {

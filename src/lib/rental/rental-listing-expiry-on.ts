@@ -66,10 +66,19 @@ export function validateListingExpiresOnForUpsert(opts: {
   intent: 'create' | 'edit'
   /** Bei Edit: unverändert übernommenes (ggf. vergangenes) Datum erlauben — Reaktivierung prüft die Route separat. */
   existingListingExpiresOn?: string | null
+  /**
+   * Wenn gesetzt und weder Monitoring-URL noch Datum vorhanden: statt Fehler ein
+   * Standard-Enddatum (heute + N Tage, Europe/Zurich) verwenden. So blockiert das
+   * Erstellen nie an dieser Regel — genutzt bei manueller/importierter Erfassung.
+   */
+  defaultExpiresOnDays?: number
 }): { ok: true; value: string | null } | { ok: false; message: string } {
-  const { hasMonitoringUrl, listingExpiresOn, intent, existingListingExpiresOn } = opts
+  const { hasMonitoringUrl, listingExpiresOn, intent, existingListingExpiresOn, defaultExpiresOnDays } = opts
   if (!listingExpiresOn) {
     if (!hasMonitoringUrl) {
+      if (defaultExpiresOnDays != null && defaultExpiresOnDays > 0) {
+        return { ok: true, value: addDaysUtcYmd(todayYmdInZurich(), defaultExpiresOnDays) }
+      }
       return {
         ok: false,
         message:

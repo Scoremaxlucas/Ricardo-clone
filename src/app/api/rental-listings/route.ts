@@ -451,6 +451,7 @@ export async function POST(request: NextRequest) {
       hasMonitoringUrl,
       listingExpiresOn: parsedExpires,
       intent: 'create',
+      defaultExpiresOnDays: 90,
     })
     if (!expiryCheck.ok) {
       return NextResponse.json({ message: expiryCheck.message }, { status: 400 })
