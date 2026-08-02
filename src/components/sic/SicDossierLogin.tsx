@@ -34,13 +34,13 @@ export function SicDossierLogin() {
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-5 py-16">
-      <h1 className="text-2xl font-bold text-slate-900">Mein Dossier</h1>
+      <h1 className="text-2xl font-bold text-[#0f2b5e]">Mein Dossier</h1>
       <p className="mt-2 text-slate-600">
         Melden Sie sich ohne Passwort an. Wir senden Ihnen einen Anmeldelink an Ihre E-Mail-Adresse.
       </p>
 
       {sent ?
-        <div className="mt-6 flex items-start gap-3 rounded-2xl bg-teal-50 p-5 text-sm text-teal-800">
+        <div className="mt-6 flex items-start gap-3 rounded-2xl bg-[#0f2b5e]/5 p-5 text-sm text-[#0f2b5e]">
           <MailCheck className="mt-0.5 h-5 w-5 flex-shrink-0" />
           <p>
             Falls ein Dossier zu dieser Adresse existiert, haben wir Ihnen einen Anmeldelink gesendet. Bitte prüfen Sie
@@ -58,13 +58,13 @@ export function SicDossierLogin() {
             onChange={e => setEmail(e.target.value)}
             placeholder="name@beispiel.ch"
             autoComplete="email"
-            className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none ring-teal-600/20 focus:border-teal-600 focus:ring-2"
+            className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2"
           />
           <button
             type="button"
             onClick={request}
             disabled={busy}
-            className="mt-4 w-full rounded-xl bg-teal-700 px-5 py-3.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+            className="mt-4 w-full rounded-xl bg-[#0f2b5e] px-5 py-3.5 text-sm font-semibold text-white hover:bg-[#0a1f45] disabled:opacity-60"
           >
             {busy ? 'Wird gesendet …' : 'Anmeldelink senden'}
           </button>

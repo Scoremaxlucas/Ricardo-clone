@@ -35,23 +35,23 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
     <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-5 py-20 text-center">
       {state.status === 'loading' && (
         <>
-          <Loader2 className="h-10 w-10 animate-spin text-teal-600" />
+          <Loader2 className="h-10 w-10 animate-spin text-[#0f2b5e]" />
           <p className="mt-4 text-slate-600">Zahlung wird bestätigt …</p>
         </>
       )}
 
       {state.status === 'ok' && (
         <>
-          <CheckCircle2 className="h-12 w-12 text-teal-600" />
-          <h1 className="mt-4 text-2xl font-bold text-slate-900">Zahlung erfolgreich</h1>
+          <CheckCircle2 className="h-12 w-12 text-[#2f9e44]" />
+          <h1 className="mt-4 text-2xl font-bold text-[#0f2b5e]">Zahlung erfolgreich</h1>
           <p className="mt-3 text-slate-600">
             Wir haben Ihnen einen Anmeldelink an {state.email ? <strong>{state.email}</strong> : 'Ihre E-Mail'} gesendet.
             Öffnen Sie den Link, um Ihre Nachweise hochzuladen.
           </p>
-          <div className="mt-6 flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-3 text-sm text-teal-800">
+          <div className="mt-6 flex items-center gap-2 rounded-xl bg-[#0f2b5e]/5 px-4 py-3 text-sm text-[#0f2b5e]">
             <MailCheck className="h-4 w-4" /> Prüfen Sie Ihr Postfach (auch den Spam-Ordner).
           </div>
-          <Link href={sicPaths.dossier} className="mt-6 text-sm font-medium text-teal-700 hover:underline">
+          <Link href={sicPaths.dossier} className="mt-6 text-sm font-semibold text-[#0f2b5e] hover:underline">
             Zum Dossier
           </Link>
         </>
@@ -59,8 +59,8 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
 
       {state.status === 'pending' && (
         <>
-          <Loader2 className="h-10 w-10 animate-spin text-teal-600" />
-          <h1 className="mt-4 text-xl font-bold text-slate-900">Zahlung wird verarbeitet</h1>
+          <Loader2 className="h-10 w-10 animate-spin text-[#0f2b5e]" />
+          <h1 className="mt-4 text-xl font-bold text-[#0f2b5e]">Zahlung wird verarbeitet</h1>
           <p className="mt-3 text-slate-600">
             Das kann einen Moment dauern. Sie erhalten in Kürze einen Anmeldelink per E-Mail.
           </p>
@@ -73,7 +73,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
           <p className="mt-3 text-slate-600">
             {state.message || 'Bitte prüfen Sie später Ihr Dossier oder kontaktieren Sie uns.'}
           </p>
-          <Link href={sicPaths.landing} className="mt-6 text-sm font-medium text-teal-700 hover:underline">
+          <Link href={sicPaths.landing} className="mt-6 text-sm font-semibold text-[#0f2b5e] hover:underline">
             Zurück zur Startseite
           </Link>
         </>

@@ -14,7 +14,7 @@ type ModuleStatus = SicDossierView['purchasedModules'][number]['status']
 const STATUS_META: Record<ModuleStatus, { label: string; className: string; Icon: typeof CheckCircle2 }> = {
   PENDING_DOCS: { label: 'Nachweise ausstehend', className: 'bg-amber-50 text-amber-700', Icon: FileUp },
   IN_REVIEW: { label: 'In Prüfung', className: 'bg-blue-50 text-blue-700', Icon: Clock },
-  VERIFIED: { label: 'Verifiziert', className: 'bg-teal-50 text-teal-700', Icon: CheckCircle2 },
+  VERIFIED: { label: 'Verifiziert', className: 'bg-[#2f9e44]/10 text-[#1f7a34]', Icon: CheckCircle2 },
   REJECTED: { label: 'Abgelehnt', className: 'bg-rose-50 text-rose-700', Icon: AlertCircle },
 }
 
@@ -83,7 +83,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
     <div className="mx-auto max-w-3xl px-5 py-12">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Mein Dossier</h1>
+          <h1 className="text-2xl font-bold text-[#0f2b5e]">Mein Dossier</h1>
           <p className="mt-1 text-sm text-slate-500">{dossier.email}</p>
         </div>
         <form action="/api/sic/logout" method="post">
@@ -97,14 +97,14 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-teal-600" />
+            <ShieldCheck className="h-5 w-5 text-[#0f2b5e]" />
             <span className="font-mono text-sm font-semibold tracking-wide text-slate-900">
               {dossier.certificateCode}
             </span>
           </div>
           <span
             className={`rounded-md px-2 py-0.5 text-xs font-semibold ${
-              expired ? 'bg-rose-50 text-rose-700' : 'bg-teal-50 text-teal-700'
+              expired ? 'bg-rose-50 text-rose-700' : 'bg-[#2f9e44]/10 text-[#1f7a34]'
             }`}
           >
             {expired ? 'Abgelaufen' : 'Aktiv'}
@@ -124,7 +124,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         {dossier.holderName ?
           <a
             href={`/api/sic/certificate/${encodeURIComponent(dossier.certificateCode)}/pdf`}
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#0f2b5e] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0a1f45]"
           >
             <Download className="h-4 w-4" /> Zertifikat als PDF
           </a>
@@ -138,19 +138,19 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                 value={firstName}
                 onChange={e => setFirstName(e.target.value)}
                 placeholder="Vorname"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0f2b5e]"
               />
               <input
                 value={lastName}
                 onChange={e => setLastName(e.target.value)}
                 placeholder="Nachname"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0f2b5e]"
               />
               <button
                 type="button"
                 onClick={saveName}
                 disabled={savingName}
-                className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+                className="rounded-lg bg-[#0f2b5e] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a1f45] disabled:opacity-60"
               >
                 {savingName ? '…' : 'Speichern'}
               </button>
@@ -160,7 +160,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       </div>
 
       {/* Purchased modules */}
-      <h2 className="mt-8 text-lg font-semibold text-slate-900">Ihre Module</h2>
+          <h2 className="mt-8 text-lg font-semibold text-[#0f2b5e]">Ihre Module</h2>
       <ul className="mt-3 space-y-3">
         {dossier.purchasedModules.map(m => {
           const meta = STATUS_META[m.status]
@@ -204,7 +204,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                     type="button"
                     onClick={() => inputs.current[m.moduleKind]?.click()}
                     disabled={uploading === m.moduleKind}
-                    className="mt-3 inline-flex items-center gap-2 rounded-lg border border-teal-600 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-60"
+                    className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#0f2b5e] px-4 py-2 text-sm font-semibold text-[#0f2b5e] hover:bg-[#0f2b5e]/5 disabled:opacity-60"
                   >
                     <FileUp className="h-4 w-4" />
                     {uploading === m.moduleKind ? 'Wird hochgeladen …' : 'Nachweis hochladen'}
@@ -242,7 +242,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           </ul>
           <Link
             href={sicPaths.landing}
-            className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 hover:underline"
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0f2b5e] hover:underline"
           >
             <Plus className="h-4 w-4" /> Module hinzufügen
           </Link>

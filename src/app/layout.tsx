@@ -97,7 +97,7 @@ export async function generateViewport(): Promise<Viewport> {
     width: 'device-width',
     initialScale: 1,
     maximumScale: 5,
-    themeColor: sicHost ? '#0f766e' : '#0f766e',
+    themeColor: sicHost ? '#0f2b5e' : '#0f766e',
   }
 }
 
@@ -114,10 +114,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       success: {
         style: {
           ...toastPad,
-          background: '#0f766e',
+          background: '#0f2b5e',
           color: '#fff',
           borderRadius: '12px',
-          boxShadow: '0 10px 28px rgba(15, 118, 110, 0.14)',
+          boxShadow: '0 10px 28px rgba(15, 43, 94, 0.16)',
           fontWeight: 500,
         },
       },

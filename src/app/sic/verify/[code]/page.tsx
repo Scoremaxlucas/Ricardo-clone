@@ -42,7 +42,7 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
   return (
     <div className="mx-auto max-w-lg px-5 py-16">
       <div className="flex items-center gap-2 text-sm text-slate-500">
-        <ShieldCheck className="h-4 w-4 text-teal-600" /> {SIC_BRAND_NAME} — Online-Verifikation
+        <ShieldCheck className="h-4 w-4 text-[#0f2b5e]" /> {SIC_BRAND_NAME} — Online-Verifikation
       </div>
 
       {!cert ?
@@ -54,8 +54,8 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
           </p>
         </div>
       : valid ?
-        <div className="mt-6 rounded-2xl border border-teal-200 bg-white p-6">
-          <div className="flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-3 text-teal-800">
+        <div className="mt-6 rounded-2xl border border-[#2f9e44]/30 bg-white p-6">
+          <div className="flex items-center gap-2 rounded-xl bg-[#2f9e44]/10 px-4 py-3 text-[#1f7a34]">
             <CheckCircle2 className="h-5 w-5" />
             <span className="font-semibold">Gültiges Zertifikat</span>
           </div>
@@ -86,7 +86,7 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
                   <ul className="mt-1.5 space-y-1">
                     {m.lines.map(l => (
                       <li key={l} className="flex items-center gap-2 text-sm text-slate-600">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-teal-600" /> {l}
+                        <CheckCircle2 className="h-3.5 w-3.5 text-[#2f9e44]" /> {l}
                       </li>
                     ))}
                   </ul>

@@ -75,7 +75,7 @@ export function SicAdminReview() {
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
-      <h1 className="text-2xl font-bold text-slate-900">SIC — Prüfung</h1>
+      <h1 className="text-2xl font-bold text-[#0f2b5e]">SIC — Prüfung</h1>
       <p className="mt-1 text-sm text-slate-500">{items.length} Zertifikat(e) mit offenen Modulen.</p>
 
       {items.length === 0 ?
@@ -106,7 +106,7 @@ export function SicAdminReview() {
                                 href={`/api/sic/admin/document/${d.id}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center gap-1.5 text-sm text-teal-700 hover:underline"
+                                className="inline-flex items-center gap-1.5 text-sm text-[#0f2b5e] hover:underline"
                               >
                                 <ExternalLink className="h-3.5 w-3.5" /> {d.fileName}
                               </a>
@@ -121,7 +121,7 @@ export function SicAdminReview() {
                             type="button"
                             disabled={busy === key || m.documents.length === 0}
                             onClick={() => act(item.id, m.moduleKind, 'approve')}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#2f9e44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1f7a34] disabled:opacity-50"
                           >
                             <Check className="h-3.5 w-3.5" /> Freigeben
                           </button>
