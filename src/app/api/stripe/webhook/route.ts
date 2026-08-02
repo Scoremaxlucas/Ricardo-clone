@@ -171,6 +171,17 @@ export async function POST(request: NextRequest) {
 
           case 'checkout.session.completed':
             const session = event.data.object as Stripe.Checkout.Session
+            if (session.metadata?.type === 'sic_certificate') {
+              const { fulfillSicPaidCheckout } = await import('@/lib/sic/fulfillment')
+              await fulfillSicPaidCheckout({
+                stripeCheckoutSessionId: session.id,
+                stripePaymentIntentId:
+                  typeof session.payment_intent === 'string' ?
+                    session.payment_intent
+                  : (session.payment_intent?.id ?? null),
+              })
+              break
+            }
             orderId = session.metadata?.orderId
             await handleCheckoutSessionCompleted(session)
             break

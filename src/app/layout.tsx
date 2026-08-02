@@ -97,8 +97,9 @@ export async function generateViewport(): Promise<Viewport> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const h = await headers()
-  const isWohnenMatching = isWohnenMatchingHostFromHeaders(h)
-  const htmlLang = isWohnenMatching ? 'de-CH' : 'de'
+  const isSic = h.get('x-sic-route') === '1'
+  const isWohnenMatching = !isSic && isWohnenMatchingHostFromHeaders(h)
+  const htmlLang = isSic || isWohnenMatching ? 'de-CH' : 'de'
 
   const toastPad = { padding: '12px 16px', fontSize: '14px' as const }
   const toastOptions = isWohnenMatching ?
@@ -181,11 +182,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
           <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} toastOptions={toastOptions} />
 
-          {!isWohnenMatching && <AnalyticsTracker />}
+          {!isWohnenMatching && !isSic && <AnalyticsTracker />}
 
-          <DeferredComponents suppressMarketplaceWidgets={isWohnenMatching} />
+          <DeferredComponents suppressMarketplaceWidgets={isWohnenMatching || isSic} />
 
-          <CookieConsent />
+          {!isSic && <CookieConsent />}
         </Providers>
       </body>
     </html>

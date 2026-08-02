@@ -57,7 +57,13 @@ function tenantPathsRedirectToWohnen(pathname: string): boolean {
 /**
  * Nur Matching-MVP + Auth + minimale APIs. Kein Marktplatz-/Miet-Inserat-UI auf dieser Subdomain.
  */
+function isSicRoute(pathname: string): boolean {
+  return pathname === '/sic' || pathname.startsWith('/sic/') || pathname.startsWith('/api/sic')
+}
+
 function isAllowedOnWohnen(pathname: string): boolean {
+  // Swiss Immo Cert (eigenständiges Produkt, eigenes Layout).
+  if (isSicRoute(pathname)) return true
   if (pathname.startsWith('/api/auth')) return true
   if (pathname.startsWith('/api/internal/matching-maintenance')) return true
   if (pathname.startsWith('/api/rental/import-listing')) return true
@@ -117,6 +123,14 @@ function redirectToMain(pathname: string, search: string) {
   return NextResponse.redirect(url)
 }
 
+/** Weiterreichen und SIC-Routen dem Root-Layout signalisieren (eigenes Layout ohne Wohnen-Shell). */
+function proceed(request: NextRequest, isSic: boolean) {
+  if (!isSic) return NextResponse.next()
+  const headers = new Headers(request.headers)
+  headers.set('x-sic-route', '1')
+  return NextResponse.next({ request: { headers } })
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl
 
@@ -128,6 +142,8 @@ export async function middleware(request: NextRequest) {
   ) {
     return NextResponse.next()
   }
+
+  const isSic = isSicRoute(pathname)
 
   const host = rawHost(request)
 
@@ -204,10 +220,10 @@ export async function middleware(request: NextRequest) {
     if (!isAllowedOnWohnen(pathname)) {
       return redirectToMain(pathname, search)
     }
-    return NextResponse.next()
+    return proceed(request, isSic)
   }
 
-  return NextResponse.next()
+  return proceed(request, isSic)
 }
 
 export const config = {
