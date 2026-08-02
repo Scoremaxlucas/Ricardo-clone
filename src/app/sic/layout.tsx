@@ -1,4 +1,4 @@
-import { SIC_BRAND_NAME, sicPaths } from '@/lib/sic/config'
+import { SIC_BASE_PATH, SIC_BRAND_NAME, sicPaths } from '@/lib/sic/config'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -42,13 +42,13 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-5xl flex-col gap-3 px-5 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} {SIC_BRAND_NAME}</p>
           <nav className="flex flex-wrap gap-x-5 gap-y-2">
-            <Link href={`${sicPaths.landing}/faq`} className="hover:text-slate-800">
+            <Link href={`${SIC_BASE_PATH}/faq`} className="hover:text-slate-800">
               Häufige Fragen
             </Link>
-            <Link href={`${sicPaths.landing}/datenschutz`} className="hover:text-slate-800">
+            <Link href={`${SIC_BASE_PATH}/datenschutz`} className="hover:text-slate-800">
               Datenschutz
             </Link>
-            <Link href={`${sicPaths.landing}/agb`} className="hover:text-slate-800">
+            <Link href={`${SIC_BASE_PATH}/agb`} className="hover:text-slate-800">
               AGB
             </Link>
           </nav>
