@@ -57,16 +57,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Kein zu zahlender Betrag.' }, { status: 400 })
   }
 
-  const lineItems = quote.lines.map(l => ({
-    price_data: {
-      currency: 'chf' as const,
-      unit_amount: Math.round(l.amountChf * 100),
-      product_data: {
-        name: l.kind === 'base' ? `${SIC_BRAND_NAME} — Basis` : `Modul: ${l.label}`,
-      },
-    },
-    quantity: 1,
-  }))
+  // Bundle-Rabatt: negative Positionen sind bei Stripe nicht erlaubt — daher als eine
+  // Position zum Gesamtpreis zusammenfassen. Die Fulfillment nutzt Metadaten, nicht die Positionen.
+  const hasDiscount = quote.lines.some(l => l.kind === 'discount')
+  const lineItems =
+    hasDiscount ?
+      [
+        {
+          price_data: {
+            currency: 'chf' as const,
+            unit_amount: Math.round(quote.totalChf * 100),
+            product_data: { name: `${SIC_BRAND_NAME} — Komplett-Paket (Basis + 4 Module)` },
+          },
+          quantity: 1,
+        },
+      ]
+    : quote.lines.map(l => ({
+        price_data: {
+          currency: 'chf' as const,
+          unit_amount: Math.round(l.amountChf * 100),
+          product_data: {
+            name: l.kind === 'base' ? `${SIC_BRAND_NAME} — Basis` : `Modul: ${l.label}`,
+          },
+        },
+        quantity: 1,
+      }))
 
   const metadata = {
     type: 'sic_certificate',

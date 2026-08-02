@@ -16,6 +16,9 @@ export const SIC_BASE_FEE_CHF = 20
 /** Preis pro verifiziertem Modul. */
 export const SIC_MODULE_FEE_CHF = 30
 
+/** Komplett-Paket: Basis + alle 4 Module zum Bundle-Preis (statt 140). */
+export const SIC_BUNDLE_ALL_MODULES_CHF = 120
+
 /** Gültigkeit eines Zertifikats bzw. einer Verlängerung in Kalendermonaten. */
 export const SIC_VALIDITY_MONTHS = 3
 
