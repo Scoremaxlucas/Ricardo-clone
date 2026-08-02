@@ -99,86 +99,86 @@ model User {
   hasUnpaidInvoices      Boolean   @default(false)
 
   // === DISPUTE WARNING SYSTEM (Ricardo-Style) ===
-  disputeWarningCount           Int                   @default(0)
-  lastDisputeWarningAt          DateTime?
-  disputesLostCount             Int                   @default(0) // How many disputes seller lost
-  disputeRestrictionLevel       String? // 'none', 'warning', 'limited', 'suspended'
-  lastInvoiceReminderAt         DateTime?
-  stripeConnectedAccountId      String?
-  stripeOnboardingComplete      Boolean               @default(false)
-  stripeOnboardingLinkExpiresAt DateTime?
-  connectOnboardingStatus       String                @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, ACTION_REQUIRED, VERIFIED
-  payoutsEnabled                Boolean               @default(false)
-  chargesEnabled                Boolean               @default(false)
-  stripeRequirements            Json? // Snapshot of Stripe requirements for UI
-  accounts                      Account[]
-  addresses                     UserAddress[] // Extracted addresses (Phase 1 refactoring)
-  bids                          Bid[]
-  favorites                     Favorite[]
-  invoices                      Invoice[]
-  receivedMessages              Message[]             @relation("MessageReceiver")
-  messages                      Message[]             @relation("MessageSender")
-  notifications                 Notification[]
-  pushSubscriptions             PushSubscription[]    @relation("PushSubscriptions")
-  priceOffers                   PriceOffer[]
-  purchases                     Purchase[]
-  receivedReviews               Review[]              @relation("ReviewedUser")
-  reviews                       Review[]
-  salePurchases                 Sale[]                @relation("SaleBuyer")
-  sales                         Sale[]
-  searchSubscriptions           SearchSubscription[]
-  sessions                      Session[]
-  watches                       Watch[]
-  conversations                 Conversation[]
-  reportsMade                   Report[]              @relation("ReportedBy")
-  reportsReviewed               Report[]              @relation("ReviewedBy")
-  userReportsMade               UserReport[]          @relation("UserReportedBy")
-  userReportsReviewed           UserReport[]          @relation("UserReportReviewedBy")
-  userReportsReceived           UserReport[]          @relation("ReportedUser")
-  adminNotes                    AdminNote[]
-  moderationHistory             ModerationHistory[]
-  maxBids                       MaxBid[]
-  userAdminNotes                UserAdminNote[]       @relation("UserAdminNoteAdmin")
-  userAdminNotesForUser         UserAdminNote[]       @relation("UserAdminNoteUser")
-  userActivities                UserActivity[]
-  searchQueries                 SearchQuery[]
-  userPreferences               UserPreferences?
-  collections                   Collection[]
-  auctionViewers                AuctionViewer[]
-  stories                       Story[]
-  browsingHistory               BrowsingHistory[]
-  userBadges                    UserBadge[]
-  userStreaks                   UserStreak?
-  rewards                       Reward[]
-  aiConversations               AIConversation[]
-  aiSearchResults               AISearchResult[]
-  ordersAsBuyer                 Order[]               @relation("OrderBuyer")
-  ordersAsSeller                Order[]               @relation("OrderSeller")
-  pricingHistory                PricingHistory[]
-  drafts                        Draft[]
-  payoutProfile                 PayoutProfile?
-  payoutChangeRequestsDecided   PayoutChangeRequest[] @relation("PayoutChangeDecider")
-  payoutAuditLogs               PayoutAuditLog[]      @relation("PayoutAuditActor")
-  disputeComments               DisputeComment[]
-  outagesCreated                SystemOutage[]        @relation("OutageCreator")
-  outagesResolved               SystemOutage[]        @relation("OutageResolver")
-  outagesExtended               SystemOutage[]        @relation("OutageExtender")
-  marketingContacts             MarketingContact[]
-  rentalListings                RentalListing[]
-  rentalListingInvitesCreated       RentalListingInvite[]
-  rentalListingIngestDraftsCreated  RentalListingIngestDraft[]
-  rentalApplicationsAsApplicant RentalApplication[]   @relation("RentalApplicationApplicant")
-  tenantProfile                 TenantProfile?
-  certificates                  HelvendaCertificate[]
-  wohnenPlacementsAsApplicant   WohnenRentalPlacement[] @relation("WohnenPlacementApplicant")
-  wohnenPlacementsRecorded      WohnenRentalPlacement[] @relation("WohnenPlacementRecordedBy")
+  disputeWarningCount              Int                        @default(0)
+  lastDisputeWarningAt             DateTime?
+  disputesLostCount                Int                        @default(0) // How many disputes seller lost
+  disputeRestrictionLevel          String? // 'none', 'warning', 'limited', 'suspended'
+  lastInvoiceReminderAt            DateTime?
+  stripeConnectedAccountId         String?
+  stripeOnboardingComplete         Boolean                    @default(false)
+  stripeOnboardingLinkExpiresAt    DateTime?
+  connectOnboardingStatus          String                     @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, ACTION_REQUIRED, VERIFIED
+  payoutsEnabled                   Boolean                    @default(false)
+  chargesEnabled                   Boolean                    @default(false)
+  stripeRequirements               Json? // Snapshot of Stripe requirements for UI
+  accounts                         Account[]
+  addresses                        UserAddress[] // Extracted addresses (Phase 1 refactoring)
+  bids                             Bid[]
+  favorites                        Favorite[]
+  invoices                         Invoice[]
+  receivedMessages                 Message[]                  @relation("MessageReceiver")
+  messages                         Message[]                  @relation("MessageSender")
+  notifications                    Notification[]
+  pushSubscriptions                PushSubscription[]         @relation("PushSubscriptions")
+  priceOffers                      PriceOffer[]
+  purchases                        Purchase[]
+  receivedReviews                  Review[]                   @relation("ReviewedUser")
+  reviews                          Review[]
+  salePurchases                    Sale[]                     @relation("SaleBuyer")
+  sales                            Sale[]
+  searchSubscriptions              SearchSubscription[]
+  sessions                         Session[]
+  watches                          Watch[]
+  conversations                    Conversation[]
+  reportsMade                      Report[]                   @relation("ReportedBy")
+  reportsReviewed                  Report[]                   @relation("ReviewedBy")
+  userReportsMade                  UserReport[]               @relation("UserReportedBy")
+  userReportsReviewed              UserReport[]               @relation("UserReportReviewedBy")
+  userReportsReceived              UserReport[]               @relation("ReportedUser")
+  adminNotes                       AdminNote[]
+  moderationHistory                ModerationHistory[]
+  maxBids                          MaxBid[]
+  userAdminNotes                   UserAdminNote[]            @relation("UserAdminNoteAdmin")
+  userAdminNotesForUser            UserAdminNote[]            @relation("UserAdminNoteUser")
+  userActivities                   UserActivity[]
+  searchQueries                    SearchQuery[]
+  userPreferences                  UserPreferences?
+  collections                      Collection[]
+  auctionViewers                   AuctionViewer[]
+  stories                          Story[]
+  browsingHistory                  BrowsingHistory[]
+  userBadges                       UserBadge[]
+  userStreaks                      UserStreak?
+  rewards                          Reward[]
+  aiConversations                  AIConversation[]
+  aiSearchResults                  AISearchResult[]
+  ordersAsBuyer                    Order[]                    @relation("OrderBuyer")
+  ordersAsSeller                   Order[]                    @relation("OrderSeller")
+  pricingHistory                   PricingHistory[]
+  drafts                           Draft[]
+  payoutProfile                    PayoutProfile?
+  payoutChangeRequestsDecided      PayoutChangeRequest[]      @relation("PayoutChangeDecider")
+  payoutAuditLogs                  PayoutAuditLog[]           @relation("PayoutAuditActor")
+  disputeComments                  DisputeComment[]
+  outagesCreated                   SystemOutage[]             @relation("OutageCreator")
+  outagesResolved                  SystemOutage[]             @relation("OutageResolver")
+  outagesExtended                  SystemOutage[]             @relation("OutageExtender")
+  marketingContacts                MarketingContact[]
+  rentalListings                   RentalListing[]
+  rentalListingInvitesCreated      RentalListingInvite[]
+  rentalListingIngestDraftsCreated RentalListingIngestDraft[]
+  rentalApplicationsAsApplicant    RentalApplication[]        @relation("RentalApplicationApplicant")
+  tenantProfile                    TenantProfile?
+  certificates                     HelvendaCertificate[]
+  wohnenPlacementsAsApplicant      WohnenRentalPlacement[]    @relation("WohnenPlacementApplicant")
+  wohnenPlacementsRecorded         WohnenRentalPlacement[]    @relation("WohnenPlacementRecordedBy")
 
   // === HELVENDA MATCHING (eigenes Datenmodell, nicht RentalListing) ===
-  landlordMemberships              LandlordMembership[]
-  seekerProfile                    SeekerProfile?
-  matchingDocumentsUploaded        MatchingDocument[]     @relation("MatchingDocumentUploader")
-  documentVerificationsAsVerifier  DocumentVerification[] @relation("DocumentVerificationVerifier")
-  matchingAuditLogsAsActor         MatchingAuditLog[]     @relation("MatchingAuditActor")
+  landlordMemberships             LandlordMembership[]
+  seekerProfile                   SeekerProfile?
+  matchingDocumentsUploaded       MatchingDocument[]     @relation("MatchingDocumentUploader")
+  documentVerificationsAsVerifier DocumentVerification[] @relation("DocumentVerificationVerifier")
+  matchingAuditLogsAsActor        MatchingAuditLog[]     @relation("MatchingAuditActor")
 
   // === BEXIO INTEGRATION ===
   bexioContactId Int? // Bexio Contact ID for syncing
@@ -195,7 +195,9 @@ model User {
   marketingConsent   Boolean   @default(false)
   marketingConsentAt DateTime?
 
-  /** Registrierungs-Kontext: `marketplace` (Standard) oder `wohnen` (Helvenda Wohnungen) — Verifizierungs-E-Mail und Links. */
+  /**
+   * Registrierungs-Kontext: `marketplace` (Standard) oder `wohnen` (Helvenda Wohnungen) — Verifizierungs-E-Mail und Links.
+   */
   signupIntent String @default("marketplace")
 
   @@index([bexioContactId])
@@ -712,8 +714,8 @@ model PushSubscription {
   id        String   @id @default(cuid())
   userId    String
   endpoint  String
-  p256dh    String   // Public key for encryption
-  auth      String   // Auth secret for encryption
+  p256dh    String // Public key for encryption
+  auth      String // Auth secret for encryption
   createdAt DateTime @default(now())
   user      User     @relation("PushSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1669,12 +1671,12 @@ model MarketingCampaign {
 }
 
 model MarketingRecipient {
-  id         String    @id @default(cuid())
+  id         String            @id @default(cuid())
   campaignId String
   campaign   MarketingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   contactId  String
   contact    MarketingContact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  status     String    @default("pending") // "pending" | "sent" | "failed"
+  status     String            @default("pending") // "pending" | "sent" | "failed"
   sentAt     DateTime?
   error      String?
 
@@ -1695,7 +1697,9 @@ enum RentalListingStatus {
   archived
 }
 
-/** Herkunft des Miet-Inserats (Akquisition / Admin / Partner). */
+/**
+ * Herkunft des Miet-Inserats (Akquisition / Admin / Partner).
+ */
 enum ImportSource {
   SELF // Admin oder Vermieter selbst erfasst
   IMPORTED // Import-Tool mit Erlaubnis (Original-URL in importedFrom)
@@ -1740,7 +1744,9 @@ enum RentalApplicationStatus {
   rejected
 }
 
-/** URL-Monitoring (Cron): letzter Prüfstatus des Original-Inserats. */
+/**
+ * URL-Monitoring (Cron): letzter Prüfstatus des Original-Inserats.
+ */
 enum CheckStatus {
   UNCHECKED // noch nie geprüft
   ACTIVE // URL erreichbar, keine Vergeben-Hinweise
@@ -1750,7 +1756,9 @@ enum CheckStatus {
   MANUAL // keine gültige http(s)-URL zum Prüfen
 }
 
-/** Automatische oder manuelle Deaktivierung (Admin-E-Mail / Übersicht). */
+/**
+ * Automatische oder manuelle Deaktivierung (Admin-E-Mail / Übersicht).
+ */
 enum DeactivationReason {
   URL_404
   URL_RENTED
@@ -1760,7 +1768,9 @@ enum DeactivationReason {
   LISTING_EXPIRED
 }
 
-/** Admin: E-Mail mit Link — externe Person reicht Inserat-URL ein; automatischer Import oder Entwurf. */
+/**
+ * Admin: E-Mail mit Link — externe Person reicht Inserat-URL ein; automatischer Import oder Entwurf.
+ */
 enum RentalListingInviteStatus {
   SENT
   URL_SUBMITTED
@@ -1768,7 +1778,9 @@ enum RentalListingInviteStatus {
   NEEDS_ADMIN
 }
 
-/** Admin: Bulk-URL-Import — fehlgeschlagene / unvollständige Einträge zur manuellen Fertigstellung. */
+/**
+ * Admin: Bulk-URL-Import — fehlgeschlagene / unvollständige Einträge zur manuellen Fertigstellung.
+ */
 enum RentalListingIngestDraftStatus {
   PENDING
   RESOLVED
@@ -1776,58 +1788,66 @@ enum RentalListingIngestDraftStatus {
 }
 
 model RentalListing {
-  id                  String               @id @default(cuid())
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  userId              String
-  externalLandlordId  String?
-  title               String
-  description         String               @db.Text
-  address             String
-  zip                 String
-  city                String
-  canton              String
-  rooms               Float
-  areaSqm             Int
-  floor               Int?
-  rentPerMonth        Int
-  utilitiesPerMonth   Int?
-  depositAmount       Int?
-  availableFrom       DateTime
-  photos              String // JSON string[] URLs, min 3 / max 10 in App
-  requiresCreditCheck Boolean              @default(true)
-  status              RentalListingStatus  @default(active)
-  importedFrom        String? // Original-URL oder Partner-Kennzeichnung
-  /** Interne Referenz (z. B. Homegate) — Admin-only, kein Cron-Fetch. */
-  referenceUrl        String?
-  /** Erlaubte Domains (Tutti, UrbanHome, …) — automatische Frische-Prüfung. */
-  monitoringUrl       String?
-  importSource        ImportSource         @default(SELF)
-  landlordContact     String? // AES-GCM (Base64) oder Klartext-Präfix nur ohne Key — nur intern
-  /** Bewerbungs-Leads: E-Mail für Benachrichtigungen (optional; sonst Kontaktfeld / Inhaber-Konto). */
-  landlordNotifyEmail String?
-  /** Admin-Ingest: Erlaubnis-Basis (z. B. public_authority, landlord_direct, landlord_consent, tutti_public) */
+  id                    String              @id @default(cuid())
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  userId                String
+  externalLandlordId    String?
+  title                 String
+  description           String              @db.Text
+  address               String
+  zip                   String
+  city                  String
+  canton                String
+  rooms                 Float
+  areaSqm               Int
+  floor                 Int?
+  rentPerMonth          Int
+  utilitiesPerMonth     Int?
+  depositAmount         Int?
+  availableFrom         DateTime
+  photos                String // JSON string[] URLs, min 3 / max 10 in App
+  requiresCreditCheck   Boolean             @default(true)
+  status                RentalListingStatus @default(active)
+  importedFrom          String? // Original-URL oder Partner-Kennzeichnung
+  /**
+   * Interne Referenz (z. B. Homegate) — Admin-only, kein Cron-Fetch.
+   */
+  referenceUrl          String?
+  /**
+   * Erlaubte Domains (Tutti, UrbanHome, …) — automatische Frische-Prüfung.
+   */
+  monitoringUrl         String?
+  importSource          ImportSource        @default(SELF)
+  landlordContact       String? // AES-GCM (Base64) oder Klartext-Präfix nur ohne Key — nur intern
+  /**
+   * Bewerbungs-Leads: E-Mail für Benachrichtigungen (optional; sonst Kontaktfeld / Inhaber-Konto).
+   */
+  landlordNotifyEmail   String?
+  /**
+   * Admin-Ingest: Erlaubnis-Basis (z. B. public_authority, landlord_direct, landlord_consent, tutti_public)
+   */
   ingestPermissionBasis String?
-  lastCheckedAt             DateTime?
-  lastCheckStatus           CheckStatus          @default(UNCHECKED)
-  staleReportCount          Int                  @default(0)
-  staleReportedAt           DateTime?
-  autoDeactivatedAt         DateTime?
-  autoDeactivatedReason     DeactivationReason?
+  lastCheckedAt         DateTime?
+  lastCheckStatus       CheckStatus         @default(UNCHECKED)
+  staleReportCount      Int                 @default(0)
+  staleReportedAt       DateTime?
+  autoDeactivatedAt     DateTime?
+  autoDeactivatedReason DeactivationReason?
   /// Aufeinanderfolgende UNREACHABLE-Läufe (Cron); bei ACTIVE/GONE/RENTED zurücksetzen.
-  urlUnreachableStreak Int @default(0)
+  urlUnreachableStreak  Int                 @default(0)
 
   /// Inklusives Kalenderdatum (Europe/Zurich) YYYY-MM-DD; Pflicht wenn keine http(s)-`importedFrom`-URL.
   listingExpiresOn  String?
   /// Nach Ablauf: Admin soll verlängern oder endgültig entfernen / als erledigt markieren.
-  needsExpiryReview   Boolean @default(false)
+  needsExpiryReview Boolean @default(false)
 
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  externalLandlord ExternalLandlord? @relation(fields: [externalLandlordId], references: [id], onDelete: SetNull)
-  applications  RentalApplication[]
-  placements    WohnenRentalPlacement[]
-  listingMatchAlerts WohnenListingMatchAlert[]
-  sourceInvites RentalListingInvite[]
+  user                        User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  externalLandlord            ExternalLandlord?            @relation(fields: [externalLandlordId], references: [id], onDelete: SetNull)
+  applications                RentalApplication[]
+  placements                  WohnenRentalPlacement[]
+  listingMatchAlerts          WohnenListingMatchAlert[]
+  sourceInvites               RentalListingInvite[]
   externalLandlordPermissions ExternalLandlordPermission[]
   externalLandlordAttachments ExternalLandlordAttachment[]
 
@@ -1843,23 +1863,23 @@ model RentalListing {
 }
 
 model RentalListingInvite {
-  id                String                    @id @default(cuid())
-  createdAt         DateTime                  @default(now())
-  updatedAt         DateTime                  @updatedAt
-  token             String                    @unique
-  email             String
-  createdByUserId   String
-  createdBy         User                      @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
-  status            RentalListingInviteStatus @default(SENT)
-  expiresAt         DateTime
-  sentAt            DateTime                  @default(now())
-  sourceUrl         String?
-  urlSubmittedAt    DateTime?
+  id              String                    @id @default(cuid())
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+  token           String                    @unique
+  email           String
+  createdByUserId String
+  createdBy       User                      @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  status          RentalListingInviteStatus @default(SENT)
+  expiresAt       DateTime
+  sentAt          DateTime                  @default(now())
+  sourceUrl       String?
+  urlSubmittedAt  DateTime?
   /// Rohdaten Ingest (JSON) + photos[] + warnings/errors — für Admin-Finalisierung bei NEEDS_ADMIN
-  draftPayload      Json?
-  lastError         String?                   @db.Text
-  rentalListingId   String?
-  rentalListing     RentalListing?            @relation(fields: [rentalListingId], references: [id], onDelete: SetNull)
+  draftPayload    Json?
+  lastError       String?                   @db.Text
+  rentalListingId String?
+  rentalListing   RentalListing?            @relation(fields: [rentalListingId], references: [id], onDelete: SetNull)
 
   @@index([createdByUserId])
   @@index([email])
@@ -1894,16 +1914,18 @@ model ExternalLandlord {
   normalizedPrimaryEmail String?
   normalizedPrimaryPhone String?
   internalNotes          String?              @db.Text
-  /** Strukturierte Postanschrift für Briefversand (CRM). */
+  /**
+   * Strukturierte Postanschrift für Briefversand (CRM).
+   */
   postalStreet           String?
   postalZip              String?
   postalCity             String?
   postalCountry          String?              @default("CH")
 
-  listings     RentalListing[]
-  contacts     ExternalLandlordContact[]
-  permissions  ExternalLandlordPermission[]
-  attachments  ExternalLandlordAttachment[]
+  listings    RentalListing[]
+  contacts    ExternalLandlordContact[]
+  permissions ExternalLandlordPermission[]
+  attachments ExternalLandlordAttachment[]
 
   @@index([displayName])
   @@index([normalizedPrimaryEmail])
@@ -1941,8 +1963,8 @@ model ExternalLandlordPermission {
   grantedAt          DateTime                       @default(now())
   summary            String                         @db.Text
 
-  externalLandlord ExternalLandlord @relation(fields: [externalLandlordId], references: [id], onDelete: Cascade)
-  rentalListing    RentalListing?   @relation(fields: [rentalListingId], references: [id], onDelete: SetNull)
+  externalLandlord ExternalLandlord             @relation(fields: [externalLandlordId], references: [id], onDelete: Cascade)
+  rentalListing    RentalListing?               @relation(fields: [rentalListingId], references: [id], onDelete: SetNull)
   attachments      ExternalLandlordAttachment[]
 
   @@index([externalLandlordId])
@@ -1964,8 +1986,8 @@ model ExternalLandlordAttachment {
   fileUrl            String
   note               String?                         @db.Text
 
-  externalLandlord ExternalLandlord          @relation(fields: [externalLandlordId], references: [id], onDelete: Cascade)
-  rentalListing    RentalListing?            @relation(fields: [rentalListingId], references: [id], onDelete: SetNull)
+  externalLandlord ExternalLandlord            @relation(fields: [externalLandlordId], references: [id], onDelete: Cascade)
+  rentalListing    RentalListing?              @relation(fields: [rentalListingId], references: [id], onDelete: SetNull)
   permission       ExternalLandlordPermission? @relation(fields: [permissionId], references: [id], onDelete: SetNull)
 
   @@index([externalLandlordId])
@@ -1975,35 +1997,43 @@ model ExternalLandlordAttachment {
 }
 
 model RentalApplication {
-  id                  String                   @id @default(cuid())
-  createdAt           DateTime                 @default(now())
-  rentalListingId     String
-  applicantUserId     String
-  message             String?                  @db.Text
-  status              RentalApplicationStatus
-  encryptedFileRef    String? // Blob-URL o. Pfad zu verschlüsseltem PDF
-  creditCheckResult   Json?
-  viewingRequestedAt  DateTime?
-  viewingDate         DateTime?
-  rejectedAt          DateTime?
-  rejectionNote       String?                  @db.Text
-  tenantProfileId     String?
-  tenantProfile       TenantProfile?           @relation(fields: [tenantProfileId], references: [id], onDelete: SetNull)
-  staleReportedAt     DateTime?
-  staleReportNote     String?                  @db.Text
-  /** E-Mail am Inserat / Auflösung — Zieladresse für den Vermieter (Audit). */
-  landlordLeadEmail           String?
-  /** Tatsächliche Zustelladresse der Vermieter-Mail (kann Test-Override sein). */
+  id                           String                  @id @default(cuid())
+  createdAt                    DateTime                @default(now())
+  rentalListingId              String
+  applicantUserId              String
+  message                      String?                 @db.Text
+  status                       RentalApplicationStatus
+  encryptedFileRef             String? // Blob-URL o. Pfad zu verschlüsseltem PDF
+  creditCheckResult            Json?
+  viewingRequestedAt           DateTime?
+  viewingDate                  DateTime?
+  rejectedAt                   DateTime?
+  rejectionNote                String?                 @db.Text
+  tenantProfileId              String?
+  tenantProfile                TenantProfile?          @relation(fields: [tenantProfileId], references: [id], onDelete: SetNull)
+  staleReportedAt              DateTime?
+  staleReportNote              String?                 @db.Text
+  /**
+   * E-Mail am Inserat / Auflösung — Zieladresse für den Vermieter (Audit).
+   */
+  landlordLeadEmail            String?
+  /**
+   * Tatsächliche Zustelladresse der Vermieter-Mail (kann Test-Override sein).
+   */
   landlordLeadEmailDeliveredTo String?
-  /** Magic-Link-Token für Vermieter-Antwort ohne Konto (einmalig pro Bewerbung, rotierbar). */
-  landlordLeadToken            String?   @unique
+  /**
+   * Magic-Link-Token für Vermieter-Antwort ohne Konto (einmalig pro Bewerbung, rotierbar).
+   */
+  landlordLeadToken            String?                 @unique
   landlordLeadTokenExpiresAt   DateTime?
   landlordRespondedAt          DateTime?
-  /** Mieter über ausbleibende Vermieter-Rückmeldung informiert (Cron). */
+  /**
+   * Mieter über ausbleibende Vermieter-Rückmeldung informiert (Cron).
+   */
   landlordNoResponseNotifiedAt DateTime?
 
-  listing   RentalListing @relation(fields: [rentalListingId], references: [id], onDelete: Cascade)
-  applicant User          @relation("RentalApplicationApplicant", fields: [applicantUserId], references: [id], onDelete: Cascade)
+  listing   RentalListing          @relation(fields: [rentalListingId], references: [id], onDelete: Cascade)
+  applicant User                   @relation("RentalApplicationApplicant", fields: [applicantUserId], references: [id], onDelete: Cascade)
   placement WohnenRentalPlacement?
 
   @@unique([rentalListingId, applicantUserId])
@@ -2030,31 +2060,33 @@ enum WohnenTenantBonusStatus {
   excluded
 }
 
-/** Erfolgreiche Vermittlung — Grundlage für Vermittlungsentgelt und Mieter-Einzugsbonus. */
+/**
+ * Erfolgreiche Vermittlung — Grundlage für Vermittlungsentgelt und Mieter-Einzugsbonus.
+ */
 model WohnenRentalPlacement {
-  id                   String                  @id @default(cuid())
-  createdAt            DateTime                @default(now())
-  updatedAt            DateTime                @updatedAt
-  rentalApplicationId  String                  @unique
-  rentalListingId      String
-  applicantUserId      String
-  netRentPerMonth      Int
-  commissionPercent    Int                     @default(33)
-  commissionAmountChf  Int
-  vatRate              Float                   @default(0.081)
-  vatAmountChf         Int
-  commissionTotalChf   Int
-  commissionStatus     WohnenCommissionStatus  @default(pending)
-  moveInDate           DateTime?
-  confirmedAt          DateTime?
-  commissionInvoicedAt DateTime?
-  commissionPaidAt     DateTime?
-  tenantBonusAmountChf Int                     @default(250)
-  tenantBonusStatus    WohnenTenantBonusStatus @default(eligible)
+  id                    String                  @id @default(cuid())
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  rentalApplicationId   String                  @unique
+  rentalListingId       String
+  applicantUserId       String
+  netRentPerMonth       Int
+  commissionPercent     Int                     @default(33)
+  commissionAmountChf   Int
+  vatRate               Float                   @default(0.081)
+  vatAmountChf          Int
+  commissionTotalChf    Int
+  commissionStatus      WohnenCommissionStatus  @default(pending)
+  moveInDate            DateTime?
+  confirmedAt           DateTime?
+  commissionInvoicedAt  DateTime?
+  commissionPaidAt      DateTime?
+  tenantBonusAmountChf  Int                     @default(250)
+  tenantBonusStatus     WohnenTenantBonusStatus @default(eligible)
   tenantBonusEligibleAt DateTime?
-  tenantBonusPaidAt    DateTime?
-  adminNotes           String?                 @db.Text
-  recordedByUserId     String?
+  tenantBonusPaidAt     DateTime?
+  adminNotes            String?                 @db.Text
+  recordedByUserId      String?
 
   rentalApplication RentalApplication @relation(fields: [rentalApplicationId], references: [id], onDelete: Cascade)
   rentalListing     RentalListing     @relation(fields: [rentalListingId], references: [id], onDelete: Cascade)
@@ -2068,7 +2100,9 @@ model WohnenRentalPlacement {
   @@map("wohnen_rental_placements")
 }
 
-/** Versendete «Neues Inserat passt zu deiner Suche»-Mails (Dedupe). */
+/**
+ * Versendete «Neues Inserat passt zu deiner Suche»-Mails (Dedupe).
+ */
 model WohnenListingMatchAlert {
   id              String        @id @default(cuid())
   sentAt          DateTime      @default(now())
@@ -2082,7 +2116,9 @@ model WohnenListingMatchAlert {
   @@map("wohnen_listing_match_alerts")
 }
 
-/** Wohnen: zuverlässiger E-Mail-Versand (Retry via Cron), z. B. Mieter-Bestätigung nach Bewerbung. */
+/**
+ * Wohnen: zuverlässiger E-Mail-Versand (Retry via Cron), z. B. Mieter-Bestätigung nach Bewerbung.
+ */
 enum WohnenEmailOutboxKind {
   TENANT_APPLICATION_CONFIRM
 }
@@ -2191,78 +2227,100 @@ enum CreditCheckStatus {
 }
 
 model TenantProfile {
-  id                    String             @id @default(cuid())
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
-  userId                String             @unique
-  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  firstName             String
-  lastName              String
-  dateOfBirth           DateTime
-  currentAddress        String
-  currentZip            String
-  currentCity           String
-  /** Mietwohnung, Eigentum, Untermiete, Sonstiges — Selbstangabe im Mieterprofil. */
+  firstName               String
+  lastName                String
+  dateOfBirth             DateTime
+  currentAddress          String
+  currentZip              String
+  currentCity             String
+  /**
+   * Mietwohnung, Eigentum, Untermiete, Sonstiges — Selbstangabe im Mieterprofil.
+   */
   currentHousingSituation CurrentHousingSituation?
-  /** Erster Tag des Monats «an dieser Adresse seit» (UTC). */
+  /**
+   * Erster Tag des Monats «an dieser Adresse seit» (UTC).
+   */
   currentHousingSince     DateTime?
 
-  employmentStatus      EmploymentStatus
-  employer              String?
-  jobTitle              String?
-  employedSince         DateTime?
+  employmentStatus EmploymentStatus
+  employer         String?
+  jobTitle         String?
+  employedSince    DateTime?
 
   monthlyIncomeCategory IncomeCategory
 
-  /** Anzahl Personen im Haushalt inkl. Bewerber/in (mind. 1). */
-  householdTotalPersons Int @default(1)
-  /** Anzahl im Haushalt lebender Kinder (0 wenn keine). */
+  /**
+   * Anzahl Personen im Haushalt inkl. Bewerber/in (mind. 1).
+   */
+  householdTotalPersons  Int @default(1)
+  /**
+   * Anzahl im Haushalt lebender Kinder (0 wenn keine).
+   */
   householdChildrenCount Int @default(0)
 
-  /** Erreichbarkeit für Vermieter (Pflicht im Mieterprofil). */
-  contactPhone          String             @default("")
-  /** Optional: abweichende E-Mail für Bewerbungen; leer = Konto-E-Mail. */
-  applicationEmail      String?
+  /**
+   * Erreichbarkeit für Vermieter (Pflicht im Mieterprofil).
+   */
+  contactPhone     String  @default("")
+  /**
+   * Optional: abweichende E-Mail für Bewerbungen; leer = Konto-E-Mail.
+   */
+  applicationEmail String?
 
-  /** Freiwillig: Nutzer bestätigt Nichtraucher(in) in der Wohnung (kein negatives Gegenfeld). */
+  /**
+   * Freiwillig: Nutzer bestätigt Nichtraucher(in) in der Wohnung (kein negatives Gegenfeld).
+   */
   declaresNonSmoker Boolean?
-  householdPets       HouseholdPets @default(NONE)
+  householdPets     HouseholdPets @default(NONE)
 
-  referenceName         String?
-  referencePhone        String?
-  referenceRelation     String?
+  referenceName     String?
+  referencePhone    String?
+  referenceRelation String?
 
   // Optionale Suchpräferenzen (Phase 1 Matching für Wohnen)
-  preferredCanton       String?
-  preferredPostalCodes  String?             @db.Text
-  preferredBudgetMin    Int?
-  preferredBudgetMax    Int?
-  preferredMinRooms     Float?
-  preferredMaxRooms     Float?
+  preferredCanton         String?
+  preferredPostalCodes    String?   @db.Text
+  preferredBudgetMin      Int?
+  preferredBudgetMax      Int?
+  preferredMinRooms       Float?
+  preferredMaxRooms       Float?
   preferredMoveInEarliest DateTime?
   preferredMoveInLatest   DateTime?
 
-  creditCheckStatus     CreditCheckStatus @default(NONE)
-  creditCheckResult     Json?
-  encryptedFileRef      String?
-  creditCheckUploadedAt DateTime?
-  creditCheckExpiresAt  DateTime?
-  /** Letzte E-Mail „Betreibungsregisterauszug läuft ab“ (Cron, max. 1× / 24h Fenster) */
-  expiryReminderSentAt  DateTime?
-  /** Einmalige E-Mail ca. 14 Tage vor Ablauf des Betreibungsregister-Auszugs */
+  creditCheckStatus                  CreditCheckStatus @default(NONE)
+  creditCheckResult                  Json?
+  encryptedFileRef                   String?
+  creditCheckUploadedAt              DateTime?
+  creditCheckExpiresAt               DateTime?
+  /**
+   * Letzte E-Mail „Betreibungsregisterauszug läuft ab“ (Cron, max. 1× / 24h Fenster)
+   */
+  expiryReminderSentAt               DateTime?
+  /**
+   * Einmalige E-Mail ca. 14 Tage vor Ablauf des Betreibungsregister-Auszugs
+   */
   creditCheckExpiryReminder14dSentAt DateTime?
 
-  isComplete            Boolean            @default(false)
+  isComplete Boolean @default(false)
 
-  /** IBAN für Auszahlung des Einzugsbonus (optional, manuelle Prüfung durch Admin). */
-  bonusPayoutIban       String?
-  /** E-Mail-Benachrichtigung bei neuen passenden Inseraten (Cron). */
-  listingMatchAlertsEnabled Boolean        @default(true)
+  /**
+   * IBAN für Auszahlung des Einzugsbonus (optional, manuelle Prüfung durch Admin).
+   */
+  bonusPayoutIban           String?
+  /**
+   * E-Mail-Benachrichtigung bei neuen passenden Inseraten (Cron).
+   */
+  listingMatchAlertsEnabled Boolean @default(true)
 
-  applications RentalApplication[]
-  certificates         HelvendaCertificate[]
-  listingMatchAlerts   WohnenListingMatchAlert[]
+  applications       RentalApplication[]
+  certificates       HelvendaCertificate[]
+  listingMatchAlerts WohnenListingMatchAlert[]
 
   @@index([userId])
   @@map("tenant_profiles")
@@ -2276,9 +2334,9 @@ enum CertificateStatus {
 }
 
 model HelvendaCertificate {
-  id         String   @id @default(cuid())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   userId          String
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -2311,9 +2369,13 @@ model HelvendaCertificate {
   verificationCount Int       @default(0)
   lastVerifiedAt    DateTime?
 
-  /** Cron: einmalige Erinnerung ca. 14 Tage vor Zertifikats-Ablauf (ACTIVE) */
+  /**
+   * Cron: einmalige Erinnerung ca. 14 Tage vor Zertifikats-Ablauf (ACTIVE)
+   */
   expiryReminder14dSentAt DateTime?
-  /** Cron: einmalige Erinnerung in den letzten 3 Tagen vor Ablauf (ACTIVE) */
+  /**
+   * Cron: einmalige Erinnerung in den letzten 3 Tagen vor Ablauf (ACTIVE)
+   */
   expiryReminder3dSentAt  DateTime?
 
   @@index([certificateCode])
@@ -2442,7 +2504,7 @@ model MatchingProperty {
   rulesJson         Json?
   status            MatchPropertyStatus @default(draft)
 
-  landlordAccount LandlordAccount        @relation(fields: [landlordAccountId], references: [id], onDelete: Cascade)
+  landlordAccount LandlordAccount       @relation(fields: [landlordAccountId], references: [id], onDelete: Cascade)
   matches         HousingMatch[]
   applications    MatchingApplication[]
 
@@ -2458,29 +2520,29 @@ model SeekerProfile {
   updatedAt DateTime @updatedAt
   userId    String   @unique
 
-  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  searchProfile   SeekerSearchProfile?
-  household       HouseholdProfile?
-  employment      EmploymentProfile?
-  financial       FinancialProfile?
-  housingHistory  HousingHistoryEntry[]
-  matches         HousingMatch[]
-  applications    MatchingApplication[]
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  searchProfile  SeekerSearchProfile?
+  household      HouseholdProfile?
+  employment     EmploymentProfile?
+  financial      FinancialProfile?
+  housingHistory HousingHistoryEntry[]
+  matches        HousingMatch[]
+  applications   MatchingApplication[]
 
   @@map("matching_seeker_profiles")
 }
 
 model SeekerSearchProfile {
-  id                String   @id @default(cuid())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  seekerProfileId   String   @unique
+  id                String    @id @default(cuid())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  seekerProfileId   String    @unique
   cantonPreference  String?
-  postalCodesWanted String?  @db.Text
+  postalCodesWanted String?   @db.Text
   budgetMin         Int?
   budgetMax         Int?
-  minRooms          Decimal? @db.Decimal(4, 1)
-  maxRooms          Decimal? @db.Decimal(4, 1)
+  minRooms          Decimal?  @db.Decimal(4, 1)
+  maxRooms          Decimal?  @db.Decimal(4, 1)
   moveInEarliest    DateTime?
   moveInLatest      DateTime?
 
@@ -2491,13 +2553,13 @@ model SeekerSearchProfile {
 }
 
 model HouseholdProfile {
-  id               String   @id @default(cuid())
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  seekerProfileId  String   @unique
-  adults           Int      @default(1)
-  children         Int      @default(0)
-  petsDescription  String?  @db.Text
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  seekerProfileId String   @unique
+  adults          Int      @default(1)
+  children        Int      @default(0)
+  petsDescription String?  @db.Text
 
   seekerProfile SeekerProfile @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
 
@@ -2505,12 +2567,12 @@ model HouseholdProfile {
 }
 
 model EmploymentProfile {
-  id                 String   @id @default(cuid())
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  seekerProfileId    String   @unique
-  employmentStatus   String?
-  employerName       String?
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  seekerProfileId  String   @unique
+  employmentStatus String?
+  employerName     String?
 
   seekerProfile SeekerProfile @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
 
@@ -2518,11 +2580,11 @@ model EmploymentProfile {
 }
 
 model FinancialProfile {
-  id                     String   @id @default(cuid())
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-  seekerProfileId       String   @unique
-  monthlyNetIncomeBand  String?
+  id                   String   @id @default(cuid())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  seekerProfileId      String   @unique
+  monthlyNetIncomeBand String?
 
   seekerProfile SeekerProfile @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
 
@@ -2565,14 +2627,14 @@ model MatchingDocument {
 }
 
 model DocumentVerification {
-  id                String                     @id @default(cuid())
-  createdAt         DateTime                   @default(now())
-  updatedAt         DateTime                   @updatedAt
-  documentId        String                     @unique
+  id               String                     @id @default(cuid())
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+  documentId       String                     @unique
   verifiedByUserId String?
-  status            DocumentVerificationStatus @default(pending)
-  notes             String?                    @db.Text
-  verifiedAt        DateTime?
+  status           DocumentVerificationStatus @default(pending)
+  notes            String?                    @db.Text
+  verifiedAt       DateTime?
 
   document       MatchingDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
   verifiedByUser User?            @relation("DocumentVerificationVerifier", fields: [verifiedByUserId], references: [id], onDelete: SetNull)
@@ -2582,24 +2644,24 @@ model DocumentVerification {
 }
 
 model HousingMatch {
-  id               String             @id @default(cuid())
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  seekerProfileId  String
-  propertyId       String
-  score            Float              @default(0)
-  hardFailed       Boolean            @default(false)
-  status           HousingMatchStatus @default(active)
-  computedAt       DateTime           @default(now())
+  id              String             @id @default(cuid())
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  seekerProfileId String
+  propertyId      String
+  score           Float              @default(0)
+  hardFailed      Boolean            @default(false)
+  status          HousingMatchStatus @default(active)
+  computedAt      DateTime           @default(now())
 
-  seekerProfile SeekerProfile           @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
-  property       MatchingProperty      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  reasons        HousingMatchReason[]
-  application    MatchingApplication?
+  seekerProfile SeekerProfile        @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+  property      MatchingProperty     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  reasons       HousingMatchReason[]
+  application   MatchingApplication?
 
+  @@unique([seekerProfileId, propertyId])
   @@index([seekerProfileId, status, computedAt])
   @@index([propertyId, status, score])
-  @@unique([seekerProfileId, propertyId])
   @@map("matching_matches")
 }
 
@@ -2617,14 +2679,14 @@ model HousingMatchReason {
 }
 
 model MatchingApplication {
-  id               String                     @id @default(cuid())
-  createdAt        DateTime                   @default(now())
-  updatedAt        DateTime                   @updatedAt
-  propertyId       String
-  seekerProfileId  String
-  housingMatchId   String?                    @unique
-  status           MatchingApplicationStatus @default(draft)
-  message          String?                    @db.Text
+  id              String                    @id @default(cuid())
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+  propertyId      String
+  seekerProfileId String
+  housingMatchId  String?                   @unique
+  status          MatchingApplicationStatus @default(draft)
+  message         String?                   @db.Text
 
   property      MatchingProperty @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   seekerProfile SeekerProfile    @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
@@ -2682,4 +2744,151 @@ model MatchingOutboxEvent {
   @@index([status, createdAt])
   @@index([type])
   @@map("matching_outbox_events")
+}
+
+// ============================================
+// Swiss Immo Cert (SIC) — modulares Mieter-Zertifikat
+// E-Mail = Konto (Magic Link, kein Passwort). Nur bezahlte + freigegebene Module gelten als VERIFIZIERT.
+// ============================================
+
+enum SicCertificateStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+enum SicModuleKind {
+  BONITAET
+  ARBEIT_EINKOMMEN
+  ZUVERLAESSIGKEIT
+  AUFENTHALT
+}
+
+enum SicModuleStatus {
+  PENDING_DOCS // bezahlt, Nachweise fehlen/unvollständig
+  IN_REVIEW // Nachweise eingereicht, Prüfung offen
+  VERIFIED // freigegeben -> erscheint als VERIFIZIERT
+  REJECTED // abgelehnt
+}
+
+enum SicPaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model SicCertificate {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /**
+   * E-Mail ist das Konto: gleiche Mail = gleiches Dossier. Immer kleingeschrieben gespeichert.
+   */
+  email           String @unique
+  certificateCode String @unique
+
+  holderFirstName String?
+  holderLastName  String?
+
+  status    SicCertificateStatus @default(ACTIVE)
+  issuedAt  DateTime             @default(now())
+  expiresAt DateTime
+
+  verificationCount Int       @default(0)
+  lastVerifiedAt    DateTime?
+
+  expiryReminder14dSentAt DateTime?
+  expiryReminder3dSentAt  DateTime?
+
+  modules   SicCertificateModule[]
+  documents SicDocument[]
+  payments  SicPayment[]
+
+  @@index([certificateCode])
+  @@index([email])
+  @@map("sic_certificates")
+}
+
+model SicCertificateModule {
+  id            String         @id @default(cuid())
+  certificateId String
+  certificate   SicCertificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+
+  moduleKind SicModuleKind
+  status     SicModuleStatus @default(PENDING_DOCS)
+
+  paidAt           DateTime  @default(now())
+  reviewedAt       DateTime?
+  reviewedByUserId String?
+  reviewNote       String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([certificateId, moduleKind])
+  @@index([certificateId])
+  @@map("sic_certificate_modules")
+}
+
+model SicDocument {
+  id            String         @id @default(cuid())
+  certificateId String
+  certificate   SicCertificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+
+  moduleKind  SicModuleKind
+  blobUrl     String
+  fileName    String
+  contentType String
+  sizeBytes   Int
+
+  uploadedAt DateTime @default(now())
+
+  @@index([certificateId])
+  @@index([certificateId, moduleKind])
+  @@map("sic_documents")
+}
+
+model SicPayment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /**
+   * Vor der Zahlung existiert evtl. noch kein Zertifikat -> Verknüpfung per E-Mail.
+   */
+  email         String
+  certificateId String?
+  certificate   SicCertificate? @relation(fields: [certificateId], references: [id], onDelete: SetNull)
+
+  stripeCheckoutSessionId String  @unique
+  stripePaymentIntentId   String?
+
+  includeBaseFee Boolean
+  /**
+   * Modul-IDs als Text (validiert in Code über normalizeSicModuleIds).
+   */
+  moduleKinds    String[]
+  amountChf      Int
+  currency       String           @default("CHF")
+  status         SicPaymentStatus @default(PENDING)
+  paidAt         DateTime?
+
+  @@index([email])
+  @@index([certificateId])
+  @@map("sic_payments")
+}
+
+model SicMagicLink {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  email      String
+  token      String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+
+  @@index([email])
+  @@index([token])
+  @@map("sic_magic_links")
 }
