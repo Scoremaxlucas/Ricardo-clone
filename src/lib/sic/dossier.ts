@@ -19,8 +19,23 @@ export type SicDossierView = {
   status: string
   issuedAt: string
   expiresAt: string
+  holderName: string | null
+  hasVerifiedModule: boolean
   purchasedModules: SicDossierModuleView[]
   availableModules: { moduleKind: SicModuleId; title: string; summary: string; priceChf: number }[]
+}
+
+/** Baut die Liste verifizierter Module (mit Zertifikatszeilen) für PDF und Verifikation. */
+export function verifiedModuleLineItems(
+  modules: { moduleKind: string; status: SicModuleStatus }[]
+): { title: string; lines: string[] }[] {
+  const verified = new Set(modules.filter(m => m.status === 'VERIFIED').map(m => m.moduleKind))
+  return SIC_MODULES.filter(def => verified.has(def.id)).map(def => ({ title: def.title, lines: def.lineItems }))
+}
+
+export function joinHolderName(first: string | null, last: string | null): string | null {
+  const name = `${(first ?? '').trim()} ${(last ?? '').trim()}`.trim()
+  return name || null
 }
 
 export async function getSicDossierView(emailRaw: string): Promise<SicDossierView | null> {
@@ -67,6 +82,8 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     status: cert.status,
     issuedAt: cert.issuedAt.toISOString(),
     expiresAt: cert.expiresAt.toISOString(),
+    holderName: joinHolderName(cert.holderFirstName, cert.holderLastName),
+    hasVerifiedModule: cert.modules.some(m => m.status === 'VERIFIED'),
     purchasedModules,
     availableModules,
   }

@@ -3,7 +3,7 @@
 import { sicPaths } from '@/lib/sic/config'
 import type { SicDossierView } from '@/lib/sic/dossier'
 import type { SicModuleId } from '@/lib/sic/modules'
-import { AlertCircle, CheckCircle2, Clock, FileUp, Plus, ShieldCheck } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Clock, Download, FileUp, Plus, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
@@ -26,6 +26,35 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
   const router = useRouter()
   const [uploading, setUploading] = useState<SicModuleId | null>(null)
   const inputs = useRef<Record<string, HTMLInputElement | null>>({})
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [savingName, setSavingName] = useState(false)
+
+  async function saveName() {
+    if (!firstName.trim() || !lastName.trim()) {
+      toast.error('Bitte Vor- und Nachname angeben.')
+      return
+    }
+    setSavingName(true)
+    try {
+      const res = await fetch('/api/sic/profile', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim() }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data?.message || 'Speichern fehlgeschlagen.')
+        return
+      }
+      toast.success('Name gespeichert.')
+      router.refresh()
+    } catch {
+      toast.error('Netzwerkfehler.')
+    } finally {
+      setSavingName(false)
+    }
+  }
 
   async function upload(moduleKind: SicModuleId, file: File) {
     setUploading(moduleKind)
@@ -91,6 +120,43 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             <dd className="font-medium text-slate-800">{formatDate(dossier.expiresAt)}</dd>
           </div>
         </div>
+
+        {dossier.holderName ?
+          <a
+            href={`/api/sic/certificate/${encodeURIComponent(dossier.certificateCode)}/pdf`}
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
+          >
+            <Download className="h-4 w-4" /> Zertifikat als PDF
+          </a>
+        : <div className="mt-5 rounded-xl bg-slate-50 p-4">
+            <p className="text-sm font-medium text-slate-700">Name auf dem Zertifikat</p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Geben Sie Ihren Namen an, damit wir das Zertifikat erstellen können.
+            </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <input
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
+                placeholder="Vorname"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600"
+              />
+              <input
+                value={lastName}
+                onChange={e => setLastName(e.target.value)}
+                placeholder="Nachname"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600"
+              />
+              <button
+                type="button"
+                onClick={saveName}
+                disabled={savingName}
+                className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+              >
+                {savingName ? '…' : 'Speichern'}
+              </button>
+            </div>
+          </div>
+        }
       </div>
 
       {/* Purchased modules */}
