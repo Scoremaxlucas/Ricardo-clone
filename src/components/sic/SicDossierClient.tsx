@@ -1,8 +1,10 @@
 'use client'
 
+import { SicTemplateForm } from '@/components/sic/SicTemplateForm'
 import { sicPaths } from '@/lib/sic/config'
 import type { SicDossierView } from '@/lib/sic/dossier'
 import type { SicModuleId } from '@/lib/sic/modules'
+import { templatesForModule } from '@/lib/sic/templates'
 import { AlertCircle, CheckCircle2, Clock, Download, FileUp, Plus, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -187,6 +189,11 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                       <li key={d}>{d}</li>
                     ))}
                   </ul>
+
+                  {templatesForModule(m.moduleKind).map(t => (
+                    <SicTemplateForm key={t.id} template={t} holderName={dossier.holderName} />
+                  ))}
+
                   <input
                     ref={el => {
                       inputs.current[m.moduleKind] = el
@@ -230,7 +237,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-6">
           <h3 className="text-sm font-semibold text-slate-900">Zertifikat erweitern</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Weitere Module hinzufügen — die Gültigkeit Ihres Zertifikats verlängert sich entsprechend.
+            Weitere Module hinzufügen — die Gültigkeit deines Zertifikats verlängert sich entsprechend.
           </p>
           <ul className="mt-3 space-y-2">
             {dossier.availableModules.map(a => (

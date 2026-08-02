@@ -483,56 +483,73 @@ export function SicLandingClient() {
             })}
           </div>
 
-          {/* Live-Vorschau + Checkout */}
+          {/* Live-Vorschau + Checkout: Name → Vorschau, E-Mail → Zahlung */}
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-            {/* Live-Vorschau des Zertifikats */}
-            <div className="rounded-2xl border-2 border-[#b8912f]/40 bg-gradient-to-b from-white to-slate-50 p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <SicLogoMark size={24} />
-                  <span className="text-sm font-bold tracking-[0.1em] text-[#0f2b5e]">SWISS IMMO CERT</span>
-                </div>
-                <span className="rounded-full bg-[#0f2b5e]/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#0f2b5e]">
-                  Vorschau
-                </span>
+            {/* Vorschau-Spalte inkl. Name */}
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="sic-name" className="block text-sm font-semibold text-[#0f2b5e]">
+                  Dein Name <span className="font-normal text-slate-400">(personalisierte Vorschau)</span>
+                </label>
+                <input
+                  id="sic-name"
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Vorname Nachname"
+                  autoComplete="name"
+                  className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2"
+                />
               </div>
-              <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#b8912f]">Mieter-Zertifikat</p>
 
-              <div className="mt-3 rounded-lg bg-[#0f2b5e]/[0.04] px-3 py-2">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ausgestellt für</p>
-                <p className={`text-sm font-bold ${name.trim() ? 'text-[#0f2b5e]' : 'text-slate-400'}`}>
-                  {name.trim() || 'Dein Name'}
+              <div className="rounded-2xl border-2 border-[#b8912f]/40 bg-gradient-to-b from-white to-slate-50 p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <SicLogoMark size={24} />
+                    <span className="text-sm font-bold tracking-[0.1em] text-[#0f2b5e]">SWISS IMMO CERT</span>
+                  </div>
+                  <span className="rounded-full bg-[#0f2b5e]/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#0f2b5e]">
+                    Vorschau
+                  </span>
+                </div>
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#b8912f]">Mieter-Zertifikat</p>
+
+                <div className="mt-3 rounded-lg bg-[#0f2b5e]/[0.04] px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ausgestellt für</p>
+                  <p className={`text-sm font-bold ${name.trim() ? 'text-[#0f2b5e]' : 'text-slate-400'}`}>
+                    {name.trim() || 'Dein Name'}
+                  </p>
+                </div>
+
+                <ul className="mt-4 divide-y divide-slate-100">
+                  <li className="flex items-center justify-between gap-3 py-2.5">
+                    <span className="text-sm font-semibold text-[#0f2b5e]">Basis · Zertifikat</span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                      <Check className="h-3.5 w-3.5 text-[#2f9e44]" /> Enthalten
+                    </span>
+                  </li>
+                  {SIC_MODULES.map(m => {
+                    const on = selected.has(m.id)
+                    return (
+                      <li key={m.id} className={`flex items-center justify-between gap-3 py-2.5 ${on ? '' : 'opacity-40'}`}>
+                        <span className="text-sm font-semibold text-[#0f2b5e]">{m.title}</span>
+                        {on ?
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                            <Lock className="h-3.5 w-3.5" /> Gesperrt — nach Zahlung verifizierbar
+                          </span>
+                        : <span className="text-[11px] font-medium text-slate-400">Nicht gewählt</span>}
+                      </li>
+                    )
+                  })}
+                </ul>
+                <p className="mt-4 rounded-lg bg-[#0f2b5e]/[0.04] px-3 py-2.5 text-[11px] leading-relaxed text-slate-500">
+                  Kostenlose Vorschau — nach der Zahlung lädst du Belege hoch und jedes Modul wechselt auf
+                  „Verifiziert".
                 </p>
               </div>
-
-              <ul className="mt-4 divide-y divide-slate-100">
-                <li className="flex items-center justify-between gap-3 py-2.5">
-                  <span className="text-sm font-semibold text-[#0f2b5e]">Basis · Zertifikat</span>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
-                    <Check className="h-3.5 w-3.5 text-[#2f9e44]" /> Enthalten
-                  </span>
-                </li>
-                {SIC_MODULES.map(m => {
-                  const on = selected.has(m.id)
-                  return (
-                    <li key={m.id} className={`flex items-center justify-between gap-3 py-2.5 ${on ? '' : 'opacity-40'}`}>
-                      <span className="text-sm font-semibold text-[#0f2b5e]">{m.title}</span>
-                      {on ?
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
-                          <Lock className="h-3.5 w-3.5" /> Gesperrt — nach Zahlung verifizierbar
-                        </span>
-                      : <span className="text-[11px] font-medium text-slate-400">Nicht gewählt</span>}
-                    </li>
-                  )
-                })}
-              </ul>
-              <p className="mt-4 rounded-lg bg-[#0f2b5e]/[0.04] px-3 py-2.5 text-[11px] leading-relaxed text-slate-500">
-                Nach der Zahlung lädst du deine Belege hoch — dann prüfen wir sie und jedes Modul wechselt auf
-                „Verifiziert".
-              </p>
             </div>
 
-            {/* Checkout */}
+            {/* Checkout: E-Mail erst hier */}
             <div className="rounded-2xl border border-[#0f2b5e]/10 bg-[#0f2b5e]/[0.03] p-6 sm:p-7">
               <h3 className="text-lg font-bold text-[#0f2b5e]">Deine Auswahl</h3>
               <dl className="mt-4 space-y-2.5 text-sm">
@@ -556,20 +573,7 @@ export function SicLandingClient() {
                 <span className="text-2xl font-bold tabular-nums text-[#0f2b5e]">CHF {quote.totalChf}.–</span>
               </div>
 
-              <label htmlFor="sic-name" className="mt-5 block text-sm font-semibold text-[#0f2b5e]">
-                Name <span className="font-normal text-slate-400">(für dein Zertifikat)</span>
-              </label>
-              <input
-                id="sic-name"
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Vorname Nachname"
-                autoComplete="name"
-                className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2"
-              />
-
-              <label htmlFor="sic-email" className="mt-4 block text-sm font-semibold text-[#0f2b5e]">
+              <label htmlFor="sic-email" className="mt-5 block text-sm font-semibold text-[#0f2b5e]">
                 E-Mail-Adresse
               </label>
               <input
@@ -582,8 +586,8 @@ export function SicLandingClient() {
                 className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2"
               />
               <p className="mt-1.5 text-xs text-slate-500">
-                Deine E-Mail ist dein Zugang — kein Passwort nötig. Du erhältst nach der Zahlung einen Anmeldelink
-                zum Hochladen der Nachweise.
+                Deine E-Mail ist dein Zugang — kein Passwort nötig. Nach der Zahlung erhältst du einen Anmeldelink
+                zum Ausfüllen der Formulare und Hochladen der Nachweise.
               </p>
               <button
                 type="button"

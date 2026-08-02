@@ -41,17 +41,33 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
               Aufenthaltsstatus — verifiziert und mit QR-Code überprüfbar.
             </p>
           </div>
-          <nav className="flex flex-col gap-2.5 text-sm text-white/70">
-            <Link href={`${SIC_BASE_PATH}/faq`} className="transition-colors hover:text-white">
+          <nav className="flex flex-col gap-2.5 text-sm">
+            <Link
+              href={`${SIC_BASE_PATH}/faq`}
+              className="text-white/80 transition-colors hover:text-white"
+              style={{ color: 'rgba(255,255,255,0.8)' }}
+            >
               Häufige Fragen
             </Link>
-            <Link href={`${SIC_BASE_PATH}/datenschutz`} className="transition-colors hover:text-white">
+            <Link
+              href={`${SIC_BASE_PATH}/datenschutz`}
+              className="text-white/80 transition-colors hover:text-white"
+              style={{ color: 'rgba(255,255,255,0.8)' }}
+            >
               Datenschutz
             </Link>
-            <Link href={`${SIC_BASE_PATH}/agb`} className="transition-colors hover:text-white">
+            <Link
+              href={`${SIC_BASE_PATH}/agb`}
+              className="text-white/80 transition-colors hover:text-white"
+              style={{ color: 'rgba(255,255,255,0.8)' }}
+            >
               AGB
             </Link>
-            <Link href={`${SIC_BASE_PATH}/impressum`} className="transition-colors hover:text-white">
+            <Link
+              href={`${SIC_BASE_PATH}/impressum`}
+              className="text-white/80 transition-colors hover:text-white"
+              style={{ color: 'rgba(255,255,255,0.8)' }}
+            >
               Impressum
             </Link>
           </nav>

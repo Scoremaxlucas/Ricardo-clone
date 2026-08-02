@@ -60,9 +60,9 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
       'Aktuelles Mietverhältnis (schriftlicher Nachweis geprüft)',
     ],
     requiredDocuments: [
-      'Lohnnachweis / Lohnausweis',
-      'Arbeitgeberbestätigung (inkl. Anstellungsdauer)',
-      'Nachweis aktuelles Mietverhältnis',
+      'Lohnnachweis / Lohnausweis (Selbst-Upload)',
+      'Arbeitgeberbestätigung — SIC-Formular digital ausfüllen & unterschreiben lassen',
+      'Nachweis aktuelles Mietverhältnis (Selbst-Upload)',
     ],
     priceChf: SIC_MODULE_FEE_CHF,
   },
@@ -72,7 +72,9 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     title: 'Zuverlässigkeit',
     summary: 'Wir prüfen deine Referenz- und Ausweisdokumente und verifizieren sie.',
     lineItems: ['Vermieterreferenz (Referenzschreiben eingereicht und geprüft)'],
-    requiredDocuments: ['Referenzschreiben des aktuellen/früheren Vermieters'],
+    requiredDocuments: [
+      'Vermieter-Referenz — SIC-Formular digital ausfüllen & unterschreiben lassen',
+    ],
     priceChf: SIC_MODULE_FEE_CHF,
   },
   {
