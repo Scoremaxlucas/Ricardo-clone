@@ -3,7 +3,6 @@ import { CookieConsent } from '@/components/CookieConsent'
 import { DeferredComponents } from '@/components/DeferredComponents'
 import { SkipLinks } from '@/components/accessibility/SkipLinks'
 import { Providers } from '@/components/providers'
-import { WohnenLayoutShell } from '@/components/wohnen/WohnenLayoutShell'
 import { isWohnenMatchingHostFromHeaders } from '@/lib/tenant-host'
 import { BASE_URL } from '@/lib/seo'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
@@ -45,25 +44,32 @@ function requestOriginUrl(h: { get(name: string): string | null }): URL {
 
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers()
-  if (isWohnenMatchingHostFromHeaders(h)) {
+  // SIC-Host (früher Helvenda Wohnen): nur noch Swiss Immo Cert
+  if (isWohnenMatchingHostFromHeaders(h) || h.get('x-sic-host') === '1' || h.get('x-sic-route') === '1') {
     return {
       metadataBase: requestOriginUrl(h),
       title: {
-        default: 'Helvenda Wohnungen — Fair mieten und vermieten in der Schweiz',
-        template: '%s | Helvenda Wohnungen',
+        default: 'Swiss Immo Cert — Das geprüfte Schweizer Mieterdossier',
+        template: '%s | Swiss Immo Cert',
       },
       description:
-        'Kostenlos Wohnungen inserieren. Keine Abo-Pflicht für Mieter. Nur verifizierte Anfragen mit integriertem Betreibungsregisterauszug.',
-      keywords: ['Wohnung mieten Schweiz', 'Wohnung inserieren kostenlos', 'Mietwohnung Zürich', 'Betreibungsregisterauszug Mieter'],
+        'Erstellen Sie Ihr geprüftes Mieterzertifikat: Bonität, Einkommen, Zuverlässigkeit und Aufenthaltsstatus — verifiziert und mit QR-Code überprüfbar.',
+      keywords: [
+        'Mieterzertifikat Schweiz',
+        'Betreibungsauszug Mieter',
+        'Mieterdossier',
+        'Wohnungsbewerbung',
+        'Swiss Immo Cert',
+      ],
       openGraph: {
-        siteName: 'Helvenda Wohnungen',
+        siteName: 'Swiss Immo Cert',
         locale: 'de_CH',
       },
       manifest: '/manifest.json',
       appleWebApp: {
         capable: true,
         statusBarStyle: 'default',
-        title: 'Helvenda Wohnungen',
+        title: 'Swiss Immo Cert',
       },
       icons: sharedIcons,
     }
@@ -86,32 +92,32 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export async function generateViewport(): Promise<Viewport> {
   const h = await headers()
-  const wohnen = isWohnenMatchingHostFromHeaders(h)
+  const sicHost = isWohnenMatchingHostFromHeaders(h) || h.get('x-sic-host') === '1'
   return {
     width: 'device-width',
     initialScale: 1,
     maximumScale: 5,
-    themeColor: wohnen ? '#107a5a' : '#0f766e',
+    themeColor: sicHost ? '#0f766e' : '#0f766e',
   }
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const h = await headers()
-  const isSic = h.get('x-sic-route') === '1'
-  const isWohnenMatching = !isSic && isWohnenMatchingHostFromHeaders(h)
-  const htmlLang = isSic || isWohnenMatching ? 'de-CH' : 'de'
+  // Hard pivot: auf dem SIC-Host (wohnen.helvenda.ch) nie die Wohnen-Shell rendern.
+  const isSic = h.get('x-sic-route') === '1' || h.get('x-sic-host') === '1' || isWohnenMatchingHostFromHeaders(h)
+  const htmlLang = isSic ? 'de-CH' : 'de'
 
   const toastPad = { padding: '12px 16px', fontSize: '14px' as const }
-  const toastOptions = isWohnenMatching ?
+  const toastOptions = isSic ?
     {
       duration: 3500,
       success: {
         style: {
           ...toastPad,
-          background: '#18a87c',
+          background: '#0f766e',
           color: '#fff',
           borderRadius: '12px',
-          boxShadow: '0 10px 28px rgba(13, 43, 31, 0.14)',
+          boxShadow: '0 10px 28px rgba(15, 118, 110, 0.14)',
           fontWeight: 500,
         },
       },
@@ -128,7 +134,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       loading: {
         style: {
           ...toastPad,
-          background: '#1e3d2f',
+          background: '#1e293b',
           color: '#fff',
           borderRadius: '12px',
           fontWeight: 500,
@@ -171,20 +177,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="dns-prefetch" href="https://vercel.live" />
         <link rel="preconnect" href="https://vercel.live" crossOrigin="anonymous" />
       </head>
-      <body
-        className={`${inter.className} flex min-h-screen flex-col${isWohnenMatching ? ' helvenda-wohnen' : ''}`}
-      >
+      <body className={`${inter.className} flex min-h-screen flex-col`}>
         <Providers>
           <SkipLinks />
-          {isWohnenMatching ?
-            <WohnenLayoutShell>{children}</WohnenLayoutShell>
-          : <div className="flex flex-1 flex-col">{children}</div>}
+          <div className="flex flex-1 flex-col">{children}</div>
 
           <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} toastOptions={toastOptions} />
 
-          {!isWohnenMatching && !isSic && <AnalyticsTracker />}
+          {!isSic && <AnalyticsTracker />}
 
-          <DeferredComponents suppressMarketplaceWidgets={isWohnenMatching || isSic} />
+          <DeferredComponents suppressMarketplaceWidgets={isSic} />
 
           {!isSic && <CookieConsent />}
         </Providers>

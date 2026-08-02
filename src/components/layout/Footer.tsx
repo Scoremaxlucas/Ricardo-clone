@@ -52,7 +52,7 @@ export function Footer() {
               href={`${WOHNEN_SITE_ORIGIN}/`}
               className="touch-target-exempt whitespace-nowrap rounded-md border border-white/30 px-2.5 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a] md:py-1.5"
             >
-              Mietwohnungen Schweiz
+              Swiss Immo Cert
             </a>
             <Link href="/help" className={linkClass}>
               {t.footer.helpCenter}

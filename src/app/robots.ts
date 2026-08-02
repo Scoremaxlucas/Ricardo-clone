@@ -16,7 +16,13 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
 
   return {
     rules: [
-      { userAgent: '*', allow: '/', disallow: ['/api/', '/admin/', '/auth/', '/checkout/', '/orders/'] },
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: isWohnenHost(host)
+          ? ['/api/', '/sic/admin', '/sic/dossier', '/login', '/admin/']
+          : ['/api/', '/admin/', '/auth/', '/checkout/', '/orders/'],
+      },
     ],
     sitemap: `${base}/sitemap.xml`,
     host: base,

@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { abs } from '@/lib/seo'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
-import { RentalListingStatus } from '@prisma/client'
 import { headers } from 'next/headers'
 import type { MetadataRoute } from 'next'
 
@@ -19,35 +18,16 @@ function joinUrl(base: string, path: string): string {
   return `${b}${p === '/' ? '' : p}` || b
 }
 
-async function wohnenSitemap(): Promise<MetadataRoute.Sitemap> {
+async function sicSitemap(): Promise<MetadataRoute.Sitemap> {
   const base = WOHNEN_SITE_ORIGIN.replace(/\/$/, '')
 
-  const staticPages: MetadataRoute.Sitemap = [
-    { url: base, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
-    { url: joinUrl(base, '/wohnungen'), lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
-    { url: joinUrl(base, '/zertifikat'), lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
-    { url: joinUrl(base, '/faq'), lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-    { url: joinUrl(base, '/contact'), lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
-    { url: joinUrl(base, '/terms'), lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-    { url: joinUrl(base, '/privacy'), lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-    { url: joinUrl(base, '/imprint'), lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+  return [
+    { url: base, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
+    { url: joinUrl(base, '/sic'), lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
+    { url: joinUrl(base, '/sic/faq'), lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
+    { url: joinUrl(base, '/sic/agb'), lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: joinUrl(base, '/sic/datenschutz'), lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
   ]
-
-  const listings = await prisma.rentalListing.findMany({
-    where: { status: RentalListingStatus.active },
-    select: { id: true, updatedAt: true },
-    orderBy: { updatedAt: 'desc' },
-    take: 5000,
-  })
-
-  const listingPages: MetadataRoute.Sitemap = listings.map(l => ({
-    url: joinUrl(base, `/wohnungen/${l.id}`),
-    lastModified: l.updatedAt,
-    changeFrequency: 'daily' as const,
-    priority: 0.8,
-  }))
-
-  return [...staticPages, ...listingPages]
 }
 
 async function marketplaceSitemap(): Promise<MetadataRoute.Sitemap> {
@@ -92,5 +72,5 @@ async function marketplaceSitemap(): Promise<MetadataRoute.Sitemap> {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const h = await headers()
   const host = h.get('host') || ''
-  return isWohnenHost(host) ? wohnenSitemap() : marketplaceSitemap()
+  return isWohnenHost(host) ? sicSitemap() : marketplaceSitemap()
 }

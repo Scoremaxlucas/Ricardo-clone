@@ -13,7 +13,8 @@ export const SIC_SITE_ORIGIN = (process.env.NEXT_PUBLIC_SIC_URL || WOHNEN_SITE_O
 export const SIC_BASE_PATH = '/sic'
 
 export const sicPaths = {
-  landing: SIC_BASE_PATH,
+  /** Root wird auf dem SIC-Host auf die Landing umgeschrieben. */
+  landing: '/',
   dossier: `${SIC_BASE_PATH}/dossier`,
   checkoutSuccess: `${SIC_BASE_PATH}/checkout/erfolg`,
   checkoutCancel: `${SIC_BASE_PATH}/checkout/abbruch`,

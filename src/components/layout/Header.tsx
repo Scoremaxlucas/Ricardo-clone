@@ -380,7 +380,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   className="flex flex-shrink-0 items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-xs font-semibold text-teal-900 transition-all duration-200 hover:bg-teal-100 active:scale-95"
                 >
                   <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span className="whitespace-nowrap">Mietwohnung</span>
+                  <span className="whitespace-nowrap">Mieterzertifikat</span>
                 </a>
                 {[
                   { slug: 'kleidung-accessoires', name: 'Kleidung', icon: Shirt },
@@ -783,7 +783,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               className="group flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50/90 px-3 py-1.5 text-[13px] font-semibold text-teal-900 transition-all duration-200 hover:bg-teal-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 active:translate-y-0"
             >
               <Building2 className="h-4 w-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
-              <span className="whitespace-nowrap">Mietwohnung</span>
+              <span className="whitespace-nowrap">Mieterzertifikat</span>
             </a>
 
             {/* Top 8 Categories with smooth hover animations */}
