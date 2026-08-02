@@ -179,7 +179,9 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/admin/applications') ||
     pathname.startsWith('/api/admin/wohnen/placements') ||
     pathname.startsWith('/api/admin/rental-listing-invites') ||
-    pathname.startsWith('/api/admin/rental-ingest')
+    pathname.startsWith('/api/admin/rental-ingest') ||
+    pathname.startsWith('/sic/admin') ||
+    pathname.startsWith('/api/sic/admin')
   ) {
     const secret = process.env.NEXTAUTH_SECRET
     if (!secret) {
@@ -213,7 +215,7 @@ export async function middleware(request: NextRequest) {
     if (isWohnenTenant(request) && pathname === '/admin/dashboard') {
       return NextResponse.redirect(new URL('/admin/wohnen', request.url))
     }
-    return NextResponse.next()
+    return proceed(request, isSic)
   }
 
   if (isWohnenTenant(request)) {
