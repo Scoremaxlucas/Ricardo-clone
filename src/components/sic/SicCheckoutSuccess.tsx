@@ -45,15 +45,54 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
           <CheckCircle2 className="h-12 w-12 text-[#2f9e44]" />
           <h1 className="mt-4 text-2xl font-bold text-[#0f2b5e]">Zahlung erfolgreich</h1>
           <p className="mt-3 text-slate-600">
-            Wir haben dir einen Anmeldelink an {state.email ? <strong>{state.email}</strong> : 'deine E-Mail'} gesendet.
-            Öffne den Link, um deine Nachweise hochzuladen.
+            Dein Zertifikat ist angelegt. So geht&apos;s weiter:
           </p>
-          <div className="mt-6 flex items-center gap-2 rounded-xl bg-[#0f2b5e]/5 px-4 py-3 text-sm text-[#0f2b5e]">
-            <MailCheck className="h-4 w-4" /> Prüfe dein Postfach (auch den Spam-Ordner).
+
+          <ol className="mt-6 w-full space-y-3 text-left text-sm text-slate-700">
+            <li className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4">
+              <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-[#0f2b5e] text-xs font-bold text-white">
+                1
+              </span>
+              <span>
+                <strong className="font-semibold text-[#0f2b5e]">Zahlung bestätigt</strong>
+                <br />
+                Deine Module sind freigeschaltet für Uploads.
+              </span>
+            </li>
+            <li className="flex gap-3 rounded-xl border border-[#0f2b5e]/20 bg-[#0f2b5e]/[0.04] p-4">
+              <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-[#0f2b5e] text-xs font-bold text-white">
+                2
+              </span>
+              <span>
+                <strong className="font-semibold text-[#0f2b5e]">Postfach öffnen</strong>
+                <br />
+                Wir haben einen Anmeldelink an{' '}
+                {state.email ? <strong>{state.email}</strong> : 'deine E-Mail'} gesendet. Öffne den Link
+                (auch Spam prüfen) — kein Passwort nötig.
+              </span>
+            </li>
+            <li className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4">
+              <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-[#0f2b5e] text-xs font-bold text-white">
+                3
+              </span>
+              <span>
+                <strong className="font-semibold text-[#0f2b5e]">Formulare &amp; Nachweise</strong>
+                <br />
+                Im Bereich «Mein Zertifikat» füllst du Formulare aus und lädst Belege hoch.
+              </span>
+            </li>
+          </ol>
+
+          <div className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f2b5e] px-5 py-3.5 text-sm font-semibold text-white">
+            <MailCheck className="h-4 w-4" /> Als Nächstes: Postfach öffnen
           </div>
-          <Link href={sicPaths.dossier} className="mt-6 text-sm font-semibold text-[#0f2b5e] hover:underline">
-            Zum Dossier
-          </Link>
+
+          <p className="mt-4 text-xs text-slate-400">
+            Link schon geöffnet / bereits angemeldet?{' '}
+            <Link href={sicPaths.certificateWorkspace} className="font-semibold text-[#0f2b5e] hover:underline">
+              Zum Zertifikat
+            </Link>
+          </p>
         </>
       )}
 
@@ -71,7 +110,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
         <>
           <h1 className="text-xl font-bold text-slate-900">Etwas ist schiefgelaufen</h1>
           <p className="mt-3 text-slate-600">
-            {state.message || 'Bitte prüfe später dein Dossier oder kontaktiere uns.'}
+            {state.message || 'Bitte prüfe später «Mein Zertifikat» oder kontaktiere uns.'}
           </p>
           <Link href={sicPaths.landing} className="mt-6 text-sm font-semibold text-[#0f2b5e] hover:underline">
             Zurück zur Startseite

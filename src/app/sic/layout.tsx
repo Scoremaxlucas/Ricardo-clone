@@ -20,10 +20,10 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
             <SicLogo size={32} />
           </Link>
           <Link
-            href={sicPaths.dossier}
+            href={sicPaths.certificateWorkspace}
             className="rounded-lg border border-[#0f2b5e]/15 px-3.5 py-2 text-sm font-semibold text-[#0f2b5e] transition-colors hover:bg-[#0f2b5e]/5"
           >
-            Mein Dossier
+            Mein Zertifikat
           </Link>
         </div>
       </header>
@@ -43,7 +43,7 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
           </div>
           <nav className="flex flex-col gap-2.5 text-sm">
             <Link
-              href={`${SIC_BASE_PATH}/faq`}
+              href={sicPaths.faq}
               className="text-white/80 transition-colors hover:text-white"
               style={{ color: 'rgba(255,255,255,0.8)' }}
             >

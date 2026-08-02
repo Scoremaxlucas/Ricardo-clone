@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { requireSicAdmin } from '@/lib/sic/admin'
+import { sendSicModuleReviewEmail } from '@/lib/sic/email'
 import { isSicModuleId } from '@/lib/sic/modules'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -64,6 +65,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Bitte einen Grund für die Ablehnung angeben.' }, { status: 400 })
   }
 
+  const cert = await prisma.sicCertificate.findUnique({
+    where: { id: certificateId },
+    select: { id: true, email: true },
+  })
+  if (!cert) {
+    return NextResponse.json({ ok: false, message: 'Zertifikat nicht gefunden.' }, { status: 404 })
+  }
+
   const updated = await prisma.sicCertificateModule.updateMany({
     where: { certificateId, moduleKind },
     data: {
@@ -76,6 +85,17 @@ export async function POST(req: NextRequest) {
 
   if (updated.count === 0) {
     return NextResponse.json({ ok: false, message: 'Modul nicht gefunden.' }, { status: 404 })
+  }
+
+  try {
+    await sendSicModuleReviewEmail({
+      email: cert.email,
+      moduleKind,
+      action,
+      note: action === 'reject' ? note : null,
+    })
+  } catch (err) {
+    console.error('[sic/admin/review] notification email failed', err)
   }
 
   return NextResponse.json({ ok: true })

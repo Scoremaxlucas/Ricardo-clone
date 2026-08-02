@@ -2,7 +2,7 @@ import { normalizeSicCertificateCode, isValidSicCertificateCode } from '@/lib/si
 import { SIC_BRAND_NAME } from '@/lib/sic/config'
 import { verifiedModuleLineItems, joinHolderName } from '@/lib/sic/dossier'
 import { prisma } from '@/lib/prisma'
-import { AlertTriangle, CheckCircle2, ShieldCheck, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Clock, ShieldCheck, XCircle } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -29,15 +29,15 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
     : null
 
   const now = new Date()
-  const valid = !!cert && cert.status === 'ACTIVE' && cert.expiresAt.getTime() > now.getTime()
+  const notExpired = !!cert && cert.status === 'ACTIVE' && cert.expiresAt.getTime() > now.getTime()
+  const verifiedModules = cert ? verifiedModuleLineItems(cert.modules) : []
+  const hasVerifiedContent = verifiedModules.length > 0
 
-  if (cert && valid) {
+  if (cert && notExpired && hasVerifiedContent) {
     prisma.sicCertificate
       .update({ where: { id: cert.id }, data: { verificationCount: { increment: 1 }, lastVerifiedAt: now } })
       .catch(() => {})
   }
-
-  const verifiedModules = cert ? verifiedModuleLineItems(cert.modules) : []
 
   return (
     <div className="mx-auto max-w-lg px-5 py-16">
@@ -53,8 +53,42 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
             Der Code <span className="font-mono">{code || '—'}</span> ist unbekannt.
           </p>
         </div>
-      : valid ?
-        <div className="mt-6 rounded-2xl border border-[#2f9e44]/30 bg-white p-6">
+      : !notExpired ?
+        <div className="mt-6 rounded-2xl border border-amber-200 bg-white p-6 text-center">
+          <AlertTriangle className="mx-auto h-10 w-10 text-amber-500" />
+          <h1 className="mt-3 text-xl font-bold text-slate-900">Nicht (mehr) gültig</h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Dieses Zertifikat ist {cert.status === 'REVOKED' ? 'widerrufen' : 'abgelaufen'}.
+          </p>
+        </div>
+      : !hasVerifiedContent ?
+        <div className="mt-6 rounded-2xl border border-amber-200 bg-white p-6">
+          <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-amber-800">
+            <Clock className="h-5 w-5 flex-shrink-0" />
+            <span className="font-semibold">Zertifikat existiert — Prüfung ausstehend</span>
+          </div>
+          <dl className="mt-5 space-y-3 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-slate-500">Code</dt>
+              <dd className="font-mono font-semibold text-slate-900">{cert.certificateCode}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-slate-500">Inhaber</dt>
+              <dd className="font-medium text-slate-900">
+                {joinHolderName(cert.holderFirstName, cert.holderLastName) || 'Gemäss Nachweisen'}
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-slate-500">Gültig bis</dt>
+              <dd className="font-medium text-slate-900">{fmt(cert.expiresAt)}</dd>
+            </div>
+          </dl>
+          <p className="mt-5 text-sm leading-relaxed text-slate-600">
+            Es sind noch keine Module freigegeben. Erst nach bestandener Prüfung erscheinen hier verifizierte
+            Angaben. Ein leeres Zertifikat ersetzt keine geprüften Nachweise.
+          </p>
+        </div>
+      : <div className="mt-6 rounded-2xl border border-[#2f9e44]/30 bg-white p-6">
           <div className="flex items-center gap-2 rounded-xl bg-[#2f9e44]/10 px-4 py-3 text-[#1f7a34]">
             <CheckCircle2 className="h-5 w-5" />
             <span className="font-semibold">Gültiges Zertifikat</span>
@@ -77,30 +111,20 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
           </dl>
 
           <h2 className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-500">Verifizierte Angaben</h2>
-          {verifiedModules.length === 0 ?
-            <p className="mt-2 text-sm text-slate-500">Basiszertifikat — keine Module verifiziert.</p>
-          : <ul className="mt-3 space-y-4">
-              {verifiedModules.map(m => (
-                <li key={m.title}>
-                  <p className="text-sm font-semibold text-slate-900">{m.title}</p>
-                  <ul className="mt-1.5 space-y-1">
-                    {m.lines.map(l => (
-                      <li key={l} className="flex items-center gap-2 text-sm text-slate-600">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-[#2f9e44]" /> {l}
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-          }
-        </div>
-      : <div className="mt-6 rounded-2xl border border-amber-200 bg-white p-6 text-center">
-          <AlertTriangle className="mx-auto h-10 w-10 text-amber-500" />
-          <h1 className="mt-3 text-xl font-bold text-slate-900">Nicht (mehr) gültig</h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Dieses Zertifikat ist {cert.status === 'REVOKED' ? 'widerrufen' : 'abgelaufen'}.
-          </p>
+          <ul className="mt-3 space-y-4">
+            {verifiedModules.map(m => (
+              <li key={m.title}>
+                <p className="text-sm font-semibold text-slate-900">{m.title}</p>
+                <ul className="mt-1.5 space-y-1">
+                  {m.lines.map(l => (
+                    <li key={l} className="flex items-center gap-2 text-sm text-slate-600">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-[#2f9e44]" /> {l}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
         </div>
       }
     </div>

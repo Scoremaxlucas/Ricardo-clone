@@ -28,11 +28,11 @@ export default function SicImpressumPage() {
         </div>
         <div>
           <dt className="font-semibold text-[#0f2b5e]">Kontakt</dt>
-          <dd className="mt-1 text-slate-700">[E-MAIL/KONTAKT EINFÜGEN]</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-[#0f2b5e]">Handelsregister / UID</dt>
-          <dd className="mt-1 text-slate-700">[UID FALLS VORHANDEN]</dd>
+          <dd className="mt-1 text-slate-700">
+            <a href="mailto:support@helvenda.ch" className="text-[#0f2b5e] underline-offset-2 hover:underline">
+              support@helvenda.ch
+            </a>
+          </dd>
         </div>
       </dl>
 

@@ -1,13 +1,23 @@
 import { prisma } from '@/lib/prisma'
 import { getSicModule, SIC_MODULES, type SicModuleId } from '@/lib/sic/modules'
+import { templatesForModule } from '@/lib/sic/templates'
 import { normalizeEmail } from '@/lib/sic/session'
 import type { SicModuleStatus } from '@prisma/client'
+
+export type SicChecklistItem = {
+  id: string
+  label: string
+  kind: 'upload' | 'template'
+  /** Template-ID wenn kind === 'template' */
+  templateId?: string
+}
 
 export type SicDossierModuleView = {
   moduleKind: SicModuleId
   title: string
   summary: string
   requiredDocuments: string[]
+  checklist: SicChecklistItem[]
   status: SicModuleStatus
   documentCount: number
   reviewNote: string | null
@@ -21,6 +31,13 @@ export type SicDossierView = {
   expiresAt: string
   holderName: string | null
   hasVerifiedModule: boolean
+  progress: {
+    totalModules: number
+    verifiedCount: number
+    pendingDocsCount: number
+    inReviewCount: number
+    rejectedCount: number
+  }
   purchasedModules: SicDossierModuleView[]
   availableModules: { moduleKind: SicModuleId; title: string; summary: string; priceChf: number }[]
 }
@@ -36,6 +53,46 @@ export function verifiedModuleLineItems(
 export function joinHolderName(first: string | null, last: string | null): string | null {
   const name = `${(first ?? '').trim()} ${(last ?? '').trim()}`.trim()
   return name || null
+}
+
+function buildChecklist(moduleKind: SicModuleId, requiredDocuments: string[]): SicChecklistItem[] {
+  const templates = templatesForModule(moduleKind)
+  const templateLabels = new Set(
+    templates.flatMap(t => [
+      t.title.toLowerCase(),
+      ...t.title.toLowerCase().split(/\s+/),
+    ])
+  )
+
+  const items: SicChecklistItem[] = []
+
+  for (const t of templates) {
+    items.push({
+      id: `template:${t.id}`,
+      label: `${t.title} (SIC-Formular — digital ausfüllen)`,
+      kind: 'template',
+      templateId: t.id,
+    })
+  }
+
+  for (const doc of requiredDocuments) {
+    const lower = doc.toLowerCase()
+    // Docs die klar das SIC-Formular meinen, nicht nochmal als Upload-Zeile listen.
+    if (templates.some(t => lower.includes(t.title.toLowerCase()) || lower.includes('sic-formular'))) {
+      continue
+    }
+    // Heuristik: Vermieter-Referenz / Arbeitgeberbestätigung bereits als Template
+    if (Array.from(templateLabels).some(l => l.length > 4 && lower.includes(l))) {
+      continue
+    }
+    items.push({
+      id: `upload:${doc}`,
+      label: doc,
+      kind: 'upload',
+    })
+  }
+
+  return items
 }
 
 export async function getSicDossierView(emailRaw: string): Promise<SicDossierView | null> {
@@ -63,6 +120,7 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
       title: def.title,
       summary: def.summary,
       requiredDocuments: def.requiredDocuments,
+      checklist: buildChecklist(def.id, def.requiredDocuments),
       status: row.status,
       documentCount: docCountByKind.get(def.id) ?? 0,
       reviewNote: row.reviewNote,
@@ -76,6 +134,17 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     priceChf: def.priceChf,
   }))
 
+  let verifiedCount = 0
+  let pendingDocsCount = 0
+  let inReviewCount = 0
+  let rejectedCount = 0
+  for (const m of purchasedModules) {
+    if (m.status === 'VERIFIED') verifiedCount++
+    else if (m.status === 'PENDING_DOCS') pendingDocsCount++
+    else if (m.status === 'IN_REVIEW') inReviewCount++
+    else if (m.status === 'REJECTED') rejectedCount++
+  }
+
   return {
     email,
     certificateCode: cert.certificateCode,
@@ -83,7 +152,14 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     issuedAt: cert.issuedAt.toISOString(),
     expiresAt: cert.expiresAt.toISOString(),
     holderName: joinHolderName(cert.holderFirstName, cert.holderLastName),
-    hasVerifiedModule: cert.modules.some(m => m.status === 'VERIFIED'),
+    hasVerifiedModule: verifiedCount > 0,
+    progress: {
+      totalModules: purchasedModules.length,
+      verifiedCount,
+      pendingDocsCount,
+      inReviewCount,
+      rejectedCount,
+    },
     purchasedModules,
     availableModules,
   }

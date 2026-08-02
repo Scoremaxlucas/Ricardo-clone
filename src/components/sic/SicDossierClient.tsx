@@ -24,6 +24,22 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+function progressSummary(p: SicDossierView['progress']): string {
+  if (p.totalModules === 0) return 'Noch keine Module erworben.'
+  const parts: string[] = []
+  parts.push(`${p.verifiedCount} von ${p.totalModules} Modul${p.totalModules === 1 ? '' : 'en'} verifiziert`)
+  if (p.pendingDocsCount > 0) {
+    parts.push(`${p.pendingDocsCount} wartet auf deine Uploads`)
+  }
+  if (p.inReviewCount > 0) {
+    parts.push(`${p.inReviewCount} in Prüfung`)
+  }
+  if (p.rejectedCount > 0) {
+    parts.push(`${p.rejectedCount} abgelehnt — bitte nachreichen`)
+  }
+  return parts.join(' · ')
+}
+
 export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
   const router = useRouter()
   const [uploading, setUploading] = useState<SicModuleId | null>(null)
@@ -85,7 +101,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
     <div className="mx-auto max-w-3xl px-5 py-12">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#0f2b5e]">Mein Dossier</h1>
+          <h1 className="text-2xl font-bold text-[#0f2b5e]">Mein Zertifikat</h1>
           <p className="mt-1 text-sm text-slate-500">{dossier.email}</p>
         </div>
         <form action="/api/sic/logout" method="post">
@@ -93,6 +109,10 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             Abmelden
           </button>
         </form>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-[#0f2b5e]/15 bg-[#0f2b5e]/[0.03] px-4 py-3 text-sm text-[#0f2b5e]">
+        {progressSummary(dossier.progress)}
       </div>
 
       {/* Certificate summary */}
@@ -162,7 +182,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       </div>
 
       {/* Purchased modules */}
-          <h2 className="mt-8 text-lg font-semibold text-[#0f2b5e]">Deine Module</h2>
+      <h2 className="mt-8 text-lg font-semibold text-[#0f2b5e]">Deine Module</h2>
       <ul className="mt-3 space-y-3">
         {dossier.purchasedModules.map(m => {
           const meta = STATUS_META[m.status]
@@ -183,10 +203,21 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
 
               {canUpload ?
                 <div className="mt-4">
-                  <p className="text-xs font-medium text-slate-500">Benötigte Nachweise:</p>
-                  <ul className="mt-1 list-inside list-disc text-xs text-slate-500">
-                    {m.requiredDocuments.map(d => (
-                      <li key={d}>{d}</li>
+                  <p className="text-xs font-medium text-slate-500">Checkliste — benötigte Nachweise:</p>
+                  <ul className="mt-2 space-y-1.5">
+                    {m.checklist.map(item => (
+                      <li key={item.id} className="flex items-start gap-2 text-xs text-slate-600">
+                        <span
+                          className={`mt-0.5 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                            item.kind === 'template' ?
+                              'bg-[#0f2b5e]/10 text-[#0f2b5e]'
+                            : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {item.kind === 'template' ? 'Formular' : 'Upload'}
+                        </span>
+                        <span>{item.label}</span>
+                      </li>
                     ))}
                   </ul>
 
@@ -216,16 +247,26 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                     <FileUp className="h-4 w-4" />
                     {uploading === m.moduleKind ? 'Wird hochgeladen …' : 'Nachweis hochladen'}
                   </button>
+                  <p className="mt-1.5 text-[11px] text-slate-400">
+                    Du kannst mehrere Dateien nacheinander hochladen (z. B. Lohnausweis und Mietvertrag).
+                  </p>
                   {m.documentCount > 0 ?
-                    <span className="ml-3 text-xs text-slate-400">{m.documentCount} Datei(en) hochgeladen</span>
+                    <span className="mt-1 inline-block text-xs text-slate-400">
+                      {m.documentCount} Datei(en) hochgeladen
+                    </span>
                   : null}
                 </div>
               : null}
 
               {m.status === 'IN_REVIEW' ?
                 <p className="mt-3 text-sm text-slate-500">
-                  Deine Nachweise werden geprüft. Du wirst benachrichtigt, sobald das Modul freigegeben ist.
+                  Deine Nachweise werden geprüft. Wir benachrichtigen dich per E-Mail, sobald das Modul
+                  freigegeben oder abgelehnt wird.
                 </p>
+              : null}
+
+              {m.status === 'VERIFIED' ?
+                <p className="mt-3 text-sm text-[#1f7a34]">Dieses Modul ist freigegeben und erscheint auf dem PDF.</p>
               : null}
             </li>
           )
@@ -237,7 +278,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-6">
           <h3 className="text-sm font-semibold text-slate-900">Zertifikat erweitern</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Weitere Module hinzufügen — die Gültigkeit deines Zertifikats verlängert sich entsprechend.
+            Zusätzliche Module auf der Startseite wählen und bezahlen — die Gültigkeit deines Zertifikats
+            verlängert sich entsprechend.
           </p>
           <ul className="mt-3 space-y-2">
             {dossier.availableModules.map(a => (
@@ -251,7 +293,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             href={sicPaths.landing}
             className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0f2b5e] hover:underline"
           >
-            <Plus className="h-4 w-4" /> Module hinzufügen
+            <Plus className="h-4 w-4" /> Zur Startseite — Module hinzufügen
           </Link>
         </div>
       : null}

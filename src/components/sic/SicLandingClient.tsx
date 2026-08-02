@@ -2,6 +2,7 @@
 
 import { SicLogoMark } from '@/components/sic/SicLogo'
 import { SIC_COLORS, SIC_MODULE_ACCENT } from '@/lib/sic/brand'
+import { SIC_FAQ } from '@/lib/sic/faq'
 import {
   SIC_BASE_FEE_CHF,
   SIC_BUNDLE_ALL_MODULES_CHF,
@@ -58,25 +59,6 @@ const HOW_STEPS: { icon: LucideIcon; title: string }[] = [
   { icon: QrCode, title: 'Fertiges Zertifikat mit QR-Code erhalten' },
 ]
 
-const FAQ: { q: string; a: string }[] = [
-  {
-    q: 'Was passiert, wenn ein Beleg nicht anerkannt wird?',
-    a: 'Wir bitten dich, einen gültigen Nachweis nachzureichen; das Modul wird danach verifiziert.',
-  },
-  {
-    q: 'Wie lange dauert die Prüfung?',
-    a: 'In der Regel innert 24 Std. nach vollständigem Upload.',
-  },
-  {
-    q: 'Wer sieht meine Daten?',
-    a: 'Nur Swiss Immo Cert zur Prüfung. Vermieter sehen nur dein fertiges Zertifikat, das du selbst teilst.',
-  },
-  {
-    q: 'Akzeptieren Vermieter das Zertifikat?',
-    a: 'Swiss Immo Cert ist ein unabhängiges, standardisiertes Zertifikat, das du deiner Bewerbung als PDF beilegst — bei jeder Wohnung, über jedes Portal. Ob ein Vermieter es berücksichtigt, entscheidet er selbst; das geprüfte, einheitliche Format macht deine Bewerbung nachvollziehbarer.',
-  },
-]
-
 const PROBLEM_POINTS = [
   'Wohnungsmarkt stark überlastet',
   'Bis zu 100 Bewerbungen pro Wohnung',
@@ -109,7 +91,7 @@ const CERT_PREVIEW: { label: string; value: string; module: SicModuleId }[] = [
   { label: 'Bruttojahreseinkommen', value: 'CHF 90’000', module: 'ARBEIT_EINKOMMEN' },
   { label: 'Arbeitsverhältnis', value: 'Ungekündigt', module: 'ARBEIT_EINKOMMEN' },
   { label: 'Arbeitgeber', value: 'Seit 6 Jahren beschäftigt', module: 'ARBEIT_EINKOMMEN' },
-  { label: 'Aktuelle Wohnung', value: 'Seit 5 Jahren wohnhaft', module: 'ARBEIT_EINKOMMEN' },
+  { label: 'Aktuelle Wohnung', value: 'Seit 5 Jahren wohnhaft', module: 'ZUVERLAESSIGKEIT' },
   { label: 'Vermieterreferenz', value: 'Positiv bestätigt', module: 'ZUVERLAESSIGKEIT' },
   { label: 'Aufenthaltsstatus', value: 'Gültige Bewilligung', module: 'AUFENTHALT' },
 ]
@@ -586,8 +568,8 @@ export function SicLandingClient() {
                 className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2"
               />
               <p className="mt-1.5 text-xs text-slate-500">
-                Deine E-Mail ist dein Zugang — kein Passwort nötig. Nach der Zahlung erhältst du einen Anmeldelink
-                zum Ausfüllen der Formulare und Hochladen der Nachweise.
+                Deine E-Mail ist dein Zugang — kein Passwort nötig. Nach der Zahlung erhältst du einen Anmeldelink;
+                Formulare und Uploads folgen unter «Mein Zertifikat».
               </p>
               <button
                 type="button"
@@ -625,7 +607,7 @@ export function SicLandingClient() {
       <section className="mx-auto max-w-3xl px-5 pb-24">
         <h2 className="text-center text-2xl font-bold tracking-tight text-[#0f2b5e]">Häufige Fragen</h2>
         <div className="mt-8 divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
-          {FAQ.map((item, i) => {
+          {SIC_FAQ.map((item, i) => {
             const open = openFaq === i
             return (
               <div key={item.q}>

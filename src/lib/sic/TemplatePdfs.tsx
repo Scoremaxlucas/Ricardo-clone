@@ -109,8 +109,8 @@ export function SicTemplatePdfDocument(props: {
 
         <Text style={s.note}>
           Dieses Formular dient als Nachweis für Swiss Immo Cert. Unvollständige oder fehlende Angaben
-          können zu einer Rückfrage führen. Bitte unterschriebenes Dokument als PDF oder Foto im
-          Mieter-Dossier hochladen.
+          können zu einer Rückfrage führen. Bitte unterschriebenes Dokument als PDF oder Foto unter
+          «Mein Zertifikat» hochladen.
         </Text>
 
         <Text style={s.footer}>Swiss Immo Cert · schweizerisches Mieter-Zertifikat · swissimmocert.ch / wohnen.helvenda.ch</Text>

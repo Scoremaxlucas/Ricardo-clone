@@ -15,10 +15,12 @@ export const SIC_BASE_PATH = '/sic'
 export const sicPaths = {
   /** Root wird auf dem SIC-Host auf die Landing umgeschrieben. */
   landing: '/',
-  dossier: `${SIC_BASE_PATH}/dossier`,
+  /** Post-Purchase-Workspace (früher „Dossier“). */
+  certificateWorkspace: `${SIC_BASE_PATH}/zertifikat`,
   checkoutSuccess: `${SIC_BASE_PATH}/checkout/erfolg`,
   checkoutCancel: `${SIC_BASE_PATH}/checkout/abbruch`,
   verify: (code: string) => `${SIC_BASE_PATH}/verify/${encodeURIComponent(code)}`,
+  faq: `${SIC_BASE_PATH}/faq`,
   authCallback: '/api/sic/auth/callback',
 } as const
 

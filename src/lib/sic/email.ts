@@ -1,8 +1,9 @@
 import { sendEmail } from '@/lib/email/sender'
 import { getFromEmail } from '@/lib/email/config'
-import { SIC_BRAND_NAME } from '@/lib/sic/config'
+import { SIC_BRAND_NAME, sicPaths, sicUrl } from '@/lib/sic/config'
+import { getSicModule, type SicModuleId } from '@/lib/sic/modules'
 
-const ACCENT = '#0f766e'
+const ACCENT = '#0f2b5e'
 const INK = '#0f172a'
 const MUTED = '#64748b'
 
@@ -53,7 +54,7 @@ export function sicEmailShell(opts: {
           : ''
         }
         <tr><td style="padding:20px 40px;border-top:1px solid #e2e8f0;font-size:12px;line-height:1.6;color:#94a3b8;">
-          Diese Nachricht wurde automatisch von ${SIC_BRAND_NAME} versendet. Fragen? Antworten Sie einfach auf diese E-Mail.
+          Diese Nachricht wurde automatisch von ${SIC_BRAND_NAME} versendet. Fragen? Antworte einfach auf diese E-Mail.
         </td></tr>
       </table>
     </td></tr>
@@ -64,20 +65,63 @@ export function sicEmailShell(opts: {
 
 export async function sendSicMagicLinkEmail(email: string, url: string) {
   const html = sicEmailShell({
-    preheader: 'Ihr Anmeldelink für Swiss Immo Cert',
+    preheader: 'Dein Anmeldelink für Swiss Immo Cert',
     heading: 'Anmeldung bei Swiss Immo Cert',
-    bodyHtml: `<p style="margin:0 0 12px;">Klicken Sie auf den Button, um sich sicher und ohne Passwort anzumelden. Der Link ist 30 Minuten gültig und nur einmal verwendbar.</p>`,
+    bodyHtml: `<p style="margin:0 0 12px;">Klicke auf den Button, um dich sicher und ohne Passwort anzumelden. Der Link ist 30 Minuten gültig und nur einmal verwendbar.</p>`,
     buttonText: 'Jetzt anmelden',
     buttonUrl: url,
     footnoteHtml:
-      'Falls Sie diese Anmeldung nicht angefordert haben, können Sie diese E-Mail ignorieren. Es wird kein Zugriff gewährt, solange der Link nicht geöffnet wird.',
+      'Falls du diese Anmeldung nicht angefordert hast, kannst du diese E-Mail ignorieren. Es wird kein Zugriff gewährt, solange der Link nicht geöffnet wird.',
   })
 
   return sendEmail({
     to: email,
     from: sicFromAddress(),
-    subject: 'Ihr Anmeldelink für Swiss Immo Cert',
+    subject: 'Dein Anmeldelink für Swiss Immo Cert',
     html,
     text: `Anmeldung bei ${SIC_BRAND_NAME}\n\nMit diesem Link anmelden (30 Minuten gültig, einmalig):\n${url}`,
   })
+}
+
+export async function sendSicModuleReviewEmail(opts: {
+  email: string
+  moduleKind: SicModuleId
+  action: 'approve' | 'reject'
+  note?: string | null
+}) {
+  const title = getSicModule(opts.moduleKind).title
+  const workspaceUrl = sicUrl(sicPaths.certificateWorkspace)
+  const approved = opts.action === 'approve'
+
+  const html = sicEmailShell({
+    preheader: approved ? `Modul ${title} freigegeben` : `Modul ${title} — Nacharbeit nötig`,
+    heading: approved ? `Modul «${title}» freigegeben` : `Modul «${title}» abgelehnt`,
+    bodyHtml: approved ?
+      `<p style="margin:0 0 12px;">Gute Nachricht: Das Modul <strong>${title}</strong> wurde geprüft und freigegeben. Es erscheint jetzt auf deinem Zertifikat.</p>`
+    : `<p style="margin:0 0 12px;">Leider konnten wir das Modul <strong>${title}</strong> noch nicht freigeben.</p>
+       ${opts.note ? `<p style="margin:0 0 12px;"><strong>Grund:</strong> ${escapeHtml(opts.note)}</p>` : ''}
+       <p style="margin:0;">Bitte reich einen gültigen Nachweis nach und lade ihn erneut hoch.</p>`,
+    buttonText: 'Zum Zertifikat',
+    buttonUrl: workspaceUrl,
+  })
+
+  return sendEmail({
+    to: opts.email,
+    from: sicFromAddress(),
+    subject: approved ?
+      `${SIC_BRAND_NAME}: Modul «${title}» freigegeben`
+    : `${SIC_BRAND_NAME}: Modul «${title}» — Nacharbeit nötig`,
+    html,
+    text: approved ?
+      `Modul «${title}» wurde freigegeben.\n\nZum Zertifikat: ${workspaceUrl}`
+    : `Modul «${title}» wurde abgelehnt.${opts.note ? `\nGrund: ${opts.note}` : ''}\n\nZum Zertifikat: ${workspaceUrl}`,
+  })
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
 }

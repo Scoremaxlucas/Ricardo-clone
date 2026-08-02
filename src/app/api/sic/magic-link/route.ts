@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
   const generic = NextResponse.json({
     ok: true,
-    message: 'Falls ein Dossier zu dieser E-Mail existiert, haben wir Ihnen einen Anmeldelink gesendet.',
+    message: 'Falls ein Zertifikat zu dieser E-Mail existiert, haben wir dir einen Anmeldelink gesendet.',
   })
 
   const certificate = await prisma.sicCertificate.findUnique({ where: { email }, select: { id: true } })

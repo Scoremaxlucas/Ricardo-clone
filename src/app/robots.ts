@@ -20,7 +20,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         userAgent: '*',
         allow: '/',
         disallow: isWohnenHost(host)
-          ? ['/api/', '/sic/admin', '/sic/dossier', '/login', '/admin/']
+          ? ['/api/', '/sic/admin', '/sic/zertifikat', '/sic/dossier', '/login', '/admin/']
           : ['/api/', '/admin/', '/auth/', '/checkout/', '/orders/'],
       },
     ],

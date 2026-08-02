@@ -34,17 +34,18 @@ export function SicDossierLogin() {
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-5 py-16">
-      <h1 className="text-2xl font-bold text-[#0f2b5e]">Mein Dossier</h1>
+      <h1 className="text-2xl font-bold text-[#0f2b5e]">Mein Zertifikat</h1>
       <p className="mt-2 text-slate-600">
-        Melde dich ohne Passwort an. Wir senden dir einen Anmeldelink an deine E-Mail-Adresse.
+        Hier siehst du Status, Formulare und Uploads — <strong>nach dem Kauf</strong>. Melde dich ohne
+        Passwort an; wir senden dir einen Anmeldelink.
       </p>
 
       {sent ?
         <div className="mt-6 flex items-start gap-3 rounded-2xl bg-[#0f2b5e]/5 p-5 text-sm text-[#0f2b5e]">
           <MailCheck className="mt-0.5 h-5 w-5 flex-shrink-0" />
           <p>
-            Falls ein Dossier zu dieser Adresse existiert, haben wir dir einen Anmeldelink gesendet. Bitte prüfe
-            dein Postfach (auch den Spam-Ordner).
+            Falls zu dieser Adresse ein Zertifikat existiert, haben wir dir einen Anmeldelink gesendet.
+            Bitte prüfe dein Postfach (auch den Spam-Ordner).
           </p>
         </div>
       : <div className="mt-6">
@@ -68,6 +69,12 @@ export function SicDossierLogin() {
           >
             {busy ? 'Wird gesendet …' : 'Anmeldelink senden'}
           </button>
+          <p className="mt-3 text-center text-xs text-slate-400">
+            Noch nichts gekauft?{' '}
+            <a href="/" className="font-semibold text-[#0f2b5e] hover:underline">
+              Zertifikat erstellen
+            </a>
+          </p>
         </div>
       }
     </div>
