@@ -5,11 +5,11 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: {
-    default: `${SIC_BRAND_NAME} — Das geprüfte Schweizer Mieterdossier`,
+    default: `${SIC_BRAND_NAME} — Das geprüfte Schweizer Mieter-Zertifikat`,
     template: `%s | ${SIC_BRAND_NAME}`,
   },
   description:
-    'Erstellen Sie Ihr geprüftes Mieterzertifikat: Bonität, Einkommen, Zuverlässigkeit und Aufenthaltsstatus — verifiziert und mit QR-Code überprüfbar. Bewerben Sie sich schneller und überzeugender.',
+    'Erstellen Sie Ihr geprüftes Mieter-Zertifikat: Bonität, Einkommen, Zuverlässigkeit und Aufenthaltsstatus — geprüft und per QR-Code überprüfbar. Bewerben Sie sich schneller und überzeugender.',
   robots: { index: true, follow: true },
 }
 
@@ -39,7 +39,7 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
           <div>
             <SicLogo size={30} onDark />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
-              Das geprüfte Schweizer Mieterzertifikat. Bonität, Einkommen, Zuverlässigkeit und
+              Das geprüfte Schweizer Mieter-Zertifikat. Bonität, Einkommen, Zuverlässigkeit und
               Aufenthaltsstatus — verifiziert und mit QR-Code überprüfbar.
             </p>
           </div>
@@ -52,6 +52,9 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
             </Link>
             <Link href={`${SIC_BASE_PATH}/agb`} className="transition-colors hover:text-white">
               AGB
+            </Link>
+            <Link href={`${SIC_BASE_PATH}/impressum`} className="transition-colors hover:text-white">
+              Impressum
             </Link>
           </nav>
         </div>

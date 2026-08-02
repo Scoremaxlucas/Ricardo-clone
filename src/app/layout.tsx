@@ -49,21 +49,25 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       metadataBase: requestOriginUrl(h),
       title: {
-        default: 'Swiss Immo Cert — Das geprüfte Schweizer Mieterdossier',
+        default: 'Swiss Immo Cert — Das geprüfte Schweizer Mieter-Zertifikat',
         template: '%s | Swiss Immo Cert',
       },
       description:
-        'Erstellen Sie Ihr geprüftes Mieterzertifikat: Bonität, Einkommen, Zuverlässigkeit und Aufenthaltsstatus — verifiziert und mit QR-Code überprüfbar.',
+        'Erstellen Sie Ihr geprüftes Mieter-Zertifikat: Bonität, Einkommen, Zuverlässigkeit und Aufenthaltsstatus — geprüft und per QR-Code überprüfbar.',
       keywords: [
-        'Mieterzertifikat Schweiz',
+        'Mieter-Zertifikat Schweiz',
         'Betreibungsauszug Mieter',
-        'Mieterdossier',
         'Wohnungsbewerbung',
         'Swiss Immo Cert',
       ],
       openGraph: {
         siteName: 'Swiss Immo Cert',
         locale: 'de_CH',
+        images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'Swiss Immo Cert — Mieter-Zertifikat' }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        images: [{ url: '/opengraph-image', alt: 'Swiss Immo Cert — Mieter-Zertifikat' }],
       },
       manifest: '/manifest.json',
       appleWebApp: {

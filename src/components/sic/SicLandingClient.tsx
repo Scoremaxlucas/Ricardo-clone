@@ -44,14 +44,14 @@ const TENANT_POINTS = [
   'Betreibungsauszug',
   'Arbeitgeberbestätigung',
   'Referenzen der letzten Vermieter',
-  'Alle Dokumente zentral und beglaubigt',
+  'Alle Dokumente zentral und geprüft',
 ]
 
 const TENANT_BENEFITS = ['Höhere Glaubwürdigkeit', 'Schnellere Bewerbung', 'Mehr Erfolgschancen']
 
 const LANDLORD_POINTS = [
   'Weniger Administrationsaufwand',
-  'Verifizierte & beglaubigte Informationen',
+  'Geprüfte, einheitliche Informationen',
   'Einheitliche Bewerbungsunterlagen',
   'Schnellere & fundiertere Entscheidungsfindung',
 ]
@@ -68,7 +68,7 @@ const CERT_PREVIEW: { label: string; value: string }[] = [
 ]
 
 export function SicLandingClient() {
-  const [selected, setSelected] = useState<Set<SicModuleId>>(new Set(SIC_MODULES.map(m => m.id)))
+  const [selected, setSelected] = useState<Set<SicModuleId>>(new Set())
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -126,13 +126,12 @@ export function SicLandingClient() {
               <ShieldCheck className="h-3.5 w-3.5" style={{ color: SIC_COLORS.goldLight }} />
               SIC — Der Fast Track zur Wunschwohnung
             </span>
-            <h1 className="mt-6 text-3xl font-bold leading-[1.1] tracking-tight sm:text-5xl">
-              Das geprüfte Schweizer
-              <br className="hidden sm:block" /> <span style={{ color: SIC_COLORS.goldLight }}>Mieter-Zertifikat</span>
+            <h1 className="mt-6 text-3xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl">
+              Das geprüfte Schweizer <span style={{ color: SIC_COLORS.goldLight }}>Mieter-Zertifikat</span>
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-              Bonität, Einkommen, Zuverlässigkeit und Aufenthaltsstatus — unabhängig verifiziert,
-              beglaubigt und in Sekunden per QR-Code überprüfbar. Ein Dokument, das Vermieter überzeugt.
+              Bonität, Einkommen, Zuverlässigkeit und Aufenthaltsstatus — anhand eingereichter Belege
+              geprüft und per QR-Code fälschungssicher überprüfbar. Ein Dokument, das Vermieter überzeugt.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a
@@ -180,10 +179,10 @@ export function SicLandingClient() {
             <p className="mt-5 text-[15px] leading-relaxed text-slate-700">
               <strong className="font-semibold text-[#0f2b5e]">Swiss Immo Cert (SIC)</strong> ist ein digitales
               Qualitätszertifikat für Wohnungssuchende. Alle relevanten Informationen — geprüft, vollständig
-              und beglaubigt — in einem einzigen Zertifikat.
+              und per QR-Code überprüfbar — in einem einzigen Zertifikat.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
-              {['Geprüft', 'Vollständig', 'Beglaubigt'].map(t => (
+              {['Geprüft', 'Vollständig', 'QR-überprüfbar'].map(t => (
                 <span key={t} className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1f7a34] ring-1 ring-[#2f9e44]/20">
                   <Check className="h-3.5 w-3.5" /> {t}
                 </span>
@@ -210,6 +209,11 @@ export function SicLandingClient() {
             </div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#0f2b5e] sm:text-4xl">4 verifizierte Module</h2>
             <p className="mt-2 text-slate-500">Einfach. Transparent. Vertrauenswürdig.</p>
+            <p className="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-slate-400">
+              Verifiziert bedeutet: Der eingereichte Beleg wurde von Swiss Immo Cert gesichtet und auf
+              Vollständigkeit und Plausibilität geprüft. Es erfolgt keine telefonische Rückfrage bei Dritten
+              (z. B. Arbeitgeber).
+            </p>
           </div>
 
           {/* Basisgebühr */}
@@ -329,6 +333,10 @@ export function SicLandingClient() {
               <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-400">
                 <Lock className="h-3.5 w-3.5" /> Sichere Zahlung über Stripe
               </p>
+              <p className="mt-3 text-xs leading-relaxed text-slate-400">
+                Ist ein eingereichter Beleg unvollständig oder nicht plausibel, bitten wir dich, einen gültigen
+                Nachweis nachzureichen — damit dein Zertifikat sauber verifiziert werden kann.
+              </p>
             </div>
           </div>
         </div>
@@ -340,8 +348,8 @@ export function SicLandingClient() {
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-[#0f2b5e]">So sieht Ihr Zertifikat aus</h2>
             <p className="mt-4 max-w-md text-slate-600">
-              Ein seriöses, fälschungssicheres Dokument mit allen verifizierten Angaben und einem QR-Code, mit dem
-              Vermieter die Echtheit in Sekunden prüfen können.
+              Ein seriöses Dokument mit geprüften Angaben und einem QR-Code, mit dem Vermieter die Echtheit des
+              Zertifikats in Sekunden fälschungssicher prüfen können.
             </p>
             <ul className="mt-6 space-y-3 text-sm text-slate-600">
               <li className="flex items-center gap-2.5"><BadgeCheck className="h-5 w-5 text-[#b8912f]" /> Fälschungssicher — Online-Verifikation per QR</li>
@@ -352,6 +360,9 @@ export function SicLandingClient() {
 
           {/* Zertifikat-Karte */}
           <div className="relative rounded-2xl bg-white p-1.5 shadow-xl shadow-[#0a1f45]/10 ring-1 ring-[#b8912f]/40">
+            <span className="absolute right-4 top-4 z-10 rounded-full bg-slate-900/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
+              Beispiel
+            </span>
             <div className="rounded-xl border-2 border-[#b8912f]/50 bg-gradient-to-b from-white to-slate-50 p-6">
               <div className="text-center">
                 <div className="mx-auto flex w-fit justify-center">
