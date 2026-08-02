@@ -678,8 +678,10 @@ function AudiencePanel({
     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
       <div className="flex items-center gap-3 bg-[#0f2b5e] px-6 py-4">
         <Icon className="h-5 w-5 flex-shrink-0" style={{ color: SIC_COLORS.goldLight }} />
-        {/* text-white explizit: globals.css setzt h1–h6 auf text-gray-900 */}
-        <h3 className="text-base font-bold uppercase tracking-wide text-white">{title}</h3>
+        {/* Inline-Farbe: globals.css setzt h1–h6 auf text-gray-900 und schlägt Vererbung */}
+        <h3 className="text-base font-bold uppercase tracking-wide text-white" style={{ color: '#ffffff' }}>
+          {title}
+        </h3>
       </div>
       <div className="p-6">
         <ul className="space-y-2.5">
