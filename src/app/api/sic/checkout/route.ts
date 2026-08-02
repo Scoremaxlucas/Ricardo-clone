@@ -19,10 +19,13 @@ function clientIp(req: NextRequest): string {
 export async function POST(req: NextRequest) {
   let email = ''
   let requested: SicModuleId[] = []
+  let holderName: string | null = null
   try {
     const body = await req.json()
     email = normalizeEmail(typeof body?.email === 'string' ? body.email : '')
     requested = normalizeSicModuleIds(body?.moduleIds)
+    const rawName = typeof body?.name === 'string' ? body.name.trim() : ''
+    holderName = rawName ? rawName.slice(0, 120) : null
   } catch {
     return NextResponse.json({ ok: false, message: 'Ungültige Anfrage.' }, { status: 400 })
   }
@@ -104,6 +107,7 @@ export async function POST(req: NextRequest) {
     await prisma.sicPayment.create({
       data: {
         email,
+        holderName,
         includeBaseFee,
         moduleKinds: candidate as SicModuleKind[],
         amountChf: quote.totalChf,

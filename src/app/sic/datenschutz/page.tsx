@@ -31,8 +31,8 @@ export default function SicDatenschutzPage() {
             Verlängerung ist innerhalb dieser Zeit ohne erneuten Upload möglich.
           </p>
           <p className="mt-1.5">
-            Nach Ablauf werden die eingereichten Nachweise nach einer Aufbewahrungsfrist von
-            [AUFBEWAHRUNGSFRIST — vom Betreiber festzulegen] gelöscht. Die QR-Prüfseite zeigt danach nur noch den
+            Nach Ablauf werden die eingereichten Nachweise gemäss Schweizer Datenschutzgesetz (revDSG) gelöscht,
+            sobald sie für den Zweck nicht mehr erforderlich sind. Die QR-Prüfseite zeigt danach nur noch den
             Status „abgelaufen" ohne inhaltliche Angaben.
           </p>
         </section>
@@ -44,7 +44,7 @@ export default function SicDatenschutzPage() {
 
         <section>
           <h2 className="font-semibold text-[#0f2b5e]">Verantwortliche Stelle</h2>
-          <p className="mt-1.5">Score-Max GmbH · [KONTAKT EINFÜGEN]. Details siehe Impressum.</p>
+          <p className="mt-1.5">Score-Max GmbH. Kontaktangaben siehe Impressum.</p>
         </section>
       </div>
     </div>

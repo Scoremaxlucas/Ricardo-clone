@@ -600,12 +600,13 @@ export function SicLandingClient() {
               <ul className="mt-3 space-y-1.5 border-t border-slate-200 pt-3">
                 <li className="flex items-center gap-2 text-xs text-slate-500"><ShieldCheck className="h-3.5 w-3.5 text-[#0f2b5e]" /> Schweizer Datenschutz (revDSG)</li>
                 <li className="flex items-center gap-2 text-xs text-slate-500"><Lock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Daten verschlüsselt gespeichert</li>
-                <li className="flex items-center gap-2 text-xs text-slate-500"><Clock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Nach Ablauf + Aufbewahrungsfrist gelöscht</li>
+                <li className="flex items-center gap-2 text-xs text-slate-500"><Clock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Nach Ablauf gemäss revDSG gelöscht</li>
               </ul>
               <p className="mt-3 text-xs leading-relaxed text-slate-400">
                 Deine Daten bleiben während der {SIC_VALIDITY_MONTHS} Monate gespeichert; eine Verlängerung ist in
-                dieser Zeit ohne erneuten Upload möglich. Nach Ablauf werden die Nachweise nach einer
-                Aufbewahrungsfrist gelöscht — die QR-Prüfseite zeigt danach nur noch „abgelaufen".
+                dieser Zeit ohne erneuten Upload möglich. Nach Ablauf werden die Nachweise gemäss Schweizer
+                Datenschutzgesetz (revDSG) gelöscht, sobald sie für den Zweck nicht mehr benötigt werden — die
+                QR-Prüfseite zeigt danach nur noch „abgelaufen".
               </p>
               <p className="mt-3 text-xs leading-relaxed text-slate-400">
                 Ist ein eingereichter Beleg unvollständig oder nicht plausibel, bitten wir dich, einen gültigen

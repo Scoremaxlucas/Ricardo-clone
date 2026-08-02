@@ -9,6 +9,15 @@ export type FulfillResult =
   | { ok: true; certificateId: string; certificateCode: string; email: string; alreadyDone: boolean }
   | { ok: false; reason: string }
 
+/** Zerlegt einen frei eingegebenen Namen in Vor-/Nachname (erstes Token = Vorname, Rest = Nachname). */
+function splitHolderName(raw?: string | null): { firstName: string; lastName: string } | null {
+  const cleaned = (raw ?? '').trim().replace(/\s+/g, ' ')
+  if (!cleaned) return null
+  const parts = cleaned.split(' ')
+  if (parts.length === 1) return { firstName: parts[0], lastName: '' }
+  return { firstName: parts[0], lastName: parts.slice(1).join(' ') }
+}
+
 async function ensureUniqueCode(): Promise<string> {
   for (let i = 0; i < 6; i++) {
     const code = generateSicCertificateCode()
@@ -55,13 +64,21 @@ export async function fulfillSicPaidCheckout(input: {
 
   const existing = await prisma.sicCertificate.findUnique({ where: { email } })
   const code = existing ? existing.certificateCode : await ensureUniqueCode()
+  const prefillName = splitHolderName(payment.holderName)
 
   const cert = await prisma.$transaction(async tx => {
     const c =
       existing ?
         await tx.sicCertificate.update({
           where: { id: existing.id },
-          data: { status: 'ACTIVE', expiresAt: sicExtendedExpiresAt(existing.expiresAt, now) },
+          data: {
+            status: 'ACTIVE',
+            expiresAt: sicExtendedExpiresAt(existing.expiresAt, now),
+            // Nur ergänzen, wenn noch kein Name gesetzt ist — vorhandene Angaben nie überschreiben.
+            ...(prefillName && !existing.holderFirstName && !existing.holderLastName ?
+              { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName || null }
+            : {}),
+          },
         })
       : await tx.sicCertificate.create({
           data: {
@@ -70,6 +87,9 @@ export async function fulfillSicPaidCheckout(input: {
             status: 'ACTIVE',
             issuedAt: now,
             expiresAt: sicValidityExpiresAt(now),
+            ...(prefillName ?
+              { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName || null }
+            : {}),
           },
         })
 

@@ -2861,6 +2861,11 @@ model SicPayment {
   certificateId String?
   certificate   SicCertificate? @relation(fields: [certificateId], references: [id], onDelete: SetNull)
 
+  /**
+   * Optionaler, im Checkout eingegebener Name — belegt bei Neuerstellung den Zertifikatsnamen vor.
+   */
+  holderName String?
+
   stripeCheckoutSessionId String  @unique
   stripePaymentIntentId   String?
 
