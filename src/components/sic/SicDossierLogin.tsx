@@ -1,0 +1,75 @@
+'use client'
+
+import { MailCheck } from 'lucide-react'
+import { useState } from 'react'
+import toast from 'react-hot-toast'
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+export function SicDossierLogin() {
+  const [email, setEmail] = useState('')
+  const [sent, setSent] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  async function request() {
+    if (!EMAIL_RE.test(email.trim())) {
+      toast.error('Bitte eine gültige E-Mail-Adresse angeben.')
+      return
+    }
+    setBusy(true)
+    try {
+      const res = await fetch('/api/sic/magic-link', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      })
+      if (res.ok) setSent(true)
+      else toast.error('Bitte später erneut versuchen.')
+    } catch {
+      toast.error('Netzwerkfehler.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-5 py-16">
+      <h1 className="text-2xl font-bold text-slate-900">Mein Dossier</h1>
+      <p className="mt-2 text-slate-600">
+        Melden Sie sich ohne Passwort an. Wir senden Ihnen einen Anmeldelink an Ihre E-Mail-Adresse.
+      </p>
+
+      {sent ?
+        <div className="mt-6 flex items-start gap-3 rounded-2xl bg-teal-50 p-5 text-sm text-teal-800">
+          <MailCheck className="mt-0.5 h-5 w-5 flex-shrink-0" />
+          <p>
+            Falls ein Dossier zu dieser Adresse existiert, haben wir Ihnen einen Anmeldelink gesendet. Bitte prüfen Sie
+            Ihr Postfach (auch den Spam-Ordner).
+          </p>
+        </div>
+      : <div className="mt-6">
+          <label htmlFor="login-email" className="block text-sm font-medium text-slate-700">
+            E-Mail-Adresse
+          </label>
+          <input
+            id="login-email"
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="name@beispiel.ch"
+            autoComplete="email"
+            className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none ring-teal-600/20 focus:border-teal-600 focus:ring-2"
+          />
+          <button
+            type="button"
+            onClick={request}
+            disabled={busy}
+            className="mt-4 w-full rounded-xl bg-teal-700 px-5 py-3.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+          >
+            {busy ? 'Wird gesendet …' : 'Anmeldelink senden'}
+          </button>
+        </div>
+      }
+    </div>
+  )
+}
