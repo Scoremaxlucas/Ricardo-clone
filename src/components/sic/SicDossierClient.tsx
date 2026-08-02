@@ -131,7 +131,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         : <div className="mt-5 rounded-xl bg-slate-50 p-4">
             <p className="text-sm font-medium text-slate-700">Name auf dem Zertifikat</p>
             <p className="mt-0.5 text-xs text-slate-500">
-              Geben Sie Ihren Namen an, damit wir das Zertifikat erstellen können.
+              Gib deinen Namen an, damit wir das Zertifikat erstellen können.
             </p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <input
@@ -160,7 +160,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       </div>
 
       {/* Purchased modules */}
-          <h2 className="mt-8 text-lg font-semibold text-[#0f2b5e]">Ihre Module</h2>
+          <h2 className="mt-8 text-lg font-semibold text-[#0f2b5e]">Deine Module</h2>
       <ul className="mt-3 space-y-3">
         {dossier.purchasedModules.map(m => {
           const meta = STATUS_META[m.status]
@@ -217,7 +217,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
 
               {m.status === 'IN_REVIEW' ?
                 <p className="mt-3 text-sm text-slate-500">
-                  Ihre Nachweise werden geprüft. Sie werden benachrichtigt, sobald das Modul freigegeben ist.
+                  Deine Nachweise werden geprüft. Du wirst benachrichtigt, sobald das Modul freigegeben ist.
                 </p>
               : null}
             </li>

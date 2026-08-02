@@ -3,13 +3,11 @@ import { SIC_BASE_PATH, SIC_BRAND_NAME, sicPaths } from '@/lib/sic/config'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+// Titel/Marke werden im Root-Layout (host-abhängig) gesetzt; hier NICHT erneut
+// definieren, sonst wird die Marke im <title> doppelt angehängt.
 export const metadata: Metadata = {
-  title: {
-    default: `${SIC_BRAND_NAME} — Das geprüfte Schweizer Mieter-Zertifikat`,
-    template: `%s | ${SIC_BRAND_NAME}`,
-  },
   description:
-    'Erstellen Sie Ihr geprüftes Mieter-Zertifikat: Bonität, Einkommen, Zuverlässigkeit und Aufenthaltsstatus — geprüft und per QR-Code überprüfbar. Bewerben Sie sich schneller und überzeugender.',
+    'Erstelle dein geprüftes Mieter-Zertifikat: Bonität, Einkommen, Zuverlässigkeit und Aufenthaltsstatus — geprüft und per QR-Code überprüfbar. Bewirb dich schneller und überzeugender.',
   robots: { index: true, follow: true },
 }
 

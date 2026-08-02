@@ -45,11 +45,11 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
           <CheckCircle2 className="h-12 w-12 text-[#2f9e44]" />
           <h1 className="mt-4 text-2xl font-bold text-[#0f2b5e]">Zahlung erfolgreich</h1>
           <p className="mt-3 text-slate-600">
-            Wir haben Ihnen einen Anmeldelink an {state.email ? <strong>{state.email}</strong> : 'Ihre E-Mail'} gesendet.
-            Öffnen Sie den Link, um Ihre Nachweise hochzuladen.
+            Wir haben dir einen Anmeldelink an {state.email ? <strong>{state.email}</strong> : 'deine E-Mail'} gesendet.
+            Öffne den Link, um deine Nachweise hochzuladen.
           </p>
           <div className="mt-6 flex items-center gap-2 rounded-xl bg-[#0f2b5e]/5 px-4 py-3 text-sm text-[#0f2b5e]">
-            <MailCheck className="h-4 w-4" /> Prüfen Sie Ihr Postfach (auch den Spam-Ordner).
+            <MailCheck className="h-4 w-4" /> Prüfe dein Postfach (auch den Spam-Ordner).
           </div>
           <Link href={sicPaths.dossier} className="mt-6 text-sm font-semibold text-[#0f2b5e] hover:underline">
             Zum Dossier
@@ -62,7 +62,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
           <Loader2 className="h-10 w-10 animate-spin text-[#0f2b5e]" />
           <h1 className="mt-4 text-xl font-bold text-[#0f2b5e]">Zahlung wird verarbeitet</h1>
           <p className="mt-3 text-slate-600">
-            Das kann einen Moment dauern. Sie erhalten in Kürze einen Anmeldelink per E-Mail.
+            Das kann einen Moment dauern. Du erhältst in Kürze einen Anmeldelink per E-Mail.
           </p>
         </>
       )}
@@ -71,7 +71,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
         <>
           <h1 className="text-xl font-bold text-slate-900">Etwas ist schiefgelaufen</h1>
           <p className="mt-3 text-slate-600">
-            {state.message || 'Bitte prüfen Sie später Ihr Dossier oder kontaktieren Sie uns.'}
+            {state.message || 'Bitte prüfe später dein Dossier oder kontaktiere uns.'}
           </p>
           <Link href={sicPaths.landing} className="mt-6 text-sm font-semibold text-[#0f2b5e] hover:underline">
             Zurück zur Startseite

@@ -20,13 +20,12 @@ import {
   ChevronDown,
   Clock,
   CreditCard,
+  FileText,
   Globe,
   ListChecks,
   Lock,
   QrCode,
   ShieldCheck,
-  Target,
-  Trash2,
   Upload,
   UserCheck,
   Users,
@@ -46,6 +45,10 @@ const MODULE_ICON: Record<SicModuleId, LucideIcon> = {
   ARBEIT_EINKOMMEN: Briefcase,
   ZUVERLAESSIGKEIT: UserCheck,
   AUFENTHALT: Globe,
+}
+
+function moduleOrder(id: SicModuleId): number {
+  return SIC_MODULES.find(m => m.id === id)?.order ?? 0
 }
 
 const HOW_STEPS: { icon: LucideIcon; title: string }[] = [
@@ -70,7 +73,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Akzeptieren Vermieter das Zertifikat?',
-    a: '[PLATZHALTER — vom Kunden zu füllen, bewusst noch offen]',
+    a: 'Swiss Immo Cert ist ein unabhängiges, standardisiertes Zertifikat, das du deiner Bewerbung als PDF beilegst — bei jeder Wohnung, über jedes Portal. Ob ein Vermieter es berücksichtigt, entscheidet er selbst; das geprüfte, einheitliche Format macht deine Bewerbung nachvollziehbarer.',
   },
 ]
 
@@ -101,17 +104,19 @@ const LANDLORD_POINTS = [
 
 const LANDLORD_BENEFITS = ['Zeit sparen', 'Risiko minimieren', 'Bessere Mieter finden']
 
-const CERT_PREVIEW: { label: string; value: string }[] = [
-  { label: 'Bonität', value: 'Keine Betreibungen' },
-  { label: 'Bruttojahreseinkommen', value: 'CHF 90’000' },
-  { label: 'Arbeitsverhältnis', value: 'Ungekündigt' },
-  { label: 'Arbeitgeber', value: 'Seit 6 Jahren beschäftigt' },
-  { label: 'Aktuelle Wohnung', value: 'Seit 5 Jahren wohnhaft' },
-  { label: 'Aufenthaltsstatus', value: 'Gültige Bewilligung' },
+const CERT_PREVIEW: { label: string; value: string; module: SicModuleId }[] = [
+  { label: 'Bonität', value: 'Keine Betreibungen', module: 'BONITAET' },
+  { label: 'Bruttojahreseinkommen', value: 'CHF 90’000', module: 'ARBEIT_EINKOMMEN' },
+  { label: 'Arbeitsverhältnis', value: 'Ungekündigt', module: 'ARBEIT_EINKOMMEN' },
+  { label: 'Arbeitgeber', value: 'Seit 6 Jahren beschäftigt', module: 'ARBEIT_EINKOMMEN' },
+  { label: 'Aktuelle Wohnung', value: 'Seit 5 Jahren wohnhaft', module: 'ARBEIT_EINKOMMEN' },
+  { label: 'Vermieterreferenz', value: 'Positiv bestätigt', module: 'ZUVERLAESSIGKEIT' },
+  { label: 'Aufenthaltsstatus', value: 'Gültige Bewilligung', module: 'AUFENTHALT' },
 ]
 
 export function SicLandingClient() {
   const [selected, setSelected] = useState<Set<SicModuleId>>(new Set(RECOMMENDED))
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
@@ -122,10 +127,18 @@ export function SicLandingClient() {
   const allSelected = SIC_MODULES.every(m => selected.has(m.id))
 
   useEffect(() => {
-    const onScroll = () => setShowSticky(window.scrollY > 640)
+    const onScroll = () => {
+      const y = window.scrollY
+      const nearBottom = window.innerHeight + y >= document.documentElement.scrollHeight - 200
+      setShowSticky(y > 640 && !nearBottom)
+    }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [])
 
   function toggle(id: SicModuleId) {
@@ -143,7 +156,7 @@ export function SicLandingClient() {
 
   async function checkout() {
     if (!EMAIL_RE.test(email.trim())) {
-      toast.error('Bitte geben Sie eine gültige E-Mail-Adresse an.')
+      toast.error('Bitte gib eine gültige E-Mail-Adresse an.')
       return
     }
     setSubmitting(true)
@@ -151,7 +164,7 @@ export function SicLandingClient() {
       const res = await fetch('/api/sic/checkout', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), moduleIds }),
+        body: JSON.stringify({ email: email.trim(), moduleIds, name: name.trim() || undefined }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data?.url) {
@@ -192,7 +205,7 @@ export function SicLandingClient() {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a
-                href="#builder"
+                href="#module"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
               >
                 Zertifikat erstellen <ArrowRight className="h-4 w-4" />
@@ -207,8 +220,8 @@ export function SicLandingClient() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-white/60">
               <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4" style={{ color: SIC_COLORS.goldLight }} /> Ab CHF {SIC_BASE_FEE_CHF}</span>
               <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4" style={{ color: SIC_COLORS.goldLight }} /> {SIC_VALIDITY_MONTHS} Monate gültig</span>
-              <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4" style={{ color: SIC_COLORS.goldLight }} /> Ohne Konto</span>
-              <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4" style={{ color: SIC_COLORS.goldLight }} /> Verifiziert innert 24 Std.</span>
+              <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4" style={{ color: SIC_COLORS.goldLight }} /> Ohne Passwort</span>
+              <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4" style={{ color: SIC_COLORS.goldLight }} /> Prüfung innert 24 Std. nach vollständigem Upload</span>
             </div>
           </div>
         </div>
@@ -269,14 +282,14 @@ export function SicLandingClient() {
             </p>
             <ul className="mt-6 space-y-3 text-sm text-slate-600">
               <li className="flex items-center gap-2.5"><BadgeCheck className="h-5 w-5 text-[#b8912f]" /> Fälschungssicher — Online-Verifikation per QR</li>
-              <li className="flex items-center gap-2.5"><Target className="h-5 w-5 text-[#b8912f]" /> Überall einsetzbar — auch bei anderen Portalen</li>
-              <li className="flex items-center gap-2.5"><Clock className="h-5 w-5 text-[#b8912f]" /> {SIC_VALIDITY_MONTHS} Monate gültig, jederzeit erweiterbar</li>
+              <li className="flex items-center gap-2.5"><FileText className="h-5 w-5 text-[#b8912f]" /> Als PDF überall beilegbar — auch bei anderen Portalen</li>
+              <li className="flex items-center gap-2.5"><Clock className="h-5 w-5 text-[#b8912f]" /> {SIC_VALIDITY_MONTHS} Monate gültig — in dieser Zeit ohne erneuten Upload verlängerbar</li>
             </ul>
             <a
-              href="#builder"
+              href="#module"
               className="mt-7 inline-flex items-center gap-2 rounded-xl bg-[#0f2b5e] px-5 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
             >
-              Jetzt zusammenstellen <ArrowRight className="h-4 w-4" />
+              Zertifikat erstellen <ArrowRight className="h-4 w-4" />
             </a>
           </div>
 
@@ -294,17 +307,28 @@ export function SicLandingClient() {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#b8912f]">Mieter-Zertifikat</p>
               </div>
               <dl className="mt-5 divide-y divide-slate-100">
-                {CERT_PREVIEW.map(row => (
-                  <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
-                    <div className="min-w-0">
-                      <dt className="text-xs font-semibold text-[#0f2b5e]">{row.label}</dt>
-                      <dd className="truncate text-xs text-slate-500">{row.value}</dd>
+                {CERT_PREVIEW.map(row => {
+                  const accent = SIC_MODULE_ACCENT[row.module]
+                  return (
+                    <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <dt className="text-xs font-semibold text-[#0f2b5e]">{row.label}</dt>
+                          <span
+                            className="rounded px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white"
+                            style={{ backgroundColor: accent.hex }}
+                          >
+                            Modul {moduleOrder(row.module)}
+                          </span>
+                        </div>
+                        <dd className="truncate text-xs text-slate-500">{row.value}</dd>
+                      </div>
+                      <span className="inline-flex flex-shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-[#2f9e44]">
+                        <Check className="h-3.5 w-3.5" /> Verifiziert
+                      </span>
                     </div>
-                    <span className="inline-flex flex-shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-[#2f9e44]">
-                      <Check className="h-3.5 w-3.5" /> Verifiziert
-                    </span>
-                  </div>
-                ))}
+                  )
+                })}
               </dl>
               <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-[10px] text-slate-400">
                 <span>Geprüft. Verifiziert. Vertrauenswürdig.</span>
@@ -336,7 +360,7 @@ export function SicLandingClient() {
       </section>
 
       {/* ── Module (Builder + Live-Vorschau) ─────────────────────────────── */}
-      <section id="builder" className="py-16">
+      <section id="module" className="py-16">
         <div className="mx-auto max-w-6xl px-5">
           <div className="text-center">
             <div className="mx-auto flex w-fit items-center gap-2 text-[#c8102e]">
@@ -356,8 +380,8 @@ export function SicLandingClient() {
             <div className="max-w-2xl">
               <p className="text-sm font-bold uppercase tracking-wide text-[#8a6d1f]">Basis · Einschreibegebühr</p>
               <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-                Erstellt dein persönliches Zertifikat und ist immer enthalten. Wähle darunter die Module, die
-                verifiziert werden sollen.
+                Erstelle dein persönliches Zertifikat — die Basis ist immer enthalten. Wähle darunter die Module,
+                die verifiziert werden sollen.
               </p>
             </div>
             <div className="text-right">
@@ -390,14 +414,18 @@ export function SicLandingClient() {
                     Beliebteste Wahl
                   </span>
                 </div>
-                <p className="mt-0.5 text-sm text-slate-500">Alle Angaben verifiziert — der stärkste Auftritt bei Vermietern.</p>
+                <p className="mt-0.5 text-sm text-slate-500">
+                  Alle Angaben verifiziert, inkl. Basisgebühr — der stärkste Auftritt bei Vermietern.
+                </p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-[#0f2b5e]">
                 CHF {SIC_BUNDLE_ALL_MODULES_CHF}.– <span className="text-sm font-medium text-slate-400 line-through">CHF {FULL_PRICE_CHF}.–</span>
               </p>
-              <p className="text-xs font-semibold text-[#2f9e44]">Du sparst CHF {FULL_PRICE_CHF - SIC_BUNDLE_ALL_MODULES_CHF}.–</p>
+              <p className="text-xs font-semibold text-[#2f9e44]">
+                Inkl. Basis · du sparst CHF {FULL_PRICE_CHF - SIC_BUNDLE_ALL_MODULES_CHF}.–
+              </p>
             </div>
           </button>
 
@@ -470,6 +498,13 @@ export function SicLandingClient() {
               </div>
               <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#b8912f]">Mieter-Zertifikat</p>
 
+              <div className="mt-3 rounded-lg bg-[#0f2b5e]/[0.04] px-3 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ausgestellt für</p>
+                <p className={`text-sm font-bold ${name.trim() ? 'text-[#0f2b5e]' : 'text-slate-400'}`}>
+                  {name.trim() || 'Dein Name'}
+                </p>
+              </div>
+
               <ul className="mt-4 divide-y divide-slate-100">
                 <li className="flex items-center justify-between gap-3 py-2.5">
                   <span className="text-sm font-semibold text-[#0f2b5e]">Basis · Zertifikat</span>
@@ -501,21 +536,40 @@ export function SicLandingClient() {
             <div className="rounded-2xl border border-[#0f2b5e]/10 bg-[#0f2b5e]/[0.03] p-6 sm:p-7">
               <h3 className="text-lg font-bold text-[#0f2b5e]">Deine Auswahl</h3>
               <dl className="mt-4 space-y-2.5 text-sm">
-                {quote.lines.map((l, i) => (
-                  <div key={i} className={`flex justify-between ${l.kind === 'discount' ? 'text-[#2f9e44]' : 'text-slate-600'}`}>
-                    <dt>{l.label}</dt>
-                    <dd className="tabular-nums">
-                      {l.amountChf < 0 ? `− CHF ${Math.abs(l.amountChf)}.–` : `CHF ${l.amountChf}.–`}
-                    </dd>
+                {allSelected ?
+                  <div className="flex justify-between text-slate-700">
+                    <dt>Komplett-Paket (inkl. Basis)</dt>
+                    <dd className="tabular-nums">CHF {SIC_BUNDLE_ALL_MODULES_CHF}.–</dd>
                   </div>
-                ))}
+                : quote.lines.map((l, i) => (
+                    <div key={i} className={`flex justify-between ${l.kind === 'discount' ? 'text-[#2f9e44]' : 'text-slate-600'}`}>
+                      <dt>{l.label}</dt>
+                      <dd className="tabular-nums">
+                        {l.amountChf < 0 ? `− CHF ${Math.abs(l.amountChf)}.–` : `CHF ${l.amountChf}.–`}
+                      </dd>
+                    </div>
+                  ))
+                }
               </dl>
               <div className="mt-4 flex items-baseline justify-between border-t border-slate-200 pt-4">
                 <span className="text-sm font-medium text-slate-500">Total</span>
                 <span className="text-2xl font-bold tabular-nums text-[#0f2b5e]">CHF {quote.totalChf}.–</span>
               </div>
 
-              <label htmlFor="sic-email" className="mt-5 block text-sm font-semibold text-[#0f2b5e]">
+              <label htmlFor="sic-name" className="mt-5 block text-sm font-semibold text-[#0f2b5e]">
+                Name <span className="font-normal text-slate-400">(für dein Zertifikat)</span>
+              </label>
+              <input
+                id="sic-name"
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Vorname Nachname"
+                autoComplete="name"
+                className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2"
+              />
+
+              <label htmlFor="sic-email" className="mt-4 block text-sm font-semibold text-[#0f2b5e]">
                 E-Mail-Adresse
               </label>
               <input
@@ -546,8 +600,13 @@ export function SicLandingClient() {
               <ul className="mt-3 space-y-1.5 border-t border-slate-200 pt-3">
                 <li className="flex items-center gap-2 text-xs text-slate-500"><ShieldCheck className="h-3.5 w-3.5 text-[#0f2b5e]" /> Schweizer Datenschutz (revDSG)</li>
                 <li className="flex items-center gap-2 text-xs text-slate-500"><Lock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Daten verschlüsselt gespeichert</li>
-                <li className="flex items-center gap-2 text-xs text-slate-500"><Trash2 className="h-3.5 w-3.5 text-[#0f2b5e]" /> Automatische Löschung nach Ablauf</li>
+                <li className="flex items-center gap-2 text-xs text-slate-500"><Clock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Nach Ablauf + Aufbewahrungsfrist gelöscht</li>
               </ul>
+              <p className="mt-3 text-xs leading-relaxed text-slate-400">
+                Deine Daten bleiben während der {SIC_VALIDITY_MONTHS} Monate gespeichert; eine Verlängerung ist in
+                dieser Zeit ohne erneuten Upload möglich. Nach Ablauf werden die Nachweise nach einer
+                Aufbewahrungsfrist gelöscht — die QR-Prüfseite zeigt danach nur noch „abgelaufen".
+              </p>
               <p className="mt-3 text-xs leading-relaxed text-slate-400">
                 Ist ein eingereichter Beleg unvollständig oder nicht plausibel, bitten wir dich, einen gültigen
                 Nachweis nachzureichen — damit dein Zertifikat sauber verifiziert werden kann.
@@ -558,7 +617,7 @@ export function SicLandingClient() {
       </section>
 
       {/* ── Inline-FAQ ───────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-3xl px-5 pb-20">
+      <section className="mx-auto max-w-3xl px-5 pb-24">
         <h2 className="text-center text-2xl font-bold tracking-tight text-[#0f2b5e]">Häufige Fragen</h2>
         <div className="mt-8 divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
           {FAQ.map((item, i) => {
@@ -581,18 +640,23 @@ export function SicLandingClient() {
         </div>
       </section>
 
-      {/* ── Sticky-CTA ───────────────────────────────────────────────────── */}
+      {/* ── Sticky-CTA (deckende Bottom-Bar) ─────────────────────────────── */}
       <div
-        className={`fixed inset-x-0 bottom-4 z-50 flex justify-center px-4 transition-all duration-300 ${
-          showSticky ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'
+        className={`fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 shadow-[0_-4px_20px_rgba(10,31,69,0.08)] backdrop-blur transition-transform duration-300 ${
+          showSticky ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
-        <a
-          href="#builder"
-          className="inline-flex items-center gap-2 rounded-full bg-[#c8102e] px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-black/25 transition-transform hover:-translate-y-0.5"
-        >
-          Zertifikat erstellen <ArrowRight className="h-4 w-4" />
-        </a>
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
+          <span className="hidden text-sm font-semibold text-[#0f2b5e] sm:block">
+            Bereit? Stell dein Mieter-Zertifikat zusammen.
+          </span>
+          <a
+            href="#module"
+            className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#c8102e] px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
+          >
+            Zertifikat erstellen <ArrowRight className="h-4 w-4" />
+          </a>
+        </div>
       </div>
     </div>
   )

@@ -63,11 +63,9 @@ export async function generateMetadata(): Promise<Metadata> {
       openGraph: {
         siteName: 'Swiss Immo Cert',
         locale: 'de_CH',
-        images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'Swiss Immo Cert — Mieter-Zertifikat' }],
       },
       twitter: {
         card: 'summary_large_image',
-        images: [{ url: '/opengraph-image', alt: 'Swiss Immo Cert — Mieter-Zertifikat' }],
       },
       manifest: '/manifest.json',
       appleWebApp: {

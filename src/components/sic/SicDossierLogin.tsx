@@ -36,15 +36,15 @@ export function SicDossierLogin() {
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-5 py-16">
       <h1 className="text-2xl font-bold text-[#0f2b5e]">Mein Dossier</h1>
       <p className="mt-2 text-slate-600">
-        Melden Sie sich ohne Passwort an. Wir senden Ihnen einen Anmeldelink an Ihre E-Mail-Adresse.
+        Melde dich ohne Passwort an. Wir senden dir einen Anmeldelink an deine E-Mail-Adresse.
       </p>
 
       {sent ?
         <div className="mt-6 flex items-start gap-3 rounded-2xl bg-[#0f2b5e]/5 p-5 text-sm text-[#0f2b5e]">
           <MailCheck className="mt-0.5 h-5 w-5 flex-shrink-0" />
           <p>
-            Falls ein Dossier zu dieser Adresse existiert, haben wir Ihnen einen Anmeldelink gesendet. Bitte prüfen Sie
-            Ihr Postfach (auch den Spam-Ordner).
+            Falls ein Dossier zu dieser Adresse existiert, haben wir dir einen Anmeldelink gesendet. Bitte prüfe
+            dein Postfach (auch den Spam-Ordner).
           </p>
         </div>
       : <div className="mt-6">

@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   if (!includeBaseFee && candidate.length === 0) {
     return NextResponse.json(
-      { ok: false, message: 'Alle gewählten Module sind bereits Teil Ihres Zertifikats.' },
+      { ok: false, message: 'Alle gewählten Module sind bereits Teil deines Zertifikats.' },
       { status: 400 }
     )
   }
