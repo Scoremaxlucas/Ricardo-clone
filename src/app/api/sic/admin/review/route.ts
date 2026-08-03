@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { requireSicAdmin } from '@/lib/sic/admin'
 import { sendSicModuleReviewEmail } from '@/lib/sic/email'
+import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { isSicModuleId } from '@/lib/sic/modules'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -73,6 +74,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Zertifikat nicht gefunden.' }, { status: 404 })
   }
 
+  if (action === 'approve') {
+    const docCount = await prisma.sicDocument.count({
+      where: { certificateId, moduleKind },
+    })
+    if (docCount === 0) {
+      return NextResponse.json(
+        { ok: false, message: 'Freigabe nicht möglich — kein Nachweis hochgeladen.' },
+        { status: 400 }
+      )
+    }
+  }
+
   const updated = await prisma.sicCertificateModule.updateMany({
     where: { certificateId, moduleKind },
     data: {
@@ -88,11 +101,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const { url: magicLinkUrl } = await createSicMagicLink(cert.email)
     await sendSicModuleReviewEmail({
       email: cert.email,
       moduleKind,
       action,
       note: action === 'reject' ? note : null,
+      magicLinkUrl,
     })
   } catch (err) {
     console.error('[sic/admin/review] notification email failed', err)

@@ -12,6 +12,11 @@ export type SicChecklistItem = {
   templateId?: string
 }
 
+export type SicUploadedDocMeta = {
+  fileName: string
+  uploadedAt: string
+}
+
 export type SicDossierModuleView = {
   moduleKind: SicModuleId
   title: string
@@ -20,6 +25,7 @@ export type SicDossierModuleView = {
   checklist: SicChecklistItem[]
   status: SicModuleStatus
   documentCount: number
+  documents: SicUploadedDocMeta[]
   reviewNote: string | null
 }
 
@@ -101,20 +107,26 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     where: { email },
     include: {
       modules: true,
-      documents: { select: { moduleKind: true } },
+      documents: {
+        select: { moduleKind: true, fileName: true, uploadedAt: true },
+        orderBy: { uploadedAt: 'asc' },
+      },
     },
   })
   if (!cert) return null
 
-  const docCountByKind = new Map<string, number>()
+  const docsByKind = new Map<string, SicUploadedDocMeta[]>()
   for (const d of cert.documents) {
-    docCountByKind.set(d.moduleKind, (docCountByKind.get(d.moduleKind) ?? 0) + 1)
+    const list = docsByKind.get(d.moduleKind) ?? []
+    list.push({ fileName: d.fileName, uploadedAt: d.uploadedAt.toISOString() })
+    docsByKind.set(d.moduleKind, list)
   }
 
   const purchasedKinds = new Set(cert.modules.map(m => m.moduleKind))
 
   const purchasedModules: SicDossierModuleView[] = SIC_MODULES.filter(def => purchasedKinds.has(def.id)).map(def => {
     const row = cert.modules.find(m => m.moduleKind === def.id)!
+    const documents = docsByKind.get(def.id) ?? []
     return {
       moduleKind: def.id,
       title: def.title,
@@ -122,7 +134,8 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
       requiredDocuments: def.requiredDocuments,
       checklist: buildChecklist(def.id, def.requiredDocuments),
       status: row.status,
-      documentCount: docCountByKind.get(def.id) ?? 0,
+      documentCount: documents.length,
+      documents,
       reviewNote: row.reviewNote,
     }
   })

@@ -31,9 +31,8 @@ export default function SicDatenschutzPage() {
             Verlängerung ist innerhalb dieser Zeit ohne erneuten Upload möglich.
           </p>
           <p className="mt-1.5">
-            Nach Ablauf werden die eingereichten Nachweise gemäss Schweizer Datenschutzgesetz (revDSG) gelöscht,
-            sobald sie für den Zweck nicht mehr erforderlich sind. Die QR-Prüfseite zeigt danach nur noch den
-            Status „abgelaufen" ohne inhaltliche Angaben.
+            Nach Ablauf werden die eingereichten Nachweise spätestens 30 Tage nach dem Ablaufdatum gelöscht.
+            Die QR-Prüfseite zeigt danach nur noch den Status „abgelaufen" ohne inhaltliche Angaben.
           </p>
         </section>
 

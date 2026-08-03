@@ -103,10 +103,28 @@ export function SicLandingClient() {
   const [submitting, setSubmitting] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
   const [showSticky, setShowSticky] = useState(false)
+  const [loginInvalid, setLoginInvalid] = useState(false)
+  const [baseOnlyAck, setBaseOnlyAck] = useState(false)
+  const [serverQuote, setServerQuote] = useState<ReturnType<typeof quoteSicOrder> | null>(null)
+  const [quoteNote, setQuoteNote] = useState<string | null>(null)
 
   const moduleIds = useMemo(() => SIC_MODULES.filter(m => selected.has(m.id)).map(m => m.id), [selected])
-  const quote = useMemo(() => quoteSicOrder({ includeBaseFee: true, moduleIds }), [moduleIds])
+  const localQuote = useMemo(() => quoteSicOrder({ includeBaseFee: true, moduleIds }), [moduleIds])
+  const quote = serverQuote ?? localQuote
   const allSelected = SIC_MODULES.every(m => selected.has(m.id))
+  const isBaseOnly = moduleIds.length === 0
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('login') === 'invalid') {
+      setLoginInvalid(true)
+      params.delete('login')
+      const qs = params.toString()
+      const next = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`
+      window.history.replaceState({}, '', next)
+    }
+  }, [])
 
   useEffect(() => {
     const onScroll = () => {
@@ -122,6 +140,39 @@ export function SicLandingClient() {
       window.removeEventListener('resize', onScroll)
     }
   }, [])
+
+  useEffect(() => {
+    if (!EMAIL_RE.test(email.trim())) {
+      setServerQuote(null)
+      setQuoteNote(null)
+      return
+    }
+    const controller = new AbortController()
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/sic/quote', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email: email.trim(), moduleIds }),
+          signal: controller.signal,
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok || !data?.ok || !data?.quote) return
+        setServerQuote(data.quote)
+        setQuoteNote(typeof data.note === 'string' ? data.note : null)
+      } catch {
+        // ignore abort / network — keep local quote
+      }
+    }, 400)
+    return () => {
+      clearTimeout(t)
+      controller.abort()
+    }
+  }, [email, moduleIds])
+
+  useEffect(() => {
+    if (!isBaseOnly) setBaseOnlyAck(false)
+  }, [isBaseOnly])
 
   function toggle(id: SicModuleId) {
     setSelected(prev => {
@@ -139,6 +190,10 @@ export function SicLandingClient() {
   async function checkout() {
     if (!EMAIL_RE.test(email.trim())) {
       toast.error('Bitte gib eine gültige E-Mail-Adresse an.')
+      return
+    }
+    if (isBaseOnly && !baseOnlyAck) {
+      toast.error('Bitte bestätige, dass du ein Zertifikat ohne Module erwerben möchtest.')
       return
     }
     setSubmitting(true)
@@ -163,6 +218,15 @@ export function SicLandingClient() {
 
   return (
     <div className="bg-white">
+      {loginInvalid ?
+        <div className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-center text-sm text-amber-900">
+          Anmeldelink ungültig oder abgelaufen — fordere unter{' '}
+          <a href="/sic/zertifikat" className="font-semibold underline">
+            Mein Zertifikat
+          </a>{' '}
+          einen neuen an.
+        </div>
+      : null}
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-[#0a1f45] text-white">
         <div
@@ -535,7 +599,7 @@ export function SicLandingClient() {
             <div className="rounded-2xl border border-[#0f2b5e]/10 bg-[#0f2b5e]/[0.03] p-6 sm:p-7">
               <h3 className="text-lg font-bold text-[#0f2b5e]">Deine Auswahl</h3>
               <dl className="mt-4 space-y-2.5 text-sm">
-                {allSelected ?
+                {allSelected && quote.includeBaseFee && quote.lines.some(l => l.kind === 'discount') ?
                   <div className="flex justify-between text-slate-700">
                     <dt>Komplett-Paket (inkl. Basis)</dt>
                     <dd className="tabular-nums">CHF {SIC_BUNDLE_ALL_MODULES_CHF}.–</dd>
@@ -549,11 +613,36 @@ export function SicLandingClient() {
                     </div>
                   ))
                 }
+                {quote.lines.length === 0 ?
+                  <p className="text-xs text-slate-500">Kein zu zahlender Betrag für die aktuelle Auswahl.</p>
+                : null}
               </dl>
               <div className="mt-4 flex items-baseline justify-between border-t border-slate-200 pt-4">
                 <span className="text-sm font-medium text-slate-500">Total</span>
                 <span className="text-2xl font-bold tabular-nums text-[#0f2b5e]">CHF {quote.totalChf}.–</span>
               </div>
+              {quoteNote ?
+                <p className="mt-2 text-xs font-medium text-[#1f7a34]">{quoteNote}</p>
+              : null}
+
+              {isBaseOnly ?
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                  <p className="font-semibold">Hinweis: Ohne Module</p>
+                  <p className="mt-1 text-xs leading-relaxed text-amber-900/90">
+                    Ohne Module enthält das Zertifikat noch keine verifizierten Angaben — Vermieter sehen
+                    nur die Basis. Du kannst Module später nachkaufen.
+                  </p>
+                  <label className="mt-3 flex items-start gap-2 text-xs font-medium">
+                    <input
+                      type="checkbox"
+                      checked={baseOnlyAck}
+                      onChange={e => setBaseOnlyAck(e.target.checked)}
+                      className="mt-0.5"
+                    />
+                    <span>Ich verstehe und möchte trotzdem nur die Basis kaufen.</span>
+                  </label>
+                </div>
+              : null}
 
               <label htmlFor="sic-email" className="mt-5 block text-sm font-semibold text-[#0f2b5e]">
                 E-Mail-Adresse
@@ -574,7 +663,7 @@ export function SicLandingClient() {
               <button
                 type="button"
                 onClick={checkout}
-                disabled={submitting}
+                disabled={submitting || (isBaseOnly && !baseOnlyAck)}
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-5 py-3.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
               >
                 {submitting ? 'Wird geöffnet …' : 'Weiter zur Zahlung'}
@@ -586,13 +675,12 @@ export function SicLandingClient() {
               <ul className="mt-3 space-y-1.5 border-t border-slate-200 pt-3">
                 <li className="flex items-center gap-2 text-xs text-slate-500"><ShieldCheck className="h-3.5 w-3.5 text-[#0f2b5e]" /> Schweizer Datenschutz (revDSG)</li>
                 <li className="flex items-center gap-2 text-xs text-slate-500"><Lock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Daten verschlüsselt gespeichert</li>
-                <li className="flex items-center gap-2 text-xs text-slate-500"><Clock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Nach Ablauf gemäss revDSG gelöscht</li>
+                <li className="flex items-center gap-2 text-xs text-slate-500"><Clock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Nachweise spätestens 30 Tage nach Ablauf gelöscht</li>
               </ul>
               <p className="mt-3 text-xs leading-relaxed text-slate-400">
                 Deine Daten bleiben während der {SIC_VALIDITY_MONTHS} Monate gespeichert; eine Verlängerung ist in
-                dieser Zeit ohne erneuten Upload möglich. Nach Ablauf werden die Nachweise gemäss Schweizer
-                Datenschutzgesetz (revDSG) gelöscht, sobald sie für den Zweck nicht mehr benötigt werden — die
-                QR-Prüfseite zeigt danach nur noch „abgelaufen".
+                dieser Zeit ohne erneuten Upload möglich. Nach Ablauf werden die Nachweise spätestens 30 Tage nach
+                dem Ablaufdatum gelöscht — die QR-Prüfseite zeigt danach nur noch „abgelaufen".
               </p>
               <p className="mt-3 text-xs leading-relaxed text-slate-400">
                 Ist ein eingereichter Beleg unvollständig oder nicht plausibel, bitten wir dich, einen gültigen

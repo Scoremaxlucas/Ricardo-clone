@@ -2775,6 +2775,8 @@ enum SicPaymentStatus {
   PENDING
   PAID
   FAILED
+  CANCELLED
+  REFUNDED
 }
 
 model SicCertificate {
@@ -2822,6 +2824,8 @@ model SicCertificateModule {
   reviewedAt       DateTime?
   reviewedByUserId String?
   reviewNote       String?   @db.Text
+  /** Letzte Nudge-Mail «Nachweise fehlen» (PENDING_DOCS). */
+  uploadReminderSentAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

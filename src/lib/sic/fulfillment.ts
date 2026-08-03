@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { stripe } from '@/lib/stripe-server'
 import { generateSicCertificateCode } from '@/lib/sic/certificate-code'
 import { sendSicMagicLinkEmail } from '@/lib/sic/email'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
@@ -6,7 +7,7 @@ import { sicExtendedExpiresAt, sicValidityExpiresAt } from '@/lib/sic/validity'
 import type { SicModuleKind } from '@prisma/client'
 
 export type FulfillResult =
-  | { ok: true; certificateId: string; certificateCode: string; email: string; alreadyDone: boolean }
+  | { ok: true; certificateId: string; certificateCode: string; email: string; alreadyDone: boolean; refundedDuplicate?: boolean }
   | { ok: false; reason: string }
 
 /** Zerlegt einen frei eingegebenen Namen in Vor-/Nachname (erstes Token = Vorname, Rest = Nachname). */
@@ -28,6 +29,17 @@ async function ensureUniqueCode(): Promise<string> {
     if (!exists) return code
   }
   throw new Error('Konnte keinen eindeutigen Zertifikatscode erzeugen')
+}
+
+async function refundPaymentIntent(paymentIntentId: string | null | undefined): Promise<boolean> {
+  if (!paymentIntentId) return false
+  try {
+    await stripe.refunds.create({ payment_intent: paymentIntentId })
+    return true
+  } catch (err) {
+    console.error('[sic/fulfillment] refund failed', err)
+    return false
+  }
 }
 
 /**
@@ -58,61 +70,136 @@ export async function fulfillSicPaidCheckout(input: {
     }
   }
 
+  if (payment.status === 'REFUNDED') {
+    return { ok: false, reason: 'PAYMENT_REFUNDED' }
+  }
+
   const now = new Date()
   const email = payment.email
   const moduleKinds = (payment.moduleKinds as SicModuleKind[]) ?? []
+  const pi =
+    input.stripePaymentIntentId ?? payment.stripePaymentIntentId
 
-  const existing = await prisma.sicCertificate.findUnique({ where: { email } })
+  // Race: Zertifikat erneut laden — Module die schon existieren, nicht nochmals «verkaufen».
+  let existing = await prisma.sicCertificate.findUnique({
+    where: { email },
+    include: { modules: { select: { moduleKind: true } } },
+  })
+  const alreadyOwned = new Set((existing?.modules ?? []).map(m => m.moduleKind))
+  const newKinds = moduleKinds.filter(k => !alreadyOwned.has(k))
+
+  // Doppelzahlung: alle Module schon da und Basis nicht neu → refund
+  if (existing && newKinds.length === 0 && !payment.includeBaseFee) {
+    await refundPaymentIntent(pi)
+    await prisma.sicPayment.update({
+      where: { id: payment.id },
+      data: {
+        status: 'REFUNDED',
+        paidAt: now,
+        certificateId: existing.id,
+        stripePaymentIntentId: pi,
+      },
+    })
+    return {
+      ok: true,
+      certificateId: existing.id,
+      certificateCode: existing.certificateCode,
+      email,
+      alreadyDone: true,
+      refundedDuplicate: true,
+    }
+  }
+
+  // Doppelzahlung Erstkauf-Basis ohne neue Module: refund, behalte bestehendes Cert
+  if (existing && newKinds.length === 0 && payment.includeBaseFee) {
+    await refundPaymentIntent(pi)
+    await prisma.sicPayment.update({
+      where: { id: payment.id },
+      data: {
+        status: 'REFUNDED',
+        paidAt: now,
+        certificateId: existing.id,
+        stripePaymentIntentId: pi,
+      },
+    })
+    return {
+      ok: true,
+      certificateId: existing.id,
+      certificateCode: existing.certificateCode,
+      email,
+      alreadyDone: true,
+      refundedDuplicate: true,
+    }
+  }
+
   const code = existing ? existing.certificateCode : await ensureUniqueCode()
   const prefillName = splitHolderName(payment.holderName)
 
-  const cert = await prisma.$transaction(async tx => {
-    const c =
-      existing ?
-        await tx.sicCertificate.update({
-          where: { id: existing.id },
-          data: {
-            status: 'ACTIVE',
-            expiresAt: sicExtendedExpiresAt(existing.expiresAt, now),
-            // Nur ergänzen, wenn noch kein Name gesetzt ist — vorhandene Angaben nie überschreiben.
-            ...(prefillName && !existing.holderFirstName && !existing.holderLastName ?
-              { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName || null }
-            : {}),
-          },
-        })
-      : await tx.sicCertificate.create({
-          data: {
-            email,
-            certificateCode: code,
-            status: 'ACTIVE',
-            issuedAt: now,
-            expiresAt: sicValidityExpiresAt(now),
-            ...(prefillName ?
-              { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName || null }
-            : {}),
-          },
-        })
+  let cert
+  try {
+    cert = await prisma.$transaction(async tx => {
+      const c =
+        existing ?
+          await tx.sicCertificate.update({
+            where: { id: existing!.id },
+            data: {
+              status: 'ACTIVE',
+              expiresAt: sicExtendedExpiresAt(existing!.expiresAt, now),
+              ...(prefillName && !existing!.holderFirstName && !existing!.holderLastName ?
+                { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName || null }
+              : {}),
+            },
+          })
+        : await tx.sicCertificate.create({
+            data: {
+              email,
+              certificateCode: code,
+              status: 'ACTIVE',
+              issuedAt: now,
+              expiresAt: sicValidityExpiresAt(now),
+              ...(prefillName ?
+                { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName || null }
+              : {}),
+            },
+          })
 
-    for (const kind of moduleKinds) {
-      await tx.sicCertificateModule.upsert({
-        where: { certificateId_moduleKind: { certificateId: c.id, moduleKind: kind } },
-        create: { certificateId: c.id, moduleKind: kind, status: 'PENDING_DOCS', paidAt: now },
-        update: {},
+      for (const kind of newKinds) {
+        await tx.sicCertificateModule.upsert({
+          where: { certificateId_moduleKind: { certificateId: c.id, moduleKind: kind } },
+          create: { certificateId: c.id, moduleKind: kind, status: 'PENDING_DOCS', paidAt: now },
+          update: {},
+        })
+      }
+
+      await tx.sicPayment.update({
+        where: { id: payment.id },
+        data: {
+          status: 'PAID',
+          paidAt: now,
+          certificateId: c.id,
+          stripePaymentIntentId: pi,
+        },
       })
-    }
 
-    await tx.sicPayment.update({
-      where: { id: payment.id },
-      data: {
-        status: 'PAID',
-        paidAt: now,
-        certificateId: c.id,
-        stripePaymentIntentId: input.stripePaymentIntentId ?? payment.stripePaymentIntentId,
-      },
+      return c
     })
-
-    return c
-  })
+  } catch (err: unknown) {
+    // Unique email race: zweiter paralleler Erstkauf — nachgeladen fortsetzen (max. 1 Retry-Semantik via PAID-Check oben)
+    const again = await prisma.sicCertificate.findUnique({
+      where: { email },
+      include: { modules: { select: { moduleKind: true } } },
+    })
+    if (!again) throw err
+    // Payment kann zwischenzeitlich von anderem Worker auf PAID gesetzt worden sein
+    const refreshed = await prisma.sicPayment.findUnique({
+      where: { id: payment.id },
+    })
+    if (refreshed?.status === 'PAID' || refreshed?.status === 'REFUNDED') {
+      return fulfillSicPaidCheckout(input)
+    }
+    existing = again
+    return fulfillSicPaidCheckout(input)
+  }
 
   try {
     const { url } = await createSicMagicLink(email)

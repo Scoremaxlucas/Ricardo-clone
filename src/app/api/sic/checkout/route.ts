@@ -16,6 +16,34 @@ function clientIp(req: NextRequest): string {
   return (req.headers.get('x-forwarded-for')?.split(',')[0] || '').trim() || 'unknown'
 }
 
+function overlaps(a: string[], b: string[]): boolean {
+  const set = new Set(a)
+  return b.some(x => set.has(x))
+}
+
+/** Offene PENDING-Sessions mit überlappenden Modulen bei Stripe expire + DB CANCELLED. */
+async function cancelOverlappingPending(email: string, candidate: string[], includeBaseFee: boolean) {
+  const pending = await prisma.sicPayment.findMany({
+    where: { email, status: 'PENDING' },
+    orderBy: { createdAt: 'desc' },
+  })
+  for (const p of pending) {
+    const kinds = (p.moduleKinds as string[]) ?? []
+    const overlap =
+      overlaps(kinds, candidate) || (includeBaseFee && p.includeBaseFee) || (candidate.length === 0 && kinds.length === 0)
+    if (!overlap) continue
+    try {
+      await stripe.checkout.sessions.expire(p.stripeCheckoutSessionId)
+    } catch {
+      // Session evtl. schon expired/completed — weiter DB markieren
+    }
+    await prisma.sicPayment.update({
+      where: { id: p.id },
+      data: { status: 'CANCELLED' },
+    })
+  }
+}
+
 export async function POST(req: NextRequest) {
   let email = ''
   let requested: SicModuleId[] = []
@@ -39,7 +67,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Zu viele Anfragen. Bitte später erneut.' }, { status: 429 })
   }
 
-  // Bestehendes Dossier bestimmt, ob Basisgebühr anfällt und welche Module bereits bezahlt sind.
   const existing = await prisma.sicCertificate.findUnique({
     where: { email },
     select: { modules: { select: { moduleKind: true } } },
@@ -60,8 +87,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Kein zu zahlender Betrag.' }, { status: 400 })
   }
 
-  // Bundle-Rabatt: negative Positionen sind bei Stripe nicht erlaubt — daher als eine
-  // Position zum Gesamtpreis zusammenfassen. Die Fulfillment nutzt Metadaten, nicht die Positionen.
+  await cancelOverlappingPending(email, candidate, includeBaseFee)
+
   const hasDiscount = quote.lines.some(l => l.kind === 'discount')
   const lineItems =
     hasDiscount ?

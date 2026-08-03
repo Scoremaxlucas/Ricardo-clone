@@ -186,7 +186,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       <ul className="mt-3 space-y-3">
         {dossier.purchasedModules.map(m => {
           const meta = STATUS_META[m.status]
-          const canUpload = m.status === 'PENDING_DOCS' || m.status === 'REJECTED'
+          const canUpload =
+            m.status === 'PENDING_DOCS' || m.status === 'REJECTED' || m.status === 'IN_REVIEW'
           return (
             <li key={m.moduleKind} className="rounded-2xl border border-slate-200 bg-white p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -204,6 +205,9 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
               {canUpload ?
                 <div className="mt-4">
                   <p className="text-xs font-medium text-slate-500">Checkliste — benötigte Nachweise:</p>
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    Modul geht in Prüfung, sobald mindestens ein Nachweis hochgeladen ist.
+                  </p>
                   <ul className="mt-2 space-y-1.5">
                     {m.checklist.map(item => (
                       <li key={item.id} className="flex items-start gap-2 text-xs text-slate-600">
@@ -250,10 +254,14 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                   <p className="mt-1.5 text-[11px] text-slate-400">
                     Du kannst mehrere Dateien nacheinander hochladen (z. B. Lohnausweis und Mietvertrag).
                   </p>
-                  {m.documentCount > 0 ?
-                    <span className="mt-1 inline-block text-xs text-slate-400">
-                      {m.documentCount} Datei(en) hochgeladen
-                    </span>
+                  {m.documents.length > 0 ?
+                    <ul className="mt-2 space-y-1">
+                      {m.documents.map(d => (
+                        <li key={`${d.fileName}-${d.uploadedAt}`} className="text-xs text-slate-500">
+                          {d.fileName}
+                        </li>
+                      ))}
+                    </ul>
                   : null}
                 </div>
               : null}

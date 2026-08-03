@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { encryptPdfForStorageBestEffort } from '@/lib/rental/pdf-crypto'
 import { isSicModuleId } from '@/lib/sic/modules'
+import { nextModuleStatusAfterUpload } from '@/lib/sic/module-status'
 import { getSicSession } from '@/lib/sic/session-cookie'
 import { put } from '@vercel/blob'
 import { randomBytes } from 'crypto'
@@ -51,10 +52,21 @@ export async function POST(req: NextRequest) {
 
   const cert = await prisma.sicCertificate.findUnique({
     where: { email: session.email },
-    select: { id: true, modules: { where: { moduleKind }, select: { id: true, status: true } } },
+    select: {
+      id: true,
+      status: true,
+      expiresAt: true,
+      modules: { where: { moduleKind }, select: { id: true, status: true } },
+    },
   })
   if (!cert) {
     return NextResponse.json({ ok: false, message: 'Kein Zertifikat gefunden.' }, { status: 404 })
+  }
+  if (cert.status !== 'ACTIVE' || cert.expiresAt.getTime() <= Date.now()) {
+    return NextResponse.json(
+      { ok: false, message: 'Dieses Zertifikat ist abgelaufen oder nicht aktiv.' },
+      { status: 403 }
+    )
   }
   const moduleRow = cert.modules[0]
   if (!moduleRow) {
@@ -63,27 +75,49 @@ export async function POST(req: NextRequest) {
       { status: 403 }
     )
   }
+  if (moduleRow.status === 'VERIFIED') {
+    return NextResponse.json(
+      { ok: false, message: 'Dieses Modul ist bereits verifiziert — kein weiterer Upload nötig.' },
+      { status: 403 }
+    )
+  }
+  if (moduleRow.status === 'IN_REVIEW') {
+    // Weitere Dateien ok — Status bleibt IN_REVIEW
+  }
 
   const original = Buffer.from(await file.arrayBuffer())
   const { buffer, encrypted } = encryptPdfForStorageBestEffort(original)
   const ext = encrypted ? 'bin' : file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1] || 'bin'
-  const path = `sic/${cert.id}/${moduleKind}/${Date.now()}-${randomBytes(6).toString('hex')}.${ext}`
+  const path = `sic/${cert.id}/${moduleKind}/${Date.now()}-${randomBytes(12).toString('hex')}.${ext}`
 
   let blobUrl: string
   try {
     const blob = await put(path, buffer, {
-      access: 'public',
+      access: 'private',
       addRandomSuffix: true,
       contentType: encrypted ? 'application/octet-stream' : file.type,
     })
     blobUrl = blob.url
   } catch (err) {
-    console.error('[sic/documents] blob upload failed', err)
-    return NextResponse.json({ ok: false, message: 'Upload fehlgeschlagen.' }, { status: 502 })
+    // Store noch public-only → Fallback, damit Uploads nicht blockieren.
+    console.error('[sic/documents] private put failed, retry public', err)
+    try {
+      const blob = await put(path, buffer, {
+        access: 'public',
+        addRandomSuffix: true,
+        contentType: encrypted ? 'application/octet-stream' : file.type,
+      })
+      blobUrl = blob.url
+    } catch (err2) {
+      console.error('[sic/documents] blob upload failed', err2)
+      return NextResponse.json({ ok: false, message: 'Upload fehlgeschlagen.' }, { status: 502 })
+    }
   }
 
-  await prisma.$transaction([
-    prisma.sicDocument.create({
+  const nextStatus = nextModuleStatusAfterUpload(moduleRow.status)
+
+  await prisma.$transaction(async tx => {
+    await tx.sicDocument.create({
       data: {
         certificateId: cert.id,
         moduleKind,
@@ -92,13 +126,14 @@ export async function POST(req: NextRequest) {
         contentType: file.type,
         sizeBytes: original.length,
       },
-    }),
-    // Nachweis eingereicht -> in Prüfung (nur wenn noch nicht freigegeben/abgelehnt).
-    prisma.sicCertificateModule.updateMany({
-      where: { id: moduleRow.id, status: 'PENDING_DOCS' },
-      data: { status: 'IN_REVIEW' },
-    }),
-  ])
+    })
+    if (nextStatus) {
+      await tx.sicCertificateModule.update({
+        where: { id: moduleRow.id },
+        data: { status: nextStatus, reviewNote: null },
+      })
+    }
+  })
 
   return NextResponse.json({ ok: true })
 }

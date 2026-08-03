@@ -102,6 +102,10 @@
     {
       "path": "/api/cron/wohnen-listing-match-alerts",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/sic-certificate-expiry",
+      "schedule": "20 7 * * *"
     }
   ]
 }

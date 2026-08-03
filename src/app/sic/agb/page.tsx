@@ -35,8 +35,8 @@ export default function SicAgbPage() {
           <h2 className="font-semibold text-[#0f2b5e]">Gültigkeit &amp; Daten-Lebenszyklus</h2>
           <p className="mt-1.5">
             Ein Zertifikat ist 3 Monate gültig. Innerhalb dieser Zeit ist eine Verlängerung ohne erneuten Upload
-            möglich. Nach Ablauf werden die Nachweise gemäss Schweizer Datenschutzgesetz (revDSG) gelöscht, sobald
-            sie für den Zweck nicht mehr erforderlich sind; die QR-Prüfseite zeigt danach nur noch „abgelaufen".
+            möglich. Nach Ablauf werden die Nachweise spätestens 30 Tage nach dem Ablaufdatum gelöscht; die
+            QR-Prüfseite zeigt danach nur noch „abgelaufen".
           </p>
         </section>
 
