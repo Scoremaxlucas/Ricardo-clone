@@ -173,9 +173,11 @@ export async function POST(request: NextRequest) {
             const session = event.data.object as Stripe.Checkout.Session
             if (session.metadata?.type === 'sic_certificate') {
               if (session.payment_status !== 'paid') {
-                console.log(
-                  `[stripe/webhook] SIC session ${session.id} payment_status=${session.payment_status} — skip fulfill`
-                )
+                const { sicLog } = await import('@/lib/sic/log')
+                sicLog('sic.webhook.skip_not_paid', {
+                  sessionId: session.id,
+                  paymentStatus: session.payment_status,
+                })
                 break
               }
               const { fulfillSicPaidCheckout } = await import('@/lib/sic/fulfillment')
@@ -206,7 +208,11 @@ export async function POST(request: NextRequest) {
                 typeof charge.payment_intent === 'string' ?
                   charge.payment_intent
                 : charge.payment_intent?.id
-              await revokeSicAfterStripeRefund({ paymentIntentId: pi })
+              await revokeSicAfterStripeRefund({
+                paymentIntentId: pi,
+                chargeAmount: charge.amount,
+                chargeAmountRefunded: charge.amount_refunded,
+              })
             }
             orderId = charge.metadata?.orderId
             await handleChargeRefunded(charge)
@@ -219,7 +225,7 @@ export async function POST(request: NextRequest) {
               typeof dispute.payment_intent === 'string' ?
                 dispute.payment_intent
               : dispute.payment_intent?.id
-            await revokeSicAfterStripeRefund({ paymentIntentId: dpi })
+            await revokeSicAfterStripeRefund({ paymentIntentId: dpi, forceFull: true })
             break
           }
 

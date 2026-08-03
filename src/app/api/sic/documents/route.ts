@@ -101,6 +101,8 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     // Store noch public-only → Fallback, damit Uploads nicht blockieren.
     console.error('[sic/documents] private put failed, retry public', err)
+    const { sicLog } = await import('@/lib/sic/log')
+    sicLog('sic.blob.private_put_fallback', { certificateId: cert.id, moduleKind })
     try {
       const blob = await put(path, buffer, {
         access: 'public',
@@ -131,6 +133,11 @@ export async function POST(req: NextRequest) {
       await tx.sicCertificateModule.update({
         where: { id: moduleRow.id },
         data: { status: nextStatus, reviewNote: null },
+      })
+      // Touch cert so Admin-Queue (oldest-first) die Nachreichung sieht.
+      await tx.sicCertificate.update({
+        where: { id: cert.id },
+        data: { updatedAt: new Date() },
       })
     }
   })

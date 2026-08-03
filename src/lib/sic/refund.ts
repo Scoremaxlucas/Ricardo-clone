@@ -1,15 +1,36 @@
 import { prisma } from '@/lib/prisma'
+import { sicLog } from '@/lib/sic/log'
+import { isFullStripeRefund } from '@/lib/sic/refund-gate'
 import { del } from '@vercel/blob'
 import type { SicModuleKind } from '@prisma/client'
 
 /**
- * Nach Stripe-Refund: Module aus dieser Zahlung entfernen; ohne Module + Basis-Refund → REVOKED.
- * Findet SicPayment über PaymentIntent-ID oder Checkout-Session-Metadata.
+ * Nach vollständigem Stripe-Refund: Module aus dieser Zahlung entfernen;
+ * ohne Module + Basis-Refund → REVOKED.
  */
 export async function revokeSicAfterStripeRefund(input: {
   paymentIntentId?: string | null
   checkoutSessionId?: string | null
+  /** Stripe Charge amount / amount_refunded — Partial → skip */
+  chargeAmount?: number | null
+  chargeAmountRefunded?: number | null
+  /** Dispute funds withdrawn = Full-Loss */
+  forceFull?: boolean
 }): Promise<{ ok: boolean; reason?: string }> {
+  if (
+    !input.forceFull &&
+    input.chargeAmount != null &&
+    input.chargeAmountRefunded != null &&
+    !isFullStripeRefund(input.chargeAmount, input.chargeAmountRefunded)
+  ) {
+    sicLog('sic.refund.skipped_partial', {
+      paymentIntentId: input.paymentIntentId ?? null,
+      amount: input.chargeAmount,
+      amountRefunded: input.chargeAmountRefunded,
+    })
+    return { ok: true, reason: 'PARTIAL_REFUND_SKIPPED' }
+  }
+
   let payment =
     input.paymentIntentId ?
       await prisma.sicPayment.findFirst({
@@ -23,7 +44,12 @@ export async function revokeSicAfterStripeRefund(input: {
     })
   }
 
-  if (!payment) return { ok: false, reason: 'SIC_PAYMENT_NOT_FOUND' }
+  if (!payment) {
+    sicLog('sic.refund.payment_not_found', {
+      paymentIntentId: input.paymentIntentId ?? null,
+    })
+    return { ok: false, reason: 'SIC_PAYMENT_NOT_FOUND' }
+  }
 
   if (payment.status === 'REFUNDED') return { ok: true, reason: 'ALREADY_REFUNDED' }
 
@@ -35,15 +61,20 @@ export async function revokeSicAfterStripeRefund(input: {
     data: { status: 'REFUNDED' },
   })
 
-  if (!certificateId) return { ok: true, reason: 'NO_CERTIFICATE_YET' }
+  if (!certificateId) {
+    sicLog('sic.refund.revoked', { paymentId: payment.id, reason: 'NO_CERTIFICATE_YET' })
+    return { ok: true, reason: 'NO_CERTIFICATE_YET' }
+  }
 
   const cert = await prisma.sicCertificate.findUnique({
     where: { id: certificateId },
     include: { modules: true, documents: true },
   })
-  if (!cert) return { ok: true, reason: 'CERTIFICATE_GONE' }
+  if (!cert) {
+    sicLog('sic.refund.revoked', { paymentId: payment.id, reason: 'CERTIFICATE_GONE' })
+    return { ok: true, reason: 'CERTIFICATE_GONE' }
+  }
 
-  // Dokumente der betroffenen Module löschen (Blob best-effort)
   const docsToDelete = cert.documents.filter(d => kinds.includes(d.moduleKind as SicModuleKind))
   for (const doc of docsToDelete) {
     try {
@@ -65,15 +96,19 @@ export async function revokeSicAfterStripeRefund(input: {
   }
 
   const remaining = await prisma.sicCertificateModule.count({ where: { certificateId } })
-  // Basis refunded: includeBaseFee auf dieser Payment — wenn keine Module mehr → widerrufen
   if (remaining === 0 && payment.includeBaseFee) {
     await prisma.sicCertificate.update({
       where: { id: certificateId },
       data: { status: 'REVOKED' },
     })
-  } else if (remaining === 0) {
-    // Nur Module refunded, Basis blieb — Zertifikat bleibt ACTIVE aber leer (Basis-only)
   }
+
+  sicLog('sic.refund.revoked', {
+    paymentId: payment.id,
+    certificateId,
+    modulesRemoved: kinds.length,
+    revokedCert: remaining === 0 && payment.includeBaseFee,
+  })
 
   return { ok: true }
 }

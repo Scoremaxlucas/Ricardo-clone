@@ -1,16 +1,16 @@
 import { prisma } from '@/lib/prisma'
 import { decryptPdfFromStorageBestEffort } from '@/lib/rental/pdf-crypto'
 import { requireSicAdmin } from '@/lib/sic/admin'
+import { sicLog } from '@/lib/sic/log'
 import { get } from '@vercel/blob'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
 async function loadBlobBytes(blobUrl: string): Promise<Buffer | null> {
-  // Private Blob via SDK
   try {
     const result = await get(blobUrl, { access: 'private' })
-    if (result?.stream) {
+    if (result?.statusCode === 200 && result.stream) {
       const chunks: Uint8Array[] = []
       const reader = result.stream.getReader()
       for (;;) {
@@ -21,15 +21,15 @@ async function loadBlobBytes(blobUrl: string): Promise<Buffer | null> {
       return Buffer.concat(chunks.map(c => Buffer.from(c)))
     }
   } catch {
-    // Alt-Uploads waren evtl. public
+    sicLog('sic.blob.private_get_fallback', { reason: 'private_get_error' })
   }
 
-  // Fallback: öffentlicher Fetch (Legacy) oder Bearer-Token
   const headers: HeadersInit = {}
   const token = process.env.BLOB_READ_WRITE_TOKEN
   if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(blobUrl, { headers })
   if (!res.ok) return null
+  sicLog('sic.blob.private_get_fallback', { reason: 'public_or_token_fetch' })
   return Buffer.from(await res.arrayBuffer())
 }
 

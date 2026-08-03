@@ -2809,6 +2809,7 @@ model SicCertificate {
 
   @@index([certificateCode])
   @@index([email])
+  @@index([status, expiresAt])
   @@map("sic_certificates")
 }
 
@@ -2832,6 +2833,8 @@ model SicCertificateModule {
 
   @@unique([certificateId, moduleKind])
   @@index([certificateId])
+  @@index([status, paidAt])
+  @@index([status, uploadReminderSentAt])
   @@map("sic_certificate_modules")
 }
 
@@ -2885,6 +2888,8 @@ model SicPayment {
 
   @@index([email])
   @@index([certificateId])
+  @@index([stripePaymentIntentId])
+  @@index([status, createdAt])
   @@map("sic_payments")
 }
 
@@ -2899,5 +2904,6 @@ model SicMagicLink {
 
   @@index([email])
   @@index([token])
+  @@index([expiresAt])
   @@map("sic_magic_links")
 }

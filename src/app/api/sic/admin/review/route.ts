@@ -1,46 +1,91 @@
 import { prisma } from '@/lib/prisma'
 import { requireSicAdmin } from '@/lib/sic/admin'
+import {
+  adminQueueCursorWhere,
+  clampAdminQueueLimit,
+  decodeAdminQueueCursor,
+  encodeAdminQueueCursor,
+  moduleStatusesForQueueFilter,
+  parseSicAdminQueueFilter,
+} from '@/lib/sic/admin-queue'
 import { sendSicModuleReviewEmail } from '@/lib/sic/email'
+import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { isSicModuleId } from '@/lib/sic/modules'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-/** Liste aller Zertifikate mit Modulen in Prüfung (oder mit hochgeladenen Nachweisen). */
-export async function GET() {
+/** Liste Zertifikate mit offenen Modulen — Filter, oldest-first, Cursor-Pagination. */
+export async function GET(req: NextRequest) {
   const admin = await requireSicAdmin()
   if (!admin) return NextResponse.json({ ok: false, message: 'Zugriff verweigert' }, { status: 403 })
 
-  const certs = await prisma.sicCertificate.findMany({
-    where: { modules: { some: { status: { in: ['IN_REVIEW', 'PENDING_DOCS'] } } } },
-    orderBy: { updatedAt: 'desc' },
-    include: {
-      modules: { orderBy: { createdAt: 'asc' } },
-      documents: {
-        select: { id: true, moduleKind: true, fileName: true, contentType: true, uploadedAt: true },
-        orderBy: { uploadedAt: 'asc' },
-      },
-    },
-    take: 200,
-  })
+  const filter = parseSicAdminQueueFilter(req.nextUrl.searchParams.get('status'))
+  const statuses = moduleStatusesForQueueFilter(filter)
+  const limit = clampAdminQueueLimit(req.nextUrl.searchParams.get('limit'))
+  const decoded = decodeAdminQueueCursor(req.nextUrl.searchParams.get('cursor'))
 
-  const items = certs.map(c => ({
+  const [inReview, pendingDocs, certs] = await Promise.all([
+    prisma.sicCertificateModule.count({ where: { status: 'IN_REVIEW' } }),
+    prisma.sicCertificateModule.count({ where: { status: 'PENDING_DOCS' } }),
+    prisma.sicCertificate.findMany({
+      where: {
+        AND: [
+          { modules: { some: { status: { in: statuses } } } },
+          ...(decoded ? [adminQueueCursorWhere(decoded)] : []),
+        ],
+      },
+      // Oldest open work first (cert updated when module changes / upload).
+      orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
+      include: {
+        modules: { orderBy: { createdAt: 'asc' } },
+        documents: {
+          select: { id: true, moduleKind: true, fileName: true, contentType: true, uploadedAt: true },
+          orderBy: { uploadedAt: 'asc' },
+        },
+      },
+      take: limit + 1,
+    }),
+  ])
+
+  const page = certs.slice(0, limit)
+  const hasMore = certs.length > limit
+  const last = page[page.length - 1]
+  const nextCursor = hasMore && last ? encodeAdminQueueCursor(last.updatedAt, last.id) : null
+
+  const items = page.map(c => ({
     id: c.id,
     email: c.email,
     certificateCode: c.certificateCode,
     expiresAt: c.expiresAt.toISOString(),
+    updatedAt: c.updatedAt.toISOString(),
     modules: c.modules.map(m => ({
       moduleKind: m.moduleKind,
       status: m.status,
       reviewNote: m.reviewNote,
       documents: c.documents
         .filter(d => d.moduleKind === m.moduleKind)
-        .map(d => ({ id: d.id, fileName: d.fileName, contentType: d.contentType, uploadedAt: d.uploadedAt.toISOString() })),
+        .map(d => ({
+          id: d.id,
+          fileName: d.fileName,
+          contentType: d.contentType,
+          uploadedAt: d.uploadedAt.toISOString(),
+        })),
     })),
   }))
 
-  return NextResponse.json({ ok: true, items })
+  return NextResponse.json({
+    ok: true,
+    filter,
+    items,
+    nextCursor,
+    counts: {
+      inReview,
+      pendingDocs,
+      totalOpen: inReview + pendingDocs,
+    },
+  })
 }
 
 /** Modul freigeben oder ablehnen. */
@@ -100,6 +145,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Modul nicht gefunden.' }, { status: 404 })
   }
 
+  await prisma.sicCertificate.update({
+    where: { id: certificateId },
+    data: { updatedAt: new Date() },
+  })
+
+  sicLog('sic.admin.review', { certificateId, moduleKind, action })
+
   try {
     const { url: magicLinkUrl } = await createSicMagicLink(cert.email)
     await sendSicModuleReviewEmail({
@@ -111,6 +163,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (err) {
     console.error('[sic/admin/review] notification email failed', err)
+    sicLog('sic.admin.review_email_failed', { certificateId, moduleKind, action })
   }
 
   return NextResponse.json({ ok: true })

@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe-server'
 import { generateSicCertificateCode } from '@/lib/sic/certificate-code'
 import { sendSicMagicLinkEmail } from '@/lib/sic/email'
+import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { sicExtendedExpiresAt, sicValidityExpiresAt } from '@/lib/sic/validity'
 import type { SicModuleKind } from '@prisma/client'
@@ -88,39 +89,46 @@ export async function fulfillSicPaidCheckout(input: {
   const alreadyOwned = new Set((existing?.modules ?? []).map(m => m.moduleKind))
   const newKinds = moduleKinds.filter(k => !alreadyOwned.has(k))
 
-  // Doppelzahlung: alle Module schon da und Basis nicht neu → refund
-  if (existing && newKinds.length === 0 && !payment.includeBaseFee) {
-    await refundPaymentIntent(pi)
-    await prisma.sicPayment.update({
-      where: { id: payment.id },
-      data: {
-        status: 'REFUNDED',
-        paidAt: now,
+  // Doppelzahlung: nichts Neues zu erfüllen → Stripe full refund (nur REFUNDED wenn Refund OK)
+  if (existing && newKinds.length === 0) {
+    const refunded = await refundPaymentIntent(pi)
+    if (refunded) {
+      await prisma.sicPayment.update({
+        where: { id: payment.id },
+        data: {
+          status: 'REFUNDED',
+          paidAt: now,
+          certificateId: existing.id,
+          stripePaymentIntentId: pi,
+        },
+      })
+      sicLog('sic.fulfillment.duplicate_refunded', {
+        paymentId: payment.id,
         certificateId: existing.id,
-        stripePaymentIntentId: pi,
-      },
-    })
-    return {
-      ok: true,
-      certificateId: existing.id,
-      certificateCode: existing.certificateCode,
-      email,
-      alreadyDone: true,
-      refundedDuplicate: true,
+      })
+      return {
+        ok: true,
+        certificateId: existing.id,
+        certificateCode: existing.certificateCode,
+        email,
+        alreadyDone: true,
+        refundedDuplicate: true,
+      }
     }
-  }
-
-  // Doppelzahlung Erstkauf-Basis ohne neue Module: refund, behalte bestehendes Cert
-  if (existing && newKinds.length === 0 && payment.includeBaseFee) {
-    await refundPaymentIntent(pi)
+    // Refund fehlgeschlagen: als PAID verknüpfen ohne zweite Module; Ops sieht Log
     await prisma.sicPayment.update({
       where: { id: payment.id },
       data: {
-        status: 'REFUNDED',
+        status: 'PAID',
         paidAt: now,
         certificateId: existing.id,
         stripePaymentIntentId: pi,
       },
+    })
+    sicLog('sic.fulfillment.refund_failed', {
+      paymentId: payment.id,
+      certificateId: existing.id,
+      paymentIntentId: pi ?? null,
     })
     return {
       ok: true,
@@ -128,7 +136,7 @@ export async function fulfillSicPaidCheckout(input: {
       certificateCode: existing.certificateCode,
       email,
       alreadyDone: true,
-      refundedDuplicate: true,
+      refundedDuplicate: false,
     }
   }
 
