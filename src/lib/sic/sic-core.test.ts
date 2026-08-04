@@ -4,7 +4,7 @@ import {
   isValidSicCertificateCode,
   normalizeSicCertificateCode,
 } from '@/lib/sic/certificate-code'
-import { normalizeSicModuleIds, SIC_BASE_FEE_CHF, SIC_MODULE_FEE_CHF, SIC_MODULES } from '@/lib/sic/modules'
+import { normalizeSicModuleIds, SIC_BASE_FEE_CHF, SIC_BUNDLE_ALL_MODULES_CHF, SIC_MODULE_FEE_CHF, SIC_MODULES } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { addCalendarMonths, isSicExpired, sicExtendedExpiresAt, sicValidityExpiresAt } from '@/lib/sic/validity'
 
@@ -50,10 +50,9 @@ describe('pricing', () => {
   })
   it('full certificate (base + all 4 modules) applies bundle discount', () => {
     const q = quoteSicOrder({ includeBaseFee: true, moduleIds: SIC_MODULES.map(m => m.id) })
-    // Ohne Rabatt wären es 140 (20 + 4×30); Komplett-Paket kostet 120.
-    expect(SIC_BASE_FEE_CHF + 4 * SIC_MODULE_FEE_CHF).toBe(140)
-    expect(q.totalChf).toBe(120)
-    expect(q.lines.some(l => l.kind === 'discount' && l.amountChf === -20)).toBe(true)
+    const fullPrice = SIC_BASE_FEE_CHF + 4 * SIC_MODULE_FEE_CHF
+    expect(q.totalChf).toBe(SIC_BUNDLE_ALL_MODULES_CHF)
+    expect(q.lines.some(l => l.kind === 'discount' && l.amountChf === SIC_BUNDLE_ALL_MODULES_CHF - fullPrice)).toBe(true)
   })
   it('all 4 modules as add-on (no base fee) → no bundle discount', () => {
     const q = quoteSicOrder({ includeBaseFee: false, moduleIds: SIC_MODULES.map(m => m.id) })

@@ -10,14 +10,17 @@
 
 export const SIC_CURRENCY = 'CHF' as const
 
-/** Einmalige Einschreibegebühr: erstellt das Zertifikat (ohne Module = keine Verifizierung). */
-export const SIC_BASE_FEE_CHF = 20
+/**
+ * TEST-Preise (Stripe CHF-Minimum = 0.50).
+ * Produktion wiederherstellen: Basis 20 / Modul 30 / Bundle 120.
+ */
+export const SIC_BASE_FEE_CHF = 0.5
 
 /** Preis pro verifiziertem Modul. */
-export const SIC_MODULE_FEE_CHF = 30
+export const SIC_MODULE_FEE_CHF = 0.5
 
-/** Komplett-Paket: Basis + alle 4 Module zum Bundle-Preis (statt 140). */
-export const SIC_BUNDLE_ALL_MODULES_CHF = 120
+/** Komplett-Paket: Basis + alle 4 Module zum Bundle-Preis. */
+export const SIC_BUNDLE_ALL_MODULES_CHF = 0.5
 
 /** Gültigkeit eines Zertifikats bzw. einer Verlängerung in Kalendermonaten. */
 export const SIC_VALIDITY_MONTHS = 3
