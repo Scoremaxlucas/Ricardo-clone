@@ -1,9 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { SicTemplatePdfDocument } from '@/lib/sic/TemplatePdfs'
+import { renderSicTemplatePdf } from '@/lib/sic/form-kit/render'
 import { getSicTemplate, isSicTemplateId, type SicTemplateValues } from '@/lib/sic/templates'
 import { getSicSession } from '@/lib/sic/session-cookie'
-import { renderToBuffer } from '@react-pdf/renderer'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -50,15 +49,15 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ templateId
   }
   if (!cert.modules[0]) {
     return NextResponse.json(
-      { ok: false, message: 'Dieses Modul wurde nicht erworben — Formular nicht freigeschaltet.' },
+      { ok: false, message: 'Dieses Modul wurde nicht erworben — Formular nicht freigegeben.' },
       { status: 403 }
     )
   }
 
   try {
-    const buffer = await renderToBuffer(<SicTemplatePdfDocument template={template} values={values} />)
+    const bytes = await renderSicTemplatePdf(template.id, values)
     const filename = `SIC-${template.id}.pdf`
-    return new NextResponse(new Uint8Array(buffer), {
+    return new NextResponse(Buffer.from(bytes), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

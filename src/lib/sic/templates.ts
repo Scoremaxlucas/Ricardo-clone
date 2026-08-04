@@ -48,7 +48,7 @@ export const SIC_TEMPLATES: readonly SicTemplateDefinition[] = [
     fields: [
       {
         key: 'employeeName',
-        label: 'Name der/des Arbeitnehmer:in',
+        label: 'Name der mietsuchenden Person',
         kind: 'text',
         section: 'tenant',
         required: true,
@@ -176,7 +176,7 @@ export const SIC_TEMPLATES: readonly SicTemplateDefinition[] = [
     fields: [
       {
         key: 'tenantName',
-        label: 'Name der/des Mieter:in',
+        label: 'Name der mietsuchenden Person',
         kind: 'text',
         section: 'tenant',
         required: true,
