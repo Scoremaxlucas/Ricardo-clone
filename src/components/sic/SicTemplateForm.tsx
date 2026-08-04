@@ -49,7 +49,7 @@ export function SicTemplateForm({
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        toast.error(data?.message || 'PDF konnte nicht erstellt werden.')
+        toast.error(data?.message || 'Vorlage konnte nicht erstellt werden.')
         return
       }
       const blob = await res.blob()
@@ -62,7 +62,7 @@ export function SicTemplateForm({
       a.remove()
       URL.revokeObjectURL(url)
       toast.success(
-        `PDF heruntergeladen — vom ${template.thirdPartyLabel} ausfüllen und unterzeichnen lassen, danach hier hochladen.`
+        `Vorlage heruntergeladen — vom ${template.thirdPartyLabel} ausfüllen und unterzeichnen lassen, danach hier hochladen.`
       )
     } catch {
       toast.error('Netzwerkfehler.')
@@ -93,7 +93,7 @@ export function SicTemplateForm({
             onClick={() => setOpen(o => !o)}
             className="rounded-lg border border-[#0f2b5e]/20 px-3 py-1.5 text-xs font-semibold text-[#0f2b5e] hover:bg-white"
           >
-            {open ? 'Schliessen' : 'Name vorausfüllen'}
+            {open ? 'Schliessen' : 'Deinen Namen vorausfüllen'}
           </button>
           <button
             type="button"
@@ -102,7 +102,7 @@ export function SicTemplateForm({
             className="inline-flex items-center gap-1.5 rounded-lg bg-[#0f2b5e] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0a1f45] disabled:opacity-60"
           >
             <Download className="h-3.5 w-3.5" />
-            {busy ? 'Wird erstellt …' : 'PDF-Formular holen'}
+            {busy ? 'Wird erstellt …' : 'Vorlage herunterladen'}
           </button>
         </div>
       </div>
@@ -110,8 +110,8 @@ export function SicTemplateForm({
       {open ?
         <div className="mt-4 space-y-3 border-t border-[#0f2b5e]/10 pt-4">
           <p className="text-[11px] text-slate-500">
-            Optional: Deinen Namen (und ggf. Adresse) vorausfüllen. Die Felder für den{' '}
-            {template.thirdPartyLabel} bleiben im PDF leer zum Ausfüllen — digital oder ausgedruckt.
+            Optional: Deinen Namen vorausfüllen, dann Vorlage herunterladen. Die Felder für den{' '}
+            {template.thirdPartyLabel} bleiben in der Vorlage leer zum Ausfüllen — digital oder ausgedruckt.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {tenantFields.map(f => (
@@ -151,7 +151,12 @@ export function SicTemplateForm({
             className="inline-flex items-center gap-2 rounded-lg bg-[#0f2b5e] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0a1f45] disabled:opacity-60"
           >
             <Download className="h-4 w-4" />
-            {busy ? 'PDF wird erstellt …' : 'PDF-Formular herunterladen'}
+            {busy ?
+              'Vorlage wird erstellt …'
+            : template.thirdPartyLabel === 'Arbeitgeber' ?
+              'Arbeitgeber-Vorlage herunterladen'
+            : 'Vorlage herunterladen'
+            }
           </button>
         </div>
       : null}

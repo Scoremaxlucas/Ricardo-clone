@@ -41,8 +41,8 @@ export const SIC_TEMPLATES: readonly SicTemplateDefinition[] = [
     subtitle: 'Bestätigung zu Anstellung, Pensum und Einkommen',
     thirdPartyLabel: 'Arbeitgeber',
     howTo: [
-      'Optional: Name vorausfüllen, dann PDF herunterladen.',
-      'Formular dem Arbeitgeber senden — ausfüllen und unterzeichnen (digital oder ausgedruckt).',
+      'Optional: Deinen Namen vorausfüllen, dann Vorlage herunterladen.',
+      'Vorlage dem Arbeitgeber senden — ausfüllen und unterzeichnen (digital oder ausgedruckt).',
       'Unterzeichnetes Dokument (PDF/Scan) im Modul hochladen.',
     ],
     fields: [
@@ -169,8 +169,8 @@ export const SIC_TEMPLATES: readonly SicTemplateDefinition[] = [
     subtitle: 'Referenz zum Mietverhältnis und zur Zahlungsmoral',
     thirdPartyLabel: 'Vermieter',
     howTo: [
-      'Optional: Name und Mietobjekt vorausfüllen, dann PDF herunterladen.',
-      'Formular dem Vermieter senden — ausfüllen und unterzeichnen (digital oder ausgedruckt).',
+      'Optional: Deinen Namen vorausfüllen, dann Vorlage herunterladen.',
+      'Vorlage dem Vermieter senden — ausfüllen und unterzeichnen (digital oder ausgedruckt).',
       'Unterzeichnetes Dokument (PDF/Scan) im Modul hochladen.',
     ],
     fields: [

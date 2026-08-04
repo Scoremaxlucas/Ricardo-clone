@@ -25,6 +25,17 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
     return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 })
   }
 
+  const hasVerified = cert.modules.some(m => m.status === 'VERIFIED')
+  if (!hasVerified) {
+    return NextResponse.json(
+      {
+        message:
+          'Das Zertifikat ist erst abrufbar, sobald mindestens ein Modul verifiziert ist.',
+      },
+      { status: 403 }
+    )
+  }
+
   const verifyUrl = sicVerifyUrl(cert.certificateCode)
   let qrDataUrl = ''
   try {

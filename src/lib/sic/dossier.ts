@@ -13,8 +13,10 @@ export type SicChecklistItem = {
 }
 
 export type SicUploadedDocMeta = {
+  id: string
   fileName: string
   uploadedAt: string
+  sizeBytes: number
 }
 
 export type SicDossierModuleView = {
@@ -108,7 +110,7 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     include: {
       modules: true,
       documents: {
-        select: { moduleKind: true, fileName: true, uploadedAt: true },
+        select: { id: true, moduleKind: true, fileName: true, uploadedAt: true, sizeBytes: true },
         orderBy: { uploadedAt: 'asc' },
       },
     },
@@ -118,7 +120,12 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
   const docsByKind = new Map<string, SicUploadedDocMeta[]>()
   for (const d of cert.documents) {
     const list = docsByKind.get(d.moduleKind) ?? []
-    list.push({ fileName: d.fileName, uploadedAt: d.uploadedAt.toISOString() })
+    list.push({
+      id: d.id,
+      fileName: d.fileName,
+      uploadedAt: d.uploadedAt.toISOString(),
+      sizeBytes: d.sizeBytes,
+    })
     docsByKind.set(d.moduleKind, list)
   }
 

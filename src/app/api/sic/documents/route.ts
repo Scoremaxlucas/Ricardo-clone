@@ -144,3 +144,63 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true })
 }
+
+/** Nachweis löschen — nur solange das Modul nicht VERIFIED ist. */
+export async function DELETE(req: NextRequest) {
+  const session = getSicSession()
+  if (!session) {
+    return NextResponse.json({ ok: false, message: 'Nicht angemeldet.' }, { status: 401 })
+  }
+
+  const id = req.nextUrl.searchParams.get('id') || ''
+  if (!id) {
+    return NextResponse.json({ ok: false, message: 'Dokument-ID fehlt.' }, { status: 400 })
+  }
+
+  const doc = await prisma.sicDocument.findUnique({
+    where: { id },
+    include: {
+      certificate: {
+        select: {
+          id: true,
+          email: true,
+          modules: { select: { moduleKind: true, status: true } },
+        },
+      },
+    },
+  })
+  if (!doc || doc.certificate.email !== session.email) {
+    return NextResponse.json({ ok: false, message: 'Nicht gefunden.' }, { status: 404 })
+  }
+
+  const moduleRow = doc.certificate.modules.find(m => m.moduleKind === doc.moduleKind)
+  if (moduleRow?.status === 'VERIFIED') {
+    return NextResponse.json(
+      { ok: false, message: 'Verifizierte Nachweise können nicht entfernt werden.' },
+      { status: 403 }
+    )
+  }
+
+  try {
+    const { del } = await import('@vercel/blob')
+    await del(doc.blobUrl)
+  } catch {
+    // Blob evtl. schon weg
+  }
+
+  await prisma.sicDocument.delete({ where: { id: doc.id } })
+
+  // Wenn keine Docs mehr und Modul IN_REVIEW → zurück auf PENDING_DOCS
+  const remaining = await prisma.sicDocument.count({
+    where: { certificateId: doc.certificateId, moduleKind: doc.moduleKind },
+  })
+  if (remaining === 0 && moduleRow?.status === 'IN_REVIEW') {
+    await prisma.sicCertificateModule.updateMany({
+      where: { certificateId: doc.certificateId, moduleKind: doc.moduleKind },
+      data: { status: 'PENDING_DOCS' },
+    })
+  }
+
+  return NextResponse.json({ ok: true })
+}
+

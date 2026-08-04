@@ -78,14 +78,14 @@ export type SicPdfModule = { title: string; lines: string[] }
 export function SicCertificatePdfDocument(props: {
   certificateCode: string
   holderName: string | null
-  email: string
+  email?: string
   issuedAt: Date
   expiresAt: Date
   verifiedModules: SicPdfModule[]
   verifyUrl: string
   qrDataUrl: string
 }) {
-  const { certificateCode, holderName, email, issuedAt, expiresAt, verifiedModules, verifyUrl, qrDataUrl } = props
+  const { certificateCode, holderName, issuedAt, expiresAt, verifiedModules, verifyUrl, qrDataUrl } = props
 
   return (
     <Document title={`Swiss Immo Cert ${certificateCode}`}>
@@ -114,7 +114,6 @@ export function SicCertificatePdfDocument(props: {
             <View style={s.holderWrap}>
               <Text style={s.holderLabel}>Ausgestellt für</Text>
               <Text style={s.holderName}>{holderName || 'Inhaber gemäss Nachweisen'}</Text>
-              <Text style={s.holderMeta}>{email}</Text>
             </View>
 
             {/* Verifizierte Angaben */}
