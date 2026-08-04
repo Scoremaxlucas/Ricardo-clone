@@ -135,11 +135,14 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
     availableModules.length > 0 && availableModules.every(m => selected.has(m.id))
   const isBaseOnly = !isReturning && moduleIds.length === 0
   const nothingToBuy = isReturning && availableModules.length === 0
+  const verifiedCount = account?.verifiedModules.length ?? 0
+  const ownedCount = owned.size
   const statusLabel =
-    account?.status === 'ACTIVE' ? 'aktiv'
+    account?.status === 'REVOKED' ? 'widerrufen'
     : account?.status === 'EXPIRED' ? 'abgelaufen'
-    : account?.status === 'REVOKED' ? 'widerrufen'
-    : 'vorhanden'
+    : ownedCount > 0 && verifiedCount === ownedCount ? 'verifiziert'
+    : verifiedCount > 0 ? 'teilweise verifiziert'
+    : 'in Bearbeitung'
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -276,26 +279,18 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
 
       {isReturning && account ?
         <div className="border-b border-[#0f2b5e]/15 bg-[#0f2b5e]/[0.04] px-5 py-3.5">
-          <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-            <div className="text-sm text-[#0f2b5e]">
-              <span className="font-semibold">Dein Zertifikat ist {statusLabel}</span>
-              <span className="mx-1.5 text-slate-400">·</span>
-              <span className="font-mono text-xs">{account.certificateCode}</span>
-              {owned.size > 0 ?
-                <span className="mt-0.5 block text-xs text-slate-600 sm:mt-0 sm:inline sm:before:mx-1.5 sm:before:content-['·']">
-                  {owned.size} Modul{owned.size === 1 ? '' : 'e'} enthalten
-                  {availableModules.length > 0 ?
-                    ` — du kannst ${availableModules.length} weitere hinzufügen`
-                  : ' — alle Module vorhanden'}
-                </span>
-              : null}
-            </div>
-            <a
-              href={sicPaths.certificateWorkspace}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0f2b5e] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a1f45]"
-            >
-              Zum Zertifikat <ArrowRight className="h-4 w-4" />
-            </a>
+          <div className="mx-auto max-w-6xl text-sm text-[#0f2b5e]">
+            <span className="font-semibold">Dein Zertifikat ist {statusLabel}</span>
+            <span className="mx-1.5 text-slate-400">·</span>
+            <span className="font-mono text-xs">{account.certificateCode}</span>
+            {owned.size > 0 ?
+              <span className="mt-0.5 block text-xs text-slate-600 sm:mt-0 sm:inline sm:before:mx-1.5 sm:before:content-['·']">
+                {owned.size} Modul{owned.size === 1 ? '' : 'e'} enthalten
+                {availableModules.length > 0 ?
+                  ` — du kannst ${availableModules.length} weitere hinzufügen`
+                : ' — alle Module vorhanden'}
+              </span>
+            : null}
           </div>
         </div>
       : null}
@@ -324,26 +319,26 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               {isReturning ?
                 <>
-                  <a
-                    href={sicPaths.certificateWorkspace}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
-                  >
-                    Zum Zertifikat <ArrowRight className="h-4 w-4" />
-                  </a>
                   {!nothingToBuy ?
                     <a
                       href="#module"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
                     >
-                      Modul hinzufügen
+                      Modul hinzufügen <ArrowRight className="h-4 w-4" />
                     </a>
                   : <a
-                      href="#zertifikat"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                      href={sicPaths.certificateWorkspace}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
                     >
-                      So sieht es aus
+                      Zum Zertifikat <ArrowRight className="h-4 w-4" />
                     </a>
                   }
+                  <a
+                    href="#zertifikat"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                  >
+                    So sieht es aus
+                  </a>
                 </>
               : <>
                   <a
@@ -661,12 +656,13 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   <p className="text-lg font-bold leading-tight text-[#0f2b5e]">{m.title}</p>
                   <p className="mt-2 flex-1 text-xs leading-relaxed text-slate-500">{m.summary}</p>
                   <ul className="mt-3 space-y-1.5">
-                    {m.lineItems.map(li => (
+                    {m.scopeItems.map(li => (
                       <li key={li} className="flex items-start gap-1.5 text-[11px] leading-snug text-slate-600">
-                        <Check
-                          className="mt-0.5 h-3 w-3 flex-shrink-0"
-                          style={{ color: alreadyOwned ? '#2f9e44' : accent.hex }}
-                        />{' '}
+                        <span
+                          className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full"
+                          style={{ backgroundColor: alreadyOwned ? '#1f7a34' : accent.hex }}
+                          aria-hidden
+                        />
                         {li}
                       </li>
                     ))}
@@ -678,22 +674,20 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                         CHF {m.priceChf}.–
                       </span>
                     }
-                    <span
-                      className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${
-                        alreadyOwned ? 'text-[#1f7a34]' : on ? '' : 'opacity-30'
-                      }`}
-                      style={alreadyOwned || !on ? undefined : { color: accent.hex }}
-                    >
-                      {alreadyOwned ?
-                        <>
-                          <Check className="h-3.5 w-3.5" /> Deins
-                        </>
-                      : on ?
-                        <>
-                          <Check className="h-3.5 w-3.5" /> Ausgewählt
-                        </>
-                      : 'Hinzufügen'}
-                    </span>
+                    {!alreadyOwned ?
+                      <span
+                        className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${
+                          on ? '' : 'opacity-30'
+                        }`}
+                        style={on ? { color: accent.hex } : undefined}
+                      >
+                        {on ?
+                          <>
+                            <Check className="h-3.5 w-3.5" /> Ausgewählt
+                          </>
+                        : 'Hinzufügen'}
+                      </span>
+                    : null}
                   </div>
                 </button>
               )
@@ -781,7 +775,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 </ul>
                 <p className="mt-4 rounded-lg bg-[#0f2b5e]/[0.04] px-3 py-2.5 text-[11px] leading-relaxed text-slate-500">
                   Kostenlose Vorschau — nach der Zahlung lädst du Belege hoch und jedes Modul wechselt auf
-                  „Verifiziert".
+                  «Verifiziert».
                 </p>
               </div>
             </div>

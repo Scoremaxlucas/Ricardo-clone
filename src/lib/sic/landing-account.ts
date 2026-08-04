@@ -8,6 +8,7 @@ export type SicLandingAccount = {
   status: string
   holderName: string | null
   ownedModules: SicModuleId[]
+  verifiedModules: SicModuleId[]
 }
 
 /** Session + Zertifikat für Returning-User-UX auf der Landing. */
@@ -22,7 +23,7 @@ export async function getSicLandingAccount(): Promise<SicLandingAccount | null> 
       status: true,
       holderFirstName: true,
       holderLastName: true,
-      modules: { select: { moduleKind: true } },
+      modules: { select: { moduleKind: true, status: true } },
     },
   })
   if (!cert) return null
@@ -30,6 +31,10 @@ export async function getSicLandingAccount(): Promise<SicLandingAccount | null> 
   const ownedModules = cert.modules
     .map(m => m.moduleKind)
     .filter(isSicModuleId)
+
+  const verifiedModules = cert.modules
+    .filter(m => m.status === 'VERIFIED' && isSicModuleId(m.moduleKind))
+    .map(m => m.moduleKind)
 
   const holderName = `${cert.holderFirstName ?? ''} ${cert.holderLastName ?? ''}`.trim() || null
 
@@ -39,5 +44,6 @@ export async function getSicLandingAccount(): Promise<SicLandingAccount | null> 
     status: cert.status,
     holderName,
     ownedModules,
+    verifiedModules,
   }
 }

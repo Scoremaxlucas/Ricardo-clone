@@ -34,9 +34,11 @@ export type SicModuleDefinition = {
   title: string
   /** Kurzbeschreibung des Prüfumfangs. */
   summary: string
-  /** Einzelne verifizierte Zeilen, die dieses Modul auf dem Zertifikat erzeugt. */
+  /** Prüfumfang für Landing-Kacheln — ohne «geprüft», sonst wirkt es schon fertig. */
+  scopeItems: string[]
+  /** Verifizierte Zeilen auf dem Zertifikat-PDF (nur nach Freigabe). */
   lineItems: string[]
-  /** Vom Nutzer benötigte Nachweise (für Upload-Schritt). */
+  /** Vom Nutzer benötigte Nachweise (für Upload-Checklist). */
   requiredDocuments: string[]
   priceChf: number
 }
@@ -47,6 +49,7 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     order: 1,
     title: 'Bonität',
     summary: 'Wir prüfen deine Bonitätsunterlagen und verifizieren sie.',
+    scopeItems: ['Betreibungsauszug'],
     lineItems: ['Betreibungsauszug eingereicht und geprüft'],
     requiredDocuments: ['Aktueller Betreibungsregisterauszug (max. 3 Monate alt)'],
     priceChf: SIC_MODULE_FEE_CHF,
@@ -56,6 +59,12 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     order: 2,
     title: 'Arbeit & Einkommen',
     summary: 'Wir prüfen deine Arbeits- und Einkommensnachweise und verifizieren sie.',
+    scopeItems: [
+      'Einkommensnachweis',
+      'Arbeitsverhältnis (Arbeitgeberbestätigung)',
+      'Arbeitgeberdauer',
+      'Aktuelles Mietverhältnis',
+    ],
     lineItems: [
       'Einkommensnachweis eingereicht und geprüft',
       'Arbeitsverhältnis (schriftliche Arbeitgeberbestätigung geprüft)',
@@ -74,6 +83,7 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     order: 3,
     title: 'Zuverlässigkeit',
     summary: 'Wir prüfen deine Referenz- und Ausweisdokumente und verifizieren sie.',
+    scopeItems: ['Vermieterreferenz'],
     lineItems: ['Vermieterreferenz (Referenzschreiben eingereicht und geprüft)'],
     requiredDocuments: [
       'Vermieter-Referenz — SIC-PDF-Formular vom Vermieter ausfüllen und unterzeichnen lassen',
@@ -85,6 +95,7 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     order: 4,
     title: 'Aufenthaltsstatus',
     summary: 'Wir prüfen deinen Aufenthaltsstatus und verifizieren ihn.',
+    scopeItems: ['Aufenthaltsstatus (Pass / ID oder Bewilligung)'],
     lineItems: ['Aufenthaltsstatus (entsprechender Nachweis geprüft)'],
     requiredDocuments: ['Pass / ID (CH) oder gültige Aufenthaltsbewilligung (C, B, L)'],
     priceChf: SIC_MODULE_FEE_CHF,
