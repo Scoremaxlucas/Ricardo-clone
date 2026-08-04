@@ -12,6 +12,8 @@ import {
   type SicModuleId,
 } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
+import type { SicLandingAccount } from '@/lib/sic/landing-account'
+import { sicPaths } from '@/lib/sic/config'
 import {
   ArrowRight,
   BadgeCheck,
@@ -96,10 +98,21 @@ const CERT_PREVIEW: { label: string; value: string; module: SicModuleId }[] = [
   { label: 'Aufenthaltsstatus', value: 'Gültige Bewilligung', module: 'AUFENTHALT' },
 ]
 
-export function SicLandingClient() {
-  const [selected, setSelected] = useState<Set<SicModuleId>>(new Set(RECOMMENDED))
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+export function SicLandingClient({ account }: { account?: SicLandingAccount | null }) {
+  const owned = useMemo(() => new Set<SicModuleId>(account?.ownedModules ?? []), [account])
+  const isReturning = Boolean(account)
+  const availableModules = useMemo(() => SIC_MODULES.filter(m => !owned.has(m.id)), [owned])
+
+  const initialSelected = useMemo(() => {
+    if (!isReturning) return new Set<SicModuleId>(RECOMMENDED)
+    // Bereits gekaufte Module nicht vorauswählen; empfohlen nur unter den verfügbaren
+    const next = RECOMMENDED.filter(id => !owned.has(id))
+    return new Set<SicModuleId>(next.length > 0 ? next : [])
+  }, [isReturning, owned])
+
+  const [selected, setSelected] = useState<Set<SicModuleId>>(initialSelected)
+  const [name, setName] = useState(account?.holderName ?? '')
+  const [email, setEmail] = useState(account?.email ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
   const [showSticky, setShowSticky] = useState(false)
@@ -108,11 +121,25 @@ export function SicLandingClient() {
   const [serverQuote, setServerQuote] = useState<ReturnType<typeof quoteSicOrder> | null>(null)
   const [quoteNote, setQuoteNote] = useState<string | null>(null)
 
-  const moduleIds = useMemo(() => SIC_MODULES.filter(m => selected.has(m.id)).map(m => m.id), [selected])
-  const localQuote = useMemo(() => quoteSicOrder({ includeBaseFee: true, moduleIds }), [moduleIds])
+  const moduleIds = useMemo(
+    () => SIC_MODULES.filter(m => selected.has(m.id) && !owned.has(m.id)).map(m => m.id),
+    [selected, owned]
+  )
+  const includeBaseFee = !isReturning
+  const localQuote = useMemo(
+    () => quoteSicOrder({ includeBaseFee, moduleIds }),
+    [includeBaseFee, moduleIds]
+  )
   const quote = serverQuote ?? localQuote
-  const allSelected = SIC_MODULES.every(m => selected.has(m.id))
-  const isBaseOnly = moduleIds.length === 0
+  const allAvailableSelected =
+    availableModules.length > 0 && availableModules.every(m => selected.has(m.id))
+  const isBaseOnly = !isReturning && moduleIds.length === 0
+  const nothingToBuy = isReturning && availableModules.length === 0
+  const statusLabel =
+    account?.status === 'ACTIVE' ? 'aktiv'
+    : account?.status === 'EXPIRED' ? 'abgelaufen'
+    : account?.status === 'REVOKED' ? 'widerrufen'
+    : 'vorhanden'
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -142,9 +169,12 @@ export function SicLandingClient() {
   }, [])
 
   useEffect(() => {
+    // Quote nur wenn E-Mail gültig; Returning nutzt Session-Mail
     if (!EMAIL_RE.test(email.trim())) {
-      setServerQuote(null)
-      setQuoteNote(null)
+      if (!isReturning) {
+        setServerQuote(null)
+        setQuoteNote(null)
+      }
       return
     }
     const controller = new AbortController()
@@ -168,13 +198,14 @@ export function SicLandingClient() {
       clearTimeout(t)
       controller.abort()
     }
-  }, [email, moduleIds])
+  }, [email, moduleIds, isReturning])
 
   useEffect(() => {
     if (!isBaseOnly) setBaseOnlyAck(false)
   }, [isBaseOnly])
 
   function toggle(id: SicModuleId) {
+    if (owned.has(id)) return
     setSelected(prev => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -184,16 +215,31 @@ export function SicLandingClient() {
   }
 
   function toggleBundle() {
-    setSelected(allSelected ? new Set(RECOMMENDED) : new Set(SIC_MODULES.map(m => m.id)))
+    if (availableModules.length === 0) return
+    setSelected(prev => {
+      if (availableModules.every(m => prev.has(m.id))) {
+        // Nur verfügbare abwählen; owned bleiben irrelevant
+        return new Set()
+      }
+      return new Set(availableModules.map(m => m.id))
+    })
   }
 
   async function checkout() {
+    if (nothingToBuy) {
+      toast.error('Alle Module sind bereits Teil deines Zertifikats.')
+      return
+    }
     if (!EMAIL_RE.test(email.trim())) {
       toast.error('Bitte gib eine gültige E-Mail-Adresse an.')
       return
     }
     if (isBaseOnly && !baseOnlyAck) {
       toast.error('Bitte bestätige, dass du ein Zertifikat ohne Module erwerben möchtest.')
+      return
+    }
+    if (isReturning && moduleIds.length === 0) {
+      toast.error('Bitte wähle mindestens ein neues Modul.')
       return
     }
     setSubmitting(true)
@@ -221,10 +267,36 @@ export function SicLandingClient() {
       {loginInvalid ?
         <div className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-center text-sm text-amber-900">
           Anmeldelink ungültig oder abgelaufen — fordere unter{' '}
-          <a href="/sic/zertifikat" className="font-semibold underline">
+          <a href={sicPaths.certificateWorkspace} className="font-semibold underline">
             Mein Zertifikat
           </a>{' '}
           einen neuen an.
+        </div>
+      : null}
+
+      {isReturning && account ?
+        <div className="border-b border-[#0f2b5e]/15 bg-[#0f2b5e]/[0.04] px-5 py-3.5">
+          <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+            <div className="text-sm text-[#0f2b5e]">
+              <span className="font-semibold">Dein Zertifikat ist {statusLabel}</span>
+              <span className="mx-1.5 text-slate-400">·</span>
+              <span className="font-mono text-xs">{account.certificateCode}</span>
+              {owned.size > 0 ?
+                <span className="mt-0.5 block text-xs text-slate-600 sm:mt-0 sm:inline sm:before:mx-1.5 sm:before:content-['·']">
+                  {owned.size} Modul{owned.size === 1 ? '' : 'e'} enthalten
+                  {availableModules.length > 0 ?
+                    ` — du kannst ${availableModules.length} weitere hinzufügen`
+                  : ' — alle Module vorhanden'}
+                </span>
+              : null}
+            </div>
+            <a
+              href={sicPaths.certificateWorkspace}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0f2b5e] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a1f45]"
+            >
+              Zum Zertifikat <ArrowRight className="h-4 w-4" />
+            </a>
+          </div>
         </div>
       : null}
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
@@ -250,18 +322,44 @@ export function SicLandingClient() {
               geprüft und per QR-Code fälschungssicher überprüfbar. Ein Dokument, das Vermieter überzeugt.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a
-                href="#module"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
-              >
-                Zertifikat erstellen <ArrowRight className="h-4 w-4" />
-              </a>
-              <a
-                href="#zertifikat"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
-              >
-                So sieht es aus
-              </a>
+              {isReturning ?
+                <>
+                  <a
+                    href={sicPaths.certificateWorkspace}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
+                  >
+                    Zum Zertifikat <ArrowRight className="h-4 w-4" />
+                  </a>
+                  {!nothingToBuy ?
+                    <a
+                      href="#module"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                    >
+                      Modul hinzufügen
+                    </a>
+                  : <a
+                      href="#zertifikat"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                    >
+                      So sieht es aus
+                    </a>
+                  }
+                </>
+              : <>
+                  <a
+                    href="#module"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
+                  >
+                    Zertifikat erstellen <ArrowRight className="h-4 w-4" />
+                  </a>
+                  <a
+                    href="#zertifikat"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                  >
+                    So sieht es aus
+                  </a>
+                </>
+              }
             </div>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-white/60">
               <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4" style={{ color: SIC_COLORS.goldLight }} /> Ab CHF {SIC_BASE_FEE_CHF}</span>
@@ -332,10 +430,15 @@ export function SicLandingClient() {
               <li className="flex items-center gap-2.5"><Clock className="h-5 w-5 text-[#b8912f]" /> {SIC_VALIDITY_MONTHS} Monate gültig — in dieser Zeit ohne erneuten Upload verlängerbar</li>
             </ul>
             <a
-              href="#module"
+              href={isReturning ? (nothingToBuy ? sicPaths.certificateWorkspace : '#module') : '#module'}
               className="mt-7 inline-flex items-center gap-2 rounded-xl bg-[#0f2b5e] px-5 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
             >
-              Zertifikat erstellen <ArrowRight className="h-4 w-4" />
+              {isReturning ?
+                nothingToBuy ?
+                  'Zum Zertifikat'
+                : 'Modul hinzufügen'
+              : 'Zertifikat erstellen'}{' '}
+              <ArrowRight className="h-4 w-4" />
             </a>
           </div>
 
@@ -412,8 +515,14 @@ export function SicLandingClient() {
             <div className="mx-auto flex w-fit items-center gap-2 text-[#c8102e]">
               <SicLogoMark size={26} />
             </div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#0f2b5e] sm:text-4xl">4 verifizierte Module</h2>
-            <p className="mt-2 text-slate-500">Einfach. Transparent. Vertrauenswürdig.</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#0f2b5e] sm:text-4xl">
+              {isReturning ? 'Dein Zertifikat erweitern' : '4 verifizierte Module'}
+            </h2>
+            <p className="mt-2 text-slate-500">
+              {isReturning ?
+                'Bereits gekaufte Module sind markiert — nur fehlende kannst du nachkaufen.'
+              : 'Einfach. Transparent. Vertrauenswürdig.'}
+            </p>
             <p className="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-slate-400">
               Verifiziert bedeutet: Der eingereichte Beleg wurde von Swiss Immo Cert gesichtet und auf
               Vollständigkeit und Plausibilität geprüft. Es erfolgt keine telefonische Rückfrage bei Dritten
@@ -424,86 +533,129 @@ export function SicLandingClient() {
           {/* Basisgebühr */}
           <div className="mt-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-[#b8912f]/30 bg-[#b8912f]/[0.06] p-6 sm:flex-row sm:items-center">
             <div className="max-w-2xl">
-              <p className="text-sm font-bold uppercase tracking-wide text-[#8a6d1f]">Basis · Einschreibegebühr</p>
+              <p className="text-sm font-bold uppercase tracking-wide text-[#8a6d1f]">
+                {isReturning ? 'Basis · bereits bezahlt' : 'Basis · Einschreibegebühr'}
+              </p>
               <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-                Erstelle dein persönliches Zertifikat — die Basis ist immer enthalten. Wähle darunter die Module,
-                die verifiziert werden sollen.
+                {isReturning ?
+                  'Dein Zertifikat existiert bereits — die Basisgebühr entfällt. Wähle nur Module, die du noch nicht hast.'
+                : 'Erstelle dein persönliches Zertifikat — die Basis ist immer enthalten. Wähle darunter die Module, die verifiziert werden sollen.'}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-[#0f2b5e]">CHF {SIC_BASE_FEE_CHF}.–</p>
-              <p className="text-xs text-slate-500">Einmalig · {SIC_VALIDITY_MONTHS} Monate gültig</p>
+              {isReturning ?
+                <>
+                  <p className="text-lg font-bold text-[#1f7a34]">Enthalten</p>
+                  <p className="text-xs text-slate-500">Zertifikat vorhanden</p>
+                </>
+              : <>
+                  <p className="text-3xl font-bold text-[#0f2b5e]">CHF {SIC_BASE_FEE_CHF}.–</p>
+                  <p className="text-xs text-slate-500">Einmalig · {SIC_VALIDITY_MONTHS} Monate gültig</p>
+                </>
+              }
             </div>
           </div>
 
-          {/* Komplett-Paket */}
-          <button
-            type="button"
-            onClick={toggleBundle}
-            aria-pressed={allSelected}
-            className={`mt-4 flex w-full flex-col items-start justify-between gap-3 rounded-2xl border-2 p-5 text-left transition-all sm:flex-row sm:items-center ${
-              allSelected ? 'border-[#0f2b5e] bg-[#0f2b5e]/[0.04] ring-2 ring-[#0f2b5e]/15' : 'border-slate-200 hover:border-[#0f2b5e]/40'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span
-                className={`grid h-6 w-6 flex-shrink-0 place-items-center rounded-md border ${
-                  allSelected ? 'border-[#0f2b5e] bg-[#0f2b5e] text-white' : 'border-slate-300 bg-white'
-                }`}
-              >
-                {allSelected && <Check className="h-4 w-4" />}
-              </span>
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-base font-bold text-[#0f2b5e]">Komplett-Paket — alle 4 Module</p>
-                  <span className="rounded-full bg-[#c8102e] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                    Beliebteste Wahl
-                  </span>
+          {/* Komplett-Paket — nur wenn noch mehr als 1 Modul offen (Neukunde: alle 4) */}
+          {!isReturning || availableModules.length > 1 ?
+            <button
+              type="button"
+              onClick={toggleBundle}
+              aria-pressed={allAvailableSelected}
+              disabled={availableModules.length === 0}
+              className={`mt-4 flex w-full flex-col items-start justify-between gap-3 rounded-2xl border-2 p-5 text-left transition-all sm:flex-row sm:items-center ${
+                allAvailableSelected ?
+                  'border-[#0f2b5e] bg-[#0f2b5e]/[0.04] ring-2 ring-[#0f2b5e]/15'
+                : 'border-slate-200 hover:border-[#0f2b5e]/40'
+              } disabled:opacity-50`}
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  className={`grid h-6 w-6 flex-shrink-0 place-items-center rounded-md border ${
+                    allAvailableSelected ? 'border-[#0f2b5e] bg-[#0f2b5e] text-white' : 'border-slate-300 bg-white'
+                  }`}
+                >
+                  {allAvailableSelected && <Check className="h-4 w-4" />}
+                </span>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-base font-bold text-[#0f2b5e]">
+                      {isReturning ?
+                        `Alle offenen Module (${availableModules.length})`
+                      : 'Komplett-Paket — alle 4 Module'}
+                    </p>
+                    {!isReturning ?
+                      <span className="rounded-full bg-[#c8102e] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                        Beliebteste Wahl
+                      </span>
+                    : null}
+                  </div>
+                  <p className="mt-0.5 text-sm text-slate-500">
+                    {isReturning ?
+                      'Nur Module wählen, die noch fehlen — Basis entfällt.'
+                    : 'Alle Angaben verifiziert, inkl. Basisgebühr — der stärkste Auftritt bei Vermietern.'}
+                  </p>
                 </div>
-                <p className="mt-0.5 text-sm text-slate-500">
-                  Alle Angaben verifiziert, inkl. Basisgebühr — der stärkste Auftritt bei Vermietern.
-                </p>
               </div>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-[#0f2b5e]">
-                CHF {SIC_BUNDLE_ALL_MODULES_CHF}.– <span className="text-sm font-medium text-slate-400 line-through">CHF {FULL_PRICE_CHF}.–</span>
-              </p>
-              <p className="text-xs font-semibold text-[#2f9e44]">
-                Inkl. Basis · du sparst CHF {FULL_PRICE_CHF - SIC_BUNDLE_ALL_MODULES_CHF}.–
-              </p>
-            </div>
-          </button>
+              {!isReturning ?
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-[#0f2b5e]">
+                    CHF {SIC_BUNDLE_ALL_MODULES_CHF}.–{' '}
+                    <span className="text-sm font-medium text-slate-400 line-through">CHF {FULL_PRICE_CHF}.–</span>
+                  </p>
+                  <p className="text-xs font-semibold text-[#2f9e44]">
+                    Inkl. Basis · du sparst CHF {FULL_PRICE_CHF - SIC_BUNDLE_ALL_MODULES_CHF}.–
+                  </p>
+                </div>
+              : null}
+            </button>
+          : null}
 
           {/* Modul-Kacheln */}
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {SIC_MODULES.map(m => {
-              const on = selected.has(m.id)
+              const alreadyOwned = owned.has(m.id)
+              const on = selected.has(m.id) && !alreadyOwned
               const accent = SIC_MODULE_ACCENT[m.id]
               const Icon = MODULE_ICON[m.id]
-              const recommended = RECOMMENDED.includes(m.id)
+              const recommended = !alreadyOwned && RECOMMENDED.includes(m.id)
               return (
                 <button
                   key={m.id}
                   type="button"
                   onClick={() => toggle(m.id)}
+                  disabled={alreadyOwned}
                   aria-pressed={on}
+                  aria-disabled={alreadyOwned}
                   className={`group relative flex flex-col rounded-2xl border bg-white p-6 text-left transition-all ${
-                    on ? `border-transparent shadow-md ring-2 ${accent.ring}` : 'border-slate-200 hover:border-slate-300'
+                    alreadyOwned ?
+                      'cursor-default border-[#2f9e44]/25 bg-[#2f9e44]/[0.04] opacity-90'
+                    : on ?
+                      `border-transparent shadow-md ring-2 ${accent.ring}`
+                    : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  {recommended && (
+                  {alreadyOwned ?
+                    <span className="absolute right-3 top-3 rounded-full bg-[#1f7a34] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+                      Bereits enthalten
+                    </span>
+                  : recommended ?
                     <span className="absolute right-3 top-3 rounded-full bg-[#0f2b5e] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
                       Empfohlen
                     </span>
-                  )}
+                  : null}
                   <span
-                    className={`grid h-12 w-12 place-items-center rounded-full text-white transition-opacity ${on ? '' : 'opacity-40'}`}
-                    style={{ backgroundColor: accent.hex }}
+                    className={`grid h-12 w-12 place-items-center rounded-full text-white transition-opacity ${
+                      alreadyOwned || on ? '' : 'opacity-40'
+                    }`}
+                    style={{ backgroundColor: alreadyOwned ? '#2f9e44' : accent.hex }}
                   >
                     <Icon className="h-6 w-6" />
                   </span>
-                  <p className="mt-4 text-xs font-bold uppercase tracking-wide" style={{ color: accent.hex }}>
+                  <p
+                    className="mt-4 text-xs font-bold uppercase tracking-wide"
+                    style={{ color: alreadyOwned ? '#1f7a34' : accent.hex }}
+                  >
                     Modul {m.order}
                   </p>
                   <p className="text-lg font-bold leading-tight text-[#0f2b5e]">{m.title}</p>
@@ -511,23 +663,52 @@ export function SicLandingClient() {
                   <ul className="mt-3 space-y-1.5">
                     {m.lineItems.map(li => (
                       <li key={li} className="flex items-start gap-1.5 text-[11px] leading-snug text-slate-600">
-                        <Check className="mt-0.5 h-3 w-3 flex-shrink-0" style={{ color: accent.hex }} /> {li}
+                        <Check
+                          className="mt-0.5 h-3 w-3 flex-shrink-0"
+                          style={{ color: alreadyOwned ? '#2f9e44' : accent.hex }}
+                        />{' '}
+                        {li}
                       </li>
                     ))}
                   </ul>
                   <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                    <span className="rounded-md bg-[#0f2b5e] px-2.5 py-1 text-xs font-bold text-white">CHF {m.priceChf}.–</span>
+                    {alreadyOwned ?
+                      <span className="rounded-md bg-[#1f7a34] px-2.5 py-1 text-xs font-bold text-white">Enthalten</span>
+                    : <span className="rounded-md bg-[#0f2b5e] px-2.5 py-1 text-xs font-bold text-white">
+                        CHF {m.priceChf}.–
+                      </span>
+                    }
                     <span
-                      className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide transition-opacity ${on ? '' : 'opacity-30'}`}
-                      style={{ color: accent.hex }}
+                      className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${
+                        alreadyOwned ? 'text-[#1f7a34]' : on ? '' : 'opacity-30'
+                      }`}
+                      style={alreadyOwned || !on ? undefined : { color: accent.hex }}
                     >
-                      {on ? <><Check className="h-3.5 w-3.5" /> Ausgewählt</> : 'Hinzufügen'}
+                      {alreadyOwned ?
+                        <>
+                          <Check className="h-3.5 w-3.5" /> Deins
+                        </>
+                      : on ?
+                        <>
+                          <Check className="h-3.5 w-3.5" /> Ausgewählt
+                        </>
+                      : 'Hinzufügen'}
                     </span>
                   </div>
                 </button>
               )
             })}
           </div>
+
+          {nothingToBuy ?
+            <p className="mt-6 rounded-xl border border-[#2f9e44]/20 bg-[#2f9e44]/[0.06] px-4 py-3 text-center text-sm text-[#1f7a34]">
+              Alle Module sind bereits Teil deines Zertifikats. Du kannst Uploads und Status unter{' '}
+              <a href={sicPaths.certificateWorkspace} className="font-semibold underline">
+                Mein Zertifikat
+              </a>{' '}
+              verwalten.
+            </p>
+          : null}
 
           {/* Live-Vorschau + Checkout: Name → Vorschau, E-Mail → Zahlung */}
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
@@ -575,13 +756,23 @@ export function SicLandingClient() {
                     </span>
                   </li>
                   {SIC_MODULES.map(m => {
-                    const on = selected.has(m.id)
+                    const alreadyOwned = owned.has(m.id)
+                    const on = selected.has(m.id) && !alreadyOwned
                     return (
-                      <li key={m.id} className={`flex items-center justify-between gap-3 py-2.5 ${on ? '' : 'opacity-40'}`}>
+                      <li
+                        key={m.id}
+                        className={`flex items-center justify-between gap-3 py-2.5 ${
+                          alreadyOwned || on ? '' : 'opacity-40'
+                        }`}
+                      >
                         <span className="text-sm font-semibold text-[#0f2b5e]">{m.title}</span>
-                        {on ?
+                        {alreadyOwned ?
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f7a34]">
+                            <Check className="h-3.5 w-3.5" /> Bereits enthalten
+                          </span>
+                        : on ?
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
-                            <Lock className="h-3.5 w-3.5" /> Gesperrt — nach Zahlung verifizierbar
+                            <Lock className="h-3.5 w-3.5" /> Nachzahlung — dann verifizierbar
                           </span>
                         : <span className="text-[11px] font-medium text-slate-400">Nicht gewählt</span>}
                       </li>
@@ -599,7 +790,7 @@ export function SicLandingClient() {
             <div className="rounded-2xl border border-[#0f2b5e]/10 bg-[#0f2b5e]/[0.03] p-6 sm:p-7">
               <h3 className="text-lg font-bold text-[#0f2b5e]">Deine Auswahl</h3>
               <dl className="mt-4 space-y-2.5 text-sm">
-                {allSelected && quote.includeBaseFee && quote.lines.some(l => l.kind === 'discount') ?
+                {allAvailableSelected && quote.includeBaseFee && quote.lines.some(l => l.kind === 'discount') ?
                   <div className="flex justify-between text-slate-700">
                     <dt>Komplett-Paket (inkl. Basis)</dt>
                     <dd className="tabular-nums">CHF {SIC_BUNDLE_ALL_MODULES_CHF}.–</dd>
@@ -654,20 +845,35 @@ export function SicLandingClient() {
                 onChange={e => setEmail(e.target.value)}
                 placeholder="name@beispiel.ch"
                 autoComplete="email"
-                className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2"
+                readOnly={isReturning}
+                className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2 ${
+                  isReturning ? 'cursor-default bg-slate-50 text-slate-600' : ''
+                }`}
               />
               <p className="mt-1.5 text-xs text-slate-500">
-                Deine E-Mail ist dein Zugang — kein Passwort nötig. Nach der Zahlung erhältst du einen Anmeldelink;
-                Formulare und Uploads folgen unter «Mein Zertifikat».
+                {isReturning ?
+                  'Angemeldet — Nachkauf wird diesem Zertifikat zugeordnet.'
+                : 'Deine E-Mail ist dein Zugang — kein Passwort nötig. Nach der Zahlung erhältst du einen Anmeldelink; Formulare und Uploads folgen unter «Mein Zertifikat».'}
               </p>
               <button
                 type="button"
                 onClick={checkout}
-                disabled={submitting || (isBaseOnly && !baseOnlyAck)}
+                disabled={
+                  submitting ||
+                  nothingToBuy ||
+                  (isBaseOnly && !baseOnlyAck) ||
+                  (isReturning && moduleIds.length === 0)
+                }
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-5 py-3.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
               >
-                {submitting ? 'Wird geöffnet …' : 'Weiter zur Zahlung'}
-                {!submitting && <ArrowRight className="h-4 w-4" />}
+                {submitting ?
+                  'Wird geöffnet …'
+                : nothingToBuy ?
+                  'Keine Module mehr verfügbar'
+                : isReturning ?
+                  'Modul(e) bezahlen'
+                : 'Weiter zur Zahlung'}
+                {!submitting && !nothingToBuy && <ArrowRight className="h-4 w-4" />}
               </button>
               <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-400">
                 <Lock className="h-3.5 w-3.5" /> Sichere Zahlung über Stripe
@@ -723,14 +929,26 @@ export function SicLandingClient() {
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
           <span className="hidden text-sm font-semibold text-[#0f2b5e] sm:block">
-            Bereit? Stell dein Mieter-Zertifikat zusammen.
+            {isReturning ?
+              nothingToBuy ?
+                'Dein Zertifikat ist vollständig.'
+              : 'Modul hinzufügen und Zertifikat erweitern.'
+            : 'Bereit? Stell dein Mieter-Zertifikat zusammen.'}
           </span>
-          <a
-            href="#module"
-            className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#c8102e] px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
-          >
-            Zertifikat erstellen <ArrowRight className="h-4 w-4" />
-          </a>
+          {isReturning && nothingToBuy ?
+            <a
+              href={sicPaths.certificateWorkspace}
+              className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#0f2b5e] px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
+            >
+              Zum Zertifikat <ArrowRight className="h-4 w-4" />
+            </a>
+          : <a
+              href="#module"
+              className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#c8102e] px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
+            >
+              {isReturning ? 'Modul hinzufügen' : 'Zertifikat erstellen'} <ArrowRight className="h-4 w-4" />
+            </a>
+          }
         </div>
       </div>
     </div>
