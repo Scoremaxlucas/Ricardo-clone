@@ -4,14 +4,17 @@ import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-export async function POST() {
-  const res = NextResponse.json({ ok: true })
+function logoutRedirect() {
+  const res = NextResponse.redirect(new URL(sicUrl(sicPaths.landing)), 303)
   res.cookies.set(SIC_SESSION_COOKIE, '', { ...sicSessionCookieOptions(0), maxAge: 0 })
   return res
 }
 
+/** Form-POST von «Abmelden» — Redirect, sonst sieht man Roh-JSON. */
+export async function POST() {
+  return logoutRedirect()
+}
+
 export async function GET() {
-  const res = NextResponse.redirect(new URL(sicUrl(sicPaths.landing)))
-  res.cookies.set(SIC_SESSION_COOKIE, '', { ...sicSessionCookieOptions(0), maxAge: 0 })
-  return res
+  return logoutRedirect()
 }
