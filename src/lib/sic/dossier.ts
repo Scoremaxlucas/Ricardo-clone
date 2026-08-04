@@ -75,7 +75,7 @@ function buildChecklist(moduleKind: SicModuleId, requiredDocuments: string[]): S
   for (const t of templates) {
     items.push({
       id: `template:${t.id}`,
-      label: `${t.title} (SIC-Formular — digital ausfüllen)`,
+      label: `${t.title} (SIC-PDF-Formular zum Ausfüllen lassen)`,
       kind: 'template',
       templateId: t.id,
     })

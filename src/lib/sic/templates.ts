@@ -1,9 +1,8 @@
 import type { SicModuleId } from '@/lib/sic/modules'
 
 /**
- * SIC-Nachweis-Formulare: digital ausfüllbare Vorlagen für Dritte
- * (Arbeitgeber / Vermieter). Der Mieter füllt, was er kann, lädt das PDF herunter
- * und lässt fehlende Teile beim Dritten vervollständigen/unterschreiben —
+ * SIC-Nachweis-Formulare (PDF): Vom Mieter optional vorausgefüllt (Name/Adresse),
+ * vom Dritten (Arbeitgeber / Vermieter) handschriftlich ausgefüllt und unterschrieben —
  * danach Upload im Dossier.
  */
 
@@ -42,10 +41,9 @@ export const SIC_TEMPLATES: readonly SicTemplateDefinition[] = [
     subtitle: 'Bestätigung zu Anstellung, Pensum und Einkommen',
     thirdPartyLabel: 'Arbeitgeber',
     howTo: [
-      'Fülle deine Angaben aus (Name wird vorausgefüllt).',
-      'Gib die Arbeitgeberdaten ein — oder lass den Arbeitgeber den Abschnitt «Vom Arbeitgeber» selbst ausfüllen.',
-      'Lade das PDF herunter und lass es vom Arbeitgeber unterschreiben.',
-      'Lade das unterschriebene Dokument anschliessend im Modul hoch.',
+      'Optional: Name vorausfüllen, dann PDF-Formular herunterladen.',
+      'Formular dem Arbeitgeber geben — er füllt es handschriftlich aus und unterschreibt.',
+      'Unterschriebenes Dokument (Scan/Foto) im Modul hochladen.',
     ],
     fields: [
       {
@@ -171,10 +169,9 @@ export const SIC_TEMPLATES: readonly SicTemplateDefinition[] = [
     subtitle: 'Referenz zum Mietverhältnis und zur Zahlungsmoral',
     thirdPartyLabel: 'Vermieter',
     howTo: [
-      'Fülle deine Angaben und Adresse des Mietobjekts aus.',
-      'Lass den Vermieter den Abschnitt «Vom Vermieter» digital oder handschriftlich vervollständigen.',
-      'Lade das PDF herunter und hol die Unterschrift des Vermieters ein.',
-      'Lade das unterschriebene Dokument anschliessend im Modul hoch.',
+      'Optional: Name und Mietobjekt vorausfüllen, dann PDF-Formular herunterladen.',
+      'Formular dem Vermieter geben — er füllt es handschriftlich aus und unterschreibt.',
+      'Unterschriebenes Dokument (Scan/Foto) im Modul hochladen.',
     ],
     fields: [
       {

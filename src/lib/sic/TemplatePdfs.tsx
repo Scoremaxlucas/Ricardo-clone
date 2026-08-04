@@ -1,4 +1,4 @@
-import type { SicTemplateDefinition, SicTemplateValues } from '@/lib/sic/templates'
+import type { SicTemplateDefinition, SicTemplateField, SicTemplateValues } from '@/lib/sic/templates'
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 
 const NAVY = '#0f2b5e'
@@ -7,6 +7,7 @@ const RED = '#c8102e'
 const MUTED = '#64748b'
 const INK = '#1e293b'
 const FAINT = '#e2e8f0'
+const LINE = '#94a3b8'
 
 const s = StyleSheet.create({
   page: { padding: 36, fontFamily: 'Helvetica', fontSize: 10, color: INK },
@@ -15,42 +16,112 @@ const s = StyleSheet.create({
   brandSub: { marginTop: 2, fontSize: 8, color: GOLD, letterSpacing: 2 },
   crest: { width: 28, height: 28, borderRadius: 5, backgroundColor: RED, alignItems: 'center', justifyContent: 'center' },
   crestMark: { color: '#fff', fontSize: 16, fontFamily: 'Helvetica-Bold' },
-  title: { marginTop: 22, fontFamily: 'Helvetica-Bold', fontSize: 16, color: NAVY },
-  subtitle: { marginTop: 4, fontSize: 9, color: MUTED },
-  rule: { marginTop: 14, marginBottom: 10, height: 1, backgroundColor: FAINT },
-  section: { marginTop: 12, marginBottom: 4, fontFamily: 'Helvetica-Bold', fontSize: 10, color: NAVY, textTransform: 'uppercase', letterSpacing: 1 },
-  row: { marginBottom: 8 },
-  label: { fontSize: 8, color: MUTED, marginBottom: 2 },
-  valueBox: {
-    minHeight: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: '#cbd5e1',
-    paddingBottom: 3,
+  title: { marginTop: 18, fontFamily: 'Helvetica-Bold', fontSize: 15, color: NAVY },
+  subtitle: { marginTop: 3, fontSize: 9, color: MUTED },
+  rule: { marginTop: 12, marginBottom: 8, height: 1.5, backgroundColor: NAVY },
+  section: {
+    marginTop: 14,
+    marginBottom: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    backgroundColor: '#f1f5f9',
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 9,
+    color: NAVY,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  row: { marginBottom: 10 },
+  label: { fontSize: 8, color: MUTED, marginBottom: 3 },
+  /** Ausgefüllter Wert */
+  filled: {
+    minHeight: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: FAINT,
+    paddingBottom: 2,
     fontSize: 10,
     color: INK,
   },
-  yesno: { flexDirection: 'row', marginTop: 2 },
-  check: { fontSize: 9, color: INK, marginRight: 16 },
-  note: { marginTop: 16, fontSize: 8, color: MUTED, lineHeight: 1.4 },
-  signRow: { marginTop: 28, flexDirection: 'row', justifyContent: 'space-between' },
+  /** Leere Schreiblinie für Handschrift */
+  blankLine: {
+    height: 22,
+    borderBottomWidth: 1,
+    borderBottomColor: LINE,
+    marginTop: 2,
+  },
+  /** Höheres Feld für Textarea / Bemerkungen */
+  blankArea: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: LINE,
+    borderStyle: 'dashed',
+    marginTop: 2,
+    borderRadius: 2,
+  },
+  optionsRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 2 },
+  option: { fontSize: 9, color: INK, marginRight: 14, marginBottom: 4 },
+  note: { marginTop: 14, fontSize: 8, color: MUTED, lineHeight: 1.4 },
+  signRow: { marginTop: 24, flexDirection: 'row', justifyContent: 'space-between' },
   signBox: { width: '45%' },
-  signLine: { marginTop: 28, borderBottomWidth: 1, borderBottomColor: NAVY, height: 1 },
+  signLine: { marginTop: 36, borderBottomWidth: 1, borderBottomColor: NAVY, height: 1 },
   signHint: { marginTop: 4, fontSize: 8, color: MUTED },
-  footer: { position: 'absolute', bottom: 24, left: 36, right: 36, fontSize: 7, color: '#94a3b8', textAlign: 'center' },
+  footer: {
+    position: 'absolute',
+    bottom: 24,
+    left: 36,
+    right: 36,
+    fontSize: 7,
+    color: '#94a3b8',
+    textAlign: 'center',
+  },
 })
 
-function FieldValue({ value }: { value?: string }) {
-  const v = (value ?? '').trim()
-  if (!v) return <Text style={s.valueBox}>…………………………………………</Text>
-  return <Text style={s.valueBox}>{v}</Text>
+function SelectOptions({ field, value }: { field: SicTemplateField; value?: string }) {
+  const v = (value ?? '').trim().toLowerCase()
+  const options = field.options ?? []
+  return (
+    <View style={s.optionsRow}>
+      {options.map(o => {
+        const checked = v === o.value.toLowerCase() || v === o.label.toLowerCase()
+        return (
+          <Text key={o.value} style={s.option}>
+            {checked ? '☑' : '☐'} {o.label}
+          </Text>
+        )
+      })}
+    </View>
+  )
 }
 
 function YesNoValue({ value }: { value?: string }) {
   const v = (value ?? '').trim().toLowerCase()
   return (
-    <View style={s.yesno}>
-      <Text style={s.check}>{v === 'ja' || v === 'yes' ? '☑' : '☐'} Ja</Text>
-      <Text style={s.check}>{v === 'nein' || v === 'no' ? '☑' : '☐'} Nein</Text>
+    <View style={s.optionsRow}>
+      <Text style={s.option}>{v === 'ja' || v === 'yes' ? '☑' : '☐'} Ja</Text>
+      <Text style={s.option}>{v === 'nein' || v === 'no' ? '☑' : '☐'} Nein</Text>
+    </View>
+  )
+}
+
+function FormField({ field, value }: { field: SicTemplateField; value?: string }) {
+  const filled = (value ?? '').trim()
+
+  return (
+    <View style={s.row} wrap={false}>
+      <Text style={s.label}>
+        {field.label}
+        {field.required ? ' *' : ''}
+      </Text>
+      {field.kind === 'yesno' ?
+        <YesNoValue value={value} />
+      : field.kind === 'select' ?
+        <SelectOptions field={field} value={value} />
+      : filled ?
+        <Text style={s.filled}>{filled}</Text>
+      : field.kind === 'textarea' ?
+        <View style={s.blankArea} />
+      : <View style={s.blankLine} />
+      }
     </View>
   )
 }
@@ -61,7 +132,11 @@ export function SicTemplatePdfDocument(props: {
 }) {
   const { template, values } = props
   const tenantFields = template.fields.filter(f => f.section === 'tenant')
-  const thirdFields = template.fields.filter(f => f.section === 'third_party')
+  // Unterschrifts-Meta kommt ins Signatur-Block unten, nicht als 3× leere Felder
+  const signKeys = new Set(['placeDate', 'signatoryName', 'signatoryRole'])
+  const thirdFields = template.fields.filter(
+    f => f.section === 'third_party' && !signKeys.has(f.key)
+  )
 
   return (
     <Document>
@@ -82,38 +157,40 @@ export function SicTemplatePdfDocument(props: {
 
         <Text style={s.section}>Angaben der mietsuchenden Person</Text>
         {tenantFields.map(f => (
-          <View key={f.key} style={s.row} wrap={false}>
-            <Text style={s.label}>{f.label}{f.required ? ' *' : ''}</Text>
-            {f.kind === 'yesno' ? <YesNoValue value={values[f.key]} /> : <FieldValue value={values[f.key]} />}
-          </View>
+          <FormField key={f.key} field={f} value={values[f.key]} />
         ))}
 
-        <Text style={s.section}>Vom {template.thirdPartyLabel} auszufüllen / zu bestätigen</Text>
+        <Text style={s.section}>
+          Vom {template.thirdPartyLabel} handschriftlich auszufüllen
+        </Text>
         {thirdFields.map(f => (
-          <View key={f.key} style={s.row} wrap={false}>
-            <Text style={s.label}>{f.label}{f.required ? ' *' : ''}</Text>
-            {f.kind === 'yesno' ? <YesNoValue value={values[f.key]} /> : <FieldValue value={values[f.key]} />}
-          </View>
+          <FormField key={f.key} field={f} value={values[f.key]} />
         ))}
 
         <View style={s.signRow}>
           <View style={s.signBox}>
-            <View style={s.signLine} />
+            <Text style={s.label}>Name / Funktion der unterzeichnenden Person</Text>
+            <View style={s.blankLine} />
+            <View style={[s.signLine, { marginTop: 28 }]} />
             <Text style={s.signHint}>Unterschrift {template.thirdPartyLabel}</Text>
           </View>
           <View style={s.signBox}>
-            <View style={s.signLine} />
-            <Text style={s.signHint}>Ort / Datum</Text>
+            <Text style={s.label}>Ort und Datum</Text>
+            <View style={s.blankLine} />
+            <View style={[s.signLine, { marginTop: 28 }]} />
+            <Text style={s.signHint}>Stempel (falls vorhanden)</Text>
           </View>
         </View>
 
         <Text style={s.note}>
-          Dieses Formular dient als Nachweis für Swiss Immo Cert. Unvollständige oder fehlende Angaben
-          können zu einer Rückfrage führen. Bitte unterschriebenes Dokument als PDF oder Foto unter
-          «Mein Zertifikat» hochladen.
+          Bitte dieses Formular handschriftlich ausfüllen und unterschreiben. Das unterschriebene Dokument
+          (PDF-Scan oder Foto) dient als Nachweis für Swiss Immo Cert und wird unter «Mein Zertifikat»
+          hochgeladen. Unvollständige Angaben können zu einer Rückfrage führen.
         </Text>
 
-        <Text style={s.footer}>Swiss Immo Cert · schweizerisches Mieter-Zertifikat · swissimmocert.ch / wohnen.helvenda.ch</Text>
+        <Text style={s.footer}>
+          Swiss Immo Cert · schweizerisches Mieter-Zertifikat · swissimmocert.ch / wohnen.helvenda.ch
+        </Text>
       </Page>
     </Document>
   )

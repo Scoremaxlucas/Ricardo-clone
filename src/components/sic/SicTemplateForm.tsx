@@ -12,6 +12,11 @@ import toast from 'react-hot-toast'
 const inputCls =
   'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0f2b5e] focus:ring-1 focus:ring-[#0f2b5e]/20'
 
+/**
+ * SIC-Nachweisformular: optional Namen/eigene Angaben vorausfüllen,
+ * dann leeres PDF für den Dritten (Arbeitgeber/Vermieter) herunterladen —
+ * handschriftlich ausfüllen + unterschreiben, danach Upload.
+ */
 export function SicTemplateForm({
   template,
   holderName,
@@ -30,10 +35,17 @@ export function SicTemplateForm({
   async function downloadPdf() {
     setBusy(true)
     try {
+      // Nur Mieter-Felder mitschicken — Dritter füllt im PDF handschriftlich aus
+      const tenantOnly: SicTemplateValues = {}
+      for (const f of template.fields) {
+        if (f.section === 'tenant') tenantOnly[f.key] = values[f.key] ?? ''
+        else tenantOnly[f.key] = ''
+      }
+
       const res = await fetch(`/api/sic/templates/${template.id}/pdf`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ values }),
+        body: JSON.stringify({ values: tenantOnly }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -49,7 +61,9 @@ export function SicTemplateForm({
       a.click()
       a.remove()
       URL.revokeObjectURL(url)
-      toast.success('PDF heruntergeladen — lass es unterschreiben und lade es danach hoch.')
+      toast.success(
+        `PDF heruntergeladen — vom ${template.thirdPartyLabel} ausfüllen und unterschreiben lassen, danach hier hochladen.`
+      )
     } catch {
       toast.error('Netzwerkfehler.')
     } finally {
@@ -58,59 +72,78 @@ export function SicTemplateForm({
   }
 
   const tenantFields = template.fields.filter(f => f.section === 'tenant')
-  const thirdFields = template.fields.filter(f => f.section === 'third_party')
 
   return (
     <div className="mt-4 rounded-xl border border-[#0f2b5e]/15 bg-[#0f2b5e]/[0.03] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 text-sm font-semibold text-[#0f2b5e]">
             <FileText className="h-4 w-4 flex-shrink-0" /> {template.title}
           </p>
           <p className="mt-0.5 text-xs text-slate-500">{template.subtitle}</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setOpen(o => !o)}
-          className="rounded-lg border border-[#0f2b5e]/20 px-3 py-1.5 text-xs font-semibold text-[#0f2b5e] hover:bg-white"
-        >
-          {open ? 'Schliessen' : 'Digital ausfüllen'}
-        </button>
-      </div>
-
-      {open ?
-        <div className="mt-4 space-y-5">
-          <ol className="list-decimal space-y-1 pl-4 text-xs text-slate-500">
+          <ol className="mt-2 list-decimal space-y-0.5 pl-4 text-[11px] text-slate-500">
             {template.howTo.map(step => (
               <li key={step}>{step}</li>
             ))}
           </ol>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setOpen(o => !o)}
+            className="rounded-lg border border-[#0f2b5e]/20 px-3 py-1.5 text-xs font-semibold text-[#0f2b5e] hover:bg-white"
+          >
+            {open ? 'Schliessen' : 'Name vorausfüllen'}
+          </button>
+          <button
+            type="button"
+            onClick={downloadPdf}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0f2b5e] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0a1f45] disabled:opacity-60"
+          >
+            <Download className="h-3.5 w-3.5" />
+            {busy ? 'Wird erstellt …' : 'PDF-Formular holen'}
+          </button>
+        </div>
+      </div>
 
-          <fieldset>
-            <legend className="text-xs font-bold uppercase tracking-wide text-[#0f2b5e]">
-              Deine Angaben
-            </legend>
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
-              {tenantFields.map(f => (
-                <Field key={f.key} field={f} value={values[f.key] ?? ''} onChange={v => set(f.key, v)} />
-              ))}
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend className="text-xs font-bold uppercase tracking-wide text-[#0f2b5e]">
-              Vom {template.thirdPartyLabel} — digital ausfüllen oder leer lassen
-            </legend>
-            <p className="mt-1 text-[11px] text-slate-400">
-              Fehlende Felder erscheinen im PDF als Linien zum handschriftlichen Ausfüllen.
-            </p>
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
-              {thirdFields.map(f => (
-                <Field key={f.key} field={f} value={values[f.key] ?? ''} onChange={v => set(f.key, v)} wide={f.kind === 'textarea'} />
-              ))}
-            </div>
-          </fieldset>
-
+      {open ?
+        <div className="mt-4 space-y-3 border-t border-[#0f2b5e]/10 pt-4">
+          <p className="text-[11px] text-slate-500">
+            Optional: Deinen Namen (und ggf. Adresse) vorausfüllen. Alle Fragen für den{' '}
+            {template.thirdPartyLabel} bleiben im PDF leer zum handschriftlichen Ausfüllen.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {tenantFields.map(f => (
+              <label key={f.key} className="block text-xs font-medium text-slate-600">
+                {f.label}
+                {f.required ? <span className="text-[#c8102e]"> *</span> : null}
+                {f.kind === 'date' ?
+                  <input
+                    type="date"
+                    value={values[f.key] ?? ''}
+                    onChange={e => set(f.key, e.target.value)}
+                    className={inputCls}
+                  />
+                : f.kind === 'number' ?
+                  <input
+                    type="number"
+                    value={values[f.key] ?? ''}
+                    onChange={e => set(f.key, e.target.value)}
+                    placeholder={f.placeholder}
+                    className={inputCls}
+                  />
+                : <input
+                    type="text"
+                    value={values[f.key] ?? ''}
+                    onChange={e => set(f.key, e.target.value)}
+                    placeholder={f.placeholder}
+                    className={inputCls}
+                  />
+                }
+              </label>
+            ))}
+          </div>
           <button
             type="button"
             onClick={downloadPdf}
@@ -118,61 +151,10 @@ export function SicTemplateForm({
             className="inline-flex items-center gap-2 rounded-lg bg-[#0f2b5e] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0a1f45] disabled:opacity-60"
           >
             <Download className="h-4 w-4" />
-            {busy ? 'PDF wird erstellt …' : 'Als PDF herunterladen'}
+            {busy ? 'PDF wird erstellt …' : 'PDF-Formular herunterladen'}
           </button>
         </div>
       : null}
     </div>
-  )
-}
-
-function Field({
-  field,
-  value,
-  onChange,
-  wide,
-}: {
-  field: SicTemplateDefinition['fields'][number]
-  value: string
-  onChange: (v: string) => void
-  wide?: boolean
-}) {
-  const wrap = wide ? 'sm:col-span-2' : ''
-  return (
-    <label className={`block text-xs font-medium text-slate-600 ${wrap}`}>
-      {field.label}
-      {field.required ? <span className="text-[#c8102e]"> *</span> : null}
-      {field.kind === 'textarea' ?
-        <textarea
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder={field.placeholder}
-          rows={3}
-          className={inputCls}
-        />
-      : field.kind === 'select' ?
-        <select value={value} onChange={e => onChange(e.target.value)} className={inputCls}>
-          <option value="">Bitte wählen</option>
-          {(field.options ?? []).map(o => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      : field.kind === 'yesno' ?
-        <select value={value} onChange={e => onChange(e.target.value)} className={inputCls}>
-          <option value="">Bitte wählen</option>
-          <option value="ja">Ja</option>
-          <option value="nein">Nein</option>
-        </select>
-      : <input
-          type={field.kind === 'date' ? 'date' : field.kind === 'number' ? 'number' : 'text'}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder={field.placeholder}
-          className={inputCls}
-        />
-      }
-    </label>
   )
 }
