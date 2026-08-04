@@ -64,7 +64,7 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     ],
     requiredDocuments: [
       'Lohnnachweis / Lohnausweis (Selbst-Upload)',
-      'Arbeitgeberbestätigung — SIC-PDF-Formular vom Arbeitgeber handschriftlich ausfüllen & unterschreiben lassen',
+      'Arbeitgeberbestätigung — SIC-PDF-Formular vom Arbeitgeber ausfüllen und unterzeichnen lassen',
       'Nachweis aktuelles Mietverhältnis (Selbst-Upload)',
     ],
     priceChf: SIC_MODULE_FEE_CHF,
@@ -76,7 +76,7 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     summary: 'Wir prüfen deine Referenz- und Ausweisdokumente und verifizieren sie.',
     lineItems: ['Vermieterreferenz (Referenzschreiben eingereicht und geprüft)'],
     requiredDocuments: [
-      'Vermieter-Referenz — SIC-PDF-Formular vom Vermieter handschriftlich ausfüllen & unterschreiben lassen',
+      'Vermieter-Referenz — SIC-PDF-Formular vom Vermieter ausfüllen und unterzeichnen lassen',
     ],
     priceChf: SIC_MODULE_FEE_CHF,
   },

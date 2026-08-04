@@ -14,8 +14,8 @@ const inputCls =
 
 /**
  * SIC-Nachweisformular: optional Namen/eigene Angaben vorausfüllen,
- * dann leeres PDF für den Dritten (Arbeitgeber/Vermieter) herunterladen —
- * handschriftlich ausfüllen + unterschreiben, danach Upload.
+ * dann PDF für den Dritten (Arbeitgeber/Vermieter) herunterladen —
+ * ausfüllen und unterzeichnen (digital oder Ausdruck), danach Upload.
  */
 export function SicTemplateForm({
   template,
@@ -35,7 +35,7 @@ export function SicTemplateForm({
   async function downloadPdf() {
     setBusy(true)
     try {
-      // Nur Mieter-Felder mitschicken — Dritter füllt im PDF handschriftlich aus
+      // Nur Mieter-Felder mitschicken — Felder für den Dritten bleiben im PDF leer
       const tenantOnly: SicTemplateValues = {}
       for (const f of template.fields) {
         if (f.section === 'tenant') tenantOnly[f.key] = values[f.key] ?? ''
@@ -62,7 +62,7 @@ export function SicTemplateForm({
       a.remove()
       URL.revokeObjectURL(url)
       toast.success(
-        `PDF heruntergeladen — vom ${template.thirdPartyLabel} ausfüllen und unterschreiben lassen, danach hier hochladen.`
+        `PDF heruntergeladen — vom ${template.thirdPartyLabel} ausfüllen und unterzeichnen lassen, danach hier hochladen.`
       )
     } catch {
       toast.error('Netzwerkfehler.')
@@ -110,8 +110,8 @@ export function SicTemplateForm({
       {open ?
         <div className="mt-4 space-y-3 border-t border-[#0f2b5e]/10 pt-4">
           <p className="text-[11px] text-slate-500">
-            Optional: Deinen Namen (und ggf. Adresse) vorausfüllen. Alle Fragen für den{' '}
-            {template.thirdPartyLabel} bleiben im PDF leer zum handschriftlichen Ausfüllen.
+            Optional: Deinen Namen (und ggf. Adresse) vorausfüllen. Die Felder für den{' '}
+            {template.thirdPartyLabel} bleiben im PDF leer zum Ausfüllen — digital oder ausgedruckt.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {tenantFields.map(f => (

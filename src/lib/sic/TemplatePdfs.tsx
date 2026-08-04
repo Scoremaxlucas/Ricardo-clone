@@ -1,93 +1,227 @@
 import type { SicTemplateDefinition, SicTemplateField, SicTemplateValues } from '@/lib/sic/templates'
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 
+/**
+ * Nachweisformular — klares Schweizer Geschäftsschreiben.
+ * Felder: ausgefüllt als Text; leer als Eingabelinie (digital z. B. Adobe oder Ausdruck).
+ */
+
 const NAVY = '#0f2b5e'
 const GOLD = '#b8912f'
 const RED = '#c8102e'
-const MUTED = '#64748b'
-const INK = '#1e293b'
-const FAINT = '#e2e8f0'
-const LINE = '#94a3b8'
+const INK = '#1a1a1a'
+const MUTED = '#5c5c5c'
+const RULE = '#c8c8c8'
 
 const s = StyleSheet.create({
-  page: { padding: 36, fontFamily: 'Helvetica', fontSize: 10, color: INK },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  brand: { fontFamily: 'Helvetica-Bold', fontSize: 14, color: NAVY, letterSpacing: 1 },
-  brandSub: { marginTop: 2, fontSize: 8, color: GOLD, letterSpacing: 2 },
-  crest: { width: 28, height: 28, borderRadius: 5, backgroundColor: RED, alignItems: 'center', justifyContent: 'center' },
-  crestMark: { color: '#fff', fontSize: 16, fontFamily: 'Helvetica-Bold' },
-  title: { marginTop: 18, fontFamily: 'Helvetica-Bold', fontSize: 15, color: NAVY },
-  subtitle: { marginTop: 3, fontSize: 9, color: MUTED },
-  rule: { marginTop: 12, marginBottom: 8, height: 1.5, backgroundColor: NAVY },
-  section: {
-    marginTop: 14,
-    marginBottom: 8,
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-    backgroundColor: '#f1f5f9',
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 9,
-    color: NAVY,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+  page: {
+    paddingTop: 40,
+    paddingBottom: 48,
+    paddingHorizontal: 48,
+    fontFamily: 'Helvetica',
+    fontSize: 9.5,
+    color: INK,
+    lineHeight: 1.35,
   },
-  row: { marginBottom: 10 },
-  label: { fontSize: 8, color: MUTED, marginBottom: 3 },
-  /** Ausgefüllter Wert */
-  filled: {
-    minHeight: 16,
+
+  /* Kopf */
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 12,
+    borderBottomWidth: 1.25,
+    borderBottomColor: NAVY,
+  },
+  brandCol: { flexDirection: 'row', alignItems: 'center' },
+  crest: {
+    width: 22,
+    height: 22,
+    backgroundColor: RED,
+    marginRight: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crestV: { position: 'absolute', width: 4, height: 14, backgroundColor: '#fff' },
+  crestH: { position: 'absolute', width: 14, height: 4, backgroundColor: '#fff' },
+  brand: {
+    fontFamily: 'Times-Bold',
+    fontSize: 13,
+    color: NAVY,
+    letterSpacing: 1.2,
+  },
+  brandSub: {
+    marginTop: 1,
+    fontSize: 7,
+    color: GOLD,
+    letterSpacing: 1.6,
+    fontFamily: 'Helvetica-Bold',
+  },
+  docType: {
+    fontSize: 8,
+    color: MUTED,
+    textAlign: 'right',
+    maxWidth: 140,
+  },
+
+  title: {
+    marginTop: 18,
+    fontFamily: 'Times-Bold',
+    fontSize: 16,
+    color: NAVY,
+  },
+  subtitle: {
+    marginTop: 4,
+    fontSize: 9,
+    color: MUTED,
+  },
+
+  /* Abschnitte */
+  sectionHead: {
+    marginTop: 18,
+    marginBottom: 6,
+    paddingBottom: 3,
+    borderBottomWidth: 0.75,
+    borderBottomColor: GOLD,
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 8.5,
+    color: NAVY,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+
+  /* Formularzeilen — tabellarisch */
+  field: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    minHeight: 22,
+    paddingVertical: 5,
     borderBottomWidth: 0.5,
-    borderBottomColor: FAINT,
-    paddingBottom: 2,
+    borderBottomColor: RULE,
+  },
+  fieldTall: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    paddingVertical: 6,
+    borderBottomWidth: 0.5,
+    borderBottomColor: RULE,
+  },
+  label: {
+    width: '38%',
+    fontSize: 8,
+    color: MUTED,
+    paddingRight: 8,
+    paddingBottom: 1,
+  },
+  labelFull: {
+    fontSize: 8,
+    color: MUTED,
+    marginBottom: 4,
+  },
+  value: {
+    flex: 1,
     fontSize: 10,
     color: INK,
+    fontFamily: 'Helvetica',
   },
-  /** Leere Schreiblinie für Handschrift */
-  blankLine: {
-    height: 22,
-    borderBottomWidth: 1,
-    borderBottomColor: LINE,
+  emptyLine: {
+    flex: 1,
+    borderBottomWidth: 0.75,
+    borderBottomColor: '#8a8a8a',
+    height: 14,
+    marginBottom: 1,
+  },
+  emptyArea: {
+    height: 40,
+    borderWidth: 0.75,
+    borderColor: '#8a8a8a',
     marginTop: 2,
   },
-  /** Höheres Feld für Textarea / Bemerkungen */
-  blankArea: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: LINE,
-    borderStyle: 'dashed',
-    marginTop: 2,
-    borderRadius: 2,
+
+  /* Optionen */
+  optionsRow: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
   },
-  optionsRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 2 },
-  option: { fontSize: 9, color: INK, marginRight: 14, marginBottom: 4 },
-  note: { marginTop: 14, fontSize: 8, color: MUTED, lineHeight: 1.4 },
-  signRow: { marginTop: 24, flexDirection: 'row', justifyContent: 'space-between' },
-  signBox: { width: '45%' },
-  signLine: { marginTop: 36, borderBottomWidth: 1, borderBottomColor: NAVY, height: 1 },
-  signHint: { marginTop: 4, fontSize: 8, color: MUTED },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 14,
+    marginBottom: 2,
+  },
+  box: {
+    width: 9,
+    height: 9,
+    borderWidth: 0.9,
+    borderColor: INK,
+    marginRight: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  boxOn: {
+    width: 5,
+    height: 5,
+    backgroundColor: NAVY,
+  },
+  optionLabel: {
+    fontSize: 9,
+    color: INK,
+  },
+
+  /* Unterschrift */
+  signBlock: {
+    marginTop: 22,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  signCol: { width: '46%' },
+  signLabel: { fontSize: 8, color: MUTED, marginBottom: 6 },
+  signSpace: {
+    height: 36,
+    borderBottomWidth: 0.75,
+    borderBottomColor: NAVY,
+  },
+  signCaption: { marginTop: 4, fontSize: 7.5, color: MUTED },
+
+  note: {
+    marginTop: 16,
+    fontSize: 7.5,
+    color: MUTED,
+    lineHeight: 1.45,
+  },
   footer: {
     position: 'absolute',
-    bottom: 24,
-    left: 36,
-    right: 36,
+    bottom: 28,
+    left: 48,
+    right: 48,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     fontSize: 7,
-    color: '#94a3b8',
-    textAlign: 'center',
+    color: '#9a9a9a',
+    borderTopWidth: 0.5,
+    borderTopColor: RULE,
+    paddingTop: 8,
   },
 })
 
+function CheckOption({ label, checked }: { label: string; checked: boolean }) {
+  return (
+    <View style={s.option}>
+      <View style={s.box}>{checked ? <View style={s.boxOn} /> : null}</View>
+      <Text style={s.optionLabel}>{label}</Text>
+    </View>
+  )
+}
+
 function SelectOptions({ field, value }: { field: SicTemplateField; value?: string }) {
   const v = (value ?? '').trim().toLowerCase()
-  const options = field.options ?? []
   return (
     <View style={s.optionsRow}>
-      {options.map(o => {
+      {(field.options ?? []).map(o => {
         const checked = v === o.value.toLowerCase() || v === o.label.toLowerCase()
-        return (
-          <Text key={o.value} style={s.option}>
-            {checked ? '☑' : '☐'} {o.label}
-          </Text>
-        )
+        return <CheckOption key={o.value} label={o.label} checked={checked} />
       })}
     </View>
   )
@@ -97,30 +231,36 @@ function YesNoValue({ value }: { value?: string }) {
   const v = (value ?? '').trim().toLowerCase()
   return (
     <View style={s.optionsRow}>
-      <Text style={s.option}>{v === 'ja' || v === 'yes' ? '☑' : '☐'} Ja</Text>
-      <Text style={s.option}>{v === 'nein' || v === 'no' ? '☑' : '☐'} Nein</Text>
+      <CheckOption label="Ja" checked={v === 'ja' || v === 'yes'} />
+      <CheckOption label="Nein" checked={v === 'nein' || v === 'no'} />
     </View>
   )
 }
 
 function FormField({ field, value }: { field: SicTemplateField; value?: string }) {
   const filled = (value ?? '').trim()
+  const isArea = field.kind === 'textarea'
+  const label = `${field.label}${field.required ? ' *' : ''}`
+
+  if (isArea) {
+    return (
+      <View style={s.fieldTall} wrap={false}>
+        <Text style={s.labelFull}>{label}</Text>
+        {filled ? <Text style={s.value}>{filled}</Text> : <View style={s.emptyArea} />}
+      </View>
+    )
+  }
 
   return (
-    <View style={s.row} wrap={false}>
-      <Text style={s.label}>
-        {field.label}
-        {field.required ? ' *' : ''}
-      </Text>
+    <View style={s.field} wrap={false}>
+      <Text style={s.label}>{label}</Text>
       {field.kind === 'yesno' ?
         <YesNoValue value={value} />
       : field.kind === 'select' ?
         <SelectOptions field={field} value={value} />
       : filled ?
-        <Text style={s.filled}>{filled}</Text>
-      : field.kind === 'textarea' ?
-        <View style={s.blankArea} />
-      : <View style={s.blankLine} />
+        <Text style={s.value}>{filled}</Text>
+      : <View style={s.emptyLine} />
       }
     </View>
   )
@@ -132,65 +272,65 @@ export function SicTemplatePdfDocument(props: {
 }) {
   const { template, values } = props
   const tenantFields = template.fields.filter(f => f.section === 'tenant')
-  // Unterschrifts-Meta kommt ins Signatur-Block unten, nicht als 3× leere Felder
   const signKeys = new Set(['placeDate', 'signatoryName', 'signatoryRole'])
   const thirdFields = template.fields.filter(
     f => f.section === 'third_party' && !signKeys.has(f.key)
   )
 
   return (
-    <Document>
+    <Document title={`SIC — ${template.title}`}>
       <Page size="A4" style={s.page}>
-        <View style={s.headerRow}>
-          <View>
-            <Text style={s.brand}>SWISS IMMO CERT</Text>
-            <Text style={s.brandSub}>NACHWEISFORMULAR</Text>
+        <View style={s.header}>
+          <View style={s.brandCol}>
+            <View style={s.crest}>
+              <View style={s.crestV} />
+              <View style={s.crestH} />
+            </View>
+            <View>
+              <Text style={s.brand}>SWISS IMMO CERT</Text>
+              <Text style={s.brandSub}>MIETER-ZERTIFIKAT</Text>
+            </View>
           </View>
-          <View style={s.crest}>
-            <Text style={s.crestMark}>+</Text>
-          </View>
+          <Text style={s.docType}>Nachweisformular{'\n'}zum Ausfüllen und Unterzeichnen</Text>
         </View>
 
         <Text style={s.title}>{template.title}</Text>
         <Text style={s.subtitle}>{template.subtitle}</Text>
-        <View style={s.rule} />
 
-        <Text style={s.section}>Angaben der mietsuchenden Person</Text>
+        <Text style={s.sectionHead}>Angaben der mietsuchenden Person</Text>
         {tenantFields.map(f => (
           <FormField key={f.key} field={f} value={values[f.key]} />
         ))}
 
-        <Text style={s.section}>
-          Vom {template.thirdPartyLabel} handschriftlich auszufüllen
-        </Text>
+        <Text style={s.sectionHead}>Angaben des {template.thirdPartyLabel}s</Text>
         {thirdFields.map(f => (
           <FormField key={f.key} field={f} value={values[f.key]} />
         ))}
 
-        <View style={s.signRow}>
-          <View style={s.signBox}>
-            <Text style={s.label}>Name / Funktion der unterzeichnenden Person</Text>
-            <View style={s.blankLine} />
-            <View style={[s.signLine, { marginTop: 28 }]} />
-            <Text style={s.signHint}>Unterschrift {template.thirdPartyLabel}</Text>
+        <View style={s.signBlock}>
+          <View style={s.signCol}>
+            <Text style={s.signLabel}>Name und Funktion der unterzeichnenden Person</Text>
+            <View style={s.signSpace} />
+            <Text style={s.signCaption}>Unterschrift {template.thirdPartyLabel}</Text>
           </View>
-          <View style={s.signBox}>
-            <Text style={s.label}>Ort und Datum</Text>
-            <View style={s.blankLine} />
-            <View style={[s.signLine, { marginTop: 28 }]} />
-            <Text style={s.signHint}>Stempel (falls vorhanden)</Text>
+          <View style={s.signCol}>
+            <Text style={s.signLabel}>Ort und Datum</Text>
+            <View style={s.signSpace} />
+            <Text style={s.signCaption}>Stempel (falls vorhanden)</Text>
           </View>
         </View>
 
         <Text style={s.note}>
-          Bitte dieses Formular handschriftlich ausfüllen und unterschreiben. Das unterschriebene Dokument
-          (PDF-Scan oder Foto) dient als Nachweis für Swiss Immo Cert und wird unter «Mein Zertifikat»
-          hochgeladen. Unvollständige Angaben können zu einer Rückfrage führen.
+          Bitte vollständig ausfüllen und unterzeichnen — digital (z. B. Adobe Acrobat) oder ausgedruckt.
+          Das unterzeichnete Dokument (PDF oder Scan) als Nachweis unter «Mein Zertifikat» bei Swiss Immo
+          Cert hochladen. Unvollständige Angaben können zu einer Rückfrage führen. Pflichtfelder sind mit *
+          gekennzeichnet.
         </Text>
 
-        <Text style={s.footer}>
-          Swiss Immo Cert · schweizerisches Mieter-Zertifikat · swissimmocert.ch / wohnen.helvenda.ch
-        </Text>
+        <View style={s.footer} fixed>
+          <Text>Swiss Immo Cert</Text>
+          <Text>schweizerisches Mieter-Zertifikat</Text>
+        </View>
       </Page>
     </Document>
   )

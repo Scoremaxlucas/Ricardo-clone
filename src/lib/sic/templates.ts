@@ -2,8 +2,8 @@ import type { SicModuleId } from '@/lib/sic/modules'
 
 /**
  * SIC-Nachweis-Formulare (PDF): Vom Mieter optional vorausgefüllt (Name/Adresse),
- * vom Dritten (Arbeitgeber / Vermieter) handschriftlich ausgefüllt und unterschrieben —
- * danach Upload im Dossier.
+ * vom Dritten (Arbeitgeber / Vermieter) ausgefüllt und unterzeichnet —
+ * digital oder auf Papier — danach Upload im Dossier.
  */
 
 export type SicTemplateId = 'employer_confirmation' | 'landlord_reference'
@@ -41,9 +41,9 @@ export const SIC_TEMPLATES: readonly SicTemplateDefinition[] = [
     subtitle: 'Bestätigung zu Anstellung, Pensum und Einkommen',
     thirdPartyLabel: 'Arbeitgeber',
     howTo: [
-      'Optional: Name vorausfüllen, dann PDF-Formular herunterladen.',
-      'Formular dem Arbeitgeber geben — er füllt es handschriftlich aus und unterschreibt.',
-      'Unterschriebenes Dokument (Scan/Foto) im Modul hochladen.',
+      'Optional: Name vorausfüllen, dann PDF herunterladen.',
+      'Formular dem Arbeitgeber senden — ausfüllen und unterzeichnen (digital oder ausgedruckt).',
+      'Unterzeichnetes Dokument (PDF/Scan) im Modul hochladen.',
     ],
     fields: [
       {
@@ -169,9 +169,9 @@ export const SIC_TEMPLATES: readonly SicTemplateDefinition[] = [
     subtitle: 'Referenz zum Mietverhältnis und zur Zahlungsmoral',
     thirdPartyLabel: 'Vermieter',
     howTo: [
-      'Optional: Name und Mietobjekt vorausfüllen, dann PDF-Formular herunterladen.',
-      'Formular dem Vermieter geben — er füllt es handschriftlich aus und unterschreibt.',
-      'Unterschriebenes Dokument (Scan/Foto) im Modul hochladen.',
+      'Optional: Name und Mietobjekt vorausfüllen, dann PDF herunterladen.',
+      'Formular dem Vermieter senden — ausfüllen und unterzeichnen (digital oder ausgedruckt).',
+      'Unterzeichnetes Dokument (PDF/Scan) im Modul hochladen.',
     ],
     fields: [
       {
