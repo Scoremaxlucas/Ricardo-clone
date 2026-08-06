@@ -4,13 +4,49 @@ export const SIC_BRAND_NAME = 'Swiss Immo Cert'
 export const SIC_BRAND_SHORT = 'SIC'
 
 /**
- * Origin der SIC-Plattform. Entwicklung läuft vorerst auf wohnen.helvenda.ch;
- * später `NEXT_PUBLIC_SIC_URL=https://swissimmocert.ch` setzen.
+ * Kanonische Origin der SIC-Plattform.
+ * Env: `NEXT_PUBLIC_SIC_URL=https://swissimmocert.ch` (Production).
  */
-export const SIC_SITE_ORIGIN = (process.env.NEXT_PUBLIC_SIC_URL || WOHNEN_SITE_ORIGIN).replace(/\/$/, '')
+export const SIC_SITE_ORIGIN = (
+  process.env.NEXT_PUBLIC_SIC_URL || 'https://swissimmocert.ch'
+).replace(/\/$/, '')
 
 /** Alle SIC-Seiten leben unter diesem Präfix (Koexistenz mit bestehender App). */
 export const SIC_BASE_PATH = '/sic'
+
+export const SIC_PREVIEW_COOKIE = 'helvenda-sic-preview'
+
+/** Hostnamen, auf denen SIC gerendert wird (ohne Port). */
+export function sicProductionHosts(): string[] {
+  try {
+    const primary = new URL(SIC_SITE_ORIGIN).hostname.toLowerCase()
+    const hosts = new Set<string>([primary])
+    if (primary.startsWith('www.')) hosts.add(primary.slice(4))
+    else hosts.add(`www.${primary}`)
+    return Array.from(hosts)
+  } catch {
+    return ['swissimmocert.ch', 'www.swissimmocert.ch']
+  }
+}
+
+export function isSicProductionHostname(host: string): boolean {
+  const h = host.split(':')[0].toLowerCase()
+  return sicProductionHosts().includes(h)
+}
+
+/**
+ * Frühere SIC-Adresse — leitet Middleware permanent auf {@link SIC_SITE_ORIGIN} um.
+ * Wohnen bleibt separat über {@link WOHNEN_SITE_ORIGIN} referenzierbar.
+ */
+export function isLegacySicHostname(host: string): boolean {
+  const h = host.split(':')[0].toLowerCase()
+  try {
+    const legacy = new URL(WOHNEN_SITE_ORIGIN).hostname.toLowerCase()
+    return h === legacy
+  } catch {
+    return h === 'wohnen.helvenda.ch'
+  }
+}
 
 export const sicPaths = {
   /** Root wird auf dem SIC-Host auf die Landing umgeschrieben. */

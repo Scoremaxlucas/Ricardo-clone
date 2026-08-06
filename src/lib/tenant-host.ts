@@ -1,17 +1,43 @@
 const WOHNEN_PREVIEW_COOKIE = 'helvenda-wohnen-preview'
+const SIC_PREVIEW_COOKIE = 'helvenda-sic-preview'
 
 type HeaderBag = { get(name: string): string | null }
 
+function rawHost(h: HeaderBag): string {
+  return (h.get('host') || '').split(':')[0].toLowerCase()
+}
+
 /**
- * True when this request is served on the **Matching**-Subdomain (`wohnen.helvenda.ch`)
- * bzw. lokales Wohnen-Preview (Cookie), unabhängig vom URL-Pfad.
+ * True when this request is the SIC production host (`swissimmocert.ch`)
+ * bzw. lokales SIC-Preview (Cookie), unabhängig vom URL-Pfad.
  */
-export function isWohnenMatchingHostFromHeaders(h: HeaderBag): boolean {
-  const host = (h.get('host') || '').split(':')[0].toLowerCase()
-  if (host === 'wohnen.helvenda.ch') return true
+export function isSicSiteHostFromHeaders(h: HeaderBag): boolean {
+  const host = rawHost(h)
+  if (host === 'swissimmocert.ch' || host === 'www.swissimmocert.ch') return true
+  try {
+    // Dynamic import avoided — keep sync; mirror sicProductionHosts defaults + env at build time via process.env
+    const origin = (process.env.NEXT_PUBLIC_SIC_URL || 'https://swissimmocert.ch').replace(/\/$/, '')
+    const primary = new URL(origin).hostname.toLowerCase()
+    if (host === primary) return true
+    if (primary.startsWith('www.') && host === primary.slice(4)) return true
+    if (!primary.startsWith('www.') && host === `www.${primary}`) return true
+  } catch {
+    /* ignore */
+  }
   const cookie = h.get('cookie') || ''
-  if ((host === 'localhost' || host === '127.0.0.1') && cookie.includes(`${WOHNEN_PREVIEW_COOKIE}=1`)) {
+  if (
+    (host === 'localhost' || host === '127.0.0.1') &&
+    (cookie.includes(`${SIC_PREVIEW_COOKIE}=1`) || cookie.includes(`${WOHNEN_PREVIEW_COOKIE}=1`))
+  ) {
     return true
   }
   return false
+}
+
+/**
+ * @deprecated Use {@link isSicSiteHostFromHeaders}. Kept for Wohnen-era call sites;
+ * in Production war `wohnen.helvenda.ch` vorübergehend SIC — Redirect übernimmt Middleware.
+ */
+export function isWohnenMatchingHostFromHeaders(h: HeaderBag): boolean {
+  return isSicSiteHostFromHeaders(h)
 }

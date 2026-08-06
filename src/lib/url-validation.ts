@@ -15,7 +15,13 @@
  */
 export function validateRedirectUrl(
   url: string | null | undefined,
-  allowedDomains: string[] = ['helvenda.ch', 'www.helvenda.ch', 'wohnen.helvenda.ch']
+  allowedDomains: string[] = [
+    'helvenda.ch',
+    'www.helvenda.ch',
+    'wohnen.helvenda.ch',
+    'swissimmocert.ch',
+    'www.swissimmocert.ch',
+  ]
 ): string {
   // If no URL provided, return home
   if (!url || url === 'null' || url === 'undefined') {

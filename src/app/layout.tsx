@@ -105,7 +105,7 @@ export async function generateViewport(): Promise<Viewport> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const h = await headers()
-  // Hard pivot: auf dem SIC-Host (wohnen.helvenda.ch) nie die Wohnen-Shell rendern.
+  // Hard pivot: auf dem SIC-Host (swissimmocert.ch) nie die Marktplatz-/Wohnen-Shell.
   const isSic = h.get('x-sic-route') === '1' || h.get('x-sic-host') === '1' || isWohnenMatchingHostFromHeaders(h)
   const htmlLang = isSic ? 'de-CH' : 'de'
 

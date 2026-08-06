@@ -2,7 +2,13 @@ import { ADMIN_FORBIDDEN_HTML } from '@/lib/auth/admin-forbidden-html'
 import { getToken } from 'next-auth/jwt'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { MAIN_SHOP_ORIGIN, WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
+import {
+  isLegacySicHostname,
+  isSicProductionHostname,
+  SIC_PREVIEW_COOKIE,
+  SIC_SITE_ORIGIN,
+} from '@/lib/sic/config'
+import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 
 const WOHNEN_PREVIEW_COOKIE = 'helvenda-wohnen-preview'
 
@@ -10,19 +16,17 @@ function rawHost(request: NextRequest): string {
   return (request.headers.get('host') || '').split(':')[0].toLowerCase()
 }
 
-function isProductionWohnenHost(host: string): boolean {
-  return host === 'wohnen.helvenda.ch'
-}
-
 /**
- * Früher «Helvenda Wohnen» — jetzt Swiss Immo Cert Host.
- * Vorschau lokal: ?subdomain=wohnen oder Cookie.
+ * Swiss Immo Cert Host: swissimmocert.ch (+ www).
+ * Lokal: ?subdomain=sic|wohnen oder Preview-Cookie.
  */
 function isSicHost(request: NextRequest): boolean {
   const host = rawHost(request)
-  if (isProductionWohnenHost(host)) return true
+  if (isSicProductionHostname(host)) return true
   if (host === 'localhost' || host === '127.0.0.1') {
-    if (request.nextUrl.searchParams.get('subdomain') === 'wohnen') return true
+    const sub = request.nextUrl.searchParams.get('subdomain')
+    if (sub === 'sic' || sub === 'wohnen') return true
+    if (request.cookies.get(SIC_PREVIEW_COOKIE)?.value === '1') return true
     if (request.cookies.get(WOHNEN_PREVIEW_COOKIE)?.value === '1') return true
   }
   return false
@@ -44,7 +48,7 @@ function isMainHelvendaMarketplaceHost(host: string): boolean {
   return h === 'helvenda.ch' || h === 'www.helvenda.ch'
 }
 
-/** Alte Wohnen-/Matching-Pfade auf dem Marktplatz → SIC auf wohnen.helvenda.ch. */
+/** Alte Wohnen-/Matching-Pfade auf dem Marktplatz → SIC-Homepage. */
 function marketplacePathsRedirectToSic(pathname: string): boolean {
   if (pathname === '/meine-matches') return true
   if (pathname === '/meine-bewerbungen') return true
@@ -68,7 +72,6 @@ function isAllowedOnSicHost(pathname: string): boolean {
   if (pathname.startsWith('/api/stripe')) return true
   if (pathname.startsWith('/api/cron')) return true
   if (pathname === '/robots.txt' || pathname === '/sitemap.xml') return true
-  // Admin-Login (NextAuth) für /sic/admin
   if (
     pathname === '/login' ||
     pathname === '/forgot-password' ||
@@ -81,7 +84,6 @@ function isAllowedOnSicHost(pathname: string): boolean {
   return false
 }
 
-/** Gesamten SIC-Host ohne Wohnen-Shell rendern. */
 function withSicHostHeaders(request: NextRequest, rewriteUrl?: URL) {
   const headers = new Headers(request.headers)
   headers.set('x-sic-route', '1')
@@ -97,6 +99,16 @@ function redirectToSicHome(request: NextRequest) {
   return NextResponse.redirect(url)
 }
 
+function setSicPreviewCookie(res: NextResponse) {
+  const opts = {
+    path: '/' as const,
+    sameSite: 'lax' as const,
+    maxAge: 60 * 60 * 24 * 7,
+  }
+  res.cookies.set(SIC_PREVIEW_COOKIE, '1', opts)
+  res.cookies.set(WOHNEN_PREVIEW_COOKIE, '1', opts)
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl
 
@@ -110,36 +122,40 @@ export async function middleware(request: NextRequest) {
   }
 
   const host = rawHost(request)
+
+  // Legacy SIC-Host → kanonische Domain (Magic Links, Bookmarks)
+  if (isLegacySicHostname(host)) {
+    const target = new URL(pathname + search, SIC_SITE_ORIGIN)
+    return NextResponse.redirect(target, 308)
+  }
+
   const onSicHost = isSicHost(request)
 
-  // Marktplatz: alte Mieter-/Wohnungs-Pfade → SIC-Homepage auf dem SIC-Host
+  // Marktplatz: alte Mieter-/Wohnungs-Pfade → SIC
   if (!onSicHost && isMainHelvendaMarketplaceHost(host) && marketplacePathsRedirectToSic(pathname)) {
-    return NextResponse.redirect(new URL('/' + search, WOHNEN_SITE_ORIGIN))
+    return NextResponse.redirect(new URL('/' + search, SIC_SITE_ORIGIN))
   }
 
   // localhost Preview für SIC-Host
-  if ((host === 'localhost' || host === '127.0.0.1') && request.nextUrl.searchParams.get('subdomain') === 'wohnen') {
-    const clean = request.nextUrl.clone()
-    clean.searchParams.delete('subdomain')
-    const res = NextResponse.redirect(clean)
-    res.cookies.set(WOHNEN_PREVIEW_COOKIE, '1', {
-      path: '/',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-    })
-    return res
+  if (host === 'localhost' || host === '127.0.0.1') {
+    const sub = request.nextUrl.searchParams.get('subdomain')
+    if (sub === 'sic' || sub === 'wohnen') {
+      const clean = request.nextUrl.clone()
+      clean.searchParams.delete('subdomain')
+      const res = NextResponse.redirect(clean)
+      setSicPreviewCookie(res)
+      return res
+    }
   }
 
   // ─── SIC-Host: nur Swiss Immo Cert ───────────────────────────────────────
   if (onSicHost) {
-    // Saubere Root-URL zeigt SIC-Landing (ohne /sic in der Adresszeile)
     if (pathname === '/') {
       const rewrite = request.nextUrl.clone()
       rewrite.pathname = '/sic'
       return withSicHostHeaders(request, rewrite)
     }
 
-    // Legacy-Wohnen-Admin → SIC-Prüfung
     if (
       pathname.startsWith('/admin/wohnen') ||
       pathname.startsWith('/admin/listings') ||
@@ -150,12 +166,10 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/sic/admin', request.url))
     }
 
-    // Alte Wohnen-/Matching-URLs → SIC-Home
     if (!isAllowedOnSicHost(pathname)) {
       return redirectToSicHome(request)
     }
 
-    // SIC-Admin-Gates
     if (pathname.startsWith('/sic/admin') || pathname.startsWith('/api/sic/admin')) {
       const secret = process.env.NEXTAUTH_SECRET
       if (!secret) {

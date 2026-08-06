@@ -1,16 +1,12 @@
 import { prisma } from '@/lib/prisma'
 import { abs } from '@/lib/seo'
-import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
+import { isSicProductionHostname, SIC_SITE_ORIGIN } from '@/lib/sic/config'
 import { headers } from 'next/headers'
 import type { MetadataRoute } from 'next'
 
 // Force dynamic rendering - sitemap needs database access at runtime
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600 // Revalidate every hour
-
-function isWohnenHost(host: string): boolean {
-  return host.split(':')[0].toLowerCase() === 'wohnen.helvenda.ch'
-}
 
 function joinUrl(base: string, path: string): string {
   const b = base.replace(/\/$/, '')
@@ -19,7 +15,7 @@ function joinUrl(base: string, path: string): string {
 }
 
 async function sicSitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = WOHNEN_SITE_ORIGIN.replace(/\/$/, '')
+  const base = SIC_SITE_ORIGIN.replace(/\/$/, '')
 
   return [
     { url: base, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
@@ -72,5 +68,6 @@ async function marketplaceSitemap(): Promise<MetadataRoute.Sitemap> {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const h = await headers()
   const host = h.get('host') || ''
-  return isWohnenHost(host) ? sicSitemap() : marketplaceSitemap()
+  const onSic = isSicProductionHostname(host) || h.get('x-sic-host') === '1'
+  return onSic ? sicSitemap() : marketplaceSitemap()
 }

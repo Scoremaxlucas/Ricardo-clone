@@ -112,7 +112,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "manifest-src 'self' https://www.helvenda.ch https://wohnen.helvenda.ch https://helvenda.ch",
+              "manifest-src 'self' https://www.helvenda.ch https://wohnen.helvenda.ch https://helvenda.ch https://swissimmocert.ch https://www.swissimmocert.ch",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://js.stripe.com https://connect-js.stripe.com https://*.stripecdn.com",
               "style-src 'self' 'unsafe-inline' https://*.stripecdn.com",
               "img-src 'self' data: https: blob: https://*.stripecdn.com https://*.stripe.com",
