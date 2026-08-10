@@ -4,8 +4,10 @@ export const SIC_BRAND_NAME = 'Swiss Immo Cert'
 export const SIC_BRAND_SHORT = 'SIC'
 
 /**
- * Kanonische Origin der SIC-Plattform.
- * Env: `NEXT_PUBLIC_SIC_URL=https://swissimmocert.ch` (Production).
+ * Kanonische Origin der SIC-Plattform (Apex — nicht www).
+ * Vercel: www → Apex redirecten (nicht Apex → www), sonst SSL-Warnung:
+ * Zertifikat deckt oft nur swissimmocert.ch ab, Redirect auf www schlägt fehl.
+ * Env: `NEXT_PUBLIC_SIC_URL=https://swissimmocert.ch`
  */
 export const SIC_SITE_ORIGIN = (
   process.env.NEXT_PUBLIC_SIC_URL || 'https://swissimmocert.ch'

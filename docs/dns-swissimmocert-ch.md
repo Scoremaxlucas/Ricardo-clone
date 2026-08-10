@@ -1,55 +1,55 @@
 # Domain-Umzug: Swiss Immo Cert → `swissimmocert.ch`
 
-Code erwartet ab jetzt **`https://swissimmocert.ch`** als SIC-Host (`NEXT_PUBLIC_SIC_URL`).  
+Code erwartet **`https://swissimmocert.ch`** (Apex) als SIC-Host (`NEXT_PUBLIC_SIC_URL`).  
 `wohnen.helvenda.ch` leitet per **308** auf die neue Domain um (Pfad bleibt erhalten).
 
-## 1. Domain bei Vercel
+## Wichtig: Apex kanonisch (SSL)
 
-1. [vercel.com](https://vercel.com) → Projekt **Helvenda** (dasselbe Deployment).
-2. **Settings → Domains → Add**.
-3. Hinzufügen:
-   - `swissimmocert.ch`
-   - `www.swissimmocert.ch` (Redirect auf Apex oder umgekehrt — wie Vercel vorschlägt)
-4. DNS-Ziel aus Vercel **1:1** übernehmen (meist `cname.vercel-dns.com` bzw. A/AAAA für Apex).
+Vercel-Zertifikat deckt oft nur **`swissimmocert.ch`** ab, **nicht** `www`.
 
-`wohnen.helvenda.ch` **behalten** (weiterhin dem Projekt zugeordnet), damit der Legacy-Redirect greift.
+Wenn **«Redirect apex → www»** aktiv ist:
 
-## 2. DNS beim Registrar (wo `swissimmocert.ch` liegt)
+1. Browser öffnet Apex (TLS ok)
+2. Redirect auf `https://www.swissimmocert.ch`
+3. Safari: **«This Connection Is Not Private»** — Cert hat kein `www` in den SANs
 
-Genau die Records aus **Vercel → Domains**:
+**Fix:** Redirect umdrehen → **www → Apex**.
 
-| Typ | Name | Ziel (Beispiel — bei Vercel kopieren) |
-|-----|------|----------------------------------------|
-| A / ALIAS / ANAME | `@` | Vercel-Apex-Ziel |
-| CNAME | `www` | `cname.vercel-dns.com` (o.ä.) |
+### Klick-Schritte in Vercel
 
-Warten bis Status **Valid** + SSL aktiv.
+1. Projekt → **Settings → Domains**
+2. Bei **`swissimmocert.ch`** / **`www.swissimmocert.ch`**: Redirect- oder Edit-Option öffnen
+3. **Nicht** «Redirect apex to www» — stattdessen Apex als Primary, www zeigt/redirectet auf Apex
+4. Speichern, 1–2 Min warten, hart neu laden (`https://swissimmocert.ch`)
 
-## 3. Environment Variable (Vercel Production)
+### Metanet CNAME
+
+Wert **Zeichen für Zeichen** aus Vercel (www-Domain) kopieren — Tippfehler (`6ca5` vs `6ca6`) verhindern Validierung/Cert für www.
+
+## DNS (Metanet)
+
+| Typ | Name | Ziel |
+|-----|------|------|
+| **A** | (leer) | IP aus Vercel für Apex |
+| **CNAME** | `www` | Value aus Vercel für www |
+
+Danach immer **Jetzt speichern**.
+
+## Env (Vercel Production)
 
 | Key | Value |
 |-----|--------|
 | `NEXT_PUBLIC_SIC_URL` | `https://swissimmocert.ch` |
 
-Deploy neu auslösen nach dem Setzen (damit Client-Bundles die Origin kennen).
+Nach Env-Änderung: Redeploy.
 
-## 4. Stripe
+## Checkliste
 
-- Checkout-Success/-Cancel-URLs kommen aus dem Code (`sicUrl(...)`) → greifen nach Env automatisch.
-- Webhook-Endpoint bleibt pfadbasiert (`/api/sic/...` bzw. bestehender Stripe-Webhook) — Domain muss im Stripe-Dashboard nicht geändert werden, sofern der Webhook auf die Vercel-App zeigt. Optional in Stripe die Return-URLs prüfen.
-
-## 5. E-Mails / Magic Links
-
-Neue Links nutzen `swissimmocert.ch`. Alte Links auf `wohnen.helvenda.ch` werden per Middleware umgeschrieben.
-
-## 6. Checkliste
-
-- [ ] `swissimmocert.ch` (+ www) in Vercel Domains **Valid**
-- [ ] `NEXT_PUBLIC_SIC_URL=https://swissimmocert.ch` gesetzt + Redeploy
-- [ ] `https://swissimmocert.ch` öffnet SIC-Landing
-- [ ] `https://wohnen.helvenda.ch/sic/zertifikat` → 308 → `https://swissimmocert.ch/sic/zertifikat`
-- [ ] Login / Magic Link / Checkout einmal smoke-testen
+- [ ] Redirect **www → Apex** (nicht Apex → www)
+- [ ] Vercel Domains **Valid**
+- [ ] `https://swissimmocert.ch` ohne Safari-Warnung
+- [ ] Env `NEXT_PUBLIC_SIC_URL=https://swissimmocert.ch` + Redeploy
 
 ## Lokal
 
-Preview: `http://localhost:3000/?subdomain=sic`
+`http://localhost:3000/?subdomain=sic`
