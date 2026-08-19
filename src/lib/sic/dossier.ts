@@ -53,9 +53,13 @@ export type SicDossierView = {
 /** Baut die Liste verifizierter Module (mit Zertifikatszeilen) für PDF und Verifikation. */
 export function verifiedModuleLineItems(
   modules: { moduleKind: string; status: SicModuleStatus }[]
-): { title: string; lines: string[] }[] {
+): { id: SicModuleId; title: string; lines: string[] }[] {
   const verified = new Set(modules.filter(m => m.status === 'VERIFIED').map(m => m.moduleKind))
-  return SIC_MODULES.filter(def => verified.has(def.id)).map(def => ({ title: def.title, lines: def.lineItems }))
+  return SIC_MODULES.filter(def => verified.has(def.id)).map(def => ({
+    id: def.id,
+    title: def.title,
+    lines: def.lineItems,
+  }))
 }
 
 export function joinHolderName(first: string | null, last: string | null): string | null {

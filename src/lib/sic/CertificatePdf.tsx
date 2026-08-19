@@ -1,79 +1,224 @@
+import {
+  CalendarMark,
+  CornerFlourish,
+  CrestWithLaurel,
+  GuillocheRule,
+  ModuleGlyph,
+  Seal,
+} from '@/lib/sic/cert/art'
+import { SIC_CERT_BACKDROP_DATA_URL } from '@/lib/sic/cert/backdrop-asset'
+import { CERT } from '@/lib/sic/cert/tokens'
+import type { SicModuleId } from '@/lib/sic/modules'
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import React from 'react'
 
-const NAVY = '#0f2b5e'
-const GOLD = '#b8912f'
-const GOLD_LIGHT = '#d8b25a'
-const GREEN = '#2f9e44'
-const RED = '#c8102e'
-const INK = '#1e293b'
-const MUTED = '#64748b'
-const FAINT = '#e7ddc4'
+const C = CERT.color
+const T = CERT.type
 
 const s = StyleSheet.create({
-  page: { padding: 24, backgroundColor: '#ffffff', fontFamily: 'Helvetica', color: INK, fontSize: 10 },
-  frameOuter: { flexGrow: 1, borderWidth: 2.5, borderColor: NAVY, padding: 4 },
-  frameInner: { flexGrow: 1, borderWidth: 1, borderColor: GOLD, paddingVertical: 26, paddingHorizontal: 34, position: 'relative' },
+  page: {
+    backgroundColor: C.ivory,
+    fontFamily: 'Helvetica',
+    color: C.ink,
+    fontSize: 10,
+    padding: CERT.page.padding,
+  },
+  frameOuter: {
+    flexGrow: 1,
+    borderWidth: CERT.frame.outer,
+    borderColor: C.navy,
+    padding: CERT.frame.gap,
+    position: 'relative',
+  },
+  frameInner: {
+    flexGrow: 1,
+    borderWidth: CERT.frame.inner,
+    borderColor: C.gold,
+    paddingTop: CERT.frame.padV,
+    paddingBottom: CERT.frame.padV + 8,
+    paddingHorizontal: CERT.frame.padH,
+    position: 'relative',
+  },
+  corner: { position: 'absolute', width: 28, height: 28 },
+  cornerTL: { top: 6, left: 6 },
+  cornerTR: { top: 6, right: 6 },
+  cornerBL: { bottom: 6, left: 6 },
+  cornerBR: { bottom: 6, right: 6 },
 
-  code: { position: 'absolute', top: 12, right: 16, fontSize: 8, color: MUTED, fontFamily: 'Helvetica-Bold', letterSpacing: 1 },
+  backdrop: {
+    position: 'absolute',
+    left: 24,
+    right: 24,
+    top: 250,
+    height: 180,
+    opacity: 0.18,
+  },
 
-  header: { alignItems: 'center' },
-  crest: { width: 42, height: 42, borderRadius: 7, backgroundColor: RED, alignItems: 'center', justifyContent: 'center' },
-  crestV: { position: 'absolute', width: 7, height: 24, backgroundColor: '#fff', borderRadius: 1 },
-  crestH: { position: 'absolute', width: 24, height: 7, backgroundColor: '#fff', borderRadius: 1 },
-  brand: { marginTop: 12, fontFamily: 'Times-Bold', fontSize: 25, color: NAVY, letterSpacing: 3, textAlign: 'center' },
-  brandRuleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 6 },
-  brandRule: { height: 1, width: 46, backgroundColor: GOLD },
-  brandSub: { fontSize: 9, color: GOLD, letterSpacing: 4, marginHorizontal: 10, fontFamily: 'Helvetica-Bold' },
-  tagline: { marginTop: 6, fontSize: 9, color: MUTED, textAlign: 'center' },
-  divider: { height: 1, backgroundColor: FAINT, marginTop: 16, marginBottom: 4 },
+  headerBand: {
+    backgroundColor: C.navy,
+    marginHorizontal: -CERT.frame.padH + 4,
+    marginTop: -CERT.frame.padV + 8,
+    paddingTop: 14,
+    paddingBottom: 14,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  code: {
+    position: 'absolute',
+    top: 8,
+    right: 12,
+    fontSize: T.code,
+    color: C.goldPale,
+    fontFamily: 'Helvetica-Bold',
+    letterSpacing: 1.1,
+  },
+  brand: {
+    marginTop: 6,
+    fontFamily: 'Times-Bold',
+    fontSize: T.brand,
+    color: C.white,
+    letterSpacing: 3.2,
+    textAlign: 'center',
+  },
+  brandRuleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  brandRule: { height: 1, width: 40, backgroundColor: C.gold },
+  brandSub: {
+    fontSize: T.brandSub,
+    color: C.goldLight,
+    letterSpacing: 3.5,
+    marginHorizontal: 10,
+    fontFamily: 'Helvetica-Bold',
+  },
+  tagline: {
+    marginTop: 6,
+    fontSize: T.tagline,
+    color: C.goldPale,
+    textAlign: 'center',
+    letterSpacing: 0.4,
+  },
 
-  holderWrap: { marginTop: 10, alignItems: 'center' },
-  holderLabel: { fontSize: 8, color: MUTED, letterSpacing: 1, textTransform: 'uppercase' },
-  holderName: { marginTop: 3, fontFamily: 'Times-Bold', fontSize: 15, color: NAVY },
-  holderMeta: { marginTop: 1, fontSize: 9, color: MUTED },
+  holderWrap: { marginTop: 18, alignItems: 'center' },
+  holderLabel: {
+    fontSize: T.holderLabel,
+    color: C.muted,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  holderName: {
+    marginTop: 4,
+    fontFamily: 'Times-Bold',
+    fontSize: T.holderName,
+    color: C.navy,
+  },
+  holderRule: { marginTop: 8 },
 
-  rows: { marginTop: 18 },
-  block: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: FAINT },
-  bullet: { width: 24, height: 24, borderRadius: 12, backgroundColor: NAVY, borderWidth: 1.2, borderColor: GOLD, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  bulletMark: { color: GOLD_LIGHT, fontSize: 11, fontFamily: 'Helvetica-Bold' },
-  blockBody: { flex: 1, paddingRight: 10 },
-  blockTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: NAVY },
+  rows: { marginTop: 16 },
+  block: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 9,
+    borderBottomWidth: 1,
+    borderBottomColor: C.faint,
+  },
+  glyphWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: C.gold,
+    backgroundColor: C.ivorySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  blockBody: { flex: 1, paddingRight: 8 },
+  blockTitle: {
+    fontSize: T.moduleTitle,
+    fontFamily: 'Helvetica-Bold',
+    color: C.navy,
+  },
   lineRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 3 },
-  lineDot: { color: GOLD, fontSize: 8, marginRight: 5, marginTop: 1 },
-  lineText: { fontSize: 9.5, color: '#334155', flex: 1 },
-  verified: { flexDirection: 'row', alignItems: 'center', marginTop: 1 },
-  verifiedCheck: { width: 12, height: 12, borderRadius: 6, backgroundColor: GREEN, color: '#fff', fontSize: 7, textAlign: 'center', paddingTop: 2, marginRight: 4, fontFamily: 'Helvetica-Bold' },
-  verifiedText: { fontSize: 8, color: GREEN, fontFamily: 'Helvetica-Bold', letterSpacing: 1 },
+  lineDot: { color: C.gold, fontSize: 8, marginRight: 5, marginTop: 1 },
+  lineText: { fontSize: T.moduleLine, color: '#334155', flex: 1, lineHeight: 1.35 },
+  badge: {
+    borderWidth: 1,
+    borderColor: C.gold,
+    backgroundColor: C.ivorySoft,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 2,
+    marginTop: 2,
+  },
+  badgeText: {
+    fontSize: T.badge,
+    color: C.gold,
+    fontFamily: 'Helvetica-Bold',
+    letterSpacing: 1,
+  },
 
-  emptyNote: { fontSize: 10, color: MUTED, marginTop: 6, lineHeight: 1.5 },
+  emptyNote: { fontSize: 10, color: C.muted, marginTop: 6, lineHeight: 1.5 },
 
-  footer: { position: 'absolute', bottom: 22, left: 34, right: 34 },
-  validityRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: FAINT, paddingTop: 12, marginBottom: 16 },
+  footer: { position: 'absolute', bottom: 28, left: CERT.frame.padH, right: CERT.frame.padH },
+  validityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: C.faint,
+    paddingTop: 12,
+    marginBottom: 14,
+  },
   validCol: { flexDirection: 'row', alignItems: 'center' },
-  calIcon: { width: 20, height: 20, borderRadius: 4, backgroundColor: NAVY, marginRight: 8 },
-  validLabel: { fontSize: 7.5, color: MUTED, textTransform: 'uppercase', letterSpacing: 1 },
-  validValue: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: NAVY, marginTop: 1 },
+  calIcon: {
+    marginRight: 8,
+  },
+  validLabel: {
+    fontSize: T.dateLabel,
+    color: C.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  validValue: {
+    fontSize: T.dateValue,
+    fontFamily: 'Helvetica-Bold',
+    color: C.navy,
+    marginTop: 1,
+  },
 
   signRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
-  seal: { width: 62, height: 62, borderRadius: 31, borderWidth: 1.5, borderColor: GOLD, alignItems: 'center', justifyContent: 'center' },
-  sealTop: { fontSize: 6, color: GOLD, fontFamily: 'Helvetica-Bold', letterSpacing: 0.5, textAlign: 'center' },
-  sealMark: { fontSize: 15, color: NAVY, fontFamily: 'Helvetica-Bold', marginVertical: 1 },
-  sealBottom: { fontSize: 5, color: GOLD, letterSpacing: 0.5, textAlign: 'center' },
-  signCol: { alignItems: 'center', flex: 1, marginHorizontal: 14 },
-  signLine: { width: 150, borderBottomWidth: 1, borderBottomColor: NAVY, height: 22 },
-  signLabel: { marginTop: 4, fontSize: 8, color: MUTED, textAlign: 'center' },
+  signCol: { alignItems: 'center', flex: 1, marginHorizontal: 12 },
+  signLine: { width: 150, borderBottomWidth: 1, borderBottomColor: C.navy, height: 20 },
+  signLabel: { marginTop: 4, fontSize: 7.5, color: C.muted, textAlign: 'center' },
   qrCol: { alignItems: 'center' },
-  qr: { width: 62, height: 62 },
-  qrText: { fontSize: 6.5, color: MUTED, marginTop: 3, textAlign: 'center', maxWidth: 78 },
+  qr: { width: 58, height: 58 },
+  qrText: { fontSize: 6.2, color: C.muted, marginTop: 3, textAlign: 'center', maxWidth: 78 },
 
-  legal: { position: 'absolute', bottom: 6, left: 34, right: 34, fontSize: 6.5, color: '#94a3b8', textAlign: 'center', lineHeight: 1.4 },
+  legal: {
+    position: 'absolute',
+    bottom: 8,
+    left: CERT.frame.padH,
+    right: CERT.frame.padH,
+    fontSize: T.legal,
+    color: '#94a3b8',
+    textAlign: 'center',
+    lineHeight: 1.4,
+  },
 })
 
 function fmt(d: Date): string {
   return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-export type SicPdfModule = { title: string; lines: string[] }
+export type SicPdfModule = {
+  id?: SicModuleId
+  title: string
+  lines: string[]
+}
 
 export function SicCertificatePdfDocument(props: {
   certificateCode: string
@@ -85,21 +230,32 @@ export function SicCertificatePdfDocument(props: {
   verifyUrl: string
   qrDataUrl: string
 }) {
-  const { certificateCode, holderName, issuedAt, expiresAt, verifiedModules, verifyUrl, qrDataUrl } = props
+  const { certificateCode, holderName, issuedAt, expiresAt, verifiedModules, verifyUrl, qrDataUrl } =
+    props
 
   return (
     <Document title={`Swiss Immo Cert ${certificateCode}`}>
       <Page size="A4" style={s.page}>
         <View style={s.frameOuter}>
           <View style={s.frameInner}>
-            <Text style={s.code}>{certificateCode}</Text>
+            <View style={[s.corner, s.cornerTL]}>
+              <CornerFlourish corner="tl" />
+            </View>
+            <View style={[s.corner, s.cornerTR]}>
+              <CornerFlourish corner="tr" />
+            </View>
+            <View style={[s.corner, s.cornerBL]}>
+              <CornerFlourish corner="bl" />
+            </View>
+            <View style={[s.corner, s.cornerBR]}>
+              <CornerFlourish corner="br" />
+            </View>
 
-            {/* Kopf */}
-            <View style={s.header}>
-              <View style={s.crest}>
-                <View style={s.crestV} />
-                <View style={s.crestH} />
-              </View>
+            <Image src={SIC_CERT_BACKDROP_DATA_URL} style={s.backdrop} />
+
+            <View style={s.headerBand}>
+              <Text style={s.code}>{certificateCode}</Text>
+              <CrestWithLaurel size={72} />
               <Text style={s.brand}>SWISS IMMO CERT</Text>
               <View style={s.brandRuleRow}>
                 <View style={s.brandRule} />
@@ -109,24 +265,24 @@ export function SicCertificatePdfDocument(props: {
               <Text style={s.tagline}>Geprüft. Verifiziert. Vertrauenswürdig.</Text>
             </View>
 
-            <View style={s.divider} />
-
             <View style={s.holderWrap}>
               <Text style={s.holderLabel}>Ausgestellt für</Text>
               <Text style={s.holderName}>{holderName || 'Inhaber gemäss Nachweisen'}</Text>
+              <View style={s.holderRule}>
+                <GuillocheRule width={160} />
+              </View>
             </View>
 
-            {/* Verifizierte Angaben */}
             <View style={s.rows}>
               {verifiedModules.length === 0 ?
                 <Text style={s.emptyNote}>
-                  Basiszertifikat — es wurden noch keine Module verifiziert. Fügen Sie Module hinzu, um geprüfte
-                  Angaben anzuzeigen.
+                  Basiszertifikat — es wurden noch keine Module verifiziert. Fügen Sie Module hinzu,
+                  um geprüfte Angaben anzuzeigen.
                 </Text>
               : verifiedModules.map((m, i) => (
-                  <View key={i} style={s.block}>
-                    <View style={s.bullet}>
-                      <Text style={s.bulletMark}>✓</Text>
+                  <View key={i} style={s.block} wrap={false}>
+                    <View style={s.glyphWrap}>
+                      <ModuleGlyph moduleId={m.id} size={16} />
                     </View>
                     <View style={s.blockBody}>
                       <Text style={s.blockTitle}>{m.title}</Text>
@@ -137,27 +293,29 @@ export function SicCertificatePdfDocument(props: {
                         </View>
                       ))}
                     </View>
-                    <View style={s.verified}>
-                      <Text style={s.verifiedCheck}>✓</Text>
-                      <Text style={s.verifiedText}>VERIFIZIERT</Text>
+                    <View style={s.badge}>
+                      <Text style={s.badgeText}>VERIFIZIERT</Text>
                     </View>
                   </View>
                 ))
               }
             </View>
 
-            {/* Fuss */}
             <View style={s.footer}>
               <View style={s.validityRow}>
                 <View style={s.validCol}>
-                  <View style={s.calIcon} />
+                  <View style={s.calIcon}>
+                    <CalendarMark size={18} />
+                  </View>
                   <View>
                     <Text style={s.validLabel}>Zertifikatsdatum</Text>
                     <Text style={s.validValue}>{fmt(issuedAt)}</Text>
                   </View>
                 </View>
                 <View style={s.validCol}>
-                  <View style={s.calIcon} />
+                  <View style={s.calIcon}>
+                    <CalendarMark size={18} />
+                  </View>
                   <View>
                     <Text style={s.validLabel}>Gültig bis</Text>
                     <Text style={s.validValue}>{fmt(expiresAt)}</Text>
@@ -166,11 +324,7 @@ export function SicCertificatePdfDocument(props: {
               </View>
 
               <View style={s.signRow}>
-                <View style={s.seal}>
-                  <Text style={s.sealTop}>GEPRÜFT &amp;</Text>
-                  <Text style={s.sealMark}>SIC</Text>
-                  <Text style={s.sealBottom}>VERIFIZIERT</Text>
-                </View>
+                <Seal size={58} />
 
                 <View style={s.signCol}>
                   <View style={s.signLine} />
@@ -185,8 +339,9 @@ export function SicCertificatePdfDocument(props: {
             </View>
 
             <Text style={s.legal}>
-              Swiss Immo Cert bestätigt die Prüfung der eingereichten Nachweise zum Ausstellungszeitpunkt. Das
-              Zertifikat ersetzt keine behördliche Auskunft. Online-Verifikation: {verifyUrl}
+              Swiss Immo Cert bestätigt die Prüfung der eingereichten Nachweise zum
+              Ausstellungszeitpunkt. Das Zertifikat ersetzt keine behördliche Auskunft.
+              Online-Verifikation: {verifyUrl}
             </Text>
           </View>
         </View>
