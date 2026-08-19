@@ -54,10 +54,10 @@ const HOW_STEPS: { icon: LucideIcon; title: string }[] = [
 ]
 
 const TODAY_SCENES = [
-  'Wieder dasselbe Paket. Keine Rückmeldung, keine Erklärung.',
-  'Drei Dossiers werden wirklich gelesen. Du bist der Rest — Lärm.',
-  'Ohne geprüfte Belege wirkst du austauschbar, unabhängig davon, wie gut du bist.',
-  'Jede Absage kostet die nächste Besichtigung, nicht nur Nerven.',
+  'Für eine Wohnung bewerben sich oft Dutzende. Dreissig Leute an einer Besichtigung sind keine Ausnahme.',
+  'Der Vermieter schaut ein paar Dossiers wirklich an. Der Rest geht unter — auch mit Lohn, Betreibung und Ausweis.',
+  'Du schickst die Unterlagen. Es kommt keine Antwort vom Vermieter. Die Wohnung ist trotzdem weg.',
+  'Bei so vielen Bewerbern zählt nicht nur, wie gut du bist. Es zählt, ob er dich überhaupt aus dem Stapel holt.',
 ]
 
 const CHANGE_POINTS = [
@@ -322,13 +322,13 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   Für Wohnungssuchende in der Schweiz
                 </span>
                 <h1 className="mt-6 text-3xl font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
-                  Du bewirbst dich.{' '}
-                  <span style={{ color: SIC_COLORS.goldLight }}>Gelesen wirst du trotzdem nicht.</span>
+                  Du schickst die Unterlagen.{' '}
+                  <span style={{ color: SIC_COLORS.goldLight }}>Es kommt keine Antwort.</span>
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-                  Nicht weil du ungeeignet bist — weil du in einem Stapel aussiehst wie alle anderen. Ein
-                  geprüftes Mieter-Zertifikat ist die Handlung, die noch bei dir liegt: ein Auftritt, den ein
-                  Vermieter in Sekunden ernst nimmt. Keine Wohnungszusage.
+                  Lohn, Betreibung, Ausweis — und trotzdem still. Nicht weil du ungeeignet bist: weil Dutzende
+                  dasselbe schicken und deine Bewerbung im Stapel untergeht. Ein geprüftes Mieter-Zertifikat ist
+                  das eine Blatt, das jemand in Sekunden versteht. Keine Wohnungszusage.
                 </p>
                 <a
                   href="#module"
@@ -340,7 +340,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               <div id="zertifikat">
                 <CertUrkundeCard />
                 <p className="mt-3 text-center text-xs leading-relaxed text-white/50">
-                  Das Blatt, das jemand öffnet — nicht der zwölfte Anhang.
+                  Statt fünf PDFs in einer Mail — ein Dokument mit QR.
                 </p>
               </div>
             </div>
