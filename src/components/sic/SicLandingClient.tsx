@@ -16,14 +16,11 @@ import type { SicLandingAccount } from '@/lib/sic/landing-account'
 import { sicPaths } from '@/lib/sic/config'
 import {
   ArrowRight,
-  BadgeCheck,
   Briefcase,
-  Building2,
   Check,
   ChevronDown,
   Clock,
   CreditCard,
-  FileText,
   Globe,
   ListChecks,
   Lock,
@@ -31,7 +28,6 @@ import {
   ShieldCheck,
   Upload,
   UserCheck,
-  Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
@@ -50,10 +46,6 @@ const MODULE_ICON: Record<SicModuleId, LucideIcon> = {
   AUFENTHALT: Globe,
 }
 
-function moduleOrder(id: SicModuleId): number {
-  return SIC_MODULES.find(m => m.id === id)?.order ?? 0
-}
-
 const HOW_STEPS: { icon: LucideIcon; title: string }[] = [
   { icon: ListChecks, title: 'Module wählen & Zertifikat als Vorschau sehen' },
   { icon: CreditCard, title: 'Sicher bezahlen (Stripe) — schaltet den Upload frei' },
@@ -61,32 +53,19 @@ const HOW_STEPS: { icon: LucideIcon; title: string }[] = [
   { icon: QrCode, title: 'Fertiges Zertifikat mit QR-Code erhalten' },
 ]
 
-const PROBLEM_POINTS = [
-  'Wohnungsmarkt stark überlastet',
-  'Bis zu 100 Bewerbungen pro Wohnung',
-  'Hoher Aufwand für Vermieter',
-  'Gute Bewerber gehen unter',
+const TODAY_SCENES = [
+  'Wieder dasselbe Paket. Keine Rückmeldung, keine Erklärung.',
+  'Drei Dossiers werden wirklich gelesen. Du bist der Rest — Lärm.',
+  'Ohne geprüfte Belege wirkst du austauschbar, unabhängig davon, wie gut du bist.',
+  'Jede Absage kostet die nächste Besichtigung, nicht nur Nerven.',
 ]
 
-const TENANT_POINTS = [
-  'Persönliches Profil',
-  'Arbeitsverhältnis (Dauer, Status, Jahreslohn)',
-  'Betreibungsauszug',
-  'Arbeitgeberbestätigung',
-  'Referenzen der letzten Vermieter',
-  'Alle Dokumente zentral und geprüft',
+const CHANGE_POINTS = [
+  'Ein Zertifikat statt Formular-Chaos auf jedem Portal.',
+  'Belege auf Vollständigkeit und Plausibilität gesichtet — ohne Anruf beim Arbeitgeber.',
+  'QR-Code: Echtheit in Sekunden, nicht «ich schwöre, das PDF ist echt».',
+  'Mitnehmen zu Homegate, Mail, Direktanfrage — unabhängig davon, wo du dich bewirbst.',
 ]
-
-const TENANT_BENEFITS = ['Höhere Glaubwürdigkeit', 'Schnellere Bewerbung', 'Mehr Erfolgschancen']
-
-const LANDLORD_POINTS = [
-  'Weniger Administrationsaufwand',
-  'Geprüfte, einheitliche Informationen',
-  'Einheitliche Bewerbungsunterlagen',
-  'Schnellere & fundiertere Entscheidungsfindung',
-]
-
-const LANDLORD_BENEFITS = ['Zeit sparen', 'Risiko minimieren', 'Bessere Mieter finden']
 
 const CERT_PREVIEW: { label: string; value: string; module: SicModuleId }[] = [
   { label: 'Bonität', value: 'Keine Betreibungen', module: 'BONITAET' },
@@ -303,190 +282,140 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               'radial-gradient(60% 60% at 80% 0%, rgba(28,61,120,0.9) 0%, rgba(10,31,69,0) 60%), radial-gradient(50% 50% at 0% 100%, rgba(184,145,47,0.18) 0%, rgba(10,31,69,0) 60%)',
           }}
         />
-        <div className="relative mx-auto max-w-6xl px-5 pb-20 pt-16 sm:pt-20">
-          <div className="mx-auto max-w-3xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/80">
-              <ShieldCheck className="h-3.5 w-3.5" style={{ color: SIC_COLORS.goldLight }} />
-              SIC — Der Fast Track zur Wunschwohnung
-            </span>
-            <h1 className="mt-6 text-3xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl">
-              Das geprüfte Schweizer <span style={{ color: SIC_COLORS.goldLight }}>Mieter-Zertifikat</span>
-            </h1>
-            <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-              Bonität, Einkommen, Zuverlässigkeit und Aufenthaltsstatus — anhand eingereichter Belege
-              geprüft und per QR-Code fälschungssicher überprüfbar. Ein Dokument, das Vermieter überzeugt.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              {isReturning ?
-                <>
-                  {!nothingToBuy ?
-                    <a
-                      href="#module"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
-                    >
-                      Modul hinzufügen <ArrowRight className="h-4 w-4" />
-                    </a>
-                  : <a
-                      href={sicPaths.certificateWorkspace}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
-                    >
-                      Zum Zertifikat <ArrowRight className="h-4 w-4" />
-                    </a>
-                  }
-                  <a
-                    href="#zertifikat"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
-                  >
-                    So sieht es aus
-                  </a>
-                </>
-              : <>
+        <div className="relative mx-auto max-w-6xl px-5 pb-16 pt-14 sm:pt-16 lg:pb-20 lg:pt-20">
+          {isReturning ?
+            <div className="mx-auto max-w-3xl text-center">
+              <h1 className="text-3xl font-bold leading-[1.1] tracking-tight text-white sm:text-4xl">
+                Dein Mieter-Zertifikat
+              </h1>
+              <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/70">
+                Status, Uploads und Nachkauf bleiben unter «Mein Zertifikat». Hier kannst du fehlende Module
+                hinzufügen.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                {!nothingToBuy ?
                   <a
                     href="#module"
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
                   >
-                    Zertifikat erstellen <ArrowRight className="h-4 w-4" />
+                    Modul hinzufügen <ArrowRight className="h-4 w-4" />
                   </a>
-                  <a
-                    href="#zertifikat"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                : <a
+                    href={sicPaths.certificateWorkspace}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
                   >
-                    So sieht es aus
+                    Zum Zertifikat <ArrowRight className="h-4 w-4" />
                   </a>
-                </>
-              }
+                }
+                <a
+                  href={sicPaths.certificateWorkspace}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                >
+                  Mein Zertifikat
+                </a>
+              </div>
             </div>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-white/60">
-              <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4" style={{ color: SIC_COLORS.goldLight }} /> Ab CHF {SIC_BASE_FEE_CHF}</span>
-              <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4" style={{ color: SIC_COLORS.goldLight }} /> {SIC_VALIDITY_MONTHS} Monate gültig</span>
-              <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4" style={{ color: SIC_COLORS.goldLight }} /> Ohne Passwort</span>
-              <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4" style={{ color: SIC_COLORS.goldLight }} /> Prüfung innert 24 Std. nach vollständigem Upload</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Problem / Lösung ─────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-5 py-16">
-        <div className="grid gap-5 md:grid-cols-2">
-          <div className="rounded-3xl border border-[#c8102e]/15 bg-[#c8102e]/[0.03] p-7">
-            <span className="inline-block rounded-full bg-[#c8102e] px-4 py-1 text-xs font-bold uppercase tracking-wider text-white">
-              Das Problem
-            </span>
-            <ul className="mt-5 space-y-3">
-              {PROBLEM_POINTS.map(p => (
-                <li key={p} className="flex items-start gap-3 text-[15px] text-slate-700">
-                  <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#c8102e]" />
-                  {p}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-3xl border border-[#2f9e44]/15 bg-[#2f9e44]/[0.04] p-7">
-            <span className="inline-block rounded-full bg-[#1f7a34] px-4 py-1 text-xs font-bold uppercase tracking-wider text-white">
-              Die Lösung
-            </span>
-            <p className="mt-5 text-[15px] leading-relaxed text-slate-700">
-              <strong className="font-semibold text-[#0f2b5e]">Swiss Immo Cert (SIC)</strong> ist ein digitales
-              Qualitätszertifikat für Wohnungssuchende. Alle relevanten Informationen — geprüft, vollständig
-              und per QR-Code überprüfbar — in einem einzigen Zertifikat.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {['Geprüft', 'Vollständig', 'QR-überprüfbar'].map(t => (
-                <span key={t} className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1f7a34] ring-1 ring-[#2f9e44]/20">
-                  <Check className="h-3.5 w-3.5" /> {t}
+          : <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/80">
+                  <ShieldCheck className="h-3.5 w-3.5" style={{ color: SIC_COLORS.goldLight }} />
+                  Für Wohnungssuchende in der Schweiz
                 </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Zielgruppen-Panels ───────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-5 pb-16">
-        <div className="grid gap-5 lg:grid-cols-2">
-          <AudiencePanel icon={Users} title="Für Mietsuchende" points={TENANT_POINTS} benefits={TENANT_BENEFITS} />
-          <AudiencePanel icon={Building2} title="Für Wohnungsvermieter" points={LANDLORD_POINTS} benefits={LANDLORD_BENEFITS} />
-        </div>
-      </section>
-
-      {/* ── Beispiel-Zertifikat (vor dem Geld) ───────────────────────────── */}
-      <section id="zertifikat" className="mx-auto max-w-6xl px-5 pb-16">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight text-[#0f2b5e]">So sieht dein Zertifikat aus</h2>
-            <p className="mt-4 max-w-md text-slate-600">
-              Ein seriöses Dokument mit geprüften Angaben und einem QR-Code, mit dem Vermieter die Echtheit des
-              Zertifikats in Sekunden fälschungssicher prüfen können.
-            </p>
-            <ul className="mt-6 space-y-3 text-sm text-slate-600">
-              <li className="flex items-center gap-2.5"><BadgeCheck className="h-5 w-5 text-[#b8912f]" /> Fälschungssicher — Online-Verifikation per QR</li>
-              <li className="flex items-center gap-2.5"><FileText className="h-5 w-5 text-[#b8912f]" /> Als PDF überall beilegbar — auch bei anderen Portalen</li>
-              <li className="flex items-center gap-2.5"><Clock className="h-5 w-5 text-[#b8912f]" /> {SIC_VALIDITY_MONTHS} Monate gültig — in dieser Zeit ohne erneuten Upload verlängerbar</li>
-            </ul>
-            <a
-              href={isReturning ? (nothingToBuy ? sicPaths.certificateWorkspace : '#module') : '#module'}
-              className="mt-7 inline-flex items-center gap-2 rounded-xl bg-[#0f2b5e] px-5 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
-            >
-              {isReturning ?
-                nothingToBuy ?
-                  'Zum Zertifikat'
-                : 'Modul hinzufügen'
-              : 'Zertifikat erstellen'}{' '}
-              <ArrowRight className="h-4 w-4" />
-            </a>
-          </div>
-
-          {/* Beispiel-Karte */}
-          <div className="relative rounded-2xl bg-white p-1.5 shadow-xl shadow-[#0a1f45]/10 ring-1 ring-[#b8912f]/40">
-            <span className="absolute right-4 top-4 z-10 rounded-full bg-slate-900/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
-              Beispiel
-            </span>
-            <div className="rounded-xl border-2 border-[#b8912f]/50 bg-gradient-to-b from-white to-slate-50 p-6">
-              <div className="text-center">
-                <div className="mx-auto flex w-fit justify-center">
-                  <SicLogoMark size={40} />
-                </div>
-                <p className="mt-3 text-lg font-bold tracking-[0.15em] text-[#0f2b5e]">SWISS IMMO CERT</p>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#b8912f]">Mieter-Zertifikat</p>
+                <h1 className="mt-6 text-3xl font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
+                  Du bewirbst dich.{' '}
+                  <span style={{ color: SIC_COLORS.goldLight }}>Gelesen wirst du trotzdem nicht.</span>
+                </h1>
+                <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+                  Nicht weil du ungeeignet bist — weil du in einem Stapel aussiehst wie alle anderen. Ein
+                  geprüftes Mieter-Zertifikat ist die Handlung, die noch bei dir liegt: ein Auftritt, den ein
+                  Vermieter in Sekunden ernst nimmt. Keine Wohnungszusage.
+                </p>
+                <a
+                  href="#module"
+                  className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
+                >
+                  Zertifikat erstellen <ArrowRight className="h-4 w-4" />
+                </a>
               </div>
-              <dl className="mt-5 divide-y divide-slate-100">
-                {CERT_PREVIEW.map(row => {
-                  const accent = SIC_MODULE_ACCENT[row.module]
-                  return (
-                    <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <dt className="text-xs font-semibold text-[#0f2b5e]">{row.label}</dt>
-                          <span
-                            className="rounded px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white"
-                            style={{ backgroundColor: accent.hex }}
-                          >
-                            Modul {moduleOrder(row.module)}
-                          </span>
-                        </div>
-                        <dd className="truncate text-xs text-slate-500">{row.value}</dd>
-                      </div>
-                      <span className="inline-flex flex-shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-[#2f9e44]">
-                        <Check className="h-3.5 w-3.5" /> Verifiziert
-                      </span>
-                    </div>
-                  )
-                })}
-              </dl>
-              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-[10px] text-slate-400">
-                <span>Geprüft. Verifiziert. Vertrauenswürdig.</span>
-                <span className="rounded bg-[#0f2b5e] px-2 py-0.5 font-semibold text-white">QR-geschützt</span>
+              <div id="zertifikat">
+                <CertUrkundeCard />
+                <p className="mt-3 text-center text-xs leading-relaxed text-white/50">
+                  Das Blatt, das jemand öffnet — nicht der zwölfte Anhang.
+                </p>
               </div>
             </div>
-          </div>
+          }
         </div>
       </section>
+
+      {!isReturning ?
+        <>
+          <section className="bg-[#fbf9f3]">
+            <div className="mx-auto max-w-3xl px-5 py-16 sm:py-20">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#b8912f]">
+                So ist es heute
+              </p>
+              <div className="mt-8">
+                {TODAY_SCENES.map((scene, i) => (
+                  <p
+                    key={scene}
+                    className={`text-xl leading-snug text-[#0f2b5e] sm:text-2xl ${
+                      i > 0 ? 'mt-7 border-t border-[#b8912f]/35 pt-7' : ''
+                    }`}
+                  >
+                    {scene}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="bg-[#0a1f45] text-white">
+            <div className="mx-auto max-w-3xl px-5 py-16 sm:py-20">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#d8b25a]">
+                Was sich ändert
+              </p>
+              <p className="mt-5 text-lg leading-relaxed text-white/80 sm:text-xl">
+                Ein Dokument statt zwölf PDFs, die niemand öffnet. Belege gesichtet auf Vollständigkeit und
+                Plausibilität — ohne Anruf beim Arbeitgeber. QR zur Echtheit. Mitnehmen auf jedes Portal,
+                jede Mail, jede Direktanfrage.
+              </p>
+              <ul className="mt-8 space-y-3">
+                {CHANGE_POINTS.map(p => (
+                  <li key={p} className="flex items-start gap-3 text-[15px] leading-relaxed text-white/75">
+                    <span className="mt-2 h-px w-6 flex-shrink-0 bg-[#d8b25a]" />
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+
+          <p className="mx-auto max-w-3xl px-5 py-8 text-center text-sm leading-relaxed text-slate-600">
+            Swiss Immo Cert vergibt keine Wohnungen und keine Zusage. Wir machen deine Angaben prüfbar.
+            Ernst genommen wirst du, wenn das Dossier stimmt — nicht weil eine Landingpage laut ist.
+          </p>
+          <p className="mx-auto max-w-3xl px-5 pb-10 text-center text-sm text-slate-500">
+            Falls du vermietest: einheitliche, geprüfte Angaben statt Papierkrieg. Die Entscheidung bleibt
+            deine.
+          </p>
+        </>
+      : null}
 
       {/* ── So funktioniert's ────────────────────────────────────────────── */}
       <section className="bg-slate-50 py-16">
         <div className="mx-auto max-w-6xl px-5">
           <h2 className="text-center text-3xl font-bold tracking-tight text-[#0f2b5e]">In 4 Schritten zum Zertifikat</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
+            Bezahlen schaltet den Upload frei. Beilegen willst du das PDF erst, wenn mindestens ein Modul
+            verifiziert ist.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-500">
+            <span>Ab CHF {SIC_BASE_FEE_CHF}</span>
+            <span>{SIC_VALIDITY_MONTHS} Monate gültig</span>
+            <span>Als PDF überall beilegbar</span>
+            <span>Prüfung innert 24 Std. nach vollständigem Upload</span>
+          </div>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_STEPS.map((step, i) => (
               <div key={step.title} className="relative rounded-2xl border border-slate-200 bg-white p-6">
@@ -511,12 +440,12 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               <SicLogoMark size={26} />
             </div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#0f2b5e] sm:text-4xl">
-              {isReturning ? 'Dein Zertifikat erweitern' : '4 verifizierte Module'}
+              {isReturning ? 'Dein Zertifikat erweitern' : 'Was auf dem Zertifikat stehen darf'}
             </h2>
             <p className="mt-2 text-slate-500">
               {isReturning ?
                 'Bereits gekaufte Module sind markiert — nur fehlende kannst du nachkaufen.'
-              : 'Einfach. Transparent. Vertrauenswürdig.'}
+              : 'Nur gewählte und freigegebene Module erscheinen als verifiziert.'}
             </p>
             <p className="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-slate-400">
               Verifiziert bedeutet: Der eingereichte Beleg wurde von Swiss Immo Cert gesichtet und auf
@@ -927,7 +856,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               nothingToBuy ?
                 'Dein Zertifikat ist vollständig.'
               : 'Modul hinzufügen und Zertifikat erweitern.'
-            : 'Bereit? Stell dein Mieter-Zertifikat zusammen.'}
+            : 'Mach dein Dossier zum Dokument, das jemand öffnet.'}
           </span>
           {isReturning && nothingToBuy ?
             <a
@@ -949,40 +878,40 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
   )
 }
 
-function AudiencePanel({
-  icon: Icon,
-  title,
-  points,
-  benefits,
-}: {
-  icon: LucideIcon
-  title: string
-  points: string[]
-  benefits: string[]
-}) {
+function CertUrkundeCard() {
   return (
-    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
-      <div className="flex items-center gap-3 bg-[#0f2b5e] px-6 py-4">
-        <Icon className="h-5 w-5 flex-shrink-0" style={{ color: SIC_COLORS.goldLight }} />
-        {/* Inline-Farbe: globals.css setzt h1–h6 auf text-gray-900 und schlägt Vererbung */}
-        <h3 className="text-base font-bold uppercase tracking-wide text-white" style={{ color: '#ffffff' }}>
-          {title}
-        </h3>
-      </div>
-      <div className="p-6">
-        <ul className="space-y-2.5">
-          {points.map(p => (
-            <li key={p} className="flex items-start gap-2.5 text-sm text-slate-700">
-              <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#2f9e44]" /> {p}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-5 space-y-1.5 border-t border-slate-100 pt-4">
-          {benefits.map(b => (
-            <p key={b} className="flex items-center gap-2 text-sm font-semibold text-[#0f2b5e]">
-              <ArrowRight className="h-4 w-4 text-[#c8102e]" /> {b}
-            </p>
-          ))}
+    <div className="relative overflow-hidden rounded-2xl bg-[#fbf9f3] p-1.5 shadow-xl shadow-black/25 ring-1 ring-[#b8912f]/50">
+      <span className="absolute right-4 top-4 z-10 rounded-full bg-[#0a1f45]/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
+        Beispiel
+      </span>
+      <div className="overflow-hidden rounded-xl border border-[#b8912f]/60">
+        <div className="bg-[#0f2b5e] px-5 py-5 text-center">
+          <div className="mx-auto flex w-fit justify-center">
+            <SicLogoMark size={36} />
+          </div>
+          <p className="mt-2 text-sm font-bold tracking-[0.18em] text-white">SWISS IMMO CERT</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#d8b25a]">Mieter-Zertifikat</p>
+        </div>
+        <div className="bg-[#fbf9f3] px-5 pb-5 pt-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ausgestellt für</p>
+          <p className="font-serif text-base font-bold text-[#0f2b5e]">Beispiel · Inhaberin</p>
+          <dl className="mt-3 divide-y divide-[#e7ddc4]">
+            {CERT_PREVIEW.map(row => (
+              <div key={row.label} className="flex items-center justify-between gap-3 py-2">
+                <div className="min-w-0">
+                  <dt className="text-xs font-semibold text-[#0f2b5e]">{row.label}</dt>
+                  <dd className="truncate text-xs text-slate-500">{row.value}</dd>
+                </div>
+                <span className="inline-flex flex-shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[#b8912f]">
+                  <Check className="h-3 w-3" /> Verifiziert
+                </span>
+              </div>
+            ))}
+          </dl>
+          <div className="mt-3 flex items-center justify-between border-t border-[#e7ddc4] pt-3 text-[10px] text-slate-400">
+            <span>Geprüft. Verifiziert. Vertrauenswürdig.</span>
+            <span className="rounded bg-[#0f2b5e] px-2 py-0.5 font-semibold text-white">QR-geschützt</span>
+          </div>
         </div>
       </div>
     </div>

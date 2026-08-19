@@ -1,6 +1,10 @@
 /** Shared FAQ for Landing + /sic/faq (single source of truth). */
 export const SIC_FAQ: { q: string; a: string }[] = [
   {
+    q: 'Bekommen wir mit SIC eher die Wohnung?',
+    a: 'Das entscheiden Vermieter. SIC macht die Bewerbung prüfbar und einheitlich — du gehst nicht als ungelesene Datei unter. Eine Zusage versprechen wir nicht.',
+  },
+  {
     q: 'Was passiert, wenn ein Beleg nicht anerkannt wird?',
     a: 'Wir bitten dich, einen gültigen Nachweis nachzureichen; das Modul wird danach verifiziert.',
   },

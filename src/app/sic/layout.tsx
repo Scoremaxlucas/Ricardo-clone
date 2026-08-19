@@ -7,7 +7,7 @@ import Link from 'next/link'
 // definieren, sonst wird die Marke im <title> doppelt angehängt.
 export const metadata: Metadata = {
   description:
-    'Erstelle dein geprüftes Mieter-Zertifikat: Bonität, Einkommen, Zuverlässigkeit und Aufenthaltsstatus — geprüft und per QR-Code überprüfbar. Bewirb dich schneller und überzeugender.',
+    'Du bewirbst dich, und es reicht oft nicht. Swiss Immo Cert ist das geprüfte Mieter-Zertifikat — Bonität, Einkommen, Zuverlässigkeit, Aufenthalt — per QR prüfbar. Keine Wohnungszusage: ein Dossier, das ernst genommen wird.',
   robots: { index: true, follow: true },
 }
 
@@ -37,8 +37,8 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
           <div>
             <SicLogo size={30} onDark />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
-              Das geprüfte Schweizer Mieter-Zertifikat. Bonität, Einkommen, Zuverlässigkeit und
-              Aufenthaltsstatus — verifiziert und mit QR-Code überprüfbar.
+              Das geprüfte Schweizer Mieter-Zertifikat. Sichtbar, prüfbar, ernst genommen — keine
+              Wohnungszusage, ein Dossier, das Vermieter nicht überblättern.
             </p>
           </div>
           <nav className="flex flex-col gap-2.5 text-sm">
