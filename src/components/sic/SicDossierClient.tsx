@@ -309,6 +309,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                 </span>
               </div>
               <p className="mt-1.5 text-sm text-slate-500">{m.summary}</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">Für den Vermieter: {m.landlordSees}</p>
 
               {m.reviewNote && m.status === 'REJECTED' ?
                 <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{m.reviewNote}</p>
@@ -364,7 +365,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                     {uploading === m.moduleKind ? 'Wird hochgeladen …' : 'Nachweis hochladen'}
                   </button>
                   <p className="mt-1.5 text-[11px] text-slate-400">
-                    Du kannst mehrere Dateien nacheinander hochladen (z. B. Lohnausweis und Mietvertrag).
+                    Du kannst mehrere Dateien nacheinander hochladen (z. B. Lohnausweis und Betreibungsauszug).
                   </p>
                   {m.documents.length > 0 ?
                     <ul className="mt-3 space-y-2">
@@ -409,9 +410,12 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           </p>
           <ul className="mt-3 space-y-2">
             {dossier.availableModules.map(a => (
-              <li key={a.moduleKind} className="flex items-center justify-between text-sm">
-                <span className="text-slate-700">{a.title}</span>
-                <span className="text-slate-500">{a.priceChf <= 0 ? 'Kostenlos' : `CHF ${a.priceChf}`}</span>
+              <li key={a.moduleKind} className="text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-medium text-slate-700">{a.title}</span>
+                  <span className="flex-shrink-0 text-slate-500">{a.priceChf <= 0 ? 'Kostenlos' : `CHF ${a.priceChf}`}</span>
+                </div>
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{a.landlordSees}</p>
               </li>
             ))}
           </ul>

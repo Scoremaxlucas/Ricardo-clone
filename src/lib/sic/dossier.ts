@@ -23,6 +23,7 @@ export type SicDossierModuleView = {
   moduleKind: SicModuleId
   title: string
   summary: string
+  landlordSees: string
   requiredDocuments: string[]
   checklist: SicChecklistItem[]
   status: SicModuleStatus
@@ -47,7 +48,13 @@ export type SicDossierView = {
     rejectedCount: number
   }
   purchasedModules: SicDossierModuleView[]
-  availableModules: { moduleKind: SicModuleId; title: string; summary: string; priceChf: number }[]
+  availableModules: {
+    moduleKind: SicModuleId
+    title: string
+    summary: string
+    landlordSees: string
+    priceChf: number
+  }[]
 }
 
 /** Baut die Liste verifizierter Module (mit Zertifikatszeilen) für PDF und Verifikation. */
@@ -142,6 +149,7 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
       moduleKind: def.id,
       title: def.title,
       summary: def.summary,
+      landlordSees: def.landlordSees,
       requiredDocuments: def.requiredDocuments,
       checklist: buildChecklist(def.id, def.requiredDocuments),
       status: row.status,
@@ -155,6 +163,7 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     moduleKind: def.id,
     title: def.title,
     summary: def.summary,
+    landlordSees: def.landlordSees,
     priceChf: def.priceChf,
   }))
 

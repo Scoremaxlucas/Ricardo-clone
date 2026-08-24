@@ -21,6 +21,14 @@ export const SIC_FAQ: { q: string; a: string }[] = [
     a: 'Swiss Immo Cert ist ein unabhängiges, standardisiertes Zertifikat, das du deiner Bewerbung als PDF beilegst — bei jeder Wohnung, über jedes Portal. Ob ein Vermieter es berücksichtigt, entscheidet er selbst; das geprüfte, einheitliche Format macht deine Bewerbung nachvollziehbarer.',
   },
   {
+    q: 'Was bedeuten die vier Module?',
+    a: 'Der Vermieter hat in der Regel vier Fragen: Betreibungen, Einkommen, bisheriges Wohnen, Aufenthalt. Jedes Modul beantwortet eine. Mit allen vier ist das Zertifikat vollständig — er muss nicht nach weiteren PDFs fragen.',
+  },
+  {
+    q: 'Was heisst «Verifiziert»?',
+    a: 'Wir prüfen deine eingereichten Nachweise auf Vollständigkeit und Plausibilität. Nach erfolgreicher Prüfung steht das Modul auf dem Zertifikat als «Verifiziert». Es gibt keinen Anruf beim Arbeitgeber oder Vermieter.',
+  },
+  {
     q: 'Muss ich mich vorher anmelden?',
     a: 'Nein. Auf der Startseite wählst du Module und gibst deine E-Mail an. Danach erhältst du einen Anmeldelink — «Mein Zertifikat» ist dein Bereich für Uploads und Status.',
   },

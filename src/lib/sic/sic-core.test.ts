@@ -4,7 +4,7 @@ import {
   isValidSicCertificateCode,
   normalizeSicCertificateCode,
 } from '@/lib/sic/certificate-code'
-import { normalizeSicModuleIds, SIC_BASE_FEE_CHF, SIC_BUNDLE_ALL_MODULES_CHF, SIC_MODULE_FEE_CHF, SIC_MODULES } from '@/lib/sic/modules'
+import { normalizeSicModuleIds, SIC_BASE_FEE_CHF, SIC_BUNDLE_ALL_MODULES_CHF, SIC_MODULE_FEE_CHF, SIC_MODULES, sicBundleSavingsChf } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { addCalendarMonths, isSicExpired, sicExtendedExpiresAt, sicValidityExpiresAt } from '@/lib/sic/validity'
 
@@ -65,6 +65,14 @@ describe('pricing', () => {
     const q = quoteSicOrder({ includeBaseFee: false, moduleIds: ['BONITAET', 'AUFENTHALT'] })
     expect(q.totalChf).toBe(2 * SIC_MODULE_FEE_CHF)
     expect(q.includeBaseFee).toBe(false)
+  })
+  it('bundle savings is 0 while fees are 0 (no fake discount)', () => {
+    expect(sicBundleSavingsChf()).toBe(0)
+  })
+  it('Arbeit & Einkommen has no Mietverhältnis', () => {
+    const arbeit = SIC_MODULES.find(m => m.id === 'ARBEIT_EINKOMMEN')
+    expect(arbeit?.scopeItems.join(' ')).not.toMatch(/Mietverhältnis/)
+    expect(arbeit?.requiredDocuments.join(' ')).not.toMatch(/Mietverhältnis/)
   })
   it('ignores invalid module ids in total', () => {
     const q = quoteSicOrder({ includeBaseFee: false, moduleIds: ['BONITAET', 'nope'] })

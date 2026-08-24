@@ -7,7 +7,7 @@ import Link from 'next/link'
 // definieren, sonst wird die Marke im <title> doppelt angehängt.
 export const metadata: Metadata = {
   description:
-    'Du bewirbst dich, und es reicht oft nicht. Swiss Immo Cert ist das geprüfte Mieter-Zertifikat — Bonität, Einkommen, Zuverlässigkeit, Aufenthalt — per QR prüfbar. Keine Wohnungszusage: ein Dossier, das ernst genommen wird.',
+    'Du bewirbst dich, und es reicht oft nicht. Swiss Immo Cert ist das geprüfte Mieter-Zertifikat — Bonität, Einkommen, Wohnen und Vermieterreferenz, Aufenthalt — per QR prüfbar. Keine Wohnungszusage: ein Dossier, das ernst genommen wird.',
   robots: { index: true, follow: true },
 }
 

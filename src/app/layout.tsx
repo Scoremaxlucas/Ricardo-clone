@@ -53,7 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
         template: '%s | Swiss Immo Cert',
       },
       description:
-        'Du bewirbst dich, und es reicht oft nicht. Geprüftes Mieter-Zertifikat: Bonität, Einkommen, Zuverlässigkeit, Aufenthalt — per QR prüfbar. Keine Wohnungszusage.',
+        'Du bewirbst dich, und es reicht oft nicht. Geprüftes Mieter-Zertifikat: Bonität, Einkommen, Wohnen und Vermieterreferenz, Aufenthalt — per QR prüfbar. Keine Wohnungszusage.',
       keywords: [
         'Mieter-Zertifikat Schweiz',
         'Betreibungsauszug Mieter',

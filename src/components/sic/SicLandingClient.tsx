@@ -7,6 +7,8 @@ import {
   SIC_BUNDLE_ALL_MODULES_CHF,
   SIC_MODULES,
   SIC_VALIDITY_MONTHS,
+  sicBundleSavingsChf,
+  sicCatalogListTotalChf,
   type SicModuleId,
 } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
@@ -106,6 +108,10 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
   const quote = serverQuote ?? localQuote
   const allAvailableSelected =
     availableModules.length > 0 && availableModules.every(m => selected.has(m.id))
+  const coveredCount = SIC_MODULES.filter(m => owned.has(m.id) || selected.has(m.id)).length
+  const missingTitles = SIC_MODULES.filter(m => !owned.has(m.id) && !selected.has(m.id)).map(m => m.title)
+  const bundleSavings = sicBundleSavingsChf()
+  const catalogListTotal = sicCatalogListTotalChf()
   const isBaseOnly = !isReturning && moduleIds.length === 0
   const nothingToBuy = isReturning && availableModules.length === 0
   const verifiedCount = account?.verifiedModules.length ?? 0
@@ -331,7 +337,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   Kostenlos starten <ArrowRight className="h-4 w-4" />
                 </a>
                 <p className="mt-3 max-w-md text-xs leading-relaxed text-white/45">
-                  Keine Wohnungszusage. Ein einheitliches, prüfbares Dossier.
+                  Keine Wohnungszusage – aber eine übersichtliche Bewerbung, die Vertrauen schafft.
                 </p>
               </div>
               <div id="zertifikat">
@@ -365,7 +371,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 ))}
               </div>
               <p className="mt-8 text-lg font-semibold leading-snug text-[#0f2b5e] sm:text-xl">
-                Deshalb ein Blatt mit QR: er sieht die Angaben in einer Ansicht — du erklärst nicht fünf
+                Deshalb ein Dokument mit QR: er sieht die Angaben in einer Ansicht — du erklärst nicht fünf
                 Anhänge.
               </p>
             </div>
@@ -475,7 +481,33 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             <p className="mt-2 text-slate-500">
               {isReturning ?
                 'Bereits enthaltene Module sind markiert — fehlende kannst du hinzufügen.'
-              : 'Alles vorausgewählt. Du kannst Module abwählen; nur gewählte und freigegebene erscheinen als verifiziert.'}
+              : 'Jedes Modul beantwortet eine Frage des Vermieters. Alle vier: das Zertifikat ist vollständig.'}
+            </p>
+          </div>
+
+          <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-[#0f2b5e]/10 bg-[#0f2b5e]/[0.03] px-5 py-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-sm font-semibold text-[#0f2b5e]">Vollständigkeit</p>
+              <p className="text-sm tabular-nums text-slate-600">
+                {coveredCount} von {SIC_MODULES.length} Angaben
+              </p>
+            </div>
+            <div className="mt-2.5 flex gap-1.5" aria-hidden>
+              {SIC_MODULES.map((m, i) => (
+                <span
+                  key={m.id}
+                  className={`h-2 flex-1 rounded-full ${
+                    i < coveredCount ? 'bg-[#0f2b5e]' : 'bg-slate-200'
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="mt-2.5 text-xs leading-relaxed text-slate-500">
+              {coveredCount === SIC_MODULES.length ?
+                'Vollständig. Der Vermieter hat zu den vier üblichen Fragen eine Angabe auf dem Zertifikat.'
+              : missingTitles.length === 1 ?
+                `Noch offen: ${missingTitles[0]}. Das ist die Frage, die er sonst selbst klären muss.`
+              : `Noch offen: ${missingTitles.join(', ')}. Jede fehlende Angabe ist eine offene Frage.`}
             </p>
           </div>
 
@@ -535,21 +567,30 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     </p>
                     {!isReturning ?
                       <span className="rounded-full bg-[#c8102e] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                        Beliebteste Wahl
+                        {bundleSavings > 0 ? `CHF ${bundleSavings}.– günstiger` : 'Vollständig'}
                       </span>
                     : null}
                   </div>
                   <p className="mt-0.5 text-sm text-slate-500">
                     {isReturning ?
-                      'Nur Module, die noch fehlen.'
-                    : 'Alle vier Angaben auf einem Blatt — der stärkste Auftritt.'}
+                      'Nur Module, die noch fehlen — jede Angabe schliesst eine Frage des Vermieters.'
+                    : bundleSavings > 0 ?
+                      `Alle vier Angaben. Einzeln ${formatSicPrice(catalogListTotal)}, als Paket ${formatSicPrice(SIC_BUNDLE_ALL_MODULES_CHF)}.`
+                    : 'Alle vier Angaben auf einem Dokument — der Vermieter muss nicht nach weiteren PDFs fragen.'}
                   </p>
                 </div>
               </div>
               {!isReturning ?
                 <div className="text-right">
+                  {bundleSavings > 0 ?
+                    <p className="text-sm text-slate-400 line-through">{formatSicPrice(catalogListTotal)}</p>
+                  : null}
                   <p className="text-2xl font-bold text-[#0f2b5e]">{formatSicPrice(SIC_BUNDLE_ALL_MODULES_CHF)}</p>
-                  <p className="text-xs font-semibold text-[#2f9e44]">Inkl. Basis · Einführungsphase</p>
+                  <p className="text-xs font-semibold text-[#2f9e44]">
+                    {bundleSavings > 0 ?
+                      `CHF ${bundleSavings}.– günstiger als einzeln`
+                    : 'Inkl. Basis · Einführungsphase'}
+                  </p>
                 </div>
               : null}
             </button>
@@ -598,7 +639,11 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     Modul {m.order}
                   </p>
                   <p className="text-lg font-bold leading-tight text-[#0f2b5e]">{m.title}</p>
-                  <p className="mt-2 flex-1 text-xs leading-relaxed text-slate-500">{m.summary}</p>
+                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    Vermieter fragt: {m.landlordQuestion}
+                  </p>
+                  <p className="mt-1.5 flex-1 text-xs leading-relaxed text-slate-600">{m.landlordSees}</p>
+                  <p className="mt-2 text-[11px] leading-snug text-slate-400">Du reichst ein: {m.youUpload}</p>
                   <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
                     {alreadyOwned ?
                       <span className="rounded-md bg-[#1f7a34] px-2.5 py-1 text-xs font-bold text-white">Enthalten</span>

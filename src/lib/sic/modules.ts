@@ -2,8 +2,8 @@
  * Swiss Immo Cert (SIC) — Produktdefinition.
  *
  * Modulares Mieter-Zertifikat: Basisgebühr erstellt das Zertifikat, jedes Modul
- * verifiziert zusätzliche Angaben. Nur bezahlte + freigegebene Module erscheinen
- * als «VERIFIZIERT». Preise/Gültigkeit gemäss Produktvorgabe.
+ * beantwortet eine konkrete Frage des Vermieters. Nur bezahlte + freigegebene
+ * Module erscheinen als «VERIFIZIERT».
  *
  * Diese Datei ist die Single Source of Truth für Preise und Modulinhalte.
  */
@@ -32,9 +32,15 @@ export type SicModuleDefinition = {
   /** Reihenfolge auf Zertifikat/Checkout. */
   order: number
   title: string
-  /** Kurzbeschreibung des Prüfumfangs. */
+  /** Kurz: was wir mit den Belegen tun (Dossier, FAQ). */
   summary: string
-  /** Prüfumfang für Landing-Kacheln — ohne «geprüft», sonst wirkt es schon fertig. */
+  /** Frage, die der Vermieter damit beantwortet bekommt. */
+  landlordQuestion: string
+  /** Was auf dem Zertifikat für ihn steht — Nutzen in einem Satz. */
+  landlordSees: string
+  /** Was du einreichst. */
+  youUpload: string
+  /** Prüfumfang für Checklisten — ohne «geprüft». */
   scopeItems: string[]
   /** Verifizierte Zeilen auf dem Zertifikat-PDF (nur nach Freigabe). */
   lineItems: string[]
@@ -48,7 +54,11 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     id: 'BONITAET',
     order: 1,
     title: 'Bonität',
-    summary: 'Wir prüfen deine Bonitätsunterlagen und verifizieren sie.',
+    summary:
+      'Wir prüfen deine eingereichten Bonitätsnachweise auf Vollständigkeit und Plausibilität. Nach erfolgreicher Prüfung steht das Modul auf dem Zertifikat als «Verifiziert».',
+    landlordQuestion: 'Gibt es Betreibungen?',
+    landlordSees: 'Er sieht auf einen Blick, ob ein geprüfter Betreibungsauszug vorliegt — ohne das PDF selbst zu suchen.',
+    youUpload: 'Aktueller Betreibungsauszug (nicht älter als 3 Monate)',
     scopeItems: ['Betreibungsauszug'],
     lineItems: ['Betreibungsauszug eingereicht und geprüft'],
     requiredDocuments: ['Aktueller Betreibungsregisterauszug (max. 3 Monate alt)'],
@@ -58,31 +68,36 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     id: 'ARBEIT_EINKOMMEN',
     order: 2,
     title: 'Arbeit & Einkommen',
-    summary: 'Wir prüfen deine Arbeits- und Einkommensnachweise und verifizieren sie.',
+    summary:
+      'Wir prüfen deine eingereichten Lohn- und Arbeitsnachweise auf Vollständigkeit und Plausibilität. Nach erfolgreicher Prüfung steht das Modul auf dem Zertifikat als «Verifiziert».',
+    landlordQuestion: 'Kann er die Miete tragen?',
+    landlordSees: 'Er sieht Einkommen und Arbeitsverhältnis in einer Zeile — statt Lohnabrechnung und Vertrag einzeln zu öffnen.',
+    youUpload: 'Lohnausweis oder Lohnabrechnung plus Arbeitgeberbestätigung (SIC-Formular)',
     scopeItems: [
       'Einkommensnachweis',
       'Arbeitsverhältnis (Arbeitgeberbestätigung)',
       'Arbeitgeberdauer',
-      'Aktuelles Mietverhältnis',
     ],
     lineItems: [
       'Einkommensnachweis eingereicht und geprüft',
       'Arbeitsverhältnis (schriftliche Arbeitgeberbestätigung geprüft)',
       'Arbeitgeberdauer (Nachweis geprüft)',
-      'Aktuelles Mietverhältnis (schriftlicher Nachweis geprüft)',
     ],
     requiredDocuments: [
       'Lohnnachweis / Lohnausweis (Selbst-Upload)',
       'Arbeitgeberbestätigung — SIC-PDF-Formular vom Arbeitgeber ausfüllen und unterzeichnen lassen',
-      'Nachweis aktuelles Mietverhältnis (Selbst-Upload)',
     ],
     priceChf: SIC_MODULE_FEE_CHF,
   },
   {
     id: 'ZUVERLAESSIGKEIT',
     order: 3,
-    title: 'Zuverlässigkeit',
-    summary: 'Wir prüfen deine Referenz- und Ausweisdokumente und verifizieren sie.',
+    title: 'Wohnen & Vermieterreferenz',
+    summary:
+      'Wir prüfen die eingereichte Vermieterreferenz auf Vollständigkeit und Plausibilität. Nach erfolgreicher Prüfung steht das Modul auf dem Zertifikat als «Verifiziert».',
+    landlordQuestion: 'War er als Mieter in Ordnung?',
+    landlordSees: 'Er sieht eine geprüfte Referenz des bisherigen Vermieters — ohne selbst anrufen zu müssen.',
+    youUpload: 'Vermieter-Referenz auf dem SIC-Formular, vom bisherigen Vermieter unterzeichnet',
     scopeItems: ['Vermieterreferenz'],
     lineItems: ['Vermieterreferenz (Referenzschreiben eingereicht und geprüft)'],
     requiredDocuments: [
@@ -93,9 +108,13 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
   {
     id: 'AUFENTHALT',
     order: 4,
-    title: 'Aufenthaltsstatus',
-    summary: 'Wir prüfen deinen Aufenthaltsstatus und verifizieren ihn.',
-    scopeItems: ['Aufenthaltsstatus (Pass / ID oder Bewilligung)'],
+    title: 'Aufenthalt',
+    summary:
+      'Wir prüfen deinen eingereichten Ausweis oder die Bewilligung auf Vollständigkeit und Plausibilität. Nach erfolgreicher Prüfung steht das Modul auf dem Zertifikat als «Verifiziert».',
+    landlordQuestion: 'Darf er hier wohnen?',
+    landlordSees: 'Er sieht, dass Identität und Aufenthaltsstatus mit einem geprüften Ausweis belegt sind.',
+    youUpload: 'Pass oder ID (Schweiz) oder gültige Aufenthaltsbewilligung (C, B, L)',
+    scopeItems: ['Pass / ID oder Aufenthaltsbewilligung'],
     lineItems: ['Aufenthaltsstatus (entsprechender Nachweis geprüft)'],
     requiredDocuments: ['Pass / ID (CH) oder gültige Aufenthaltsbewilligung (C, B, L)'],
     priceChf: SIC_MODULE_FEE_CHF,
@@ -126,4 +145,17 @@ export function normalizeSicModuleIds(raw: unknown): SicModuleId[] {
     if (isSicModuleId(v)) seen.add(v)
   }
   return SIC_MODULES.filter(m => seen.has(m.id)).map(m => m.id)
+}
+
+/** Katalogpreis einzeln: Basis + jedes Modul zum Einzelpreis. */
+export function sicCatalogListTotalChf(): number {
+  return SIC_BASE_FEE_CHF + SIC_MODULES.reduce((sum, m) => sum + m.priceChf, 0)
+}
+
+/**
+ * Ersparnis Komplett-Paket gegenüber einzeln.
+ * 0 in der kostenlosen Einführungsphase — UI darf dann keinen Rabatt vortäuschen.
+ */
+export function sicBundleSavingsChf(): number {
+  return Math.max(0, sicCatalogListTotalChf() - SIC_BUNDLE_ALL_MODULES_CHF)
 }
