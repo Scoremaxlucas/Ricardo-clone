@@ -18,10 +18,12 @@ import {
   Check,
   ChevronDown,
   Clock,
-  CreditCard,
+  FileText,
   Globe,
   ListChecks,
   Lock,
+  Mail,
+  Paperclip,
   QrCode,
   ShieldCheck,
   Upload,
@@ -37,8 +39,8 @@ function formatSicPrice(chf: number): string {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-/** Standardmässig empfohlene (vorausgewählte) Module. */
-const RECOMMENDED: SicModuleId[] = ['BONITAET', 'ARBEIT_EINKOMMEN']
+/** Neukunden: Komplett-Paket vorausgewählt (stärkster Auftritt, eine Entscheidung). */
+const RECOMMENDED: SicModuleId[] = SIC_MODULES.map(m => m.id)
 
 const MODULE_ICON: Record<SicModuleId, LucideIcon> = {
   BONITAET: ShieldCheck,
@@ -48,24 +50,15 @@ const MODULE_ICON: Record<SicModuleId, LucideIcon> = {
 }
 
 const HOW_STEPS: { icon: LucideIcon; title: string }[] = [
-  { icon: ListChecks, title: 'Module wählen & Zertifikat als Vorschau sehen' },
-  { icon: CreditCard, title: 'Kostenlos starten — schaltet den Upload frei' },
-  { icon: Upload, title: 'Belege hochladen — wir prüfen sie' },
-  { icon: QrCode, title: 'Fertiges Zertifikat mit QR-Code erhalten' },
+  { icon: Mail, title: 'E-Mail angeben — Zertifikat ist angelegt' },
+  { icon: Upload, title: 'Belege hochladen (PDF oder Foto)' },
+  { icon: ListChecks, title: 'Wir sichten innert 24 Std. nach vollständigem Upload' },
+  { icon: QrCode, title: 'PDF mit QR herunterladen und der Bewerbung beilegen' },
 ]
 
 const TODAY_SCENES = [
-  'Für eine Wohnung bewerben sich oft Dutzende. Dreissig Leute an einer Besichtigung sind keine Ausnahme.',
-  'Der Vermieter schaut ein paar Dossiers wirklich an. Der Rest geht unter — auch mit Lohn, Betreibung und Ausweis.',
-  'Du schickst die Unterlagen. Es kommt keine Antwort vom Vermieter. Die Wohnung ist trotzdem weg.',
-  'Bei so vielen Bewerbern zählt nicht nur, wie gut du bist. Es zählt, ob er dich überhaupt aus dem Stapel holt.',
-]
-
-const CHANGE_POINTS = [
-  'Ein Zertifikat statt Formular-Chaos auf jedem Portal.',
-  'Belege auf Vollständigkeit und Plausibilität gesichtet — ohne Anruf beim Arbeitgeber.',
-  'QR-Code: Echtheit in Sekunden, nicht «ich schwöre, das PDF ist echt».',
-  'Mitnehmen zu Homegate, Mail, Direktanfrage — unabhängig davon, wo du dich bewirbst.',
+  'Für eine Wohnung kommen oft Dutzende Bewerbungen. Dreissig Leute an der Besichtigung sind keine Ausnahme.',
+  'Der Vermieter öffnet ein paar Dossiers. Der Rest — Lohn, Betreibung, Ausweis — bleibt ungelesen. Die Wohnung ist trotzdem weg.',
 ]
 
 const CERT_PREVIEW: { label: string; value: string; module: SicModuleId }[] = [
@@ -290,8 +283,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 Dein Mieter-Zertifikat
               </h1>
               <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/70">
-                Status, Uploads und Nachkauf bleiben unter «Mein Zertifikat». Hier kannst du fehlende Module
-                hinzufügen.
+                Status, Uploads und weitere Module bleiben unter «Mein Zertifikat». Hier kannst du fehlende
+                Module hinzufügen.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 {!nothingToBuy ?
@@ -328,20 +321,23 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
                   Lohn, Betreibung, Ausweis — und trotzdem still. Nicht weil du ungeeignet bist: weil Dutzende
-                  dasselbe schicken und deine Bewerbung im Stapel untergeht. Ein geprüftes Mieter-Zertifikat ist
-                  das eine Blatt, das jemand in Sekunden versteht. Keine Wohnungszusage.
+                  dasselbe schicken. Ein Mieter-Zertifikat ist das eine PDF, das der Vermieter in Sekunden
+                  scannen und verstehen kann.
                 </p>
                 <a
                   href="#module"
                   className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
                 >
-                  Zertifikat erstellen <ArrowRight className="h-4 w-4" />
+                  Kostenlos starten <ArrowRight className="h-4 w-4" />
                 </a>
+                <p className="mt-3 max-w-md text-xs leading-relaxed text-white/45">
+                  Keine Wohnungszusage. Ein einheitliches, prüfbares Dossier.
+                </p>
               </div>
               <div id="zertifikat">
                 <CertUrkundeCard />
                 <p className="mt-3 text-center text-xs leading-relaxed text-white/50">
-                  Statt fünf PDFs in einer Mail — ein Dokument mit QR.
+                  Er scannt den QR. Du musst nicht fünf Anhänge erklären.
                 </p>
               </div>
             </div>
@@ -352,7 +348,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       {!isReturning ?
         <>
           <section className="bg-[#fbf9f3]">
-            <div className="mx-auto max-w-3xl px-5 py-16 sm:py-20">
+            <div className="mx-auto max-w-3xl px-5 py-14 sm:py-16">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#b8912f]">
                 So ist es heute
               </p>
@@ -360,56 +356,89 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 {TODAY_SCENES.map((scene, i) => (
                   <p
                     key={scene}
-                    className={`text-xl leading-snug text-[#0f2b5e] sm:text-2xl ${
-                      i > 0 ? 'mt-7 border-t border-[#b8912f]/35 pt-7' : ''
+                    className={`text-xl leading-snug text-[#0f2b5e] sm:text-[1.65rem] ${
+                      i > 0 ? 'mt-6 border-t border-[#b8912f]/35 pt-6' : ''
                     }`}
                   >
                     {scene}
                   </p>
                 ))}
               </div>
+              <p className="mt-8 text-lg font-semibold leading-snug text-[#0f2b5e] sm:text-xl">
+                Deshalb ein Blatt mit QR: er sieht die Angaben in einer Ansicht — du erklärst nicht fünf
+                Anhänge.
+              </p>
             </div>
           </section>
 
-          <section className="bg-[#0a1f45] text-white">
-            <div className="mx-auto max-w-3xl px-5 py-16 sm:py-20">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#d8b25a]">
-                Was sich ändert
+          <section className="bg-white py-14 sm:py-16">
+            <div className="mx-auto max-w-5xl px-5">
+              <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-[#b8912f]">
+                Was der Vermieter öffnet
               </p>
-              <p className="mt-5 text-lg leading-relaxed text-white/80 sm:text-xl">
-                Ein Dokument statt zwölf PDFs, die niemand öffnet. Belege gesichtet auf Vollständigkeit und
-                Plausibilität — ohne Anruf beim Arbeitgeber. QR zur Echtheit. Mitnehmen auf jedes Portal,
-                jede Mail, jede Direktanfrage.
+              <h2 className="mt-3 text-center text-2xl font-bold tracking-tight text-[#0f2b5e] sm:text-3xl">
+                Fünf Dateien, oder ein Dokument
+              </h2>
+              <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
+                Er hat drei Minuten. Ein einheitliches PDF mit QR ist schneller zu prüfen als ein Stapel aus
+                Lohn, Betreibung, ID und Referenz.
               </p>
-              <ul className="mt-8 space-y-3">
-                {CHANGE_POINTS.map(p => (
-                  <li key={p} className="flex items-start gap-3 text-[15px] leading-relaxed text-white/75">
-                    <span className="mt-2 h-px w-6 flex-shrink-0 bg-[#d8b25a]" />
-                    {p}
-                  </li>
-                ))}
-              </ul>
+              <div className="mt-10 grid gap-5 md:grid-cols-2">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Heute</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-700">Bewerbung — 5 Anhänge</p>
+                  <ul className="mt-4 space-y-2">
+                    {[
+                      'Lohnabrechnung.pdf',
+                      'Betreibungsauszug.pdf',
+                      'Pass_ID.jpg',
+                      'Arbeitsvertrag.pdf',
+                      'Referenz.pdf',
+                    ].map(f => (
+                      <li
+                        key={f}
+                        className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600"
+                      >
+                        <Paperclip className="h-3.5 w-3.5 text-slate-400" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 text-xs leading-relaxed text-slate-500">Oft ungelesen, weil der Stapel zu lang ist.</p>
+                </div>
+                <div className="rounded-2xl border border-[#b8912f]/40 bg-[#fbf9f3] p-5 ring-1 ring-[#b8912f]/20">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#b8912f]">Mit SIC</p>
+                  <p className="mt-1 text-sm font-semibold text-[#0f2b5e]">Bewerbung — 1 Anhang</p>
+                  <div className="mt-4 flex items-start gap-3 rounded-lg border border-[#0f2b5e]/15 bg-white px-3 py-3">
+                    <FileText className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#0f2b5e]" />
+                    <div>
+                      <p className="text-sm font-semibold text-[#0f2b5e]">Mieter-Zertifikat.pdf</p>
+                      <p className="text-xs text-slate-500">Bonität, Einkommen, Referenz, Aufenthalt · QR zur Prüfung</p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs leading-relaxed text-[#0f2b5e]/70">
+                    Wir sichten die Belege auf Vollständigkeit und Plausibilität. Kein Anruf beim Arbeitgeber —
+                    der QR zeigt, dass das Dokument von uns stammt.
+                  </p>
+                </div>
+              </div>
+              <p className="mx-auto mt-8 max-w-xl text-center text-sm text-slate-500">
+                <a href="#module" className="font-semibold text-[#c8102e] hover:underline">
+                  Kostenlos starten
+                </a>
+                <span className="text-slate-400"> · Prüfung innert 24 Std. nach vollständigem Upload</span>
+              </p>
             </div>
           </section>
-
-          <p className="mx-auto max-w-3xl px-5 py-8 text-center text-sm leading-relaxed text-slate-600">
-            Swiss Immo Cert vergibt keine Wohnungen und keine Zusage. Wir machen deine Angaben prüfbar.
-            Ernst genommen wirst du, wenn das Dossier stimmt — nicht weil eine Landingpage laut ist.
-          </p>
-          <p className="mx-auto max-w-3xl px-5 pb-10 text-center text-sm text-slate-500">
-            Falls du vermietest: einheitliche, geprüfte Angaben statt Papierkrieg. Die Entscheidung bleibt
-            deine.
-          </p>
         </>
       : null}
 
       {/* ── So funktioniert's ────────────────────────────────────────────── */}
       <section className="bg-slate-50 py-16">
         <div className="mx-auto max-w-6xl px-5">
-          <h2 className="text-center text-3xl font-bold tracking-tight text-[#0f2b5e]">In 4 Schritten zum Zertifikat</h2>
+          <h2 className="text-center text-3xl font-bold tracking-tight text-[#0f2b5e]">In 4 Schritten</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-            Bezahlen schaltet den Upload frei. Beilegen willst du das PDF erst, wenn mindestens ein Modul
-            verifiziert ist.
+            E-Mail reicht zum Start. Das PDF zum Beilegen gibt es, sobald mindestens ein Modul verifiziert ist.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-500">
             <span>Derzeit kostenlos</span>
@@ -441,17 +470,12 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               <SicLogoMark size={26} />
             </div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#0f2b5e] sm:text-4xl">
-              {isReturning ? 'Dein Zertifikat erweitern' : 'Was auf dem Zertifikat stehen darf'}
+              {isReturning ? 'Zertifikat erweitern' : 'Was draufstehen soll'}
             </h2>
             <p className="mt-2 text-slate-500">
               {isReturning ?
-                'Bereits gekaufte Module sind markiert — nur fehlende kannst du nachkaufen.'
-              : 'Nur gewählte und freigegebene Module erscheinen als verifiziert.'}
-            </p>
-            <p className="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-slate-400">
-              Verifiziert bedeutet: Der eingereichte Beleg wurde von Swiss Immo Cert gesichtet und auf
-              Vollständigkeit und Plausibilität geprüft. Es erfolgt keine telefonische Rückfrage bei Dritten
-              (z. B. Arbeitgeber).
+                'Bereits enthaltene Module sind markiert — fehlende kannst du hinzufügen.'
+              : 'Alles vorausgewählt. Du kannst Module abwählen; nur gewählte und freigegebene erscheinen als verifiziert.'}
             </p>
           </div>
 
@@ -459,12 +483,12 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           <div className="mt-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-[#b8912f]/30 bg-[#b8912f]/[0.06] p-6 sm:flex-row sm:items-center">
             <div className="max-w-2xl">
               <p className="text-sm font-bold uppercase tracking-wide text-[#8a6d1f]">
-                {isReturning ? 'Basis · bereits bezahlt' : 'Basis · Einschreibegebühr'}
+                {isReturning ? 'Basis · bereits enthalten' : 'Basis · Zertifikat'}
               </p>
               <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
                 {isReturning ?
-                  'Dein Zertifikat existiert bereits — die Basisgebühr entfällt. Wähle nur Module, die du noch nicht hast.'
-                : 'Erstelle dein persönliches Zertifikat — die Basis ist immer enthalten. Wähle darunter die Module, die verifiziert werden sollen.'}
+                  'Dein Zertifikat existiert bereits. Wähle nur Module, die noch fehlen.'
+                : 'Name und Code sind immer dabei. Die Module darunter sind die Angaben, die der Vermieter sieht.'}
               </p>
             </div>
             <div className="text-right">
@@ -517,8 +541,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   </div>
                   <p className="mt-0.5 text-sm text-slate-500">
                     {isReturning ?
-                      'Nur Module wählen, die noch fehlen — Basis entfällt.'
-                    : 'Alle Angaben verifiziert, inkl. Basisgebühr — der stärkste Auftritt bei Vermietern.'}
+                      'Nur Module, die noch fehlen.'
+                    : 'Alle vier Angaben auf einem Blatt — der stärkste Auftritt.'}
                   </p>
                 </div>
               </div>
@@ -538,7 +562,6 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               const on = selected.has(m.id) && !alreadyOwned
               const accent = SIC_MODULE_ACCENT[m.id]
               const Icon = MODULE_ICON[m.id]
-              const recommended = !alreadyOwned && RECOMMENDED.includes(m.id)
               return (
                 <button
                   key={m.id}
@@ -559,10 +582,6 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     <span className="absolute right-3 top-3 rounded-full bg-[#1f7a34] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
                       Bereits enthalten
                     </span>
-                  : recommended ?
-                    <span className="absolute right-3 top-3 rounded-full bg-[#0f2b5e] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
-                      Empfohlen
-                    </span>
                   : null}
                   <span
                     className={`grid h-12 w-12 place-items-center rounded-full text-white transition-opacity ${
@@ -580,18 +599,6 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   </p>
                   <p className="text-lg font-bold leading-tight text-[#0f2b5e]">{m.title}</p>
                   <p className="mt-2 flex-1 text-xs leading-relaxed text-slate-500">{m.summary}</p>
-                  <ul className="mt-3 space-y-1.5">
-                    {m.scopeItems.map(li => (
-                      <li key={li} className="flex items-start gap-1.5 text-[11px] leading-snug text-slate-600">
-                        <span
-                          className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full"
-                          style={{ backgroundColor: alreadyOwned ? '#1f7a34' : accent.hex }}
-                          aria-hidden
-                        />
-                        {li}
-                      </li>
-                    ))}
-                  </ul>
                   <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
                     {alreadyOwned ?
                       <span className="rounded-md bg-[#1f7a34] px-2.5 py-1 text-xs font-bold text-white">Enthalten</span>
@@ -629,13 +636,12 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             </p>
           : null}
 
-          {/* Live-Vorschau + Checkout: Name → Vorschau, E-Mail → Zahlung */}
+          {/* Auswahl + E-Mail — Urkunde nur im Hero, hier keine zweite Karte */}
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-            {/* Vorschau-Spalte inkl. Name */}
             <div className="space-y-4">
               <div>
                 <label htmlFor="sic-name" className="block text-sm font-semibold text-[#0f2b5e]">
-                  Dein Name <span className="font-normal text-slate-400">(personalisierte Vorschau)</span>
+                  Dein Name <span className="font-normal text-slate-400">(erscheint auf dem Zertifikat)</span>
                 </label>
                 <input
                   id="sic-name"
@@ -648,30 +654,13 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 />
               </div>
 
-              <div className="rounded-2xl border-2 border-[#b8912f]/40 bg-gradient-to-b from-white to-slate-50 p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <SicLogoMark size={24} />
-                    <span className="text-sm font-bold tracking-[0.1em] text-[#0f2b5e]">SWISS IMMO CERT</span>
-                  </div>
-                  <span className="rounded-full bg-[#0f2b5e]/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#0f2b5e]">
-                    Vorschau
-                  </span>
-                </div>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#b8912f]">Mieter-Zertifikat</p>
-
-                <div className="mt-3 rounded-lg bg-[#0f2b5e]/[0.04] px-3 py-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ausgestellt für</p>
-                  <p className={`text-sm font-bold ${name.trim() ? 'text-[#0f2b5e]' : 'text-slate-400'}`}>
-                    {name.trim() || 'Dein Name'}
-                  </p>
-                </div>
-
-                <ul className="mt-4 divide-y divide-slate-100">
+              <div className="rounded-2xl border border-slate-200 bg-white p-6">
+                <p className="text-sm font-bold text-[#0f2b5e]">Gewählte Angaben</p>
+                <ul className="mt-3 divide-y divide-slate-100">
                   <li className="flex items-center justify-between gap-3 py-2.5">
                     <span className="text-sm font-semibold text-[#0f2b5e]">Basis · Zertifikat</span>
                     <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
-                      <Check className="h-3.5 w-3.5 text-[#2f9e44]" /> Enthalten
+                      <Check className="h-3.5 w-3.5 text-[#2f9e44]" /> Immer dabei
                     </span>
                   </li>
                   {SIC_MODULES.map(m => {
@@ -687,21 +676,17 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                         <span className="text-sm font-semibold text-[#0f2b5e]">{m.title}</span>
                         {alreadyOwned ?
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f7a34]">
-                            <Check className="h-3.5 w-3.5" /> Bereits enthalten
+                            <Check className="h-3.5 w-3.5" /> Enthalten
                           </span>
                         : on ?
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
-                            <Lock className="h-3.5 w-3.5" /> Nachzahlung — dann verifizierbar
+                            <Check className="h-3.5 w-3.5" /> Wird geprüft nach Upload
                           </span>
                         : <span className="text-[11px] font-medium text-slate-400">Nicht gewählt</span>}
                       </li>
                     )
                   })}
                 </ul>
-                <p className="mt-4 rounded-lg bg-[#0f2b5e]/[0.04] px-3 py-2.5 text-[11px] leading-relaxed text-slate-500">
-                  Kostenlose Vorschau — danach lädst du Belege hoch und jedes Modul wechselt auf
-                  «Verifiziert».
-                </p>
               </div>
             </div>
 
@@ -740,7 +725,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   <p className="font-semibold">Hinweis: Ohne Module</p>
                   <p className="mt-1 text-xs leading-relaxed text-amber-900/90">
                     Ohne Module enthält das Zertifikat noch keine verifizierten Angaben — Vermieter sehen
-                    nur die Basis. Du kannst Module später nachkaufen.
+                    nur die Basis. Du kannst Module später hinzufügen.
                   </p>
                   <label className="mt-3 flex items-start gap-2 text-xs font-medium">
                     <input
@@ -749,7 +734,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                       onChange={e => setBaseOnlyAck(e.target.checked)}
                       className="mt-0.5"
                     />
-                    <span>Ich verstehe und möchte trotzdem nur die Basis kaufen.</span>
+                    <span>Ich verstehe und möchte trotzdem nur die Basis anlegen.</span>
                   </label>
                 </div>
               : null}
@@ -771,8 +756,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               />
               <p className="mt-1.5 text-xs text-slate-500">
                 {isReturning ?
-                  'Angemeldet — Nachkauf wird diesem Zertifikat zugeordnet.'
-                : 'Deine E-Mail ist dein Zugang — kein Passwort nötig. Nach der Zahlung erhältst du einen Anmeldelink; Formulare und Uploads folgen unter «Mein Zertifikat».'}
+                  'Angemeldet — neue Module werden diesem Zertifikat zugeordnet.'
+                : 'Deine E-Mail ist dein Zugang — kein Passwort nötig. Du erhältst einen Anmeldelink; Formulare und Uploads folgen unter «Mein Zertifikat».'}
               </p>
               <button
                 type="button"
@@ -865,7 +850,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               href="#module"
               className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#c8102e] px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
             >
-              {isReturning ? 'Modul hinzufügen' : 'Zertifikat erstellen'} <ArrowRight className="h-4 w-4" />
+              {isReturning ? 'Modul hinzufügen' : 'Kostenlos starten'} <ArrowRight className="h-4 w-4" />
             </a>
           }
         </div>

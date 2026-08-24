@@ -33,7 +33,7 @@ export function quoteSicOrder(opts: { includeBaseFee: boolean; moduleIds: unknow
   const lines: SicOrderLine[] = []
 
   if (opts.includeBaseFee) {
-    lines.push({ kind: 'base', label: 'Basis Einschreibegebühr', amountChf: SIC_BASE_FEE_CHF })
+    lines.push({ kind: 'base', label: 'Basis · Zertifikat', amountChf: SIC_BASE_FEE_CHF })
   }
 
   for (const id of moduleIds) {

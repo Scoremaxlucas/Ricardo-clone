@@ -20,7 +20,7 @@ export default async function SicZertifikatPage() {
         <h1 className="text-2xl font-bold text-[#0f2b5e]">Noch kein Zertifikat</h1>
         <p className="mt-3 text-slate-600">
           Zu dieser Anmeldung wurde noch kein Zertifikat gefunden. Stelle jetzt dein geprüftes
-          Mieter-Zertifikat zusammen — der Bereich hier öffnet sich nach dem Kauf.
+          Mieter-Zertifikat zusammen — dieser Bereich öffnet sich, sobald das Zertifikat angelegt ist.
         </p>
         <Link
           href={sicPaths.landing}

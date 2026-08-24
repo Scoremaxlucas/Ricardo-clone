@@ -19,12 +19,20 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
           <Link href={sicPaths.landing} aria-label={SIC_BRAND_NAME}>
             <SicLogo size={32} />
           </Link>
-          <Link
-            href={sicPaths.certificateWorkspace}
-            className="rounded-lg border border-[#0f2b5e]/15 px-3.5 py-2 text-sm font-semibold text-[#0f2b5e] transition-colors hover:bg-[#0f2b5e]/5"
-          >
-            Mein Zertifikat
-          </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href={`${sicPaths.landing}#module`}
+              className="rounded-lg bg-[#c8102e] px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#a50d26]"
+            >
+              Zertifikat erstellen
+            </Link>
+            <Link
+              href={sicPaths.certificateWorkspace}
+              className="rounded-lg border border-[#0f2b5e]/15 px-3.5 py-2 text-sm font-semibold text-[#0f2b5e] transition-colors hover:bg-[#0f2b5e]/5"
+            >
+              Mein Zertifikat
+            </Link>
+          </div>
         </div>
       </header>
 

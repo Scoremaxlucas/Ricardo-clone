@@ -21,7 +21,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
     a: 'Swiss Immo Cert ist ein unabhängiges, standardisiertes Zertifikat, das du deiner Bewerbung als PDF beilegst — bei jeder Wohnung, über jedes Portal. Ob ein Vermieter es berücksichtigt, entscheidet er selbst; das geprüfte, einheitliche Format macht deine Bewerbung nachvollziehbarer.',
   },
   {
-    q: 'Muss ich mich vor dem Kauf anmelden?',
-    a: 'Nein. Auf der Startseite wählst du Module, gibst E-Mail an und bezahlst. Danach erhältst du einen Anmeldelink — «Mein Zertifikat» ist dein Bereich nach dem Kauf.',
+    q: 'Muss ich mich vorher anmelden?',
+    a: 'Nein. Auf der Startseite wählst du Module und gibst deine E-Mail an. Danach erhältst du einen Anmeldelink — «Mein Zertifikat» ist dein Bereich für Uploads und Status.',
   },
 ]
