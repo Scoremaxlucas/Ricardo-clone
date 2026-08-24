@@ -1,5 +1,5 @@
 /**
- * SIC-Produktbriefing (kompakt). Kein Produktcode.
+ * SIC-Briefing: aktuell vs. besser, dicht, eine Spalte (keine leeren Seiten).
  * node scripts/render-sic-produktbriefing.mjs
  */
 import PDFDocument from 'pdfkit'
@@ -12,308 +12,259 @@ const out = path.join(__dirname, '../docs/sic-produktbriefing.pdf')
 
 const NAVY = '#0a1f45'
 const GOLD = '#b8912f'
-const INK = '#1a2332'
-const MUTED = '#5c6570'
-const PAPER = '#fbf9f3'
+const INK = '#1c2430'
+const MUTED = '#5a6270'
+const PAPER = '#f7f4ec'
+const LINE = '#cfc6b4'
 const WHITE = '#ffffff'
-const RED = '#8b1e2d'
 
 const doc = new PDFDocument({
   size: 'A4',
-  margins: { top: 50, bottom: 52, left: 50, right: 50 },
+  margins: { top: 48, bottom: 48, left: 48, right: 48 },
   bufferPages: true,
   info: {
-    Title: 'Swiss Immo Cert — Produktbriefing (kompakt)',
+    Title: 'SIC — kritisch: heute vs. morgen',
     Author: 'Produkt',
-    Subject: 'Conversion, Preiswahl, Uploads über Zeit',
   },
 })
 
 const stream = fs.createWriteStream(out)
 doc.pipe(stream)
 
-const L = 50
-const W = () => doc.page.width - 100
-const B = () => doc.page.height - 52
+const L = 48
+const PW = 499
 
-function bar() {
-  doc.save()
-  doc.rect(0, 0, doc.page.width, 6).fill(NAVY)
-  doc.rect(0, 6, doc.page.width, 2).fill(GOLD)
-  doc.restore()
+function header() {
+  doc.rect(0, 0, doc.page.width, 5).fill(NAVY)
+  doc.rect(0, 5, doc.page.width, 2).fill(GOLD)
 }
 
-function ensure(h) {
-  if (doc.y + h > B()) {
+function need(h) {
+  if (doc.y + h > 780) {
     doc.addPage()
-    bar()
-    doc.y = 24
+    header()
+    doc.y = 22
   }
 }
 
 function kicker(t) {
   doc.font('Helvetica-Bold').fontSize(7.5).fillColor(GOLD).text(t.toUpperCase(), L, doc.y, {
-    width: W(),
-    characterSpacing: 1.1,
+    width: PW,
+    characterSpacing: 1,
   })
-  doc.moveDown(0.28)
+  doc.y += 12
 }
 
-function h1(t) {
-  doc.font('Helvetica-Bold').fontSize(18).fillColor(NAVY).text(t, L, doc.y, { width: W(), lineGap: 1 })
-  doc.moveDown(0.28)
+function title(t) {
+  doc.font('Helvetica-Bold').fontSize(16).fillColor(NAVY).text(t, L, doc.y, { width: PW })
+  doc.y += 20
 }
 
-function h2(t) {
-  ensure(28)
-  doc.moveDown(0.12)
-  doc.font('Helvetica-Bold').fontSize(11).fillColor(NAVY).text(t, L, doc.y, { width: W() })
-  doc.moveDown(0.18)
+function h(t) {
+  need(28)
+  doc.y += 6
+  doc.font('Helvetica-Bold').fontSize(11).fillColor(NAVY).text(t, L, doc.y, { width: PW })
+  doc.y += 16
 }
 
-function para(t) {
-  ensure(32)
+function p(t) {
+  need(36)
   doc.font('Helvetica').fontSize(9.5).fillColor(INK).text(t, L, doc.y, {
-    width: W(),
-    lineGap: 2.2,
-    align: 'justify',
+    width: PW,
+    lineGap: 2,
+    align: 'left',
   })
-  doc.moveDown(0.28)
+  doc.y += 8
 }
 
-function bullet(t) {
-  ensure(22)
+function b(t) {
+  need(22)
   const y = doc.y
-  doc.circle(L + 2.5, y + 4.5, 1.4).fill(GOLD)
-  doc.font('Helvetica').fontSize(9.5).fillColor(INK).text(t, L + 11, y, { width: W() - 11, lineGap: 1.6 })
-  doc.moveDown(0.12)
+  doc.circle(L + 2, y + 4, 1.3).fill(GOLD)
+  doc.font('Helvetica').fontSize(9.5).fillColor(INK).text(t, L + 11, y, { width: PW - 11, lineGap: 1.5 })
+  doc.y += 5
 }
 
-function callout(title, lines) {
-  const pad = 9
-  doc.font('Helvetica').fontSize(8.5)
-  let inner = 16
-  for (const line of lines) {
-    inner += doc.heightOfString(line, { width: W() - pad * 2, lineGap: 1.6 }) + 2
-  }
-  ensure(inner + 6)
-  const y = doc.y
-  const h = inner + 6
-  doc.save()
-  doc.roundedRect(L, y, W(), h, 3).fill(PAPER)
-  doc.roundedRect(L, y, W(), h, 3).lineWidth(0.6).strokeColor(GOLD).stroke()
-  doc.restore()
-  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(NAVY).text(title, L + pad, y + 7, { width: W() - pad * 2 })
-  let ty = y + 20
-  for (const line of lines) {
-    doc.font('Helvetica').fontSize(8.5).fillColor(INK).text(line, L + pad, ty, {
-      width: W() - pad * 2,
-      lineGap: 1.6,
-    })
-    ty = doc.y + 2
-  }
-  doc.y = y + h + 8
-}
-
-function goldRule() {
-  const y = doc.y
-  doc.save()
-  doc.moveTo(L, y).lineTo(L + 56, y).lineWidth(1.3).strokeColor(GOLD).stroke()
-  doc.restore()
-  doc.y = y + 9
-}
-
-function flow(items, lastNavy) {
-  const n = items.length
-  const gap = 6
-  const w = (W() - gap * (n - 1)) / n
-  ensure(48)
-  const y = doc.y
-  const h = 42
-  items.forEach((label, i) => {
-    const x = L + i * (w + gap)
-    const last = lastNavy && i === n - 1
-    doc.save()
-    doc.roundedRect(x, y, w, h, 2.5).fill(last ? NAVY : WHITE)
-    doc.roundedRect(x, y, w, h, 2.5).lineWidth(0.6).strokeColor(NAVY).stroke()
-    doc.font('Helvetica-Bold').fontSize(6.5).fillColor(last ? WHITE : NAVY)
-    doc.text(label, x + 3, y + 8, { width: w - 6, align: 'center', lineGap: 0.8 })
-    doc.restore()
-  })
-  doc.y = y + h + 8
-}
-
-function twoCol(leftT, leftLines, rightT, rightLines) {
-  const gap = 8
-  const w = (W() - gap) / 2
+function box(title, body) {
   const pad = 8
-  doc.font('Helvetica').fontSize(8)
-  const hL = 18 + leftLines.reduce((s, t) => s + doc.heightOfString(t, { width: w - pad * 2, lineGap: 1.4 }) + 2, 0)
-  const hR = 18 + rightLines.reduce((s, t) => s + doc.heightOfString(t, { width: w - pad * 2, lineGap: 1.4 }) + 2, 0)
-  const h = Math.max(hL, hR) + 8
-  ensure(h + 4)
+  doc.font('Helvetica').fontSize(9)
+  const th = 14
+  const bh = doc.heightOfString(body, { width: PW - pad * 2, lineGap: 1.8 })
+  const hgt = th + bh + pad * 2
+  need(hgt + 6)
   const y = doc.y
-  ;[
-    [L, leftT, leftLines],
-    [L + w + gap, rightT, rightLines],
-  ].forEach(([x, title, lines]) => {
-    doc.save()
-    doc.roundedRect(x, y, w, h, 3).fill(PAPER)
-    doc.roundedRect(x, y, w, h, 3).lineWidth(0.6).strokeColor(GOLD).stroke()
-    doc.restore()
-    doc.font('Helvetica-Bold').fontSize(8).fillColor(NAVY).text(title, x + pad, y + 7, { width: w - pad * 2 })
-    let ty = y + 19
-    for (const line of lines) {
-      doc.font('Helvetica').fontSize(8).fillColor(INK).text(line, x + pad, ty, { width: w - pad * 2, lineGap: 1.4 })
-      ty = doc.y + 2
+  doc.save()
+  doc.roundedRect(L, y, PW, hgt, 3).fill(PAPER)
+  doc.roundedRect(L, y, PW, hgt, 3).lineWidth(0.6).strokeColor(GOLD).stroke()
+  doc.restore()
+  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(NAVY).text(title, L + pad, y + pad, { width: PW - pad * 2 })
+  doc.font('Helvetica').fontSize(9).fillColor(INK).text(body, L + pad, y + pad + th, {
+    width: PW - pad * 2,
+    lineGap: 1.8,
+  })
+  doc.y = y + hgt + 8
+}
+
+function table(headers, rows) {
+  const cols = headers.length
+  const widths = cols === 3 ? [118, 190, 191] : [PW / cols, PW / cols]
+  const fs = 8
+  need(20 + rows.length * 36)
+  let x = L
+  let y = doc.y
+  doc.save()
+  doc.rect(L, y, PW, 16).fill(NAVY)
+  doc.restore()
+  headers.forEach((hd, i) => {
+    doc.font('Helvetica-Bold').fontSize(7).fillColor(WHITE).text(hd, x + 4, y + 4, { width: widths[i] - 8 })
+    x += widths[i]
+  })
+  y += 16
+  rows.forEach((row, ri) => {
+    const heights = row.map((cell, i) =>
+      doc.font('Helvetica').fontSize(fs).heightOfString(String(cell), { width: widths[i] - 8, lineGap: 1.2 })
+    )
+    const rh = Math.max(18, ...heights) + 8
+    if (y + rh > 775) {
+      doc.addPage()
+      header()
+      y = 22
     }
-  })
-  doc.y = y + h + 8
-}
-
-function fourMini(cells) {
-  const gap = 6
-  const w = (W() - gap * 3) / 4
-  const h = 70
-  ensure(h + 4)
-  const y = doc.y
-  cells.forEach(([q, a], i) => {
-    const x = L + i * (w + gap)
+    if (ri % 2 === 0) {
+      doc.save()
+      doc.rect(L, y, PW, rh).fill('#f3f1ea')
+      doc.restore()
+    }
     doc.save()
-    doc.roundedRect(x, y, w, h, 2.5).lineWidth(0.55).strokeColor(NAVY).stroke()
-    doc.rect(x, y, w, 3).fill(GOLD)
-    doc.font('Helvetica-Bold').fontSize(7.5).fillColor(NAVY).text(q, x + 4, y + 8, { width: w - 8, lineGap: 0.6 })
-    doc.font('Helvetica').fontSize(6.5).fillColor(MUTED).text(a, x + 4, y + 32, { width: w - 8, lineGap: 1 })
+    doc.rect(L, y, PW, rh).lineWidth(0.3).strokeColor(LINE).stroke()
     doc.restore()
+    x = L
+    row.forEach((cell, i) => {
+      doc
+        .font(i === 0 ? 'Helvetica-Bold' : 'Helvetica')
+        .fontSize(fs)
+        .fillColor(INK)
+        .text(String(cell), x + 4, y + 4, { width: widths[i] - 8, lineGap: 1.2 })
+      x += widths[i]
+    })
+    y += rh
   })
-  doc.y = y + h + 8
+  doc.y = y + 10
 }
 
-// ── S.1 ──────────────────────────────────────────────────────────────────
-bar()
-doc.y = 28
-kicker('Internes Briefing  ·  kompakt  ·  August 2026')
-h1('Swiss Immo Cert — was wir bauen')
-goldRule()
-para(
-  'Ziel: ein ernstes Schweizer Dokument, das sich verkauft. Conversion heisst nicht möglichst viele Klicks auf der Startseite, sondern: Konto anlegen, Belege nach und nach einreichen, fertiges PDF mit QR — auch wenn dazwischen zwei Wochen liegen.'
-)
-
-callout('Zwei feste Produktregeln (ändern die frühere Empfehlung)', [
-  'Preis: Der Nutzer darf Angaben weglassen und damit den Preis beeinflussen. Das ist gewollt — kein reines «alles oder nichts».',
-  'Fertigstellung: Zu fast jeder Angabe gibt es eine Vorlage. Das Zertifikat wird erst fertig, wenn die gewählten Module mit den geforderten Uploads (Vorlagen) belegt sind. Der Bereich «Mein Zertifikat» bleibt über Tage und Wochen offen — selbstständiger Upload, jederzeit zurückkehren.',
-])
-
-h2('Was das für frühere Ideen heisst')
-bullet('«Kein Konfigurator» gilt nur halb: Default bleibt das Komplett-Paket (alle vier). Weglassen ist erlaubt und muss den Preis klar zeigen — nicht verstecken, nicht als Spiel.')
-bullet('«Unvollständiges PDF an den Vermieter» entfällt. Nach aussen gibt es kein fertiges Zertifikat, solange die gewählten Vorlagen fehlen. Nach innen: Status, Checkliste, offene Uploads.')
-bullet('Time-to-PDF bleibt die Leitmetrik — aber «PDF» heisst fertig nach Prüfung der gewählten Module, nicht ein Zwischen-Blatt mit Lücken für den Vermieter.')
-
-h2('Heute vs. Ziel (Journey)')
-doc.font('Helvetica-Bold').fontSize(7.5).fillColor(RED).text('REIBUNG — zu viel Entscheiden, zu wenig Faden', L, doc.y)
-doc.moveDown(0.2)
-flow(['Schmerz', 'Module', 'Preis', 'E-Mail', 'Leeres Dossier', 'Upload verloren?'], false)
-doc.font('Helvetica-Bold').fontSize(7.5).fillColor(NAVY).text('ZIEL — wählen, dann in Ruhe belegen', L, doc.y)
-doc.moveDown(0.2)
-flow(['Schmerz + Urkunde', 'Paket / weglassen', 'E-Mail', 'Dossier über Wochen', 'Vorlagen + Upload', 'Fertiges QR-PDF'], true)
-
-// ── S.2 ──────────────────────────────────────────────────────────────────
-doc.addPage()
-bar()
+// PAGE 1 — Urteil
+header()
 doc.y = 22
-kicker('Startseite und Preis')
-h1('Ein Einstieg, echte Preiswahl')
-para(
-  'Die Startseite verkauft nicht vier Mini-Produkte, sondern ein Zertifikat mit vier möglichen Angaben. Alle vier sind vorausgewählt (stärkstes Dossier, meist bester Paketpreis). Wer weglässt, sieht sofort: welche Vermieterfrage offen bleibt und was das kostet bzw. spart. Kein Sterne-Score. Vollständigkeit = gewählte Angaben, nicht «Stärke 73».'
+kicker('Internes Briefing  ·  kritisch  ·  August 2026')
+title('SIC: Was sich wirklich ändern muss')
+p(
+  'Kurzes Urteil vorweg: Die erste «grosse Idee» (ein Zertifikat, alle vier Module vorausgewählt, Vermieterfragen auf den Kacheln) ist im Kern das, was die Startseite schon tut. Wer das PDF als Revolution liest, hat recht, verwirrt zu sein. Der Unterschied zur Live-Seite ist klein. Der Unterschied, der Conversion und Betrieb rettet, liegt nach der E-Mail — und den habt ihr in den Produktregeln selbst genannt.'
 )
-twoCol(
-  'Default',
+
+box(
+  'Harte Linie als SIC-Hilfe',
+  'Nicht die Landing neu erfinden, weil uns der Builder zu «SaaS» vorkommt. Den Builder lassen — er ist euer Preisinstrument. Stattdessen das Dossier bauen, das zwei Wochen Upload aushält, Vorlagen ausgibt, und das PDF erst dann «fertig» nennt, wenn die gewählten Belege geprüft sind. Alles andere ist Kosmetik.'
+)
+
+h('Was heute schon da ist (nicht so tun, als fehle es)')
+b('Hero: Unterlagen, keine Antwort; Urkunde mit QR; Disclaimer ohne Wohnungszusage.')
+b('Schmerz + 5 Dateien vs. 1 PDF.')
+b('Vier Schritte: E-Mail, Upload, 24h, PDF.')
+b('Builder: alle vier Module an; Vollständigkeit 4/4; Vermieterfrage + Nutzen + «du reichst ein».')
+b('Komplett-Paket-Zeile; Basis; E-Mail; Checkout (aktuell CHF 0).')
+
+h('Was die alte Empfehlung «ein Produkt, kein Shop» wirklich war')
+p(
+  'Gemeint war: auf der Startseite nicht vier Kaufentscheide. Bei euch gilt aber: Module weglassen soll den Preis ändern. Dann braucht ihr den Builder. Default alle vier ist bereits euer Weg. Ein zweites Mal «verkauft ein Zertifikat, nicht Module» zu predigen, ohne den Preishebel zu nennen, war unklar und wirkte nach leerem Redesign.'
+)
+
+table(
+  ['Thema', 'Heute (Live)', 'Besser / nötig'],
   [
-    'Komplett vorausgewählt.',
-    'Ein Satz: alle vier Fragen, die der Vermieter üblicherweise stellt.',
-    'Paketpreis sichtbar, sobald er vom Einzelpreis abweicht (nicht bei CHF 0 vortäuschen).',
-  ],
-  'Weglassen',
-  [
-    'Erlaubt, weil es den Preis ändert.',
-    'Jede Abwahl: «Diese Frage fehlt auf dem Zertifikat.»',
-    'CTA bleibt derselbe: anlegen, dann im Dossier die Vorlagen für die gewählten Module.',
+    [
+      'Modulwahl',
+      'Alle vier an. Abwählen geht. Preis überall «Kostenlos».',
+      'Genau so lassen. Sobald Preise > 0: neben jeder Kachel der Betrag, beim Abwählen die Ersparnis, Paket vs. einzeln ehrlich.',
+    ],
+    [
+      'Vollständigkeit',
+      'Balken 1–4, Text «offene Frage».',
+      'Behalten. Keine Sterne. Optional: «wirkt auf den Preis» in denselben Satz, wenn Gebühren leben.',
+    ],
+    [
+      'Start-CTA',
+      'Kostenlos starten → Builder → E-Mail.',
+      'Reicht. Nicht noch ein zweiter Konfigurator. «Kostenlos» nicht achtmal.',
+    ],
+    [
+      'Nach der E-Mail',
+      'Bereich Mein Zertifikat existiert. Ob Vorlagen + wochenlanger Upload als Hauptweg sitzen, ist die offene Baustelle.',
+      'Das ist die eigentliche Produktarbeit. Siehe nächste Seite.',
+    ],
+    [
+      'Fertiges PDF',
+      'Logik im Briefing vorher: evtl. Zwischen-PDF mit Lücken.',
+      'Verworfen. PDF mit QR für den Vermieter erst, wenn gewählte Module inkl. Vorlagen verifiziert sind.',
+    ],
   ]
 )
 
-h2('Message — kurz und ehrlich')
-para(
-  'Ein PDF. Die Angaben, die du wählst. QR zum Prüfen. Keine Wohnungszusage. «Kostenlos» höchstens einmal, solange die Einführung gilt.'
-)
-fourMini([
-  ['Betreibungen?', 'Auszug geprüft vor. Nicht: schuldenfrei garantiert.'],
-  ['Einkommen?', 'Belegtes Einkommen. Nicht: kann DIESE Miete tragen.'],
-  ['Als Mieter?', 'Vermieter-Vorlage. Nicht: Charakter-Note.'],
-  ['Ausweis?', 'Identität / Bewilligung. Nicht: darf in dieser Wohnung leben.'],
-])
-para(
-  '«Verifiziert» bleibt: vollständig und plausibel, kein Anruf bei Dritten. Das steht einmal klar, nicht als Angst-Disclaimer unter dem Knopf.'
+p(
+  'Fazit Seite 1: Die Startseite ist nicht das Loch. Sie ist etwas laut und etwas lang, aber die Logik (Schmerz → Beweis → wählen → Mail) ist tragfähig. Wer Conversion retten will, investiert nicht in eine fünfte Hero-Variante.'
 )
 
-h2('Was die Startseite nicht mehr tut')
-bullet('Achtmal Preis/Gratis, doppelte Urkunde, doppelte Zusammenfassung, Versicherungs-Kacheln ohne Ende.')
-bullet('Module so erklären, dass man raten muss. Pro Angabe: Vermieterfrage, was auf dem PDF steht, welche Vorlage du einreichst.')
-
-// ── S.3 ──────────────────────────────────────────────────────────────────
+// PAGE 2 — Dossier / Preis / Copy
 doc.addPage()
-bar()
+header()
 doc.y = 22
-kicker('Dossier, Vorlagen, Zeit')
-h1('Zwei Wochen sind normal — das Konto muss das aushalten')
-para(
-  'Der Engpass ist nicht der Klick «Start». Es ist der Weg: SIC-Vorlage an Arbeitgeber oder bisherigen Vermieter, unterschreiben lassen, zurück hochladen. Das dauert. Wer nach drei Tagen den Link nicht mehr findet, ist verloren. Deshalb ist «Mein Zertifikat» das eigentliche Produkt nach der E-Mail — nicht die Landing.'
+kicker('Wo Conversion wirklich stirbt')
+title('Nach dem Klick: Vorlagen, Wochen, Preis')
+
+h('1. Dossier über die Zeit (Pflicht, nicht Nice-to-have)')
+p(
+  'Ihr liefert fast zu jeder Angabe eine Vorlage, die jemand Drittes unterschreiben muss. Das ist kein «Upload in 3 Minuten». Das ist ein Vorgang über Tage. Wenn der Magic Link nach 24 Stunden tot ist oder jemand nicht sieht, was noch fehlt, ist die Conversion bei null — egal wie gut die Landing ist.'
 )
-h2('Regeln für den Upload-Prozess')
-bullet('Nach der E-Mail: Dossier mit nur den gewählten Modulen. Pro Modul: Vorlage herunterladen, ausfüllen lassen, hochladen (PDF/Foto).')
-bullet('Status pro Angabe: Vorlage offen · hochgeladen · in Prüfung · verifiziert oder nachreichen.')
-bullet('Jederzeit wieder rein: Magic Link, gleiche E-Mail, keine Frist von 48 Stunden für den ganzen Vorgang. Zwei Wochen (und mehr) sind vorgesehen.')
-bullet('Erinnerungsmails an offene Vorlagen, nicht an «kauf noch ein Modul».')
-bullet('Fertiges Zertifikat-PDF mit QR erst, wenn alle gewählten Module verifiziert sind. Vorher sieht nur der Nutzer den Fortschritt — der Vermieter bekommt kein halbfertiges Blatt.')
+b('Ein Login-Weg: gleiche E-Mail, neuer Link, jederzeit, über mindestens 2–3 Wochen.')
+b('Pro gewähltes Modul: Vorlage laden → ausfüllen lassen → hochladen → Status (offen / hochgeladen / Prüfung / verifiziert / nachreichen).')
+b('Nur gewählte Module zeigen. Weggelassene nicht als Schuldgefühl nachverkaufen in derselben Session — später «erweitern» reicht.')
+b('PDF-Download für den Vermieter grau, bis alle gewählten verifiziert sind. Der Nutzer sieht intern den Fortschritt.')
+b('Mails: «Dein Link zurück ins Dossier» und «noch offen: Arbeitgeberbestätigung» — nicht «noch ein Modul kaufen».')
 
-callout('Skizze Dossier (eine Seite, über die Zeit)', [
-  'Kopf: Code, gewählte Angaben, Preis schon zugeordnet, Gültigkeit startet bei Ausstellung.',
-  'Liste: Modul · Vorlage-Button · Upload · Status.',
-  'Unten: «PDF herunterladen» aktiv erst wenn alles Gewählte geprüft ist. Sonst: «Noch offen: …».',
-])
+h('2. Preishebel (wenn nicht mehr CHF 0)')
+p(
+  'Weglassen darf den Preis ändern — das ist eure Regel. Dann muss der Builder das zeigen, sonst ist Abwählen sinnlos und wirkt nach kaputtem Shop. Heute ist alles kostenlos: da gibt es nichts zu «beeinflussen». Die UI darf das nicht mit Durchstreichen vortäuschen (das tut die Live-Seite schon richtig, solange Ersparnis 0 ist).'
+)
+b('Komplett vorausgewählt = Standard und, wenn das Bundle günstiger ist, der bessere Deal.')
+b('Abwahl: Preis live, plus Satz «Auf dem Zertifikat fehlt dann: …».')
+b('Kein Sterne-Kauf («kauf 4 für Gold»). Das wäre unehrlich neben eurer Vorlage-Prüfung.')
 
-h2('Prüfseite (Vermieter)')
-para(
-  'Zehn Sekunden, kein Login: Name, Code, gültig/abgelaufen, nur die gewählten Zeilen, verifiziert. Ein Satz zur Art der Prüfung. Das ist der Grund, warum jemand das PDF überhaupt mitschickt.'
+h('3. Copy, die ihr überzieht — und die Conversion schadet')
+p(
+  '«Kann er die Miete tragen?» und «Darf er hier wohnen?» klingen nach Garantie. Ihr prüft Belege auf Vollständigkeit und Plausibilität. Vermieter, die das PDF ernst nehmen, merken den Unterschied. Lieber: belegtes Einkommen; Ausweis/Bewilligung liegt vor. Weniger Drama, mehr Vertrauen — das ist Conversion bei 40- und 60-Jährigen.'
 )
 
-h2('Plattform und späterer Preis')
-bullet('Eine Domain, E-Mail-Zugang, Header: anlegen oder Mein Zertifikat.')
-bullet('Wenn Gebühren wieder gelten: weglassen senkt den Preis sichtbar; Komplett-Paket bleibt der klare Standard. Express (schnellere Prüfung) ist ein ehrlicher Aufpreis, kein Modul-Theater.')
-bullet('Nicht: Sterne, Fake-Rabatt, Wohnungszusage, Portal-Scraping, Anrufe die der Text nicht deckt.')
+h('4. Was ich nicht anfassen würde')
+b('Du-Form, keine Wohnungszusage, Urkunde im Hero, 5-vs-1, Default alle vier.')
+b('Kein Sterne-Score. Kein unvollständiges Zertifikat an den Vermieter.')
+b('Landing nicht auf eine einzige CTA-Zeile ohne Builder zusammenschneiden — ihr braucht die Wahl für den Preis.')
 
-h2('Umsetz-Reihenfolge')
-bullet('1. Startseite: Default alle vier, Weglassen = Preis + fehlende Vermieterfrage, ein CTA.')
-bullet('2. Dossier: Vorlagen, Upload, Haltbarkeit über Wochen, kein fertiges PDF vor Verifikation.')
-bullet('3. PDF + QR-Prüfseite nur für abgeschlossene, gewählte Module.')
-bullet('4. Mails: Link zurück ins Dossier, offene Vorlagen. Dann Bezahlpreis/Express.')
+h('Reihenfolge, wenn ihr Zeit habt')
+b('Zuerst Dossier: Vorlagen, Upload, Status, Link über Wochen, PDF erst wenn fertig.')
+b('Dann Landing nur schärfen: ehrliche Vermieterfragen, weniger Wiederholung, ein «kostenlos».')
+b('Dann Preise sichtbar machen, sobald sie nicht mehr 0 sind.')
+b('Prüfseite QR: 10 Sekunden, kein Login, nur gewählte verifizierte Zeilen.')
 
-doc.moveDown(0.15)
-goldRule()
-doc.font('Helvetica-Bold').fontSize(10).fillColor(NAVY).text('Mitnehmen', L, doc.y)
-doc.moveDown(0.25)
-para(
-  'Wählen darf den Preis ändern. Fertig ist das Zertifikat erst mit den Vorlagen der gewählten Angaben. Dazwischen gehört der Mensch in sein Dossier — nicht zurück auf eine Shop-Landing. Wer sucht, versteht: ein seriöses PDF statt fünf Anhängen. Wer prüft, versteht: QR und klare Zeilen. Wer unterwegs ist, versteht: ich kann in zwei Wochen weitermachen, ohne von vorn zu beginnen.'
+box(
+  'Mitnehmen',
+  'Der heutige Aufbau der Startseite ist nicht das Problem, das eine neue «erste Idee» lösen muss — er ist schon nah an dem, was ihr braucht. Besser wird SIC, wenn der Mensch zwei Wochen lang weiss, wo seine Vorlagen liegen, und erst dann ein fertiges Dokument in der Hand hat. Alles, was wie ein neuer Shop aussieht, ohne dieses Dossier, ist Beschäftigung, keine Conversion.'
 )
 
 const range = doc.bufferedPageRange()
 for (let i = range.start; i < range.start + range.count; i++) {
   doc.switchToPage(i)
   doc.font('Helvetica').fontSize(7.5).fillColor(MUTED)
-  doc.text('Swiss Immo Cert  ·  internes Briefing  ·  kompakt', L, doc.page.height - 32, {
-    width: W() - 36,
-    align: 'left',
-  })
-  doc.text(`${i - range.start + 1} / ${range.count}`, L, doc.page.height - 32, { width: W(), align: 'right' })
+  doc.text('Swiss Immo Cert  ·  internes Briefing  ·  kritisch', L, 812, { width: PW - 40 })
+  doc.text(`${i - range.start + 1} / ${range.count}`, L, 812, { width: PW, align: 'right' })
 }
 
 doc.end()
