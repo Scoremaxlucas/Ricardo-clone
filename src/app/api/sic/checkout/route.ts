@@ -1,9 +1,10 @@
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { sicPaths, sicUrl, SIC_BRAND_NAME } from '@/lib/sic/config'
+import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
 import { normalizeSicModuleIds, type SicModuleId } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
-import { normalizeEmail } from '@/lib/sic/session'
+import { normalizeEmail, SIC_SESSION_COOKIE, sicSessionCookieOptions, signSicSessionToken } from '@/lib/sic/session'
 import { stripe } from '@/lib/stripe-server'
 import type { SicModuleKind } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
@@ -33,7 +34,9 @@ async function cancelOverlappingPending(email: string, candidate: string[], incl
       overlaps(kinds, candidate) || (includeBaseFee && p.includeBaseFee) || (candidate.length === 0 && kinds.length === 0)
     if (!overlap) continue
     try {
-      await stripe.checkout.sessions.expire(p.stripeCheckoutSessionId)
+      if (!p.stripeCheckoutSessionId.startsWith('free_')) {
+        await stripe.checkout.sessions.expire(p.stripeCheckoutSessionId)
+      }
     } catch {
       // Session evtl. schon expired/completed — weiter DB markieren
     }
@@ -83,11 +86,33 @@ export async function POST(req: NextRequest) {
   }
 
   const quote = quoteSicOrder({ includeBaseFee, moduleIds: candidate })
-  if (quote.totalChf <= 0) {
-    return NextResponse.json({ ok: false, message: 'Kein zu zahlender Betrag.' }, { status: 400 })
+  if (quote.totalChf < 0) {
+    return NextResponse.json({ ok: false, message: 'Kein gültiger Betrag.' }, { status: 400 })
   }
 
   await cancelOverlappingPending(email, candidate, includeBaseFee)
+
+  if (quote.totalChf === 0) {
+    const sessionId = `free_${crypto.randomUUID()}`
+    await prisma.sicPayment.create({
+      data: {
+        email,
+        holderName,
+        includeBaseFee,
+        moduleKinds: candidate as SicModuleKind[],
+        amountChf: 0,
+        stripeCheckoutSessionId: sessionId,
+        status: 'PENDING',
+      },
+    })
+    const result = await fulfillSicPaidCheckout({ stripeCheckoutSessionId: sessionId })
+    if (!result.ok) {
+      return NextResponse.json({ ok: false, message: 'Zertifikat konnte nicht erstellt werden.' }, { status: 500 })
+    }
+    const res = NextResponse.json({ ok: true, url: sicPaths.certificateWorkspace })
+    res.cookies.set(SIC_SESSION_COOKIE, signSicSessionToken(email), sicSessionCookieOptions())
+    return res
+  }
 
   const hasDiscount = quote.lines.some(l => l.kind === 'discount')
   const lineItems =

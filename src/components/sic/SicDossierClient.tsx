@@ -404,14 +404,14 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-6">
           <h3 className="text-sm font-semibold text-slate-900">Zertifikat erweitern</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Zusätzliche Module auf der Startseite wählen und bezahlen — die Gültigkeit deines Zertifikats
-            verlängert sich entsprechend.
+            Zusätzliche Module auf der Startseite wählen — derzeit kostenlos. Die Gültigkeit deines
+            Zertifikats verlängert sich entsprechend.
           </p>
           <ul className="mt-3 space-y-2">
             {dossier.availableModules.map(a => (
               <li key={a.moduleKind} className="flex items-center justify-between text-sm">
                 <span className="text-slate-700">{a.title}</span>
-                <span className="text-slate-500">CHF {a.priceChf}</span>
+                <span className="text-slate-500">{a.priceChf <= 0 ? 'Kostenlos' : `CHF ${a.priceChf}`}</span>
               </li>
             ))}
           </ul>

@@ -4,9 +4,7 @@ import { SicLogoMark } from '@/components/sic/SicLogo'
 import { SIC_COLORS, SIC_MODULE_ACCENT } from '@/lib/sic/brand'
 import { SIC_FAQ } from '@/lib/sic/faq'
 import {
-  SIC_BASE_FEE_CHF,
   SIC_BUNDLE_ALL_MODULES_CHF,
-  SIC_MODULE_FEE_CHF,
   SIC_MODULES,
   SIC_VALIDITY_MONTHS,
   type SicModuleId,
@@ -33,11 +31,14 @@ import type { LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 
+function formatSicPrice(chf: number): string {
+  return chf <= 0 ? 'Kostenlos' : `CHF ${chf}.–`
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /** Standardmässig empfohlene (vorausgewählte) Module. */
 const RECOMMENDED: SicModuleId[] = ['BONITAET', 'ARBEIT_EINKOMMEN']
-const FULL_PRICE_CHF = SIC_BASE_FEE_CHF + SIC_MODULES.length * SIC_MODULE_FEE_CHF
 
 const MODULE_ICON: Record<SicModuleId, LucideIcon> = {
   BONITAET: ShieldCheck,
@@ -48,7 +49,7 @@ const MODULE_ICON: Record<SicModuleId, LucideIcon> = {
 
 const HOW_STEPS: { icon: LucideIcon; title: string }[] = [
   { icon: ListChecks, title: 'Module wählen & Zertifikat als Vorschau sehen' },
-  { icon: CreditCard, title: 'Sicher bezahlen (Stripe) — schaltet den Upload frei' },
+  { icon: CreditCard, title: 'Kostenlos starten — schaltet den Upload frei' },
   { icon: Upload, title: 'Belege hochladen — wir prüfen sie' },
   { icon: QrCode, title: 'Fertiges Zertifikat mit QR-Code erhalten' },
 ]
@@ -233,7 +234,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data?.url) {
-        toast.error(data?.message || 'Zahlung konnte nicht gestartet werden.')
+        toast.error(data?.message || 'Zertifikat konnte nicht gestartet werden.')
         return
       }
       window.location.href = data.url
@@ -411,7 +412,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             verifiziert ist.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-500">
-            <span>Ab CHF {SIC_BASE_FEE_CHF}</span>
+            <span>Derzeit kostenlos</span>
             <span>{SIC_VALIDITY_MONTHS} Monate gültig</span>
             <span>Als PDF überall beilegbar</span>
             <span>Prüfung innert 24 Std. nach vollständigem Upload</span>
@@ -473,7 +474,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   <p className="text-xs text-slate-500">Zertifikat vorhanden</p>
                 </>
               : <>
-                  <p className="text-3xl font-bold text-[#0f2b5e]">CHF {SIC_BASE_FEE_CHF}.–</p>
+                  <p className="text-3xl font-bold text-[#0f2b5e]">Kostenlos</p>
                   <p className="text-xs text-slate-500">Einmalig · {SIC_VALIDITY_MONTHS} Monate gültig</p>
                 </>
               }
@@ -523,13 +524,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               </div>
               {!isReturning ?
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-[#0f2b5e]">
-                    CHF {SIC_BUNDLE_ALL_MODULES_CHF}.–{' '}
-                    <span className="text-sm font-medium text-slate-400 line-through">CHF {FULL_PRICE_CHF}.–</span>
-                  </p>
-                  <p className="text-xs font-semibold text-[#2f9e44]">
-                    Inkl. Basis · du sparst CHF {FULL_PRICE_CHF - SIC_BUNDLE_ALL_MODULES_CHF}.–
-                  </p>
+                  <p className="text-2xl font-bold text-[#0f2b5e]">{formatSicPrice(SIC_BUNDLE_ALL_MODULES_CHF)}</p>
+                  <p className="text-xs font-semibold text-[#2f9e44]">Inkl. Basis · Einführungsphase</p>
                 </div>
               : null}
             </button>
@@ -600,7 +596,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     {alreadyOwned ?
                       <span className="rounded-md bg-[#1f7a34] px-2.5 py-1 text-xs font-bold text-white">Enthalten</span>
                     : <span className="rounded-md bg-[#0f2b5e] px-2.5 py-1 text-xs font-bold text-white">
-                        CHF {m.priceChf}.–
+                        {formatSicPrice(m.priceChf)}
                       </span>
                     }
                     {!alreadyOwned ?
@@ -703,7 +699,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   })}
                 </ul>
                 <p className="mt-4 rounded-lg bg-[#0f2b5e]/[0.04] px-3 py-2.5 text-[11px] leading-relaxed text-slate-500">
-                  Kostenlose Vorschau — nach der Zahlung lädst du Belege hoch und jedes Modul wechselt auf
+                  Kostenlose Vorschau — danach lädst du Belege hoch und jedes Modul wechselt auf
                   «Verifiziert».
                 </p>
               </div>
@@ -716,13 +712,13 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 {allAvailableSelected && quote.includeBaseFee && quote.lines.some(l => l.kind === 'discount') ?
                   <div className="flex justify-between text-slate-700">
                     <dt>Komplett-Paket (inkl. Basis)</dt>
-                    <dd className="tabular-nums">CHF {SIC_BUNDLE_ALL_MODULES_CHF}.–</dd>
+                    <dd className="tabular-nums">{formatSicPrice(SIC_BUNDLE_ALL_MODULES_CHF)}</dd>
                   </div>
                 : quote.lines.map((l, i) => (
                     <div key={i} className={`flex justify-between ${l.kind === 'discount' ? 'text-[#2f9e44]' : 'text-slate-600'}`}>
                       <dt>{l.label}</dt>
                       <dd className="tabular-nums">
-                        {l.amountChf < 0 ? `− CHF ${Math.abs(l.amountChf)}.–` : `CHF ${l.amountChf}.–`}
+                        {l.amountChf < 0 ? `− ${formatSicPrice(Math.abs(l.amountChf))}` : formatSicPrice(l.amountChf)}
                       </dd>
                     </div>
                   ))
@@ -733,7 +729,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               </dl>
               <div className="mt-4 flex items-baseline justify-between border-t border-slate-200 pt-4">
                 <span className="text-sm font-medium text-slate-500">Total</span>
-                <span className="text-2xl font-bold tabular-nums text-[#0f2b5e]">CHF {quote.totalChf}.–</span>
+                <span className="text-2xl font-bold tabular-nums text-[#0f2b5e]">{formatSicPrice(quote.totalChf)}</span>
               </div>
               {quoteNote ?
                 <p className="mt-2 text-xs font-medium text-[#1f7a34]">{quoteNote}</p>
@@ -790,16 +786,16 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-5 py-3.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
               >
                 {submitting ?
-                  'Wird geöffnet …'
+                  'Wird erstellt …'
                 : nothingToBuy ?
                   'Keine Module mehr verfügbar'
                 : isReturning ?
-                  'Modul(e) bezahlen'
-                : 'Weiter zur Zahlung'}
+                  'Module kostenlos hinzufügen'
+                : 'Zertifikat kostenlos erstellen'}
                 {!submitting && !nothingToBuy && <ArrowRight className="h-4 w-4" />}
               </button>
               <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-400">
-                <Lock className="h-3.5 w-3.5" /> Sichere Zahlung über Stripe
+                Derzeit keine Zahlung — Einführungsphase
               </p>
               <ul className="mt-3 space-y-1.5 border-t border-slate-200 pt-3">
                 <li className="flex items-center gap-2 text-xs text-slate-500"><ShieldCheck className="h-3.5 w-3.5 text-[#0f2b5e]" /> Schweizer Datenschutz (revDSG)</li>

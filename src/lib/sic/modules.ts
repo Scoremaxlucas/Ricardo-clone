@@ -11,16 +11,16 @@
 export const SIC_CURRENCY = 'CHF' as const
 
 /**
- * TEST-Preise (Stripe CHF-Minimum = 0.50).
+ * Aktuell kostenlos (Einführung). Stripe-Checkout wird bei Total 0 übersprungen.
  * Produktion wiederherstellen: Basis 20 / Modul 30 / Bundle 120.
  */
-export const SIC_BASE_FEE_CHF = 0.5
+export const SIC_BASE_FEE_CHF = 0
 
 /** Preis pro verifiziertem Modul. */
-export const SIC_MODULE_FEE_CHF = 0.5
+export const SIC_MODULE_FEE_CHF = 0
 
 /** Komplett-Paket: Basis + alle 4 Module zum Bundle-Preis. */
-export const SIC_BUNDLE_ALL_MODULES_CHF = 0.5
+export const SIC_BUNDLE_ALL_MODULES_CHF = 0
 
 /** Gültigkeit eines Zertifikats bzw. einer Verlängerung in Kalendermonaten. */
 export const SIC_VALIDITY_MONTHS = 3

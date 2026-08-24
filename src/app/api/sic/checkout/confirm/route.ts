@@ -18,6 +18,22 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    if (sessionId.startsWith('free_')) {
+      const result = await fulfillSicPaidCheckout({ stripeCheckoutSessionId: sessionId })
+      if (!result.ok) {
+        return NextResponse.json({ ok: false, message: 'Verarbeitung fehlgeschlagen.' }, { status: 500 })
+      }
+      const res = NextResponse.json({ ok: true, email: result.email })
+      if (result.email) {
+        res.cookies.set(
+          SIC_SESSION_COOKIE,
+          signSicSessionToken(result.email),
+          sicSessionCookieOptions()
+        )
+      }
+      return res
+    }
+
     const session = await stripe.checkout.sessions.retrieve(sessionId)
     if (session.payment_status !== 'paid') {
       return NextResponse.json({ ok: false, pending: true, message: 'Zahlung noch nicht bestätigt.' })

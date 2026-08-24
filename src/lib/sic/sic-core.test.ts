@@ -48,11 +48,13 @@ describe('pricing', () => {
     expect(q.totalChf).toBe(SIC_BASE_FEE_CHF)
     expect(q.lines).toHaveLength(1)
   })
-  it('full certificate (base + all 4 modules) applies bundle discount', () => {
+  it('full certificate (base + all 4 modules) is currently free (bundle)', () => {
     const q = quoteSicOrder({ includeBaseFee: true, moduleIds: SIC_MODULES.map(m => m.id) })
     const fullPrice = SIC_BASE_FEE_CHF + 4 * SIC_MODULE_FEE_CHF
     expect(q.totalChf).toBe(SIC_BUNDLE_ALL_MODULES_CHF)
-    expect(q.lines.some(l => l.kind === 'discount' && l.amountChf === SIC_BUNDLE_ALL_MODULES_CHF - fullPrice)).toBe(true)
+    if (fullPrice > SIC_BUNDLE_ALL_MODULES_CHF) {
+      expect(q.lines.some(l => l.kind === 'discount' && l.amountChf === SIC_BUNDLE_ALL_MODULES_CHF - fullPrice)).toBe(true)
+    }
   })
   it('all 4 modules as add-on (no base fee) → no bundle discount', () => {
     const q = quoteSicOrder({ includeBaseFee: false, moduleIds: SIC_MODULES.map(m => m.id) })
