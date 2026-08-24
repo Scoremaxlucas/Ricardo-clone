@@ -53,9 +53,9 @@ const MODULE_ICON: Record<SicModuleId, LucideIcon> = {
 
 const HOW_STEPS: { icon: LucideIcon; title: string }[] = [
   { icon: Mail, title: 'E-Mail angeben — Zertifikat ist angelegt' },
-  { icon: Upload, title: 'Belege hochladen (PDF oder Foto)' },
+  { icon: Upload, title: 'Vorlagen einholen und hochladen — auch über mehrere Tage' },
   { icon: ListChecks, title: 'Wir sichten innert 24 Std. nach vollständigem Upload' },
-  { icon: QrCode, title: 'PDF mit QR herunterladen und der Bewerbung beilegen' },
+  { icon: QrCode, title: 'PDF mit QR — wenn alle gewählten Module verifiziert sind' },
 ]
 
 const TODAY_SCENES = [
@@ -334,7 +334,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   href="#module"
                   className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
                 >
-                  Kostenlos starten <ArrowRight className="h-4 w-4" />
+                  Zertifikat anlegen <ArrowRight className="h-4 w-4" />
                 </a>
                 <p className="mt-3 max-w-md text-xs leading-relaxed text-white/45">
                   Keine Wohnungszusage – aber eine übersichtliche Bewerbung, die Vertrauen schafft.
@@ -430,7 +430,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               </div>
               <p className="mx-auto mt-8 max-w-xl text-center text-sm text-slate-500">
                 <a href="#module" className="font-semibold text-[#c8102e] hover:underline">
-                  Kostenlos starten
+                  Zertifikat anlegen
                 </a>
                 <span className="text-slate-400"> · Prüfung innert 24 Std. nach vollständigem Upload</span>
               </p>
@@ -444,7 +444,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
         <div className="mx-auto max-w-6xl px-5">
           <h2 className="text-center text-3xl font-bold tracking-tight text-[#0f2b5e]">In 4 Schritten</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-            E-Mail reicht zum Start. Das PDF zum Beilegen gibt es, sobald mindestens ein Modul verifiziert ist.
+            E-Mail reicht zum Start. Vorlagen darfst du über Tage einholen. Das PDF für Vermieter gibt es, wenn
+            alle von dir gewählten Module verifiziert sind.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-500">
             <span>Derzeit kostenlos</span>
@@ -802,7 +803,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               <p className="mt-1.5 text-xs text-slate-500">
                 {isReturning ?
                   'Angemeldet — neue Module werden diesem Zertifikat zugeordnet.'
-                : 'Deine E-Mail ist dein Zugang — kein Passwort nötig. Du erhältst einen Anmeldelink; Formulare und Uploads folgen unter «Mein Zertifikat».'}
+                : 'Deine E-Mail ist dein Zugang. Der Anmeldelink ist 30 Minuten gültig; Vorlagen und Uploads folgen unter «Mein Zertifikat» — auch über mehrere Tage. Einen neuen Link kannst du jederzeit anfordern.'}
               </p>
               <button
                 type="button"
@@ -820,13 +821,10 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 : nothingToBuy ?
                   'Keine Module mehr verfügbar'
                 : isReturning ?
-                  'Module kostenlos hinzufügen'
-                : 'Zertifikat kostenlos erstellen'}
+                  'Module hinzufügen'
+                : 'Zertifikat anlegen'}
                 {!submitting && !nothingToBuy && <ArrowRight className="h-4 w-4" />}
               </button>
-              <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-400">
-                Derzeit keine Zahlung — Einführungsphase
-              </p>
               <ul className="mt-3 space-y-1.5 border-t border-slate-200 pt-3">
                 <li className="flex items-center gap-2 text-xs text-slate-500"><ShieldCheck className="h-3.5 w-3.5 text-[#0f2b5e]" /> Schweizer Datenschutz (revDSG)</li>
                 <li className="flex items-center gap-2 text-xs text-slate-500"><Lock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Daten verschlüsselt gespeichert</li>
@@ -882,7 +880,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               nothingToBuy ?
                 'Dein Zertifikat ist vollständig.'
               : 'Modul hinzufügen und Zertifikat erweitern.'
-            : 'Mach dein Dossier zum Dokument, das jemand öffnet.'}
+            : 'Zertifikat anlegen. Vorlagen und Uploads folgen unter Mein Zertifikat.'}
           </span>
           {isReturning && nothingToBuy ?
             <a
@@ -895,7 +893,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               href="#module"
               className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#c8102e] px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
             >
-              {isReturning ? 'Modul hinzufügen' : 'Kostenlos starten'} <ArrowRight className="h-4 w-4" />
+              {isReturning ? 'Modul hinzufügen' : 'Zertifikat anlegen'} <ArrowRight className="h-4 w-4" />
             </a>
           }
         </div>

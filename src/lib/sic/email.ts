@@ -67,7 +67,8 @@ export async function sendSicMagicLinkEmail(email: string, url: string) {
   const html = sicEmailShell({
     preheader: 'Dein Anmeldelink für Swiss Immo Cert',
     heading: 'Anmeldung bei Swiss Immo Cert',
-    bodyHtml: `<p style="margin:0 0 12px;">Klicke auf den Button, um dich sicher und ohne Passwort anzumelden. Der Link ist 30 Minuten gültig und nur einmal verwendbar.</p>`,
+    bodyHtml: `<p style="margin:0 0 12px;">Klicke auf den Button, um dich ohne Passwort anzumelden. Dieser Link ist 30 Minuten gültig und nur einmal verwendbar.</p>
+      <p style="margin:0;">Vorlagen und Uploads dürfen über Tage dauern. Ist der Link abgelaufen, forderst du unter «Mein Zertifikat» jederzeit einen neuen an.</p>`,
     buttonText: 'Jetzt anmelden',
     buttonUrl: url,
     footnoteHtml:
@@ -79,7 +80,7 @@ export async function sendSicMagicLinkEmail(email: string, url: string) {
     from: sicFromAddress(),
     subject: 'Dein Anmeldelink für Swiss Immo Cert',
     html,
-    text: `Anmeldung bei ${SIC_BRAND_NAME}\n\nMit diesem Link anmelden (30 Minuten gültig, einmalig):\n${url}`,
+    text: `Anmeldung bei ${SIC_BRAND_NAME}\n\nMit diesem Link anmelden (30 Minuten gültig, einmalig):\n${url}\n\nVorlagen und Uploads dürfen über Tage dauern. Danach unter «Mein Zertifikat» einen neuen Link anfordern.`,
   })
 }
 
@@ -160,17 +161,17 @@ export async function sendSicUploadReminderEmail(opts: {
 }) {
   const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
   const html = sicEmailShell({
-    preheader: `Nachweise fehlen für «${opts.moduleTitle}»`,
-    heading: 'Nachweise noch ausstehend',
-    bodyHtml: `<p style="margin:0 0 12px;">Für das Modul <strong>${escapeHtml(opts.moduleTitle)}</strong> fehlen noch Nachweise.</p>
-      <p style="margin:0;">Lade die Belege hoch, damit wir prüfen und freigeben können.</p>`,
+    preheader: `Noch offen: ${opts.moduleTitle}`,
+    heading: 'Nachweis noch offen',
+    bodyHtml: `<p style="margin:0 0 12px;">Für das Modul <strong>${escapeHtml(opts.moduleTitle)}</strong> fehlt noch ein Nachweis — zum Beispiel eine unterzeichnete Vorlage.</p>
+      <p style="margin:0;">Lade die Belege hoch, sobald sie vorliegen. Das darfst du über mehrere Tage machen.</p>`,
     buttonText: 'Nachweise hochladen',
     buttonUrl,
   })
   return sendEmail({
     to: opts.email,
     from: sicFromAddress(),
-    subject: `${SIC_BRAND_NAME}: Nachweise fehlen — «${opts.moduleTitle}»`,
+    subject: `${SIC_BRAND_NAME}: Noch offen — «${opts.moduleTitle}»`,
     html,
     text: `Für «${opts.moduleTitle}» fehlen noch Nachweise.\n\n${buttonUrl}`,
   })

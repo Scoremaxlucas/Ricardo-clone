@@ -24,10 +24,10 @@ import toast from 'react-hot-toast'
 type ModuleStatus = SicDossierView['purchasedModules'][number]['status']
 
 const STATUS_META: Record<ModuleStatus, { label: string; className: string; Icon: typeof CheckCircle2 }> = {
-  PENDING_DOCS: { label: 'Nachweise ausstehend', className: 'bg-amber-50 text-amber-700', Icon: FileUp },
+  PENDING_DOCS: { label: 'Vorlage / Upload offen', className: 'bg-amber-50 text-amber-700', Icon: FileUp },
   IN_REVIEW: { label: 'In Prüfung', className: 'bg-blue-50 text-blue-700', Icon: Clock },
   VERIFIED: { label: 'Verifiziert', className: 'bg-[#2f9e44]/10 text-[#1f7a34]', Icon: CheckCircle2 },
-  REJECTED: { label: 'Abgelehnt', className: 'bg-rose-50 text-rose-700', Icon: AlertCircle },
+  REJECTED: { label: 'Nachreichen', className: 'bg-rose-50 text-rose-700', Icon: AlertCircle },
 }
 
 const VERIFY_DEFINITION =
@@ -48,13 +48,13 @@ function progressSummary(p: SicDossierView['progress']): string {
   const parts: string[] = []
   parts.push(`${p.verifiedCount} von ${p.totalModules} Modul${p.totalModules === 1 ? '' : 'en'} verifiziert`)
   if (p.pendingDocsCount > 0) {
-    parts.push(`${p.pendingDocsCount} wartet auf deine Uploads`)
+    parts.push(`${p.pendingDocsCount} mit offener Vorlage oder Upload`)
   }
   if (p.inReviewCount > 0) {
     parts.push(`${p.inReviewCount} in Prüfung`)
   }
   if (p.rejectedCount > 0) {
-    parts.push(`${p.rejectedCount} abgelehnt — bitte nachreichen`)
+    parts.push(`${p.rejectedCount} nachreichen`)
   }
   return parts.join(' · ')
 }
@@ -131,8 +131,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
 
   const expired = new Date(dossier.expiresAt).getTime() <= Date.now()
   const certStatus = certificateStatusMeta(dossier, expired)
-  const hasVerifiedModule = dossier.progress.verifiedCount > 0
-  const pdfReady = Boolean(dossier.holderName) && hasVerifiedModule && !expired && dossier.status !== 'REVOKED'
+  const pdfReady = dossier.landlordPdfReady
 
   async function saveName() {
     if (!firstName.trim() || !lastName.trim()) {
@@ -205,6 +204,10 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         <div>
           <h1 className="text-2xl font-bold text-[#0f2b5e]">Mein Zertifikat</h1>
           <p className="mt-1 text-sm text-slate-500">{dossier.email}</p>
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
+            Vorlagen von Dritten einholen und hochladen kann über Tage dauern — das ist vorgesehen. Das PDF
+            für Vermieter gibt es, wenn alle gewählten Module verifiziert sind.
+          </p>
         </div>
         <form action="/api/sic/logout" method="post">
           <button className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-800">
@@ -285,7 +288,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
               <Download className="h-4 w-4" /> Zertifikat als PDF
             </span>
             <p className="mt-2 text-xs text-slate-500">
-              Verfügbar, sobald mindestens ein Modul verifiziert ist.
+              Verfügbar, sobald alle gewählten Module verifiziert sind.
             </p>
           </div>
         }
@@ -390,9 +393,11 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                 </p>
               : null}
 
-              {m.status === 'VERIFIED' ?
+                  {m.status === 'VERIFIED' ?
                 <p className="mt-3 text-sm text-[#1f7a34]">
-                  Dieses Modul ist freigegeben und erscheint auf dem Zertifikat-PDF.
+                  {pdfReady ?
+                    'Dieses Modul ist freigegeben und erscheint auf dem Zertifikat-PDF.'
+                  : 'Dieses Modul ist freigegeben. Das PDF für Vermieter folgt, sobald die übrigen gewählten Module ebenfalls verifiziert sind.'}
                 </p>
               : null}
             </li>
@@ -405,8 +410,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-6">
           <h3 className="text-sm font-semibold text-slate-900">Zertifikat erweitern</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Zusätzliche Module auf der Startseite wählen — derzeit kostenlos. Die Gültigkeit deines
-            Zertifikats verlängert sich entsprechend.
+            Später erweitern — nicht nötig für das aktuelle Zertifikat. Zusätzliche Module auf der Startseite
+            wählen.
           </p>
           <ul className="mt-3 space-y-2">
             {dossier.availableModules.map(a => (

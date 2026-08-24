@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { certificateVerifyQrDataUrl } from '@/lib/certificate/qrDataUrl'
 import { SicCertificatePdfDocument } from '@/lib/sic/CertificatePdf'
 import { sicVerifyUrl } from '@/lib/sic/config'
-import { joinHolderName, verifiedModuleLineItems } from '@/lib/sic/dossier'
+import { isSicLandlordPdfReady, joinHolderName, verifiedModuleLineItems } from '@/lib/sic/dossier'
 import { normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
 import { getSicSession } from '@/lib/sic/session-cookie'
 import { renderToBuffer } from '@react-pdf/renderer'
@@ -25,12 +25,17 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
     return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 })
   }
 
-  const hasVerified = cert.modules.some(m => m.status === 'VERIFIED')
-  if (!hasVerified) {
+  const landlordPdfReady = isSicLandlordPdfReady({
+    holderName: joinHolderName(cert.holderFirstName, cert.holderLastName),
+    status: cert.status,
+    expiresAt: cert.expiresAt,
+    modules: cert.modules,
+  })
+  if (!landlordPdfReady) {
     return NextResponse.json(
       {
         message:
-          'Das Zertifikat ist erst abrufbar, sobald mindestens ein Modul verifiziert ist.',
+          'Das PDF für Vermieter ist erst abrufbar, wenn alle gewählten Module verifiziert sind und der Name auf dem Zertifikat steht.',
       },
       { status: 403 }
     )

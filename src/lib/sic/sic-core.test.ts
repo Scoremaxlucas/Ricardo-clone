@@ -6,6 +6,7 @@ import {
 } from '@/lib/sic/certificate-code'
 import { normalizeSicModuleIds, SIC_BASE_FEE_CHF, SIC_BUNDLE_ALL_MODULES_CHF, SIC_MODULE_FEE_CHF, SIC_MODULES, sicBundleSavingsChf } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
+import { isSicLandlordPdfReady } from '@/lib/sic/dossier'
 import { addCalendarMonths, isSicExpired, sicExtendedExpiresAt, sicValidityExpiresAt } from '@/lib/sic/validity'
 
 describe('certificate code', () => {
@@ -73,6 +74,11 @@ describe('pricing', () => {
     const arbeit = SIC_MODULES.find(m => m.id === 'ARBEIT_EINKOMMEN')
     expect(arbeit?.scopeItems.join(' ')).not.toMatch(/Mietverhältnis/)
     expect(arbeit?.requiredDocuments.join(' ')).not.toMatch(/Mietverhältnis/)
+    expect(arbeit?.landlordQuestion).not.toMatch(/Miete tragen/)
+  })
+  it('Aufenthalt does not claim a right to live here', () => {
+    const auf = SIC_MODULES.find(m => m.id === 'AUFENTHALT')
+    expect(auf?.landlordQuestion).not.toMatch(/Darf er hier wohnen/)
   })
   it('ignores invalid module ids in total', () => {
     const q = quoteSicOrder({ includeBaseFee: false, moduleIds: ['BONITAET', 'nope'] })
@@ -110,5 +116,45 @@ describe('validity', () => {
     const from = new Date(Date.UTC(2026, 0, 15))
     addCalendarMonths(from, 3)
     expect(from.toISOString().slice(0, 10)).toBe('2026-01-15')
+  })
+})
+
+describe('landlord PDF gate', () => {
+  const future = new Date(Date.now() + 86_400_000)
+  it('requires all purchased modules VERIFIED plus holder name', () => {
+    expect(
+      isSicLandlordPdfReady({
+        holderName: 'Anna Muster',
+        status: 'ACTIVE',
+        expiresAt: future,
+        modules: [{ status: 'VERIFIED' }, { status: 'PENDING_DOCS' }],
+      })
+    ).toBe(false)
+    expect(
+      isSicLandlordPdfReady({
+        holderName: 'Anna Muster',
+        status: 'ACTIVE',
+        expiresAt: future,
+        modules: [{ status: 'VERIFIED' }, { status: 'VERIFIED' }],
+      })
+    ).toBe(true)
+  })
+  it('rejects empty modules or missing name', () => {
+    expect(
+      isSicLandlordPdfReady({
+        holderName: null,
+        status: 'ACTIVE',
+        expiresAt: future,
+        modules: [{ status: 'VERIFIED' }],
+      })
+    ).toBe(false)
+    expect(
+      isSicLandlordPdfReady({
+        holderName: 'Anna Muster',
+        status: 'ACTIVE',
+        expiresAt: future,
+        modules: [],
+      })
+    ).toBe(false)
   })
 })

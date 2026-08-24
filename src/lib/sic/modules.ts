@@ -70,7 +70,7 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     title: 'Arbeit & Einkommen',
     summary:
       'Wir prüfen deine eingereichten Lohn- und Arbeitsnachweise auf Vollständigkeit und Plausibilität. Nach erfolgreicher Prüfung steht das Modul auf dem Zertifikat als «Verifiziert».',
-    landlordQuestion: 'Kann er die Miete tragen?',
+    landlordQuestion: 'Liegt ein belegtes Einkommen vor?',
     landlordSees: 'Er sieht Einkommen und Arbeitsverhältnis in einer Zeile — statt Lohnabrechnung und Vertrag einzeln zu öffnen.',
     youUpload: 'Lohnausweis oder Lohnabrechnung plus Arbeitgeberbestätigung (SIC-Formular)',
     scopeItems: [
@@ -111,7 +111,7 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     title: 'Aufenthalt',
     summary:
       'Wir prüfen deinen eingereichten Ausweis oder die Bewilligung auf Vollständigkeit und Plausibilität. Nach erfolgreicher Prüfung steht das Modul auf dem Zertifikat als «Verifiziert».',
-    landlordQuestion: 'Darf er hier wohnen?',
+    landlordQuestion: 'Ist Ausweis oder Bewilligung belegt?',
     landlordSees: 'Er sieht, dass Identität und Aufenthaltsstatus mit einem geprüften Ausweis belegt sind.',
     youUpload: 'Pass oder ID (Schweiz) oder gültige Aufenthaltsbewilligung (C, B, L)',
     scopeItems: ['Pass / ID oder Aufenthaltsbewilligung'],

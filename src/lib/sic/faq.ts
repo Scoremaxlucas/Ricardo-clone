@@ -10,7 +10,11 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Wie lange dauert die Prüfung?',
-    a: 'In der Regel innert 24 Std. nach vollständigem Upload.',
+    a: 'Die Sichtung innert 24 Std. nach vollständigem Upload. Vorlagen von Arbeitgeber oder Vermieter einzuholen kann Tage bis etwa zwei Wochen dauern — das ist normal. Du kannst jederzeit unter «Mein Zertifikat» einen neuen Anmeldelink anfordern; die Sitzung bleibt danach länger aktiv.',
+  },
+  {
+    q: 'Brauche ich SIC-Formulare?',
+    a: 'Ja, wo vorgesehen: Angaben wie Arbeitgeberbestätigung oder Vermieterreferenz gehören auf das SIC-Formular, unterzeichnet von der dritten Person. Du lädst das ausgefüllte Dokument selbst hoch. Das Zertifikat für Vermieter ist erst fertig, wenn alle von dir gewählten Module verifiziert sind.',
   },
   {
     q: 'Wer sieht meine Daten?',
@@ -30,6 +34,6 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Muss ich mich vorher anmelden?',
-    a: 'Nein. Auf der Startseite wählst du Module und gibst deine E-Mail an. Danach erhältst du einen Anmeldelink — «Mein Zertifikat» ist dein Bereich für Uploads und Status.',
+    a: 'Nein. Auf der Startseite wählst du Module und gibst deine E-Mail an. Der Anmeldelink ist kurz gültig; den Vorgang selbst kannst du über Tage fortsetzen. Unter «Mein Zertifikat» forderst du jederzeit einen neuen Link an.',
   },
 ]

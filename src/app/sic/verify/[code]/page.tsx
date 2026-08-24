@@ -1,6 +1,6 @@
 import { normalizeSicCertificateCode, isValidSicCertificateCode } from '@/lib/sic/certificate-code'
 import { SIC_BRAND_NAME } from '@/lib/sic/config'
-import { verifiedModuleLineItems, joinHolderName } from '@/lib/sic/dossier'
+import { isSicLandlordPdfReady, verifiedModuleLineItems, joinHolderName } from '@/lib/sic/dossier'
 import { prisma } from '@/lib/prisma'
 import { AlertTriangle, CheckCircle2, Clock, ShieldCheck, XCircle } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -31,9 +31,17 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
   const now = new Date()
   const notExpired = !!cert && cert.status === 'ACTIVE' && cert.expiresAt.getTime() > now.getTime()
   const verifiedModules = cert ? verifiedModuleLineItems(cert.modules) : []
-  const hasVerifiedContent = verifiedModules.length > 0
+  const holderName = cert ? joinHolderName(cert.holderFirstName, cert.holderLastName) : null
+  const landlordReady =
+    !!cert &&
+    isSicLandlordPdfReady({
+      holderName,
+      status: cert.status,
+      expiresAt: cert.expiresAt,
+      modules: cert.modules,
+    })
 
-  if (cert && notExpired && hasVerifiedContent) {
+  if (cert && landlordReady) {
     prisma.sicCertificate
       .update({ where: { id: cert.id }, data: { verificationCount: { increment: 1 }, lastVerifiedAt: now } })
       .catch(() => {})
@@ -61,11 +69,11 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
             Dieses Zertifikat ist {cert.status === 'REVOKED' ? 'widerrufen' : 'abgelaufen'}.
           </p>
         </div>
-      : !hasVerifiedContent ?
+      : !landlordReady ?
         <div className="mt-6 rounded-2xl border border-amber-200 bg-white p-6">
           <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-amber-800">
             <Clock className="h-5 w-5 flex-shrink-0" />
-            <span className="font-semibold">Zertifikat existiert — Prüfung ausstehend</span>
+            <span className="font-semibold">Noch kein fertiges Zertifikat</span>
           </div>
           <dl className="mt-5 space-y-3 text-sm">
             <div className="flex justify-between">
@@ -75,7 +83,7 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
             <div className="flex justify-between">
               <dt className="text-slate-500">Inhaber</dt>
               <dd className="font-medium text-slate-900">
-                {joinHolderName(cert.holderFirstName, cert.holderLastName) || 'Gemäss Nachweisen'}
+                {holderName || 'Gemäss Nachweisen'}
               </dd>
             </div>
             <div className="flex justify-between">
@@ -84,8 +92,8 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
             </div>
           </dl>
           <p className="mt-5 text-sm leading-relaxed text-slate-600">
-            Es sind noch keine Module freigegeben. Erst nach bestandener Prüfung erscheinen hier verifizierte
-            Angaben. Ein leeres Zertifikat ersetzt keine geprüften Nachweise.
+            Dieses Zertifikat ist für Vermieter erst gültig, wenn alle gewählten Module verifiziert sind.
+            Teilangaben werden hier nicht ausgewiesen.
           </p>
         </div>
       : <div className="mt-6 rounded-2xl border border-[#2f9e44]/30 bg-white p-6">
@@ -101,7 +109,7 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
             <div className="flex justify-between">
               <dt className="text-slate-500">Inhaber</dt>
               <dd className="font-medium text-slate-900">
-                {joinHolderName(cert.holderFirstName, cert.holderLastName) || 'Gemäss Nachweisen'}
+                {holderName || 'Gemäss Nachweisen'}
               </dd>
             </div>
             <div className="flex justify-between">

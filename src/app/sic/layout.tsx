@@ -24,7 +24,7 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
               href={`${sicPaths.landing}#module`}
               className="rounded-lg bg-[#c8102e] px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#a50d26]"
             >
-              Zertifikat erstellen
+              Zertifikat anlegen
             </Link>
             <Link
               href={sicPaths.certificateWorkspace}

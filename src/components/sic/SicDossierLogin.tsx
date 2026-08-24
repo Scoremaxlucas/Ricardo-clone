@@ -36,8 +36,8 @@ export function SicDossierLogin() {
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-5 py-16">
       <h1 className="text-2xl font-bold text-[#0f2b5e]">Mein Zertifikat</h1>
       <p className="mt-2 text-slate-600">
-        Hier siehst du Status, Formulare und Uploads, sobald du ein Zertifikat angelegt hast. Melde dich ohne
-        Passwort an; wir senden dir einen Anmeldelink.
+        Hier siehst du Status, Formulare und Uploads. Der Anmeldelink ist 30 Minuten gültig; den Vorgang
+        kannst du über Tage fortsetzen. Fordere jederzeit einen neuen Link an.
       </p>
 
       {sent ?
@@ -70,9 +70,9 @@ export function SicDossierLogin() {
             {busy ? 'Wird gesendet …' : 'Anmeldelink senden'}
           </button>
           <p className="mt-3 text-center text-xs text-slate-400">
-            Noch nichts gekauft?{' '}
+            Noch nichts angelegt?{' '}
             <a href="/" className="font-semibold text-[#0f2b5e] hover:underline">
-              Zertifikat erstellen
+              Zertifikat anlegen
             </a>
           </p>
         </div>

@@ -40,6 +40,8 @@ export type SicDossierView = {
   expiresAt: string
   holderName: string | null
   hasVerifiedModule: boolean
+  /** Vermieter-PDF/QR nur wenn alle erworbenen Module VERIFIED sind. */
+  landlordPdfReady: boolean
   progress: {
     totalModules: number
     verifiedCount: number
@@ -72,6 +74,22 @@ export function verifiedModuleLineItems(
 export function joinHolderName(first: string | null, last: string | null): string | null {
   const name = `${(first ?? '').trim()} ${(last ?? '').trim()}`.trim()
   return name || null
+}
+
+/** Fertiges Zertifikat für Vermieter: alle gekauften Module verifiziert, Name gesetzt, nicht abgelaufen. */
+export function isSicLandlordPdfReady(opts: {
+  holderName: string | null
+  status: string
+  expiresAt: Date | string
+  modules: { status: string }[]
+}): boolean {
+  const expiresAt =
+    typeof opts.expiresAt === 'string' ? new Date(opts.expiresAt).getTime() : opts.expiresAt.getTime()
+  if (opts.status === 'REVOKED' || opts.status === 'EXPIRED') return false
+  if (expiresAt <= Date.now()) return false
+  if (!opts.holderName) return false
+  if (opts.modules.length === 0) return false
+  return opts.modules.every(m => m.status === 'VERIFIED')
 }
 
 function buildChecklist(moduleKind: SicModuleId, requiredDocuments: string[]): SicChecklistItem[] {
@@ -167,6 +185,8 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     priceChf: def.priceChf,
   }))
 
+  const holderName = joinHolderName(cert.holderFirstName, cert.holderLastName)
+
   let verifiedCount = 0
   let pendingDocsCount = 0
   let inReviewCount = 0
@@ -184,8 +204,14 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     status: cert.status,
     issuedAt: cert.issuedAt.toISOString(),
     expiresAt: cert.expiresAt.toISOString(),
-    holderName: joinHolderName(cert.holderFirstName, cert.holderLastName),
+    holderName,
     hasVerifiedModule: verifiedCount > 0,
+    landlordPdfReady: isSicLandlordPdfReady({
+      holderName,
+      status: cert.status,
+      expiresAt: cert.expiresAt,
+      modules: purchasedModules,
+    }),
     progress: {
       totalModules: purchasedModules.length,
       verifiedCount,
