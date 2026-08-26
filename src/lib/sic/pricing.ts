@@ -1,15 +1,18 @@
 import {
   getSicModule,
   normalizeSicModuleIds,
+  roundSicChf,
   SIC_BASE_FEE_CHF,
   SIC_BUNDLE_ALL_MODULES_CHF,
   SIC_CURRENCY,
+  SIC_MIN_CHARGE_CHF,
   SIC_MODULES,
   type SicModuleId,
 } from '@/lib/sic/modules'
 
 export type SicOrderLine = {
-  kind: 'base' | 'module' | 'discount'
+  /** `minimum`: Aufschlag auf den Stripe-Mindestbetrag, damit angezeigt = belastet. */
+  kind: 'base' | 'module' | 'discount' | 'minimum'
   moduleId?: SicModuleId
   label: string
   amountChf: number
@@ -51,7 +54,18 @@ export function quoteSicOrder(opts: { includeBaseFee: boolean; moduleIds: unknow
     }
   }
 
-  const totalChf = lines.reduce((sum, l) => sum + l.amountChf, 0)
+  let totalChf = roundSicChf(lines.reduce((sum, l) => sum + l.amountChf, 0))
+
+  // Stripe lehnt Zahlungen unter dem Mindestbetrag ab. Differenz als eigene Zeile
+  // ausweisen, damit der angezeigte Betrag dem belasteten entspricht.
+  if (totalChf > 0 && totalChf < SIC_MIN_CHARGE_CHF) {
+    lines.push({
+      kind: 'minimum',
+      label: 'Mindestbetrag Zahlung',
+      amountChf: roundSicChf(SIC_MIN_CHARGE_CHF - totalChf),
+    })
+    totalChf = SIC_MIN_CHARGE_CHF
+  }
 
   return {
     currency: SIC_CURRENCY,

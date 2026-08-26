@@ -1,3 +1,10 @@
+import { formatSicChf, SIC_BUNDLE_ALL_MODULES_CHF, sicIsFree } from '@/lib/sic/modules'
+
+const PRICE_ANSWER =
+  sicIsFree() ?
+    'Momentan nichts. Wir sind am Anfang und wollen, dass Vermieter das Zertifikat kennenlernen.'
+  : `Das vollständige Zertifikat mit allen vier Angaben kostet ${formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)}. Bezahlt wird einmalig beim Anlegen.`
+
 /** Shared FAQ for Landing + /sic/faq (single source of truth). Alltagssprache, kurze Antworten. */
 export const SIC_FAQ: { q: string; a: string }[] = [
   {
@@ -6,7 +13,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was kostet es?',
-    a: 'Momentan nichts. Wir sind am Anfang und wollen, dass Vermieter das Zertifikat kennenlernen.',
+    a: PRICE_ANSWER,
   },
   {
     q: 'Warum genau diese vier Angaben?',

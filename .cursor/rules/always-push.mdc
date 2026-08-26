@@ -1,0 +1,9 @@
+# Git: nach erledigter Arbeit immer pushen
+
+Wenn eine Aufgabe inhaltlich fertig ist (Implementierung, Fix, Copy):
+
+1. Committen, sofern es committbare Änderungen gibt.
+2. Sofort auf den Tracking-Remote pushen (`git push`), ohne extra zu fragen.
+3. Nur nicht pushen, wenn der User das ausdrücklich untersagt oder ein unsicherer Force-Push nötig wäre.
+
+Kein «Soll ich pushen?» am Ende.

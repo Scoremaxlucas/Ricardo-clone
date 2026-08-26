@@ -3,7 +3,14 @@
 import { SicLogoMark } from '@/components/sic/SicLogo'
 import { SIC_COLORS, SIC_MODULE_ACCENT } from '@/lib/sic/brand'
 import { SIC_FAQ } from '@/lib/sic/faq'
-import { SIC_MODULES, SIC_VALIDITY_MONTHS, type SicModuleId } from '@/lib/sic/modules'
+import {
+  formatSicChf,
+  SIC_BUNDLE_ALL_MODULES_CHF,
+  SIC_MODULES,
+  SIC_VALIDITY_MONTHS,
+  sicIsFree,
+  type SicModuleId,
+} from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import type { SicLandingAccount } from '@/lib/sic/landing-account'
 import { sicPaths } from '@/lib/sic/config'
@@ -28,9 +35,9 @@ import type { LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 
-function formatSicPrice(chf: number): string {
-  return chf <= 0 ? 'Kostenlos' : `CHF ${chf}.–`
-}
+const IS_FREE = sicIsFree()
+/** Preisangabe für Copy: «Kostenlos» oder der Paketpreis. */
+const PRICE_LABEL = IS_FREE ? 'Kostenlos' : formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -422,7 +429,10 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 <a href="#module" className="font-semibold text-[#c8102e] hover:underline">
                   Zertifikat anlegen
                 </a>
-                <span className="text-slate-400"> · kostenlos, meist innert 24 Stunden geprüft</span>
+                <span className="text-slate-400">
+                  {' '}
+                  · {IS_FREE ? 'kostenlos' : PRICE_LABEL}, meist innert 24 Stunden geprüft
+                </span>
               </p>
             </div>
           </section>
@@ -435,7 +445,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           <h2 className="text-center text-3xl font-bold tracking-tight text-[#0f2b5e]">So läuft es ab</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
             Zum Start reicht deine E-Mail. Die Unterlagen sammelst du danach in deinem Tempo — das fertige PDF
-            gibt es, wenn alles geprüft ist. Kostenlos, {SIC_VALIDITY_MONTHS} Monate gültig.
+            gibt es, wenn alles geprüft ist. {PRICE_LABEL}, {SIC_VALIDITY_MONTHS} Monate gültig.
           </p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_STEPS.map((step, i) => (
@@ -576,7 +586,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                       </span>
                     }
                     {!alreadyOwned && m.priceChf > 0 ?
-                      <span className="text-xs font-semibold text-slate-500">{formatSicPrice(m.priceChf)}</span>
+                      <span className="text-xs font-semibold text-slate-500">{formatSicChf(m.priceChf)}</span>
                     : null}
                   </div>
                 </button>
@@ -641,7 +651,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     >
                       <dt>{l.label}</dt>
                       <dd className="tabular-nums">
-                        {l.amountChf < 0 ? `− ${formatSicPrice(Math.abs(l.amountChf))}` : formatSicPrice(l.amountChf)}
+                        {l.amountChf < 0 ? `− ${formatSicChf(Math.abs(l.amountChf))}` : formatSicChf(l.amountChf)}
                       </dd>
                     </div>
                   ))}
@@ -649,7 +659,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 <div className="mt-3 flex items-baseline justify-between border-t border-slate-200 pt-3">
                   <span className="text-sm font-medium text-slate-500">Total</span>
                   <span className="text-xl font-bold tabular-nums text-[#0f2b5e]">
-                    {formatSicPrice(quote.totalChf)}
+                    {formatSicChf(quote.totalChf)}
                   </span>
                 </div>
               </div>
@@ -750,7 +760,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               nothingToBuy ?
                 'Dein Zertifikat ist vollständig.'
               : 'Fehlende Angabe ergänzen.'
-            : 'Kostenlos anlegen. Unterlagen lädst du danach in deinem Tempo hoch.'}
+            : IS_FREE ?
+              'Kostenlos anlegen. Unterlagen lädst du danach in deinem Tempo hoch.'
+            : `Anlegen für ${PRICE_LABEL}. Unterlagen lädst du danach in deinem Tempo hoch.`}
           </span>
           {isReturning && nothingToBuy ?
             <a

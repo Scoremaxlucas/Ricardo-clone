@@ -114,15 +114,23 @@ export async function POST(req: NextRequest) {
     return res
   }
 
+  // Rabatt (negativ) und Mindestbetrag-Aufschlag lassen sich nicht als eigene
+  // Stripe-Positionen abbilden — dann eine Position über das Total.
   const hasDiscount = quote.lines.some(l => l.kind === 'discount')
+  const collapseToTotal = hasDiscount || quote.lines.some(l => l.kind === 'minimum')
   const lineItems =
-    hasDiscount ?
+    collapseToTotal ?
       [
         {
           price_data: {
             currency: 'chf' as const,
             unit_amount: Math.round(quote.totalChf * 100),
-            product_data: { name: `${SIC_BRAND_NAME} — Komplett-Paket (Basis + 4 Module)` },
+            product_data: {
+              name:
+                hasDiscount ?
+                  `${SIC_BRAND_NAME} — Komplett-Paket (Basis + 4 Module)`
+                : `${SIC_BRAND_NAME} — Mieter-Zertifikat`,
+            },
           },
           quantity: 1,
         },

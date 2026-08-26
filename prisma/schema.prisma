@@ -2881,7 +2881,10 @@ model SicPayment {
    * Modul-IDs als Text (validiert in Code über normalizeSicModuleIds).
    */
   moduleKinds    String[]
-  amountChf      Int
+  /**
+   * Betrag in CHF mit Rappen (Testpreise liegen unter CHF 1.–).
+   */
+  amountChf      Decimal          @db.Decimal(10, 2)
   currency       String           @default("CHF")
   status         SicPaymentStatus @default(PENDING)
   paidAt         DateTime?

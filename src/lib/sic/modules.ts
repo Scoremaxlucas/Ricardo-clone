@@ -11,16 +11,35 @@
 export const SIC_CURRENCY = 'CHF' as const
 
 /**
- * Aktuell kostenlos (Einführung). Stripe-Checkout wird bei Total 0 übersprungen.
+ * TESTPREISE: 10 Rappen pro Position, damit der Zahlungsweg echt durchlaufen wird.
+ * Bei Total 0 wird Stripe übersprungen; unter `SIC_MIN_CHARGE_CHF` hebt das Quote
+ * den Betrag sichtbar auf das Stripe-Minimum an.
  * Produktion wiederherstellen: Basis 20 / Modul 30 / Bundle 120.
  */
-export const SIC_BASE_FEE_CHF = 0
+export const SIC_BASE_FEE_CHF: number = 0.1
 
 /** Preis pro verifiziertem Modul. */
-export const SIC_MODULE_FEE_CHF = 0
+export const SIC_MODULE_FEE_CHF: number = 0.1
 
 /** Komplett-Paket: Basis + alle 4 Module zum Bundle-Preis. */
-export const SIC_BUNDLE_ALL_MODULES_CHF = 0
+export const SIC_BUNDLE_ALL_MODULES_CHF: number = 0.5
+
+/**
+ * Stripe verrechnet keine Zahlung unter diesem Betrag (docs.stripe.com/currencies,
+ * CHF: 0.50). Kleinere Summen scheitern mit `amount_too_small`.
+ */
+export const SIC_MIN_CHARGE_CHF = 0.5
+
+/** Auf Rappen runden — verhindert Float-Reste wie 0.30000000000000004. */
+export function roundSicChf(chf: number): number {
+  return Math.round(chf * 100) / 100
+}
+
+/** Anzeige: «Kostenlos», «CHF 0.10», «CHF 30.–». */
+export function formatSicChf(chf: number): string {
+  if (chf <= 0) return 'Kostenlos'
+  return Number.isInteger(chf) ? `CHF ${chf}.–` : `CHF ${chf.toFixed(2)}`
+}
 
 /** Gültigkeit eines Zertifikats bzw. einer Verlängerung in Kalendermonaten. */
 export const SIC_VALIDITY_MONTHS = 3
@@ -144,13 +163,18 @@ export function normalizeSicModuleIds(raw: unknown): SicModuleId[] {
 
 /** Katalogpreis einzeln: Basis + jedes Modul zum Einzelpreis. */
 export function sicCatalogListTotalChf(): number {
-  return SIC_BASE_FEE_CHF + SIC_MODULES.reduce((sum, m) => sum + m.priceChf, 0)
+  return roundSicChf(SIC_BASE_FEE_CHF + SIC_MODULES.reduce((sum, m) => sum + m.priceChf, 0))
 }
 
 /**
  * Ersparnis Komplett-Paket gegenüber einzeln.
- * 0 in der kostenlosen Einführungsphase — UI darf dann keinen Rabatt vortäuschen.
+ * 0 solange Bundle = Summe der Einzelpreise — UI darf dann keinen Rabatt vortäuschen.
  */
 export function sicBundleSavingsChf(): number {
-  return Math.max(0, sicCatalogListTotalChf() - SIC_BUNDLE_ALL_MODULES_CHF)
+  return Math.max(0, roundSicChf(sicCatalogListTotalChf() - SIC_BUNDLE_ALL_MODULES_CHF))
+}
+
+/** Kostet aktuell überhaupt etwas? Steuert «Kostenlos»-Copy in der Oberfläche. */
+export function sicIsFree(): boolean {
+  return sicCatalogListTotalChf() === 0
 }

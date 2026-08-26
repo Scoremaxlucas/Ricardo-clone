@@ -4,7 +4,17 @@ import {
   isValidSicCertificateCode,
   normalizeSicCertificateCode,
 } from '@/lib/sic/certificate-code'
-import { normalizeSicModuleIds, SIC_BASE_FEE_CHF, SIC_BUNDLE_ALL_MODULES_CHF, SIC_MODULE_FEE_CHF, SIC_MODULES, sicBundleSavingsChf } from '@/lib/sic/modules'
+import {
+  formatSicChf,
+  normalizeSicModuleIds,
+  roundSicChf,
+  SIC_BASE_FEE_CHF,
+  SIC_BUNDLE_ALL_MODULES_CHF,
+  SIC_MIN_CHARGE_CHF,
+  SIC_MODULE_FEE_CHF,
+  SIC_MODULES,
+  sicBundleSavingsChf,
+} from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { isSicLandlordPdfReady } from '@/lib/sic/dossier'
 import { addCalendarMonths, isSicExpired, sicExtendedExpiresAt, sicValidityExpiresAt } from '@/lib/sic/validity'
@@ -43,31 +53,37 @@ describe('module normalization', () => {
   })
 })
 
+/** Erwarteter Betrag: unter dem Stripe-Minimum wird aufs Minimum angehoben. */
+function chargeable(rawChf: number): number {
+  return rawChf > 0 && rawChf < SIC_MIN_CHARGE_CHF ? SIC_MIN_CHARGE_CHF : roundSicChf(rawChf)
+}
+
 describe('pricing', () => {
   it('base fee + no modules', () => {
     const q = quoteSicOrder({ includeBaseFee: true, moduleIds: [] })
-    expect(q.totalChf).toBe(SIC_BASE_FEE_CHF)
-    expect(q.lines).toHaveLength(1)
+    expect(q.totalChf).toBe(chargeable(SIC_BASE_FEE_CHF))
+    expect(q.lines.filter(l => l.kind === 'base')).toHaveLength(1)
+    expect(q.lines.some(l => l.kind === 'module')).toBe(false)
   })
-  it('full certificate (base + all 4 modules) is currently free (bundle)', () => {
+  it('full certificate (base + all 4 modules) costs the bundle price', () => {
     const q = quoteSicOrder({ includeBaseFee: true, moduleIds: SIC_MODULES.map(m => m.id) })
-    const fullPrice = SIC_BASE_FEE_CHF + 4 * SIC_MODULE_FEE_CHF
-    expect(q.totalChf).toBe(SIC_BUNDLE_ALL_MODULES_CHF)
+    const fullPrice = roundSicChf(SIC_BASE_FEE_CHF + 4 * SIC_MODULE_FEE_CHF)
+    expect(q.totalChf).toBe(chargeable(SIC_BUNDLE_ALL_MODULES_CHF))
     if (fullPrice > SIC_BUNDLE_ALL_MODULES_CHF) {
       expect(q.lines.some(l => l.kind === 'discount' && l.amountChf === SIC_BUNDLE_ALL_MODULES_CHF - fullPrice)).toBe(true)
     }
   })
   it('all 4 modules as add-on (no base fee) → no bundle discount', () => {
     const q = quoteSicOrder({ includeBaseFee: false, moduleIds: SIC_MODULES.map(m => m.id) })
-    expect(q.totalChf).toBe(4 * SIC_MODULE_FEE_CHF)
+    expect(q.totalChf).toBe(chargeable(4 * SIC_MODULE_FEE_CHF))
     expect(q.lines.some(l => l.kind === 'discount')).toBe(false)
   })
   it('add-on purchase without base fee', () => {
     const q = quoteSicOrder({ includeBaseFee: false, moduleIds: ['BONITAET', 'AUFENTHALT'] })
-    expect(q.totalChf).toBe(2 * SIC_MODULE_FEE_CHF)
+    expect(q.totalChf).toBe(chargeable(2 * SIC_MODULE_FEE_CHF))
     expect(q.includeBaseFee).toBe(false)
   })
-  it('bundle savings is 0 while fees are 0 (no fake discount)', () => {
+  it('bundle savings is 0 while the bundle equals the single prices (no fake discount)', () => {
     expect(sicBundleSavingsChf()).toBe(0)
   })
   it('Arbeit & Einkommen has no Mietverhältnis', () => {
@@ -82,7 +98,40 @@ describe('pricing', () => {
   })
   it('ignores invalid module ids in total', () => {
     const q = quoteSicOrder({ includeBaseFee: false, moduleIds: ['BONITAET', 'nope'] })
-    expect(q.totalChf).toBe(SIC_MODULE_FEE_CHF)
+    expect(q.moduleIds).toEqual(['BONITAET'])
+    expect(q.lines.filter(l => l.kind === 'module')).toHaveLength(1)
+    expect(q.totalChf).toBe(chargeable(SIC_MODULE_FEE_CHF))
+  })
+})
+
+describe('Stripe-Mindestbetrag', () => {
+  it('hebt Beträge unter dem Minimum sichtbar an', () => {
+    const q = quoteSicOrder({ includeBaseFee: false, moduleIds: ['BONITAET'] })
+    if (SIC_MODULE_FEE_CHF > 0 && SIC_MODULE_FEE_CHF < SIC_MIN_CHARGE_CHF) {
+      const topUp = q.lines.find(l => l.kind === 'minimum')
+      expect(topUp?.amountChf).toBe(roundSicChf(SIC_MIN_CHARGE_CHF - SIC_MODULE_FEE_CHF))
+      expect(q.totalChf).toBe(SIC_MIN_CHARGE_CHF)
+    }
+    // Angezeigte Summe muss immer der Summe der Zeilen entsprechen.
+    expect(roundSicChf(q.lines.reduce((s, l) => s + l.amountChf, 0))).toBe(q.totalChf)
+  })
+  it('lässt Total 0 unangetastet (kein Stripe-Durchlauf)', () => {
+    const q = quoteSicOrder({ includeBaseFee: false, moduleIds: [] })
+    expect(q.totalChf).toBe(0)
+    expect(q.lines.some(l => l.kind === 'minimum')).toBe(false)
+  })
+})
+
+describe('Preisanzeige', () => {
+  it('zeigt Rappen mit zwei Stellen, ganze Franken ohne', () => {
+    expect(formatSicChf(0)).toBe('Kostenlos')
+    expect(formatSicChf(0.1)).toBe('CHF 0.10')
+    expect(formatSicChf(0.5)).toBe('CHF 0.50')
+    expect(formatSicChf(30)).toBe('CHF 30.–')
+  })
+  it('rundet Float-Reste auf Rappen', () => {
+    expect(roundSicChf(0.1 + 0.1 + 0.1)).toBe(0.3)
+    expect(roundSicChf(0.1 * 4 + 0.1)).toBe(0.5)
   })
 })
 

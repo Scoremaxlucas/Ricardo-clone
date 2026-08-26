@@ -3,7 +3,7 @@
 import { SicTemplateForm } from '@/components/sic/SicTemplateForm'
 import { sicPaths } from '@/lib/sic/config'
 import type { SicDossierView, SicUploadedDocMeta } from '@/lib/sic/dossier'
-import type { SicModuleId } from '@/lib/sic/modules'
+import { formatSicChf, type SicModuleId } from '@/lib/sic/modules'
 import { templatesForModule } from '@/lib/sic/templates'
 import {
   AlertCircle,
@@ -418,7 +418,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
               <li key={a.moduleKind} className="text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-medium text-slate-700">{a.title}</span>
-                  <span className="flex-shrink-0 text-slate-500">{a.priceChf <= 0 ? 'Kostenlos' : `CHF ${a.priceChf}`}</span>
+                  <span className="flex-shrink-0 text-slate-500">{formatSicChf(a.priceChf)}</span>
                 </div>
                 <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{a.landlordSees}</p>
               </li>
