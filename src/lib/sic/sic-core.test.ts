@@ -119,6 +119,18 @@ describe('validity', () => {
   })
 })
 
+describe('module wording', () => {
+  it('keeps titles free of product jargon', () => {
+    const titles = SIC_MODULES.map(m => m.title).join(' · ')
+    expect(titles).not.toMatch(/Bonität|Zuverlässigkeit|Modul/)
+  })
+  it('keeps the hand-in line short enough for one card line', () => {
+    for (const m of SIC_MODULES) {
+      expect(m.youUpload.length).toBeLessThanOrEqual(60)
+    }
+  })
+})
+
 describe('landlord PDF gate', () => {
   const future = new Date(Date.now() + 86_400_000)
   it('requires all purchased modules VERIFIED plus holder name', () => {

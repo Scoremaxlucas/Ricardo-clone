@@ -24,14 +24,14 @@ import toast from 'react-hot-toast'
 type ModuleStatus = SicDossierView['purchasedModules'][number]['status']
 
 const STATUS_META: Record<ModuleStatus, { label: string; className: string; Icon: typeof CheckCircle2 }> = {
-  PENDING_DOCS: { label: 'Vorlage / Upload offen', className: 'bg-amber-50 text-amber-700', Icon: FileUp },
-  IN_REVIEW: { label: 'In Prüfung', className: 'bg-blue-50 text-blue-700', Icon: Clock },
-  VERIFIED: { label: 'Verifiziert', className: 'bg-[#2f9e44]/10 text-[#1f7a34]', Icon: CheckCircle2 },
-  REJECTED: { label: 'Nachreichen', className: 'bg-rose-50 text-rose-700', Icon: AlertCircle },
+  PENDING_DOCS: { label: 'Unterlagen fehlen', className: 'bg-amber-50 text-amber-700', Icon: FileUp },
+  IN_REVIEW: { label: 'Bei uns in Prüfung', className: 'bg-blue-50 text-blue-700', Icon: Clock },
+  VERIFIED: { label: 'Geprüft', className: 'bg-[#2f9e44]/10 text-[#1f7a34]', Icon: CheckCircle2 },
+  REJECTED: { label: 'Bitte nachreichen', className: 'bg-rose-50 text-rose-700', Icon: AlertCircle },
 }
 
 const VERIFY_DEFINITION =
-  'Verifiziert bedeutet: Der eingereichte Beleg wird auf Vollständigkeit und Plausibilität geprüft. Es erfolgt keine telefonische Rückfrage bei Dritten.'
+  'Wir schauen deine Unterlagen an: sind sie vollständig und plausibel? Wir rufen niemanden an — weder Arbeitgeber noch Vermieter.'
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -44,14 +44,14 @@ function formatBytes(n: number): string {
 }
 
 function progressSummary(p: SicDossierView['progress']): string {
-  if (p.totalModules === 0) return 'Noch keine Module erworben.'
+  if (p.totalModules === 0) return 'Noch keine Angaben gewählt.'
   const parts: string[] = []
-  parts.push(`${p.verifiedCount} von ${p.totalModules} Modul${p.totalModules === 1 ? '' : 'en'} verifiziert`)
+  parts.push(`${p.verifiedCount} von ${p.totalModules} geprüft`)
   if (p.pendingDocsCount > 0) {
-    parts.push(`${p.pendingDocsCount} mit offener Vorlage oder Upload`)
+    parts.push(`${p.pendingDocsCount} wartet auf Unterlagen`)
   }
   if (p.inReviewCount > 0) {
-    parts.push(`${p.inReviewCount} in Prüfung`)
+    parts.push(`${p.inReviewCount} bei uns in Prüfung`)
   }
   if (p.rejectedCount > 0) {
     parts.push(`${p.rejectedCount} nachreichen`)
@@ -71,12 +71,12 @@ function certificateStatusMeta(
   }
   const { verifiedCount, totalModules } = dossier.progress
   if (totalModules > 0 && verifiedCount === totalModules) {
-    return { label: 'Verifiziert', className: 'bg-[#2f9e44]/10 text-[#1f7a34]' }
+    return { label: 'Fertig', className: 'bg-[#2f9e44]/10 text-[#1f7a34]' }
   }
   if (verifiedCount > 0) {
-    return { label: 'Teilweise verifiziert', className: 'bg-amber-50 text-amber-800' }
+    return { label: 'Teilweise geprüft', className: 'bg-amber-50 text-amber-800' }
   }
-  return { label: 'In Bearbeitung', className: 'bg-slate-100 text-slate-700' }
+  return { label: 'In Arbeit', className: 'bg-slate-100 text-slate-700' }
 }
 
 function DocumentChip({
@@ -205,8 +205,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           <h1 className="text-2xl font-bold text-[#0f2b5e]">Mein Zertifikat</h1>
           <p className="mt-1 text-sm text-slate-500">{dossier.email}</p>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
-            Vorlagen von Dritten einholen und hochladen kann über Tage dauern — das ist vorgesehen. Das PDF
-            für Vermieter gibt es, wenn alle gewählten Module verifiziert sind.
+            Lade hoch, was du hast. Formulare von Arbeitgeber oder Vermieter brauchen oft ein paar Tage — das
+            ist normal. Das PDF für Vermieter kommt, wenn alles geprüft ist.
           </p>
         </div>
         <form action="/api/sic/logout" method="post">
@@ -288,14 +288,14 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
               <Download className="h-4 w-4" /> Zertifikat als PDF
             </span>
             <p className="mt-2 text-xs text-slate-500">
-              Verfügbar, sobald alle gewählten Module verifiziert sind.
+              Kommt, sobald alles auf deinem Zertifikat geprüft ist.
             </p>
           </div>
         }
       </div>
 
       {/* Purchased modules */}
-      <h2 className="mt-8 text-lg font-semibold text-[#0f2b5e]">Deine Module</h2>
+      <h2 className="mt-8 text-lg font-semibold text-[#0f2b5e]">Deine Unterlagen</h2>
       <p className="mt-2 text-xs leading-relaxed text-slate-500">{VERIFY_DEFINITION}</p>
       <ul className="mt-3 space-y-3">
         {dossier.purchasedModules.map(m => {
@@ -312,7 +312,9 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                 </span>
               </div>
               <p className="mt-1.5 text-sm text-slate-500">{m.summary}</p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">Für den Vermieter: {m.landlordSees}</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                Der Vermieter sieht: {m.landlordSees}
+              </p>
 
               {m.reviewNote && m.status === 'REJECTED' ?
                 <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{m.reviewNote}</p>
@@ -320,9 +322,9 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
 
               {canUpload ?
                 <div className="mt-4">
-                  <p className="text-xs font-medium text-slate-500">Checkliste — benötigte Nachweise:</p>
+                  <p className="text-xs font-medium text-slate-500">Das brauchst du dafür:</p>
                   <p className="mt-1 text-[11px] text-slate-400">
-                    Modul geht in Prüfung, sobald mindestens ein Nachweis hochgeladen ist.
+                    Sobald die erste Datei da ist, schauen wir sie an.
                   </p>
                   <ul className="mt-2 space-y-1.5">
                     {m.checklist.map(item => (
@@ -365,10 +367,10 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                     className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#0f2b5e] px-4 py-2 text-sm font-semibold text-[#0f2b5e] hover:bg-[#0f2b5e]/5 disabled:opacity-60"
                   >
                     <FileUp className="h-4 w-4" />
-                    {uploading === m.moduleKind ? 'Wird hochgeladen …' : 'Nachweis hochladen'}
+                    {uploading === m.moduleKind ? 'Wird hochgeladen …' : 'Datei hochladen'}
                   </button>
                   <p className="mt-1.5 text-[11px] text-slate-400">
-                    Du kannst mehrere Dateien nacheinander hochladen (z. B. Lohnausweis und Betreibungsauszug).
+                    PDF oder Foto. Mehrere Dateien nacheinander sind möglich.
                   </p>
                   {m.documents.length > 0 ?
                     <ul className="mt-3 space-y-2">
@@ -388,16 +390,15 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
 
               {m.status === 'IN_REVIEW' ?
                 <p className="mt-3 text-sm text-slate-500">
-                  Deine Nachweise werden geprüft. In der Regel innert 24 Std. nach vollständigem Upload.
-                  Wir benachrichtigen dich per E-Mail, sobald das Modul freigegeben oder abgelehnt wird.
+                  Wir schauen es an, meist innert 24 Stunden. Du bekommst eine E-Mail, sobald es durch ist.
                 </p>
               : null}
 
-                  {m.status === 'VERIFIED' ?
+              {m.status === 'VERIFIED' ?
                 <p className="mt-3 text-sm text-[#1f7a34]">
                   {pdfReady ?
-                    'Dieses Modul ist freigegeben und erscheint auf dem Zertifikat-PDF.'
-                  : 'Dieses Modul ist freigegeben. Das PDF für Vermieter folgt, sobald die übrigen gewählten Module ebenfalls verifiziert sind.'}
+                    'Geprüft — steht auf deinem Zertifikat.'
+                  : 'Geprüft. Das PDF kommt, sobald der Rest auch geprüft ist.'}
                 </p>
               : null}
             </li>
@@ -408,10 +409,9 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       {/* Add more modules */}
       {dossier.availableModules.length > 0 ?
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-6">
-          <h3 className="text-sm font-semibold text-slate-900">Zertifikat erweitern</h3>
+          <h3 className="text-sm font-semibold text-slate-900">Später ergänzen</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Später erweitern — nicht nötig für das aktuelle Zertifikat. Zusätzliche Module auf der Startseite
-            wählen.
+            Für dein aktuelles Zertifikat brauchst du das nicht. Wenn du willst, kommt es später dazu:
           </p>
           <ul className="mt-3 space-y-2">
             {dossier.availableModules.map(a => (
@@ -428,7 +428,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             href={sicPaths.landing}
             className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0f2b5e] hover:underline"
           >
-            <Plus className="h-4 w-4" /> Zur Startseite — Module hinzufügen
+            <Plus className="h-4 w-4" /> Auf der Startseite ergänzen
           </Link>
         </div>
       : null}

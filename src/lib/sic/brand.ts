@@ -29,10 +29,15 @@ export const SIC_COLORS = {
 export const SIC_TAGLINE = 'Der Fast Track zur Wunschwohnung'
 export const SIC_CERT_TAGLINE = 'Geprüft. Verifiziert. Vertrauenswürdig.'
 
-/** Akzentfarbe je Modul (Modul-Flyer-Referenz). */
+/**
+ * Akzentfarbe je Modul — bewusst für alle vier gleich (Navy).
+ * Vier verschiedene Buntfarben liessen die Auswahl wie ein Baukasten aussehen
+ * und erhöhten die visuelle Last; unterschieden werden die Module über Icon und
+ * Titel, nicht über Farbe.
+ */
 export const SIC_MODULE_ACCENT: Record<SicModuleId, { hex: string; tw: string; ring: string; soft: string }> = {
-  BONITAET: { hex: '#2f9e44', tw: 'bg-[#2f9e44]', ring: 'ring-[#2f9e44]/25', soft: 'bg-[#2f9e44]/10' },
-  ARBEIT_EINKOMMEN: { hex: '#1d63c9', tw: 'bg-[#1d63c9]', ring: 'ring-[#1d63c9]/25', soft: 'bg-[#1d63c9]/10' },
-  ZUVERLAESSIGKEIT: { hex: '#7b2d8e', tw: 'bg-[#7b2d8e]', ring: 'ring-[#7b2d8e]/25', soft: 'bg-[#7b2d8e]/10' },
-  AUFENTHALT: { hex: '#e8791b', tw: 'bg-[#e8791b]', ring: 'ring-[#e8791b]/25', soft: 'bg-[#e8791b]/10' },
+  BONITAET: { hex: SIC_COLORS.navy, tw: 'bg-[#0f2b5e]', ring: 'ring-[#0f2b5e]/25', soft: 'bg-[#0f2b5e]/10' },
+  ARBEIT_EINKOMMEN: { hex: SIC_COLORS.navy, tw: 'bg-[#0f2b5e]', ring: 'ring-[#0f2b5e]/25', soft: 'bg-[#0f2b5e]/10' },
+  ZUVERLAESSIGKEIT: { hex: SIC_COLORS.navy, tw: 'bg-[#0f2b5e]', ring: 'ring-[#0f2b5e]/25', soft: 'bg-[#0f2b5e]/10' },
+  AUFENTHALT: { hex: SIC_COLORS.navy, tw: 'bg-[#0f2b5e]', ring: 'ring-[#0f2b5e]/25', soft: 'bg-[#0f2b5e]/10' },
 } as const

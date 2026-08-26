@@ -108,7 +108,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
               <span>
                 <strong className="font-semibold text-[#0f2b5e]">Zahlung bestätigt</strong>
                 <br />
-                Deine Module sind freigeschaltet. Du kannst jetzt Nachweise hochladen.
+                Dein Zertifikat ist angelegt. Du kannst jetzt Unterlagen hochladen.
               </span>
             </li>
             <li className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4 ring-2 ring-[#0f2b5e]/15">

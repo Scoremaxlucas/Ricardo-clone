@@ -1,39 +1,43 @@
-/** Shared FAQ for Landing + /sic/faq (single source of truth). */
+/** Shared FAQ for Landing + /sic/faq (single source of truth). Alltagssprache, kurze Antworten. */
 export const SIC_FAQ: { q: string; a: string }[] = [
   {
-    q: 'Bekommen wir mit SIC eher die Wohnung?',
-    a: 'Das entscheiden Vermieter. SIC macht die Bewerbung prüfbar und einheitlich — du gehst nicht als ungelesene Datei unter. Eine Zusage versprechen wir nicht.',
+    q: 'Bekomme ich damit eher die Wohnung?',
+    a: 'Das entscheidet der Vermieter. Wir versprechen keine Zusage. Deine Bewerbung ist aber vollständig und auf einen Blick lesbar — statt fünf Anhänge, die niemand öffnet.',
   },
   {
-    q: 'Was passiert, wenn ein Beleg nicht anerkannt wird?',
-    a: 'Wir bitten dich, einen gültigen Nachweis nachzureichen; das Modul wird danach verifiziert.',
+    q: 'Was kostet es?',
+    a: 'Momentan nichts. Wir sind am Anfang und wollen, dass Vermieter das Zertifikat kennenlernen.',
   },
   {
-    q: 'Wie lange dauert die Prüfung?',
-    a: 'Die Sichtung innert 24 Std. nach vollständigem Upload. Vorlagen von Arbeitgeber oder Vermieter einzuholen kann Tage bis etwa zwei Wochen dauern — das ist normal. Du kannst jederzeit unter «Mein Zertifikat» einen neuen Anmeldelink anfordern; die Sitzung bleibt danach länger aktiv.',
+    q: 'Warum genau diese vier Angaben?',
+    a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob dein Ausweis gültig ist. Sind alle vier drin, muss er nicht nachfragen.',
   },
   {
-    q: 'Brauche ich SIC-Formulare?',
-    a: 'Ja, wo vorgesehen: Angaben wie Arbeitgeberbestätigung oder Vermieterreferenz gehören auf das SIC-Formular, unterzeichnet von der dritten Person. Du lädst das ausgefüllte Dokument selbst hoch. Das Zertifikat für Vermieter ist erst fertig, wenn alle von dir gewählten Module verifiziert sind.',
+    q: 'Was muss ich selbst besorgen?',
+    a: 'Den Auszug vom Betreibungsamt und deine Lohnabrechnung hast du selbst. Für Arbeitgeber und Vermieter gibt es bei uns ein kurzes Formular zum Unterschreiben — das dauert meist ein paar Tage. Du kannst alles in deinem Tempo nachliefern.',
   },
   {
-    q: 'Wer sieht meine Daten?',
-    a: 'Nur Swiss Immo Cert zur Prüfung. Vermieter sehen nur dein fertiges Zertifikat, das du selbst teilst.',
+    q: 'Wie lange dauert es insgesamt?',
+    a: 'Wir schauen deine Unterlagen meist innert 24 Stunden an. Bis alle Formulare unterschrieben zurück sind, gehen oft ein paar Tage bis zwei Wochen ins Land — das ist normal und du kannst jederzeit weitermachen.',
   },
   {
-    q: 'Akzeptieren Vermieter das Zertifikat?',
-    a: 'Swiss Immo Cert ist ein unabhängiges, standardisiertes Zertifikat, das du deiner Bewerbung als PDF beilegst — bei jeder Wohnung, über jedes Portal. Ob ein Vermieter es berücksichtigt, entscheidet er selbst; das geprüfte, einheitliche Format macht deine Bewerbung nachvollziehbarer.',
+    q: 'Was heisst «geprüft»?',
+    a: 'Wir schauen deine Unterlagen an: sind sie vollständig und plausibel? Wir rufen niemanden an — weder deinen Arbeitgeber noch deinen Vermieter.',
   },
   {
-    q: 'Was bedeuten die vier Module?',
-    a: 'Der Vermieter hat in der Regel vier Fragen: Betreibungen, Einkommen, bisheriges Wohnen, Aufenthalt. Jedes Modul beantwortet eine. Mit allen vier ist das Zertifikat vollständig — er muss nicht nach weiteren PDFs fragen.',
+    q: 'Was, wenn etwas nicht passt?',
+    a: 'Dann sagen wir dir, was fehlt, und du reichst es nach. Es gibt keine Absage.',
   },
   {
-    q: 'Was heisst «Verifiziert»?',
-    a: 'Wir prüfen deine eingereichten Nachweise auf Vollständigkeit und Plausibilität. Nach erfolgreicher Prüfung steht das Modul auf dem Zertifikat als «Verifiziert». Es gibt keinen Anruf beim Arbeitgeber oder Vermieter.',
+    q: 'Wer sieht meine Unterlagen?',
+    a: 'Nur wir, für die Prüfung. Der Vermieter sieht das fertige Zertifikat, das du ihm selbst weitergibst — nicht deine Dokumente.',
   },
   {
-    q: 'Muss ich mich vorher anmelden?',
-    a: 'Nein. Auf der Startseite wählst du Module und gibst deine E-Mail an. Der Anmeldelink ist kurz gültig; den Vorgang selbst kannst du über Tage fortsetzen. Unter «Mein Zertifikat» forderst du jederzeit einen neuen Link an.',
+    q: 'Wann bekomme ich das PDF?',
+    a: 'Wenn alles auf deinem Zertifikat geprüft ist. Halbfertige Zertifikate geben wir nicht heraus — sonst wäre das Dokument nichts wert.',
+  },
+  {
+    q: 'Brauche ich ein Passwort?',
+    a: 'Nein. Du gibst deine E-Mail an und bekommst einen Anmeldelink. Wenn er abgelaufen ist, forderst du einfach einen neuen an.',
   },
 ]

@@ -31,14 +31,15 @@ export type SicModuleDefinition = {
   id: SicModuleId
   /** Reihenfolge auf Zertifikat/Checkout. */
   order: number
+  /** Titel in Alltagssprache: das Dokument, das jeder Mieter kennt — keine Fachbegriffe. */
   title: string
-  /** Kurz: was wir mit den Belegen tun (Dossier, FAQ). */
+  /** Kurz und ohne Fachwort: was das Dokument zeigt (Dossier, FAQ). */
   summary: string
-  /** Frage, die der Vermieter damit beantwortet bekommt. */
+  /** Frage des Vermieters, in Du-Form — für Vorlese-Labels und Produktarbeit. */
   landlordQuestion: string
-  /** Was auf dem Zertifikat für ihn steht — Nutzen in einem Satz. */
+  /** Was der Vermieter dadurch sieht (Dossier). */
   landlordSees: string
-  /** Was du einreichst. */
+  /** Was du einreichst — eine kurze Zeile, die auf eine Karte passt. */
   youUpload: string
   /** Prüfumfang für Checklisten — ohne «geprüft». */
   scopeItems: string[]
@@ -53,26 +54,24 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
   {
     id: 'BONITAET',
     order: 1,
-    title: 'Bonität',
-    summary:
-      'Wir prüfen deine eingereichten Bonitätsnachweise auf Vollständigkeit und Plausibilität. Nach erfolgreicher Prüfung steht das Modul auf dem Zertifikat als «Verifiziert».',
-    landlordQuestion: 'Gibt es Betreibungen?',
-    landlordSees: 'Er sieht auf einen Blick, ob ein geprüfter Betreibungsauszug vorliegt — ohne das PDF selbst zu suchen.',
-    youUpload: 'Aktueller Betreibungsauszug (nicht älter als 3 Monate)',
+    title: 'Betreibungsauszug',
+    summary: 'Der Auszug vom Betreibungsamt zeigt, ob offene Betreibungen bestehen.',
+    landlordQuestion: 'Hast du offene Betreibungen?',
+    landlordSees: 'Ob ein aktueller Betreibungsauszug vorliegt.',
+    youUpload: 'Auszug vom Betreibungsamt, max. 3 Monate alt',
     scopeItems: ['Betreibungsauszug'],
     lineItems: ['Betreibungsauszug eingereicht und geprüft'],
-    requiredDocuments: ['Aktueller Betreibungsregisterauszug (max. 3 Monate alt)'],
+    requiredDocuments: ['Auszug vom Betreibungsamt (max. 3 Monate alt)'],
     priceChf: SIC_MODULE_FEE_CHF,
   },
   {
     id: 'ARBEIT_EINKOMMEN',
     order: 2,
-    title: 'Arbeit & Einkommen',
-    summary:
-      'Wir prüfen deine eingereichten Lohn- und Arbeitsnachweise auf Vollständigkeit und Plausibilität. Nach erfolgreicher Prüfung steht das Modul auf dem Zertifikat als «Verifiziert».',
-    landlordQuestion: 'Liegt ein belegtes Einkommen vor?',
-    landlordSees: 'Er sieht Einkommen und Arbeitsverhältnis in einer Zeile — statt Lohnabrechnung und Vertrag einzeln zu öffnen.',
-    youUpload: 'Lohnausweis oder Lohnabrechnung plus Arbeitgeberbestätigung (SIC-Formular)',
+    title: 'Lohn & Arbeitsstelle',
+    summary: 'Lohnabrechnung und Arbeitgeberbestätigung zeigen, was du verdienst und wo du arbeitest.',
+    landlordQuestion: 'Was verdienst du, und wo arbeitest du?',
+    landlordSees: 'Lohn und Arbeitsstelle auf einer Zeile.',
+    youUpload: 'Lohnabrechnung und ein kurzes Formular für den Arbeitgeber',
     scopeItems: [
       'Einkommensnachweis',
       'Arbeitsverhältnis (Arbeitgeberbestätigung)',
@@ -84,39 +83,35 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
       'Arbeitgeberdauer (Nachweis geprüft)',
     ],
     requiredDocuments: [
-      'Lohnnachweis / Lohnausweis (Selbst-Upload)',
-      'Arbeitgeberbestätigung — SIC-PDF-Formular vom Arbeitgeber ausfüllen und unterzeichnen lassen',
+      'Lohnabrechnung oder Lohnausweis',
+      'Arbeitgeberbestätigung — SIC-Formular, vom Arbeitgeber unterschrieben',
     ],
     priceChf: SIC_MODULE_FEE_CHF,
   },
   {
     id: 'ZUVERLAESSIGKEIT',
     order: 3,
-    title: 'Wohnen & Vermieterreferenz',
-    summary:
-      'Wir prüfen die eingereichte Vermieterreferenz auf Vollständigkeit und Plausibilität. Nach erfolgreicher Prüfung steht das Modul auf dem Zertifikat als «Verifiziert».',
-    landlordQuestion: 'War er als Mieter in Ordnung?',
-    landlordSees: 'Er sieht eine geprüfte Referenz des bisherigen Vermieters — ohne selbst anrufen zu müssen.',
-    youUpload: 'Vermieter-Referenz auf dem SIC-Formular, vom bisherigen Vermieter unterzeichnet',
+    title: 'Referenz vom Vermieter',
+    summary: 'Dein bisheriger Vermieter bestätigt schriftlich, wie das Mietverhältnis lief.',
+    landlordQuestion: 'Wie war es bei deinem letzten Vermieter?',
+    landlordSees: 'Eine schriftliche Referenz — er muss nicht selbst anrufen.',
+    youUpload: 'Ein kurzes Formular für deinen bisherigen Vermieter',
     scopeItems: ['Vermieterreferenz'],
     lineItems: ['Vermieterreferenz (Referenzschreiben eingereicht und geprüft)'],
-    requiredDocuments: [
-      'Vermieter-Referenz — SIC-PDF-Formular vom Vermieter ausfüllen und unterzeichnen lassen',
-    ],
+    requiredDocuments: ['Vermieter-Referenz — SIC-Formular, vom Vermieter unterschrieben'],
     priceChf: SIC_MODULE_FEE_CHF,
   },
   {
     id: 'AUFENTHALT',
     order: 4,
-    title: 'Aufenthalt',
-    summary:
-      'Wir prüfen deinen eingereichten Ausweis oder die Bewilligung auf Vollständigkeit und Plausibilität. Nach erfolgreicher Prüfung steht das Modul auf dem Zertifikat als «Verifiziert».',
-    landlordQuestion: 'Ist Ausweis oder Bewilligung belegt?',
-    landlordSees: 'Er sieht, dass Identität und Aufenthaltsstatus mit einem geprüften Ausweis belegt sind.',
-    youUpload: 'Pass oder ID (Schweiz) oder gültige Aufenthaltsbewilligung (C, B, L)',
+    title: 'Ausweis',
+    summary: 'Pass, ID oder Bewilligung zeigen, wer du bist und dass der Aufenthalt geregelt ist.',
+    landlordQuestion: 'Ist dein Ausweis gültig?',
+    landlordSees: 'Dass ein gültiger Ausweis oder eine Bewilligung vorliegt.',
+    youUpload: 'Pass, ID oder Aufenthaltsbewilligung',
     scopeItems: ['Pass / ID oder Aufenthaltsbewilligung'],
     lineItems: ['Aufenthaltsstatus (entsprechender Nachweis geprüft)'],
-    requiredDocuments: ['Pass / ID (CH) oder gültige Aufenthaltsbewilligung (C, B, L)'],
+    requiredDocuments: ['Pass, ID oder Aufenthaltsbewilligung (C, B, L)'],
     priceChf: SIC_MODULE_FEE_CHF,
   },
 ] as const

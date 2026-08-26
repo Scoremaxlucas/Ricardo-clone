@@ -3,14 +3,7 @@
 import { SicLogoMark } from '@/components/sic/SicLogo'
 import { SIC_COLORS, SIC_MODULE_ACCENT } from '@/lib/sic/brand'
 import { SIC_FAQ } from '@/lib/sic/faq'
-import {
-  SIC_BUNDLE_ALL_MODULES_CHF,
-  SIC_MODULES,
-  SIC_VALIDITY_MONTHS,
-  sicBundleSavingsChf,
-  sicCatalogListTotalChf,
-  type SicModuleId,
-} from '@/lib/sic/modules'
+import { SIC_MODULES, SIC_VALIDITY_MONTHS, type SicModuleId } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import type { SicLandingAccount } from '@/lib/sic/landing-account'
 import { sicPaths } from '@/lib/sic/config'
@@ -52,10 +45,10 @@ const MODULE_ICON: Record<SicModuleId, LucideIcon> = {
 }
 
 const HOW_STEPS: { icon: LucideIcon; title: string }[] = [
-  { icon: Mail, title: 'E-Mail angeben — Zertifikat ist angelegt' },
-  { icon: Upload, title: 'Vorlagen einholen und hochladen — auch über mehrere Tage' },
-  { icon: ListChecks, title: 'Wir sichten innert 24 Std. nach vollständigem Upload' },
-  { icon: QrCode, title: 'PDF mit QR — wenn alle gewählten Module verifiziert sind' },
+  { icon: Mail, title: 'E-Mail angeben — dein Zertifikat ist angelegt' },
+  { icon: Upload, title: 'Unterlagen hochladen: Auszug, Lohn, Formulare' },
+  { icon: ListChecks, title: 'Wir prüfen — meist innert 24 Stunden' },
+  { icon: QrCode, title: 'Fertiges PDF der Bewerbung beilegen' },
 ]
 
 const TODAY_SCENES = [
@@ -64,13 +57,12 @@ const TODAY_SCENES = [
 ]
 
 const CERT_PREVIEW: { label: string; value: string; module: SicModuleId }[] = [
-  { label: 'Bonität', value: 'Keine Betreibungen', module: 'BONITAET' },
-  { label: 'Bruttojahreseinkommen', value: 'CHF 90’000', module: 'ARBEIT_EINKOMMEN' },
-  { label: 'Arbeitsverhältnis', value: 'Ungekündigt', module: 'ARBEIT_EINKOMMEN' },
-  { label: 'Arbeitgeber', value: 'Seit 6 Jahren beschäftigt', module: 'ARBEIT_EINKOMMEN' },
-  { label: 'Aktuelle Wohnung', value: 'Seit 5 Jahren wohnhaft', module: 'ZUVERLAESSIGKEIT' },
-  { label: 'Vermieterreferenz', value: 'Positiv bestätigt', module: 'ZUVERLAESSIGKEIT' },
-  { label: 'Aufenthaltsstatus', value: 'Gültige Bewilligung', module: 'AUFENTHALT' },
+  { label: 'Betreibungen', value: 'Keine offenen', module: 'BONITAET' },
+  { label: 'Jahreslohn', value: 'CHF 90’000', module: 'ARBEIT_EINKOMMEN' },
+  { label: 'Arbeitsstelle', value: 'Ungekündigt, seit 6 Jahren', module: 'ARBEIT_EINKOMMEN' },
+  { label: 'Aktuelle Wohnung', value: 'Seit 5 Jahren', module: 'ZUVERLAESSIGKEIT' },
+  { label: 'Referenz Vermieter', value: 'Positiv', module: 'ZUVERLAESSIGKEIT' },
+  { label: 'Ausweis', value: 'Gültig', module: 'AUFENTHALT' },
 ]
 
 export function SicLandingClient({ account }: { account?: SicLandingAccount | null }) {
@@ -110,8 +102,6 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
     availableModules.length > 0 && availableModules.every(m => selected.has(m.id))
   const coveredCount = SIC_MODULES.filter(m => owned.has(m.id) || selected.has(m.id)).length
   const missingTitles = SIC_MODULES.filter(m => !owned.has(m.id) && !selected.has(m.id)).map(m => m.title)
-  const bundleSavings = sicBundleSavingsChf()
-  const catalogListTotal = sicCatalogListTotalChf()
   const isBaseOnly = !isReturning && moduleIds.length === 0
   const nothingToBuy = isReturning && availableModules.length === 0
   const verifiedCount = account?.verifiedModules.length ?? 0
@@ -209,7 +199,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
 
   async function checkout() {
     if (nothingToBuy) {
-      toast.error('Alle Module sind bereits Teil deines Zertifikats.')
+      toast.error('Alles ist bereits Teil deines Zertifikats.')
       return
     }
     if (!EMAIL_RE.test(email.trim())) {
@@ -217,11 +207,11 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       return
     }
     if (isBaseOnly && !baseOnlyAck) {
-      toast.error('Bitte bestätige, dass du ein Zertifikat ohne Module erwerben möchtest.')
+      toast.error('Bitte bestätige, dass du das Zertifikat ohne Angaben anlegen möchtest.')
       return
     }
     if (isReturning && moduleIds.length === 0) {
-      toast.error('Bitte wähle mindestens ein neues Modul.')
+      toast.error('Bitte wähle mindestens eine neue Angabe.')
       return
     }
     setSubmitting(true)
@@ -264,10 +254,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             <span className="font-mono text-xs">{account.certificateCode}</span>
             {owned.size > 0 ?
               <span className="mt-0.5 block text-xs text-slate-600 sm:mt-0 sm:inline sm:before:mx-1.5 sm:before:content-['·']">
-                {owned.size} Modul{owned.size === 1 ? '' : 'e'} enthalten
-                {availableModules.length > 0 ?
-                  ` — du kannst ${availableModules.length} weitere hinzufügen`
-                : ' — alle Module vorhanden'}
+                {owned.size} von {SIC_MODULES.length} Angaben enthalten
+                {availableModules.length > 0 ? ' — du kannst ergänzen' : ' — vollständig'}
               </span>
             : null}
           </div>
@@ -289,8 +277,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 Dein Mieter-Zertifikat
               </h1>
               <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/70">
-                Status, Uploads und weitere Module bleiben unter «Mein Zertifikat». Hier kannst du fehlende
-                Module hinzufügen.
+                Status und Uploads findest du unter «Mein Zertifikat». Hier kannst du fehlende Angaben
+                ergänzen.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 {!nothingToBuy ?
@@ -298,7 +286,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     href="#module"
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
                   >
-                    Modul hinzufügen <ArrowRight className="h-4 w-4" />
+                    Angabe ergänzen <ArrowRight className="h-4 w-4" />
                   </a>
                 : <a
                     href={sicPaths.certificateWorkspace}
@@ -419,12 +407,14 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     <FileText className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#0f2b5e]" />
                     <div>
                       <p className="text-sm font-semibold text-[#0f2b5e]">Mieter-Zertifikat.pdf</p>
-                      <p className="text-xs text-slate-500">Bonität, Einkommen, Referenz, Aufenthalt · QR zur Prüfung</p>
+                      <p className="text-xs text-slate-500">
+                        Betreibungen, Lohn, Referenz, Ausweis — mit QR-Code
+                      </p>
                     </div>
                   </div>
                   <p className="mt-3 text-xs leading-relaxed text-[#0f2b5e]/70">
-                    Wir sichten die Belege auf Vollständigkeit und Plausibilität. Kein Anruf beim Arbeitgeber —
-                    der QR zeigt, dass das Dokument von uns stammt.
+                    Wir haben die Unterlagen vorher angeschaut. Über den QR-Code sieht er, dass das Dokument
+                    echt ist.
                   </p>
                 </div>
               </div>
@@ -432,7 +422,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 <a href="#module" className="font-semibold text-[#c8102e] hover:underline">
                   Zertifikat anlegen
                 </a>
-                <span className="text-slate-400"> · Prüfung innert 24 Std. nach vollständigem Upload</span>
+                <span className="text-slate-400"> · kostenlos, meist innert 24 Stunden geprüft</span>
               </p>
             </div>
           </section>
@@ -442,17 +432,11 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       {/* ── So funktioniert's ────────────────────────────────────────────── */}
       <section className="bg-slate-50 py-16">
         <div className="mx-auto max-w-6xl px-5">
-          <h2 className="text-center text-3xl font-bold tracking-tight text-[#0f2b5e]">In 4 Schritten</h2>
+          <h2 className="text-center text-3xl font-bold tracking-tight text-[#0f2b5e]">So läuft es ab</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-            E-Mail reicht zum Start. Vorlagen darfst du über Tage einholen. Das PDF für Vermieter gibt es, wenn
-            alle von dir gewählten Module verifiziert sind.
+            Zum Start reicht deine E-Mail. Die Unterlagen sammelst du danach in deinem Tempo — das fertige PDF
+            gibt es, wenn alles geprüft ist. Kostenlos, {SIC_VALIDITY_MONTHS} Monate gültig.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-500">
-            <span>Derzeit kostenlos</span>
-            <span>{SIC_VALIDITY_MONTHS} Monate gültig</span>
-            <span>Als PDF überall beilegbar</span>
-            <span>Prüfung innert 24 Std. nach vollständigem Upload</span>
-          </div>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_STEPS.map((step, i) => (
               <div key={step.title} className="relative rounded-2xl border border-slate-200 bg-white p-6">
@@ -477,20 +461,20 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               <SicLogoMark size={26} />
             </div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#0f2b5e] sm:text-4xl">
-              {isReturning ? 'Zertifikat erweitern' : 'Was draufstehen soll'}
+              {isReturning ? 'Zertifikat erweitern' : 'Das kommt aufs Zertifikat'}
             </h2>
-            <p className="mt-2 text-slate-500">
+            <p className="mx-auto mt-2 max-w-xl text-slate-500">
               {isReturning ?
-                'Bereits enthaltene Module sind markiert — fehlende kannst du hinzufügen.'
-              : 'Jedes Modul beantwortet eine Frage des Vermieters. Alle vier: das Zertifikat ist vollständig.'}
+                'Was du schon hast, ist markiert. Fehlendes kannst du ergänzen.'
+              : 'Vier Dinge will fast jeder Vermieter sehen. Alle vier sind vorausgewählt — du kannst etwas weglassen.'}
             </p>
           </div>
 
           <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-[#0f2b5e]/10 bg-[#0f2b5e]/[0.03] px-5 py-4">
             <div className="flex items-baseline justify-between gap-3">
-              <p className="text-sm font-semibold text-[#0f2b5e]">Vollständigkeit</p>
+              <p className="text-sm font-semibold text-[#0f2b5e]">Dein Zertifikat</p>
               <p className="text-sm tabular-nums text-slate-600">
-                {coveredCount} von {SIC_MODULES.length} Angaben
+                {coveredCount} von {SIC_MODULES.length}
               </p>
             </div>
             <div className="mt-2.5 flex gap-1.5" aria-hidden>
@@ -505,95 +489,34 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             </div>
             <p className="mt-2.5 text-xs leading-relaxed text-slate-500">
               {coveredCount === SIC_MODULES.length ?
-                'Vollständig. Der Vermieter hat zu den vier üblichen Fragen eine Angabe auf dem Zertifikat.'
-              : missingTitles.length === 1 ?
-                `Noch offen: ${missingTitles[0]}. Das ist die Frage, die er sonst selbst klären muss.`
-              : `Noch offen: ${missingTitles.join(', ')}. Jede fehlende Angabe ist eine offene Frage.`}
+                'Vollständig — der Vermieter muss nichts nachfragen. Dein Name und der Prüfcode sind immer dabei.'
+              : `Noch offen: ${missingTitles.join(', ')}. Danach fragt der Vermieter vermutlich selbst.`}
             </p>
           </div>
 
-          {/* Basisgebühr */}
-          <div className="mt-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-[#b8912f]/30 bg-[#b8912f]/[0.06] p-6 sm:flex-row sm:items-center">
-            <div className="max-w-2xl">
-              <p className="text-sm font-bold uppercase tracking-wide text-[#8a6d1f]">
-                {isReturning ? 'Basis · bereits enthalten' : 'Basis · Zertifikat'}
-              </p>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-                {isReturning ?
-                  'Dein Zertifikat existiert bereits. Wähle nur Module, die noch fehlen.'
-                : 'Name und Code sind immer dabei. Die Module darunter sind die Angaben, die der Vermieter sieht.'}
-              </p>
-            </div>
-            <div className="text-right">
-              {isReturning ?
-                <>
-                  <p className="text-lg font-bold text-[#1f7a34]">Enthalten</p>
-                  <p className="text-xs text-slate-500">Zertifikat vorhanden</p>
-                </>
-              : <>
-                  <p className="text-3xl font-bold text-[#0f2b5e]">Kostenlos</p>
-                  <p className="text-xs text-slate-500">Einmalig · {SIC_VALIDITY_MONTHS} Monate gültig</p>
-                </>
-              }
-            </div>
-          </div>
-
-          {/* Komplett-Paket — nur wenn noch mehr als 1 Modul offen (Neukunde: alle 4) */}
+          {/* Alle auswählen — eine Entscheidung, kein Preisblock */}
           {!isReturning || availableModules.length > 1 ?
             <button
               type="button"
               onClick={toggleBundle}
               aria-pressed={allAvailableSelected}
               disabled={availableModules.length === 0}
-              className={`mt-4 flex w-full flex-col items-start justify-between gap-3 rounded-2xl border-2 p-5 text-left transition-all sm:flex-row sm:items-center ${
+              className={`mt-6 flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition-all ${
                 allAvailableSelected ?
-                  'border-[#0f2b5e] bg-[#0f2b5e]/[0.04] ring-2 ring-[#0f2b5e]/15'
+                  'border-[#0f2b5e] bg-[#0f2b5e]/[0.04]'
                 : 'border-slate-200 hover:border-[#0f2b5e]/40'
               } disabled:opacity-50`}
             >
-              <div className="flex items-center gap-3">
-                <span
-                  className={`grid h-6 w-6 flex-shrink-0 place-items-center rounded-md border ${
-                    allAvailableSelected ? 'border-[#0f2b5e] bg-[#0f2b5e] text-white' : 'border-slate-300 bg-white'
-                  }`}
-                >
-                  {allAvailableSelected && <Check className="h-4 w-4" />}
-                </span>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-base font-bold text-[#0f2b5e]">
-                      {isReturning ?
-                        `Alle offenen Module (${availableModules.length})`
-                      : 'Komplett-Paket — alle 4 Module'}
-                    </p>
-                    {!isReturning ?
-                      <span className="rounded-full bg-[#c8102e] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                        {bundleSavings > 0 ? `CHF ${bundleSavings}.– günstiger` : 'Vollständig'}
-                      </span>
-                    : null}
-                  </div>
-                  <p className="mt-0.5 text-sm text-slate-500">
-                    {isReturning ?
-                      'Nur Module, die noch fehlen — jede Angabe schliesst eine Frage des Vermieters.'
-                    : bundleSavings > 0 ?
-                      `Alle vier Angaben. Einzeln ${formatSicPrice(catalogListTotal)}, als Paket ${formatSicPrice(SIC_BUNDLE_ALL_MODULES_CHF)}.`
-                    : 'Alle vier Angaben auf einem Dokument — der Vermieter muss nicht nach weiteren PDFs fragen.'}
-                  </p>
-                </div>
-              </div>
-              {!isReturning ?
-                <div className="text-right">
-                  {bundleSavings > 0 ?
-                    <p className="text-sm text-slate-400 line-through">{formatSicPrice(catalogListTotal)}</p>
-                  : null}
-                  <p className="text-2xl font-bold text-[#0f2b5e]">{formatSicPrice(SIC_BUNDLE_ALL_MODULES_CHF)}</p>
-                  <p className="text-xs font-semibold text-[#2f9e44]">
-                    {bundleSavings > 0 ?
-                      `CHF ${bundleSavings}.– günstiger als einzeln`
-                    : 'Inkl. Basis · Einführungsphase'}
-                  </p>
-                </div>
-              : null}
+              <span
+                className={`grid h-6 w-6 flex-shrink-0 place-items-center rounded-md border ${
+                  allAvailableSelected ? 'border-[#0f2b5e] bg-[#0f2b5e] text-white' : 'border-slate-300 bg-white'
+                }`}
+              >
+                {allAvailableSelected && <Check className="h-4 w-4" />}
+              </span>
+              <span className="text-sm font-semibold text-[#0f2b5e]">
+                {isReturning ? `Alle ${availableModules.length} offenen ergänzen` : 'Alle vier — empfohlen'}
+              </span>
             </button>
           : null}
 
@@ -612,6 +535,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   disabled={alreadyOwned}
                   aria-pressed={on}
                   aria-disabled={alreadyOwned}
+                  aria-label={`${m.title} — beantwortet: ${m.landlordQuestion}`}
                   className={`group relative flex flex-col rounded-2xl border bg-white p-6 text-left transition-all ${
                     alreadyOwned ?
                       'cursor-default border-[#2f9e44]/25 bg-[#2f9e44]/[0.04] opacity-90'
@@ -633,29 +557,14 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   >
                     <Icon className="h-6 w-6" />
                   </span>
-                  <p
-                    className="mt-4 text-xs font-bold uppercase tracking-wide"
-                    style={{ color: alreadyOwned ? '#1f7a34' : accent.hex }}
-                  >
-                    Modul {m.order}
-                  </p>
-                  <p className="text-lg font-bold leading-tight text-[#0f2b5e]">{m.title}</p>
-                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                    Vermieter fragt: {m.landlordQuestion}
-                  </p>
-                  <p className="mt-1.5 flex-1 text-xs leading-relaxed text-slate-600">{m.landlordSees}</p>
-                  <p className="mt-2 text-[11px] leading-snug text-slate-400">Du reichst ein: {m.youUpload}</p>
-                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                  <p className="mt-4 text-lg font-bold leading-tight text-[#0f2b5e]">{m.title}</p>
+                  <p className="mt-1.5 flex-1 text-sm leading-relaxed text-slate-600">{m.youUpload}</p>
+                  <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
                     {alreadyOwned ?
-                      <span className="rounded-md bg-[#1f7a34] px-2.5 py-1 text-xs font-bold text-white">Enthalten</span>
-                    : <span className="rounded-md bg-[#0f2b5e] px-2.5 py-1 text-xs font-bold text-white">
-                        {formatSicPrice(m.priceChf)}
-                      </span>
-                    }
-                    {!alreadyOwned ?
-                      <span
+                      <span className="text-xs font-bold uppercase tracking-wide text-[#1f7a34]">Enthalten</span>
+                    : <span
                         className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${
-                          on ? '' : 'opacity-30'
+                          on ? '' : 'text-slate-400'
                         }`}
                         style={on ? { color: accent.hex } : undefined}
                       >
@@ -665,6 +574,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                           </>
                         : 'Hinzufügen'}
                       </span>
+                    }
+                    {!alreadyOwned && m.priceChf > 0 ?
+                      <span className="text-xs font-semibold text-slate-500">{formatSicPrice(m.priceChf)}</span>
                     : null}
                   </div>
                 </button>
@@ -674,7 +586,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
 
           {nothingToBuy ?
             <p className="mt-6 rounded-xl border border-[#2f9e44]/20 bg-[#2f9e44]/[0.06] px-4 py-3 text-center text-sm text-[#1f7a34]">
-              Alle Module sind bereits Teil deines Zertifikats. Du kannst Uploads und Status unter{' '}
+              Alle vier Angaben sind bereits Teil deines Zertifikats. Uploads und Status findest du unter{' '}
               <a href={sicPaths.certificateWorkspace} className="font-semibold underline">
                 Mein Zertifikat
               </a>{' '}
@@ -682,164 +594,122 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             </p>
           : null}
 
-          {/* Auswahl + E-Mail — Urkunde nur im Hero, hier keine zweite Karte */}
-          <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="sic-name" className="block text-sm font-semibold text-[#0f2b5e]">
-                  Dein Name <span className="font-normal text-slate-400">(erscheint auf dem Zertifikat)</span>
-                </label>
-                <input
-                  id="sic-name"
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Vorname Nachname"
-                  autoComplete="name"
-                  className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2"
-                />
-              </div>
+          {/* Ein Formular, eine Spalte — die Auswahl steht bereits oben */}
+          <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-[#0f2b5e]/10 bg-[#0f2b5e]/[0.03] p-6 sm:p-7">
+            <label htmlFor="sic-name" className="block text-sm font-semibold text-[#0f2b5e]">
+              Dein Name
+            </label>
+            <input
+              id="sic-name"
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Vorname Nachname"
+              autoComplete="name"
+              className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2"
+            />
+            <p className="mt-1.5 text-xs text-slate-500">So steht er später auf dem Zertifikat.</p>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-6">
-                <p className="text-sm font-bold text-[#0f2b5e]">Gewählte Angaben</p>
-                <ul className="mt-3 divide-y divide-slate-100">
-                  <li className="flex items-center justify-between gap-3 py-2.5">
-                    <span className="text-sm font-semibold text-[#0f2b5e]">Basis · Zertifikat</span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
-                      <Check className="h-3.5 w-3.5 text-[#2f9e44]" /> Immer dabei
-                    </span>
-                  </li>
-                  {SIC_MODULES.map(m => {
-                    const alreadyOwned = owned.has(m.id)
-                    const on = selected.has(m.id) && !alreadyOwned
-                    return (
-                      <li
-                        key={m.id}
-                        className={`flex items-center justify-between gap-3 py-2.5 ${
-                          alreadyOwned || on ? '' : 'opacity-40'
-                        }`}
-                      >
-                        <span className="text-sm font-semibold text-[#0f2b5e]">{m.title}</span>
-                        {alreadyOwned ?
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f7a34]">
-                            <Check className="h-3.5 w-3.5" /> Enthalten
-                          </span>
-                        : on ?
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
-                            <Check className="h-3.5 w-3.5" /> Wird geprüft nach Upload
-                          </span>
-                        : <span className="text-[11px] font-medium text-slate-400">Nicht gewählt</span>}
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            </div>
+            <label htmlFor="sic-email" className="mt-5 block text-sm font-semibold text-[#0f2b5e]">
+              E-Mail-Adresse
+            </label>
+            <input
+              id="sic-email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="name@beispiel.ch"
+              autoComplete="email"
+              readOnly={isReturning}
+              className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2 ${
+                isReturning ? 'cursor-default bg-slate-50 text-slate-600' : ''
+              }`}
+            />
+            <p className="mt-1.5 text-xs text-slate-500">
+              {isReturning ?
+                'Angemeldet — die neue Angabe kommt auf dein Zertifikat.'
+              : 'Damit meldest du dich an, ohne Passwort. Unterlagen lädst du danach hoch — auch über mehrere Tage.'}
+            </p>
 
-            {/* Checkout: E-Mail erst hier */}
-            <div className="rounded-2xl border border-[#0f2b5e]/10 bg-[#0f2b5e]/[0.03] p-6 sm:p-7">
-              <h3 className="text-lg font-bold text-[#0f2b5e]">Deine Auswahl</h3>
-              <dl className="mt-4 space-y-2.5 text-sm">
-                {allAvailableSelected && quote.includeBaseFee && quote.lines.some(l => l.kind === 'discount') ?
-                  <div className="flex justify-between text-slate-700">
-                    <dt>Komplett-Paket (inkl. Basis)</dt>
-                    <dd className="tabular-nums">{formatSicPrice(SIC_BUNDLE_ALL_MODULES_CHF)}</dd>
-                  </div>
-                : quote.lines.map((l, i) => (
-                    <div key={i} className={`flex justify-between ${l.kind === 'discount' ? 'text-[#2f9e44]' : 'text-slate-600'}`}>
+            {quote.totalChf > 0 ?
+              <div className="mt-5 border-t border-slate-200 pt-4">
+                <dl className="space-y-2.5 text-sm">
+                  {quote.lines.map((l, i) => (
+                    <div
+                      key={i}
+                      className={`flex justify-between ${l.kind === 'discount' ? 'text-[#2f9e44]' : 'text-slate-600'}`}
+                    >
                       <dt>{l.label}</dt>
                       <dd className="tabular-nums">
                         {l.amountChf < 0 ? `− ${formatSicPrice(Math.abs(l.amountChf))}` : formatSicPrice(l.amountChf)}
                       </dd>
                     </div>
-                  ))
-                }
-                {quote.lines.length === 0 ?
-                  <p className="text-xs text-slate-500">Kein zu zahlender Betrag für die aktuelle Auswahl.</p>
-                : null}
-              </dl>
-              <div className="mt-4 flex items-baseline justify-between border-t border-slate-200 pt-4">
-                <span className="text-sm font-medium text-slate-500">Total</span>
-                <span className="text-2xl font-bold tabular-nums text-[#0f2b5e]">{formatSicPrice(quote.totalChf)}</span>
-              </div>
-              {quoteNote ?
-                <p className="mt-2 text-xs font-medium text-[#1f7a34]">{quoteNote}</p>
-              : null}
-
-              {isBaseOnly ?
-                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                  <p className="font-semibold">Hinweis: Ohne Module</p>
-                  <p className="mt-1 text-xs leading-relaxed text-amber-900/90">
-                    Ohne Module enthält das Zertifikat noch keine verifizierten Angaben — Vermieter sehen
-                    nur die Basis. Du kannst Module später hinzufügen.
-                  </p>
-                  <label className="mt-3 flex items-start gap-2 text-xs font-medium">
-                    <input
-                      type="checkbox"
-                      checked={baseOnlyAck}
-                      onChange={e => setBaseOnlyAck(e.target.checked)}
-                      className="mt-0.5"
-                    />
-                    <span>Ich verstehe und möchte trotzdem nur die Basis anlegen.</span>
-                  </label>
+                  ))}
+                </dl>
+                <div className="mt-3 flex items-baseline justify-between border-t border-slate-200 pt-3">
+                  <span className="text-sm font-medium text-slate-500">Total</span>
+                  <span className="text-xl font-bold tabular-nums text-[#0f2b5e]">
+                    {formatSicPrice(quote.totalChf)}
+                  </span>
                 </div>
-              : null}
+              </div>
+            : <p className="mt-5 border-t border-slate-200 pt-4 text-sm font-semibold text-[#0f2b5e]">
+                Kostenlos — {SIC_VALIDITY_MONTHS} Monate gültig.
+              </p>
+            }
+            {quoteNote ?
+              <p className="mt-2 text-xs font-medium text-[#1f7a34]">{quoteNote}</p>
+            : null}
 
-              <label htmlFor="sic-email" className="mt-5 block text-sm font-semibold text-[#0f2b5e]">
-                E-Mail-Adresse
-              </label>
-              <input
-                id="sic-email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="name@beispiel.ch"
-                autoComplete="email"
-                readOnly={isReturning}
-                className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2 ${
-                  isReturning ? 'cursor-default bg-slate-50 text-slate-600' : ''
-                }`}
-              />
-              <p className="mt-1.5 text-xs text-slate-500">
-                {isReturning ?
-                  'Angemeldet — neue Module werden diesem Zertifikat zugeordnet.'
-                : 'Deine E-Mail ist dein Zugang. Der Anmeldelink ist 30 Minuten gültig; Vorlagen und Uploads folgen unter «Mein Zertifikat» — auch über mehrere Tage. Einen neuen Link kannst du jederzeit anfordern.'}
-              </p>
-              <button
-                type="button"
-                onClick={checkout}
-                disabled={
-                  submitting ||
-                  nothingToBuy ||
-                  (isBaseOnly && !baseOnlyAck) ||
-                  (isReturning && moduleIds.length === 0)
-                }
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-5 py-3.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
-              >
-                {submitting ?
-                  'Wird erstellt …'
-                : nothingToBuy ?
-                  'Keine Module mehr verfügbar'
-                : isReturning ?
-                  'Module hinzufügen'
-                : 'Zertifikat anlegen'}
-                {!submitting && !nothingToBuy && <ArrowRight className="h-4 w-4" />}
-              </button>
-              <ul className="mt-3 space-y-1.5 border-t border-slate-200 pt-3">
-                <li className="flex items-center gap-2 text-xs text-slate-500"><ShieldCheck className="h-3.5 w-3.5 text-[#0f2b5e]" /> Schweizer Datenschutz (revDSG)</li>
-                <li className="flex items-center gap-2 text-xs text-slate-500"><Lock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Daten verschlüsselt gespeichert</li>
-                <li className="flex items-center gap-2 text-xs text-slate-500"><Clock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Nachweise spätestens 30 Tage nach Ablauf gelöscht</li>
-              </ul>
-              <p className="mt-3 text-xs leading-relaxed text-slate-400">
-                Deine Daten bleiben während der {SIC_VALIDITY_MONTHS} Monate gespeichert; eine Verlängerung ist in
-                dieser Zeit ohne erneuten Upload möglich. Nach Ablauf werden die Nachweise spätestens 30 Tage nach
-                dem Ablaufdatum gelöscht — die QR-Prüfseite zeigt danach nur noch „abgelaufen".
-              </p>
-              <p className="mt-3 text-xs leading-relaxed text-slate-400">
-                Ist ein eingereichter Beleg unvollständig oder nicht plausibel, bitten wir dich, einen gültigen
-                Nachweis nachzureichen — damit dein Zertifikat sauber verifiziert werden kann.
-              </p>
-            </div>
+            {isBaseOnly ?
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                <p className="text-xs leading-relaxed">
+                  Ohne Angaben sieht der Vermieter nur deinen Namen und den Prüfcode. Du kannst später ergänzen.
+                </p>
+                <label className="mt-2.5 flex items-start gap-2 text-xs font-medium">
+                  <input
+                    type="checkbox"
+                    checked={baseOnlyAck}
+                    onChange={e => setBaseOnlyAck(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>Ist mir klar — trotzdem anlegen.</span>
+                </label>
+              </div>
+            : null}
+
+            <button
+              type="button"
+              onClick={checkout}
+              disabled={
+                submitting ||
+                nothingToBuy ||
+                (isBaseOnly && !baseOnlyAck) ||
+                (isReturning && moduleIds.length === 0)
+              }
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#c8102e] px-5 py-3.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+            >
+              {submitting ?
+                'Wird erstellt …'
+              : nothingToBuy ?
+                'Alles bereits enthalten'
+              : isReturning ?
+                'Hinzufügen'
+              : 'Zertifikat anlegen'}
+              {!submitting && !nothingToBuy && <ArrowRight className="h-4 w-4" />}
+            </button>
+
+            <ul className="mt-4 space-y-1.5 border-t border-slate-200 pt-3">
+              <li className="flex items-center gap-2 text-xs text-slate-500">
+                <ShieldCheck className="h-3.5 w-3.5 text-[#0f2b5e]" /> Schweizer Datenschutz (revDSG)
+              </li>
+              <li className="flex items-center gap-2 text-xs text-slate-500">
+                <Lock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Verschlüsselt gespeichert
+              </li>
+              <li className="flex items-center gap-2 text-xs text-slate-500">
+                <Clock className="h-3.5 w-3.5 text-[#0f2b5e]" /> Unterlagen 30 Tage nach Ablauf gelöscht
+              </li>
+            </ul>
           </div>
         </div>
       </section>
@@ -879,8 +749,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             {isReturning ?
               nothingToBuy ?
                 'Dein Zertifikat ist vollständig.'
-              : 'Modul hinzufügen und Zertifikat erweitern.'
-            : 'Zertifikat anlegen. Vorlagen und Uploads folgen unter Mein Zertifikat.'}
+              : 'Fehlende Angabe ergänzen.'
+            : 'Kostenlos anlegen. Unterlagen lädst du danach in deinem Tempo hoch.'}
           </span>
           {isReturning && nothingToBuy ?
             <a
@@ -893,7 +763,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               href="#module"
               className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#c8102e] px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
             >
-              {isReturning ? 'Modul hinzufügen' : 'Zertifikat anlegen'} <ArrowRight className="h-4 w-4" />
+              {isReturning ? 'Angabe ergänzen' : 'Zertifikat anlegen'} <ArrowRight className="h-4 w-4" />
             </a>
           }
         </div>
