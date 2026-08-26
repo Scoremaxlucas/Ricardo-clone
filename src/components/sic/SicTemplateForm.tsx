@@ -10,7 +10,7 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 
 const inputCls =
-  'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0f2b5e] focus:ring-1 focus:ring-[#0f2b5e]/20'
+  'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-sic-action focus:ring-1 focus:ring-sic-action/25'
 
 /**
  * SIC-Nachweisformular: optional Namen/eigene Angaben vorausfüllen,
@@ -74,10 +74,10 @@ export function SicTemplateForm({
   const tenantFields = template.fields.filter(f => f.section === 'tenant')
 
   return (
-    <div className="mt-4 rounded-xl border border-[#0f2b5e]/15 bg-[#0f2b5e]/[0.03] p-4">
+    <div className="mt-4 rounded-xl border border-sic-navy/15 bg-sic-navy/[0.03] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-2 text-sm font-semibold text-[#0f2b5e]">
+          <p className="flex items-center gap-2 text-sm font-semibold text-sic-navy">
             <FileText className="h-4 w-4 flex-shrink-0" /> {template.title}
           </p>
           <p className="mt-0.5 text-xs text-slate-500">{template.subtitle}</p>
@@ -91,7 +91,7 @@ export function SicTemplateForm({
           <button
             type="button"
             onClick={() => setOpen(o => !o)}
-            className="rounded-lg border border-[#0f2b5e]/20 px-3 py-1.5 text-xs font-semibold text-[#0f2b5e] hover:bg-white"
+            className="rounded-lg border border-sic-navy/20 px-3 py-1.5 text-xs font-semibold text-sic-navy hover:bg-white"
           >
             {open ? 'Schliessen' : 'Deinen Namen vorausfüllen'}
           </button>
@@ -99,7 +99,7 @@ export function SicTemplateForm({
             type="button"
             onClick={downloadPdf}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0f2b5e] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0a1f45] disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-sic-action px-3 py-1.5 text-xs font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
           >
             <Download className="h-3.5 w-3.5" />
             {busy ? 'Wird erstellt …' : 'Vorlage herunterladen'}
@@ -108,7 +108,7 @@ export function SicTemplateForm({
       </div>
 
       {open ?
-        <div className="mt-4 space-y-3 border-t border-[#0f2b5e]/10 pt-4">
+        <div className="mt-4 space-y-3 border-t border-sic-navy/10 pt-4">
           <p className="text-[11px] text-slate-500">
             Optional: Deinen Namen vorausfüllen, dann Vorlage herunterladen. Die Felder für den{' '}
             {template.thirdPartyLabel} bleiben in der Vorlage leer zum Ausfüllen — digital oder ausgedruckt.
@@ -117,7 +117,7 @@ export function SicTemplateForm({
             {tenantFields.map(f => (
               <label key={f.key} className="block text-xs font-medium text-slate-600">
                 {f.label}
-                {f.required ? <span className="text-[#c8102e]"> *</span> : null}
+                {f.required ? <span className="text-sic-danger"> *</span> : null}
                 {f.kind === 'date' ?
                   <input
                     type="date"
@@ -148,7 +148,7 @@ export function SicTemplateForm({
             type="button"
             onClick={downloadPdf}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#0f2b5e] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0a1f45] disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg bg-sic-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
           >
             <Download className="h-4 w-4" />
             {busy ?

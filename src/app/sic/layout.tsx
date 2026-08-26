@@ -22,13 +22,13 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href={`${sicPaths.landing}#module`}
-              className="rounded-lg bg-[#c8102e] px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#a50d26]"
+              className="rounded-lg bg-sic-action px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-sic-action-deep"
             >
               Zertifikat anlegen
             </Link>
             <Link
               href={sicPaths.certificateWorkspace}
-              className="rounded-lg border border-[#0f2b5e]/15 px-3.5 py-2 text-sm font-semibold text-[#0f2b5e] transition-colors hover:bg-[#0f2b5e]/5"
+              className="rounded-lg border border-sic-navy/15 px-3.5 py-2 text-sm font-semibold text-sic-navy transition-colors hover:bg-sic-navy/5"
             >
               Mein Zertifikat
             </Link>
@@ -40,7 +40,7 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <footer className="mt-auto bg-[#0a1f45] text-white">
+      <footer className="mt-auto bg-sic-navy-deep text-white">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-10 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <SicLogo size={30} onDark />

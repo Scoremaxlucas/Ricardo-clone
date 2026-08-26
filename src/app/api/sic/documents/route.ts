@@ -1,7 +1,15 @@
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { encryptPdfForStorageBestEffort } from '@/lib/rental/pdf-crypto'
-import { isSicModuleId } from '@/lib/sic/modules'
+import {
+  encryptSicDocument,
+  isSicDocumentEncryptionConfigured,
+  SIC_DOC_ENCRYPTION_ENV,
+} from '@/lib/sic/document-crypto'
+import { sendSicDocumentsReceivedEmail } from '@/lib/sic/email'
+import { recordSicEventOnce } from '@/lib/sic/events'
+import { sicLog } from '@/lib/sic/log'
+import { createSicMagicLink } from '@/lib/sic/magic-link'
+import { getSicModule, isSicModuleId } from '@/lib/sic/modules'
 import { nextModuleStatusAfterUpload } from '@/lib/sic/module-status'
 import { getSicSession } from '@/lib/sic/session-cookie'
 import { put } from '@vercel/blob'
@@ -50,10 +58,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Datei zu gross (max. 8 MB).' }, { status: 413 })
   }
 
+  if (!isSicDocumentEncryptionConfigured()) {
+    console.error(`[sic/documents] ${SIC_DOC_ENCRYPTION_ENV} fehlt — Upload verweigert`)
+    sicLog('sic.upload.blocked_no_encryption_key', {})
+    return NextResponse.json(
+      { ok: false, message: 'Uploads sind vorübergehend nicht möglich. Bitte später erneut versuchen.' },
+      { status: 503 }
+    )
+  }
+
   const cert = await prisma.sicCertificate.findUnique({
     where: { email: session.email },
     select: {
       id: true,
+      email: true,
       status: true,
       expiresAt: true,
       modules: { where: { moduleKind }, select: { id: true, status: true } },
@@ -62,11 +80,10 @@ export async function POST(req: NextRequest) {
   if (!cert) {
     return NextResponse.json({ ok: false, message: 'Kein Zertifikat gefunden.' }, { status: 404 })
   }
-  if (cert.status !== 'ACTIVE' || cert.expiresAt.getTime() <= Date.now()) {
-    return NextResponse.json(
-      { ok: false, message: 'Dieses Zertifikat ist abgelaufen oder nicht aktiv.' },
-      { status: 403 }
-    )
+  // Gekaufte Module verfallen nie: eine abgelaufene Gültigkeit blockiert den
+  // Upload nicht, nur ein Widerruf tut das.
+  if (cert.status === 'REVOKED') {
+    return NextResponse.json({ ok: false, message: 'Dieses Zertifikat ist widerrufen.' }, { status: 403 })
   }
   const moduleRow = cert.modules[0]
   if (!moduleRow) {
@@ -86,36 +103,30 @@ export async function POST(req: NextRequest) {
   }
 
   const original = Buffer.from(await file.arrayBuffer())
-  const { buffer, encrypted } = encryptPdfForStorageBestEffort(original)
-  const ext = encrypted ? 'bin' : file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1] || 'bin'
-  const path = `sic/${cert.id}/${moduleKind}/${Date.now()}-${randomBytes(12).toString('hex')}.${ext}`
+  const buffer = encryptSicDocument(original)
+  const path = `sic/${cert.id}/${moduleKind}/${Date.now()}-${randomBytes(12).toString('hex')}.bin`
 
   let blobUrl: string
   try {
     const blob = await put(path, buffer, {
       access: 'private',
       addRandomSuffix: true,
-      contentType: encrypted ? 'application/octet-stream' : file.type,
+      contentType: 'application/octet-stream',
     })
     blobUrl = blob.url
   } catch (err) {
-    // Store noch public-only → Fallback, damit Uploads nicht blockieren.
-    console.error('[sic/documents] private put failed, retry public', err)
-    const { sicLog } = await import('@/lib/sic/log')
-    sicLog('sic.blob.private_put_fallback', { certificateId: cert.id, moduleKind })
-    try {
-      const blob = await put(path, buffer, {
-        access: 'public',
-        addRandomSuffix: true,
-        contentType: encrypted ? 'application/octet-stream' : file.type,
-      })
-      blobUrl = blob.url
-    } catch (err2) {
-      console.error('[sic/documents] blob upload failed', err2)
-      return NextResponse.json({ ok: false, message: 'Upload fehlgeschlagen.' }, { status: 502 })
-    }
+    // Kein Fallback auf öffentlichen Zugriff: eine öffentlich erreichbare
+    // Lohnabrechnung ist schlimmer als ein fehlgeschlagener Upload.
+    console.error('[sic/documents] private blob upload failed', err)
+    sicLog('sic.upload.private_put_failed', { certificateId: cert.id, moduleKind })
+    return NextResponse.json(
+      { ok: false, message: 'Upload fehlgeschlagen. Bitte später erneut versuchen.' },
+      { status: 502 }
+    )
   }
 
+  const isFirstDocument =
+    (await prisma.sicDocument.count({ where: { certificateId: cert.id } })) === 0
   const nextStatus = nextModuleStatusAfterUpload(moduleRow.status)
 
   await prisma.$transaction(async tx => {
@@ -141,6 +152,25 @@ export async function POST(req: NextRequest) {
       })
     }
   })
+
+  if (isFirstDocument) {
+    await recordSicEventOnce({
+      kind: 'FIRST_UPLOAD',
+      certificateId: cert.id,
+      email: cert.email,
+      moduleKind,
+    })
+    try {
+      const { url } = await createSicMagicLink(cert.email)
+      await sendSicDocumentsReceivedEmail({
+        email: cert.email,
+        moduleTitle: getSicModule(moduleKind).title,
+        magicLinkUrl: url,
+      })
+    } catch (err) {
+      console.error('[sic/documents] receipt email failed', err)
+    }
+  }
 
   return NextResponse.json({ ok: true })
 }

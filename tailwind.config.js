@@ -8,6 +8,38 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        /*
+         * Swiss Immo Cert — benannte Farbrollen. Jede Farbe hat genau eine Aufgabe:
+         * Navy trägt Text und Flächen, Teal ist die Handlungsfarbe, Rot bleibt
+         * Marke und Warnsignal, Gold gehört dem Zertifikat, Grün heisst «geprüft».
+         * Dieselben Werte stehen in src/lib/sic/brand.ts für PDF und Inline-Styles,
+         * wo Tailwind nicht hinreicht — beide müssen übereinstimmen.
+         */
+        sic: {
+          navy: '#0f2b5e',
+          'navy-deep': '#0a1f45',
+          'navy-soft': '#1c3d78',
+          action: '#0e7c6b',
+          'action-deep': '#0a6357',
+          'action-bg': '#e7f4f1',
+          red: '#c8102e',
+          gold: '#b8912f',
+          'gold-text': '#8a6a1d',
+          'gold-light': '#d8b25a',
+          paper: '#fbf9f3',
+          'paper-soft': '#f7f3ea',
+          hairline: '#e7ddc4',
+          verified: '#2f9e44',
+          'verified-text': '#1f7a34',
+          'verified-bg': '#eef8f0',
+          'pending-text': '#8a5a06',
+          'pending-bg': '#fdf5e6',
+          'review-text': '#1c3d78',
+          'review-bg': '#eef1f8',
+          danger: '#c8102e',
+          'danger-text': '#9b1022',
+          'danger-bg': '#fdeef0',
+        },
         primary: {
           DEFAULT: '#0d9488',
           50: '#f0fdfa',

@@ -34,14 +34,14 @@ export function SicDossierLogin() {
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-5 py-16">
-      <h1 className="text-2xl font-bold text-[#0f2b5e]">Mein Zertifikat</h1>
+      <h1 className="text-2xl font-bold text-sic-navy">Mein Zertifikat</h1>
       <p className="mt-2 text-slate-600">
         Hier siehst du Status, Formulare und Uploads. Der Anmeldelink ist 30 Minuten gültig; den Vorgang
         kannst du über Tage fortsetzen. Fordere jederzeit einen neuen Link an.
       </p>
 
       {sent ?
-        <div className="mt-6 flex items-start gap-3 rounded-2xl bg-[#0f2b5e]/5 p-5 text-sm text-[#0f2b5e]">
+        <div className="mt-6 flex items-start gap-3 rounded-2xl bg-sic-navy/5 p-5 text-sm text-sic-navy">
           <MailCheck className="mt-0.5 h-5 w-5 flex-shrink-0" />
           <p>
             Falls zu dieser Adresse ein Zertifikat existiert, haben wir dir einen Anmeldelink gesendet.
@@ -59,19 +59,19 @@ export function SicDossierLogin() {
             onChange={e => setEmail(e.target.value)}
             placeholder="name@beispiel.ch"
             autoComplete="email"
-            className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none ring-[#0f2b5e]/15 focus:border-[#0f2b5e] focus:ring-2"
+            className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none ring-sic-action/20 focus:border-sic-action focus:ring-2"
           />
           <button
             type="button"
             onClick={request}
             disabled={busy}
-            className="mt-4 w-full rounded-xl bg-[#0f2b5e] px-5 py-3.5 text-sm font-semibold text-white hover:bg-[#0a1f45] disabled:opacity-60"
+            className="mt-4 w-full rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
           >
             {busy ? 'Wird gesendet …' : 'Anmeldelink senden'}
           </button>
           <p className="mt-3 text-center text-xs text-slate-400">
             Noch nichts angelegt?{' '}
-            <a href="/" className="font-semibold text-[#0f2b5e] hover:underline">
+            <a href="/" className="font-semibold text-sic-navy hover:underline">
               Zertifikat anlegen
             </a>
           </p>

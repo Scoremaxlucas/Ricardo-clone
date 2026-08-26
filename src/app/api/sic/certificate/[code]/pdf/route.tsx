@@ -3,6 +3,8 @@ import { certificateVerifyQrDataUrl } from '@/lib/certificate/qrDataUrl'
 import { SicCertificatePdfDocument } from '@/lib/sic/CertificatePdf'
 import { sicVerifyUrl } from '@/lib/sic/config'
 import { isSicLandlordPdfReady, joinHolderName, verifiedModuleLineItems } from '@/lib/sic/dossier'
+import { recordSicEventOnce } from '@/lib/sic/events'
+import { SIC_SCOPE_NOTE, sicCompletenessLabel } from '@/lib/sic/modules'
 import { normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
 import { getSicSession } from '@/lib/sic/session-cookie'
 import { renderToBuffer } from '@react-pdf/renderer'
@@ -19,28 +21,30 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
 
   const cert = await prisma.sicCertificate.findUnique({
     where: { certificateCode },
-    include: { modules: { select: { moduleKind: true, status: true } } },
+    include: { modules: { select: { moduleKind: true, status: true, verifiedFacts: true } } },
   })
   if (!cert || cert.email !== session.email) {
     return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 })
   }
 
+  const holderName = joinHolderName(cert.holderFirstName, cert.holderLastName)
   const landlordPdfReady = isSicLandlordPdfReady({
-    holderName: joinHolderName(cert.holderFirstName, cert.holderLastName),
+    holderName,
     status: cert.status,
     expiresAt: cert.expiresAt,
     modules: cert.modules,
   })
-  if (!landlordPdfReady) {
+  if (!landlordPdfReady || !cert.expiresAt) {
     return NextResponse.json(
       {
         message:
-          'Das PDF für Vermieter ist erst abrufbar, wenn alle gewählten Module verifiziert sind und der Name auf dem Zertifikat steht.',
+          'Das PDF gibt es, sobald mindestens eine Angabe geprüft ist und dein Name auf dem Zertifikat steht.',
       },
       { status: 403 }
     )
   }
 
+  const verifiedModules = verifiedModuleLineItems(cert.modules)
   const verifyUrl = sicVerifyUrl(cert.certificateCode)
   let qrDataUrl = ''
   try {
@@ -52,11 +56,13 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
   const doc = (
     <SicCertificatePdfDocument
       certificateCode={cert.certificateCode}
-      holderName={joinHolderName(cert.holderFirstName, cert.holderLastName)}
+      holderName={holderName}
       email={cert.email}
-      issuedAt={cert.issuedAt}
+      issuedAt={cert.certifiedAt ?? cert.issuedAt}
       expiresAt={cert.expiresAt}
-      verifiedModules={verifiedModuleLineItems(cert.modules)}
+      verifiedModules={verifiedModules}
+      completenessLabel={sicCompletenessLabel(verifiedModules.length)}
+      scopeNote={SIC_SCOPE_NOTE}
       verifyUrl={verifyUrl}
       qrDataUrl={qrDataUrl}
     />
@@ -65,6 +71,12 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
   try {
     const buffer = await renderToBuffer(doc)
     const filename = `SwissImmoCert-${cert.certificateCode}.pdf`
+    await recordSicEventOnce({
+      kind: 'PDF_DOWNLOADED',
+      certificateId: cert.id,
+      email: cert.email,
+      meta: { verifiedCount: verifiedModules.length },
+    })
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {

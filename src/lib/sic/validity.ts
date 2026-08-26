@@ -17,14 +17,15 @@ export function addCalendarMonths(from: Date, months: number): Date {
   return result
 }
 
-/** Neues Ablaufdatum: Ausstellung/Nachkauf + Gültigkeitsdauer. */
+/** Ablaufdatum ab einem Stichtag (Freigabe) + Gültigkeitsdauer. */
 export function sicValidityExpiresAt(from = new Date()): Date {
   return addCalendarMonths(from, SIC_VALIDITY_MONTHS)
 }
 
 /**
- * Gültigkeit bei Nachkauf: Das gesamte Zertifikat wird ab der jüngsten bezahlten
- * Aktion neu für die volle Dauer gültig — nie kürzer als das bestehende Datum.
+ * Gültigkeit nach einer Freigabe: drei Monate ab diesem Tag, aber nie kürzer
+ * als das bestehende Datum. Die Uhr startet mit der ersten Freigabe und
+ * verlängert sich mit jeder weiteren — Vervollständigen wird belohnt.
  */
 export function sicExtendedExpiresAt(currentExpiresAt: Date | null, from = new Date()): Date {
   const fresh = sicValidityExpiresAt(from)
@@ -33,6 +34,24 @@ export function sicExtendedExpiresAt(currentExpiresAt: Date | null, from = new D
 }
 
 export function isSicExpired(expiresAt: Date | null | undefined, now = new Date()): boolean {
-  if (!expiresAt) return true
+  if (!expiresAt) return false
   return expiresAt.getTime() <= now.getTime()
+}
+
+/**
+ * Tage nach Ablauf, bis die hochgeladenen Dateien eines abgelaufenen
+ * Zertifikats gelöscht werden. Die geprüften Angaben selbst bleiben bestehen.
+ */
+export const SIC_DOCS_RETENTION_DAYS = 30
+
+/**
+ * Monate, nach denen unfertige Unterlagen gelöscht werden.
+ * Reine Datenschutzfrist — der Anspruch auf die Prüfung bleibt bestehen,
+ * gekaufte Module verfallen nie.
+ */
+export const SIC_UNFINISHED_DOCS_RETENTION_MONTHS = 6
+
+/** Ab wann liegen die Unterlagen eines unfertigen Zertifikats zu lange? */
+export function sicUnfinishedDocsPurgeAt(purchasedAt: Date): Date {
+  return addCalendarMonths(purchasedAt, SIC_UNFINISHED_DOCS_RETENTION_MONTHS)
 }

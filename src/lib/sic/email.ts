@@ -1,7 +1,7 @@
 import { sendEmail } from '@/lib/email/sender'
 import { getFromEmail } from '@/lib/email/config'
 import { SIC_BRAND_NAME, sicPaths, sicUrl } from '@/lib/sic/config'
-import { getSicModule, type SicModuleId } from '@/lib/sic/modules'
+import { getSicModule, SIC_MODULES, type SicModuleId } from '@/lib/sic/modules'
 
 const ACCENT = '#0f2b5e'
 const INK = '#0f172a'
@@ -84,44 +84,140 @@ export async function sendSicMagicLinkEmail(email: string, url: string) {
   })
 }
 
-export async function sendSicModuleReviewEmail(opts: {
+const MAGIC_LINK_FOOTNOTE =
+  'Der Anmeldelink ist 30 Minuten gültig und nur einmal verwendbar. Danach kannst du unter «Mein Zertifikat» einen neuen anfordern.'
+
+/**
+ * Freigabe: das Zertifikat ist ab der ersten geprüften Angabe abrufbar —
+ * genau der Moment, in dem jemand das Dokument zum ersten Mal weiterschickt.
+ */
+export async function sendSicCertificateReadyEmail(opts: {
   email: string
   moduleKind: SicModuleId
-  action: 'approve' | 'reject'
-  note?: string | null
-  /** Frischer Magic-Link (bevorzugt gegenüber nackter Workspace-URL). */
+  certificateCode: string
+  verifiedCount: number
+  expiresAt: Date
+  firstVerification: boolean
+  /** Ohne Namen auf dem Zertifikat gibt es noch kein PDF. */
+  pdfReady: boolean
   magicLinkUrl?: string
 }) {
   const title = getSicModule(opts.moduleKind).title
   const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
-  const approved = opts.action === 'approve'
-
-  const html = sicEmailShell({
-    preheader: approved ? `Modul ${title} freigegeben` : `Modul ${title} — Nacharbeit nötig`,
-    heading: approved ? `Modul «${title}» freigegeben` : `Modul «${title}» abgelehnt`,
-    bodyHtml: approved ?
-      `<p style="margin:0 0 12px;">Gute Nachricht: Das Modul <strong>${title}</strong> wurde geprüft und freigegeben. Es erscheint jetzt auf deinem Zertifikat.</p>
-       <p style="margin:0;">Melde dich mit dem Button an, um dein Zertifikat zu öffnen.</p>`
-    : `<p style="margin:0 0 12px;">Leider konnten wir das Modul <strong>${title}</strong> noch nicht freigeben.</p>
-       ${opts.note ? `<p style="margin:0 0 12px;"><strong>Grund:</strong> ${escapeHtml(opts.note)}</p>` : ''}
-       <p style="margin:0;">Bitte melde dich an und reich einen gültigen Nachweis nach.</p>`,
-    buttonText: 'Zum Zertifikat anmelden',
-    buttonUrl,
-    footnoteHtml: opts.magicLinkUrl
-      ? 'Der Anmeldelink ist 30 Minuten gültig und nur einmal verwendbar. Danach kannst du unter «Mein Zertifikat» einen neuen anfordern.'
-      : undefined,
+  const validUntil = opts.expiresAt.toLocaleDateString('de-CH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   })
+  const completeness = `${opts.verifiedCount} von ${SIC_MODULES.length} Angaben geprüft`
+  const heading = opts.firstVerification ? 'Dein Zertifikat ist da' : 'Dein Zertifikat wurde aktualisiert'
+
+  const bodyHtml = `
+    <p style="margin:0 0 12px;">Die Angabe <strong>${escapeHtml(title)}</strong> ist geprüft und steht auf deinem Zertifikat.</p>
+    <p style="margin:0 0 12px;">Aktueller Stand: <strong>${completeness}</strong>. Gültig bis <strong>${validUntil}</strong>.</p>
+    ${
+      opts.pdfReady ?
+        `<p style="margin:0;">Melde dich an, lade das PDF herunter und leg es deiner Bewerbung bei. Nicht geprüfte Angaben sind auf dem Dokument nicht aufgeführt.</p>`
+      : `<p style="margin:0;">Für das PDF fehlt noch dein Name auf dem Zertifikat — das ist in einer Minute erledigt.</p>`
+    }`
 
   return sendEmail({
     to: opts.email,
     from: sicFromAddress(),
-    subject: approved ?
-      `${SIC_BRAND_NAME}: Modul «${title}» freigegeben`
-    : `${SIC_BRAND_NAME}: Modul «${title}» — Nacharbeit nötig`,
-    html,
-    text: approved ?
-      `Modul «${title}» wurde freigegeben.\n\nAnmelden: ${buttonUrl}`
-    : `Modul «${title}» wurde abgelehnt.${opts.note ? `\nGrund: ${opts.note}` : ''}\n\nAnmelden: ${buttonUrl}`,
+    subject:
+      opts.firstVerification ?
+        `${SIC_BRAND_NAME}: Dein Zertifikat ist bereit`
+      : `${SIC_BRAND_NAME}: «${title}» geprüft — Zertifikat aktualisiert`,
+    html: sicEmailShell({
+      preheader: `${title} geprüft — ${completeness}`,
+      heading,
+      bodyHtml,
+      buttonText: opts.pdfReady ? 'Zertifikat öffnen' : 'Namen ergänzen',
+      buttonUrl,
+      footnoteHtml: opts.magicLinkUrl ? MAGIC_LINK_FOOTNOTE : undefined,
+    }),
+    text: `«${title}» ist geprüft. ${completeness}. Gültig bis ${validUntil}.\n\nZertifikat öffnen: ${buttonUrl}`,
+  })
+}
+
+export async function sendSicModuleRejectedEmail(opts: {
+  email: string
+  moduleKind: SicModuleId
+  note?: string | null
+  magicLinkUrl?: string
+}) {
+  const title = getSicModule(opts.moduleKind).title
+  const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
+
+  return sendEmail({
+    to: opts.email,
+    from: sicFromAddress(),
+    subject: `${SIC_BRAND_NAME}: «${title}» — Nachweis bitte nachreichen`,
+    html: sicEmailShell({
+      preheader: `${title} — Nacharbeit nötig`,
+      heading: `«${title}»: bitte nachreichen`,
+      bodyHtml: `<p style="margin:0 0 12px;">Für die Angabe <strong>${escapeHtml(title)}</strong> konnten wir noch nicht freigeben.</p>
+        ${opts.note ? `<p style="margin:0 0 12px;"><strong>Grund:</strong> ${escapeHtml(opts.note)}</p>` : ''}
+        <p style="margin:0;">Reich einen passenden Nachweis nach — dein Anspruch darauf bleibt bestehen, es gibt keine Frist und keine zusätzlichen Kosten.</p>`,
+      buttonText: 'Nachweis nachreichen',
+      buttonUrl,
+      footnoteHtml: opts.magicLinkUrl ? MAGIC_LINK_FOOTNOTE : undefined,
+    }),
+    text: `«${title}» konnte nicht freigegeben werden.${opts.note ? `\nGrund: ${opts.note}` : ''}\n\nNachreichen: ${buttonUrl}`,
+  })
+}
+
+/** Nach dem ersten Upload: bestätigt, dass die Unterlagen angekommen sind. */
+export async function sendSicDocumentsReceivedEmail(opts: {
+  email: string
+  moduleTitle: string
+  magicLinkUrl?: string
+}) {
+  const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
+  return sendEmail({
+    to: opts.email,
+    from: sicFromAddress(),
+    subject: `${SIC_BRAND_NAME}: Unterlagen angekommen`,
+    html: sicEmailShell({
+      preheader: 'Wir haben deine Unterlagen erhalten',
+      heading: 'Unterlagen angekommen',
+      bodyHtml: `<p style="margin:0 0 12px;">Wir haben deinen Nachweis für <strong>${escapeHtml(opts.moduleTitle)}</strong> erhalten und schauen ihn an — meist innert 24 Stunden.</p>
+        <p style="margin:0;">Du bekommst eine E-Mail, sobald die Angabe auf deinem Zertifikat steht. Bis dahin kannst du weitere Unterlagen nachreichen.</p>`,
+      buttonText: 'Zum Zertifikat',
+      buttonUrl,
+      footnoteHtml: opts.magicLinkUrl ? MAGIC_LINK_FOOTNOTE : undefined,
+    }),
+    text: `Wir haben deinen Nachweis für «${opts.moduleTitle}» erhalten und prüfen ihn.\n\n${buttonUrl}`,
+  })
+}
+
+/** Vorwarnung, bevor die Unterlagen eines unfertigen Zertifikats gelöscht werden. */
+export async function sendSicDocsPurgeWarningEmail(opts: {
+  email: string
+  purgeAt: Date
+  magicLinkUrl?: string
+}) {
+  const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
+  const dateStr = opts.purgeAt.toLocaleDateString('de-CH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+  return sendEmail({
+    to: opts.email,
+    from: sicFromAddress(),
+    subject: `${SIC_BRAND_NAME}: Unterlagen werden am ${dateStr} gelöscht`,
+    html: sicEmailShell({
+      preheader: `Unterlagen werden am ${dateStr} gelöscht`,
+      heading: 'Deine Unterlagen werden gelöscht',
+      bodyHtml: `<p style="margin:0 0 12px;">Dein Zertifikat ist seit einer Weile unfertig. Aus Datenschutzgründen löschen wir die hochgeladenen Unterlagen am <strong>${dateStr}</strong>.</p>
+        <p style="margin:0 0 12px;">Was du bezahlt hast, bleibt dir: die gekauften Angaben verfallen nicht. Du kannst die Nachweise jederzeit neu hochladen.</p>
+        <p style="margin:0;">Wenn du jetzt fertig wirst, bleibt alles wie es ist.</p>`,
+      buttonText: 'Jetzt abschliessen',
+      buttonUrl,
+      footnoteHtml: opts.magicLinkUrl ? MAGIC_LINK_FOOTNOTE : undefined,
+    }),
+    text: `Deine hochgeladenen Unterlagen werden am ${dateStr} gelöscht. Gekaufte Angaben verfallen nicht.\n\n${buttonUrl}`,
   })
 }
 
@@ -141,8 +237,8 @@ export async function sendSicExpiryReminderEmail(opts: {
     preheader: `Dein Zertifikat läuft in ${opts.daysLeft} Tagen ab`,
     heading: `Gültigkeit endet in ${opts.daysLeft} Tagen`,
     bodyHtml: `<p style="margin:0 0 12px;">Dein Swiss-Immo-Cert-Zertifikat läuft am <strong>${dateStr}</strong> ab.</p>
-      <p style="margin:0;">Verlängere rechtzeitig, damit Vermieter weiterhin ein gültiges Zertifikat sehen.</p>`,
-    buttonText: 'Zum Zertifikat',
+      <p style="margin:0;">Für die Verlängerung brauchst du einen frischen Auszug vom Betreibungsamt — dessen Alter ist der Grund für die Gültigkeitsdauer. Alles andere bleibt stehen.</p>`,
+    buttonText: 'Jetzt verlängern',
     buttonUrl,
   })
   return sendEmail({

@@ -32,7 +32,7 @@
       "schedule": "0 */6 * * *"
     },
     {
-      "path": "/api/cron/reminders",
+      "path": "/api/cron",
       "schedule": "0 8 * * *"
     },
     {

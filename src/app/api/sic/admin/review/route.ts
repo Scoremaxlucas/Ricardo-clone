@@ -8,10 +8,12 @@ import {
   moduleStatusesForQueueFilter,
   parseSicAdminQueueFilter,
 } from '@/lib/sic/admin-queue'
-import { sendSicModuleReviewEmail } from '@/lib/sic/email'
+import { sendSicCertificateReadyEmail, sendSicModuleRejectedEmail } from '@/lib/sic/email'
+import { normalizeSicFacts, readSicFacts } from '@/lib/sic/facts'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
-import { isSicModuleId } from '@/lib/sic/modules'
+import { getSicModule, isSicModuleId } from '@/lib/sic/modules'
+import { approveSicModule, rejectSicModule } from '@/lib/sic/review'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -58,21 +60,30 @@ export async function GET(req: NextRequest) {
     id: c.id,
     email: c.email,
     certificateCode: c.certificateCode,
-    expiresAt: c.expiresAt.toISOString(),
+    holderName: `${c.holderFirstName ?? ''} ${c.holderLastName ?? ''}`.trim() || null,
+    certifiedAt: c.certifiedAt ? c.certifiedAt.toISOString() : null,
+    expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
     updatedAt: c.updatedAt.toISOString(),
-    modules: c.modules.map(m => ({
-      moduleKind: m.moduleKind,
-      status: m.status,
-      reviewNote: m.reviewNote,
-      documents: c.documents
-        .filter(d => d.moduleKind === m.moduleKind)
-        .map(d => ({
+    modules: c.modules.map(m => {
+      const docs = c.documents.filter(d => d.moduleKind === m.moduleKind)
+      return {
+        moduleKind: m.moduleKind,
+        title: isSicModuleId(m.moduleKind) ? getSicModule(m.moduleKind).title : m.moduleKind,
+        status: m.status,
+        reviewNote: m.reviewNote,
+        reviewedAt: m.reviewedAt ? m.reviewedAt.toISOString() : null,
+        reviewedByUserId: m.reviewedByUserId,
+        paidAt: m.paidAt.toISOString(),
+        firstUploadAt: docs[0]?.uploadedAt.toISOString() ?? null,
+        verifiedFacts: isSicModuleId(m.moduleKind) ? readSicFacts(m.moduleKind, m.verifiedFacts) : null,
+        documents: docs.map(d => ({
           id: d.id,
           fileName: d.fileName,
           contentType: d.contentType,
           uploadedAt: d.uploadedAt.toISOString(),
         })),
-    })),
+      }
+    }),
   }))
 
   return NextResponse.json({
@@ -93,7 +104,13 @@ export async function POST(req: NextRequest) {
   const admin = await requireSicAdmin()
   if (!admin) return NextResponse.json({ ok: false, message: 'Zugriff verweigert' }, { status: 403 })
 
-  let body: { certificateId?: string; moduleKind?: string; action?: string; note?: string }
+  let body: {
+    certificateId?: string
+    moduleKind?: string
+    action?: string
+    note?: string
+    facts?: unknown
+  }
   try {
     body = await req.json()
   } catch {
@@ -119,46 +136,64 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Zertifikat nicht gefunden.' }, { status: 404 })
   }
 
-  if (action === 'approve') {
-    const docCount = await prisma.sicDocument.count({
-      where: { certificateId, moduleKind },
+  if (action === 'reject') {
+    const rejected = await rejectSicModule({
+      certificateId,
+      moduleKind,
+      note,
+      reviewerId: admin.userId,
     })
-    if (docCount === 0) {
-      return NextResponse.json(
-        { ok: false, message: 'Freigabe nicht möglich — kein Nachweis hochgeladen.' },
-        { status: 400 }
-      )
+    if (!rejected) {
+      return NextResponse.json({ ok: false, message: 'Modul nicht gefunden.' }, { status: 404 })
     }
+    sicLog('sic.admin.review', { certificateId, moduleKind, action })
+    await notifyRejected({ email: cert.email, moduleKind, note, certificateId })
+    return NextResponse.json({ ok: true })
   }
 
-  const updated = await prisma.sicCertificateModule.updateMany({
-    where: { certificateId, moduleKind },
-    data: {
-      status: action === 'approve' ? 'VERIFIED' : 'REJECTED',
-      reviewedAt: new Date(),
-      reviewedByUserId: admin.userId,
-      reviewNote: action === 'reject' ? note : null,
-    },
-  })
+  const docCount = await prisma.sicDocument.count({ where: { certificateId, moduleKind } })
+  if (docCount === 0) {
+    return NextResponse.json(
+      { ok: false, message: 'Freigabe nicht möglich — kein Nachweis hochgeladen.' },
+      { status: 400 }
+    )
+  }
 
-  if (updated.count === 0) {
+  // Ohne geprüfte Werte entstünde wieder ein inhaltsleeres Zertifikat.
+  const parsed = normalizeSicFacts(moduleKind, body.facts)
+  if (!parsed.ok) {
+    const problems = [
+      ...parsed.missing.map(l => `${l} fehlt`),
+      ...parsed.invalid.map(l => `${l} ist ungültig`),
+    ]
+    return NextResponse.json(
+      { ok: false, message: `Freigabe nicht möglich — ${problems.join(', ')}.` },
+      { status: 400 }
+    )
+  }
+
+  const approved = await approveSicModule({
+    certificateId,
+    moduleKind,
+    facts: parsed.facts,
+    reviewerId: admin.userId,
+  })
+  if (!approved) {
     return NextResponse.json({ ok: false, message: 'Modul nicht gefunden.' }, { status: 404 })
   }
 
-  await prisma.sicCertificate.update({
-    where: { id: certificateId },
-    data: { updatedAt: new Date() },
-  })
-
-  sicLog('sic.admin.review', { certificateId, moduleKind, action })
+  sicLog('sic.admin.review', { certificateId, moduleKind, action, firstVerification: approved.firstVerification })
 
   try {
     const { url: magicLinkUrl } = await createSicMagicLink(cert.email)
-    await sendSicModuleReviewEmail({
+    await sendSicCertificateReadyEmail({
       email: cert.email,
       moduleKind,
-      action,
-      note: action === 'reject' ? note : null,
+      certificateCode: approved.certificateCode,
+      verifiedCount: approved.verifiedCount,
+      expiresAt: approved.expiresAt,
+      firstVerification: approved.firstVerification,
+      pdfReady: !!approved.holderName,
       magicLinkUrl,
     })
   } catch (err) {
@@ -166,5 +201,29 @@ export async function POST(req: NextRequest) {
     sicLog('sic.admin.review_email_failed', { certificateId, moduleKind, action })
   }
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, verifiedCount: approved.verifiedCount })
+}
+
+async function notifyRejected(opts: {
+  email: string
+  moduleKind: Parameters<typeof sendSicModuleRejectedEmail>[0]['moduleKind']
+  note: string
+  certificateId: string
+}) {
+  try {
+    const { url: magicLinkUrl } = await createSicMagicLink(opts.email)
+    await sendSicModuleRejectedEmail({
+      email: opts.email,
+      moduleKind: opts.moduleKind,
+      note: opts.note,
+      magicLinkUrl,
+    })
+  } catch (err) {
+    console.error('[sic/admin/review] rejection email failed', err)
+    sicLog('sic.admin.review_email_failed', {
+      certificateId: opts.certificateId,
+      moduleKind: opts.moduleKind,
+      action: 'reject',
+    })
+  }
 }

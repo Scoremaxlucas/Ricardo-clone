@@ -5,7 +5,8 @@
  * Output: `./preview-sic-certificate.pdf`
  */
 import { SicCertificatePdfDocument } from '@/lib/sic/CertificatePdf'
-import { SIC_MODULES } from '@/lib/sic/modules'
+import { sicFactLines, type SicFacts } from '@/lib/sic/facts'
+import { SIC_MODULES, SIC_SCOPE_NOTE, sicCompletenessLabel } from '@/lib/sic/modules'
 import { renderToBuffer } from '@react-pdf/renderer'
 import QRCode from 'qrcode'
 import { writeFileSync } from 'node:fs'
@@ -20,11 +21,23 @@ async function main() {
     color: { dark: '#0f2b5e', light: '#ffffff' },
   })
 
-  const verifiedModules = SIC_MODULES.map(m => ({
-    id: m.id,
-    title: m.title,
-    lines: m.lineItems,
-  }))
+  // Beispielwerte wie nach einer echten Prüfung — nicht die generischen Zeilen.
+  const exampleFacts: Record<string, SicFacts> = {
+    BONITAET: { extractDate: '2026-04-20', office: 'Betreibungsamt Zürich' },
+    AUFENTHALT: { documentType: 'ch_pass', validUntil: '2031-03-31' },
+    ARBEIT_EINKOMMEN: {
+      incomeBand: '80_100k',
+      employmentType: 'unbefristet',
+      employedSince: '2022-09-01',
+      employerName: 'Muster AG',
+    },
+    ZUVERLAESSIGKEIT: { tenancyFrom: '2021-05-01', paymentBehaviour: 'always_on_time' },
+  }
+
+  const verifiedModules = SIC_MODULES.map(m => {
+    const lines = sicFactLines(m.id, exampleFacts[m.id] ?? null)
+    return { id: m.id, title: m.title, lines: lines.length > 0 ? lines : m.lineItems }
+  })
 
   const doc = React.createElement(SicCertificatePdfDocument, {
     certificateCode: 'SIC-2026-R8YQH6TX',
@@ -32,6 +45,8 @@ async function main() {
     issuedAt: new Date('2026-04-26'),
     expiresAt: new Date('2026-07-26'),
     verifiedModules,
+    completenessLabel: sicCompletenessLabel(verifiedModules.length),
+    scopeNote: SIC_SCOPE_NOTE,
     verifyUrl,
     qrDataUrl,
   })

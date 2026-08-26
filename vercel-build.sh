@@ -65,10 +65,10 @@ if [ "$DEPLOY_CODE" -ne 0 ]; then
   fi
 fi
 
-# CRITICAL: Push database schema to ensure all columns exist
-echo "🗄️ Pushing database schema..."
-npx prisma db push --accept-data-loss || true
-echo "✅ Database schema push attempted"
+# Schema-Änderungen laufen ausschliesslich über versionierte Migrationen (oben).
+# `prisma db push --accept-data-loss` ist bewusst entfernt: es konnte Spalten und
+# damit Daten löschen und hat Migrationsfehler stillschweigend übergangen.
+# Scheitert `migrate deploy`, bricht der Build ab — das ist gewollt.
 
 # ALWAYS run manual column fixes to ensure all columns exist
 echo "🔧 Ensuring all required columns exist..."

@@ -159,7 +159,10 @@ describe('validity', () => {
     const now = new Date(Date.UTC(2026, 5, 1))
     expect(isSicExpired(new Date(Date.UTC(2026, 4, 1)), now)).toBe(true)
     expect(isSicExpired(new Date(Date.UTC(2026, 6, 1)), now)).toBe(false)
-    expect(isSicExpired(null, now)).toBe(true)
+  })
+  it('treats a certificate without expiry as not yet issued, not as expired', () => {
+    // expiresAt bleibt null bis zur ersten Freigabe — die Uhr läuft noch nicht.
+    expect(isSicExpired(null, new Date(Date.UTC(2026, 5, 1)))).toBe(false)
   })
   it('addCalendarMonths is pure', () => {
     const from = new Date(Date.UTC(2026, 0, 15))
@@ -182,7 +185,7 @@ describe('module wording', () => {
 
 describe('landlord PDF gate', () => {
   const future = new Date(Date.now() + 86_400_000)
-  it('requires all purchased modules VERIFIED plus holder name', () => {
+  it('gibt das Teil-Zertifikat ab der ersten Freigabe frei', () => {
     expect(
       isSicLandlordPdfReady({
         holderName: 'Anna Muster',
@@ -190,7 +193,7 @@ describe('landlord PDF gate', () => {
         expiresAt: future,
         modules: [{ status: 'VERIFIED' }, { status: 'PENDING_DOCS' }],
       })
-    ).toBe(false)
+    ).toBe(true)
     expect(
       isSicLandlordPdfReady({
         holderName: 'Anna Muster',
@@ -215,6 +218,25 @@ describe('landlord PDF gate', () => {
         status: 'ACTIVE',
         expiresAt: future,
         modules: [],
+      })
+    ).toBe(false)
+  })
+  it('sperrt das PDF ohne freigegebene Angabe und ohne Gültigkeit', () => {
+    expect(
+      isSicLandlordPdfReady({
+        holderName: 'Anna Muster',
+        status: 'ACTIVE',
+        expiresAt: future,
+        modules: [{ status: 'PENDING_DOCS' }, { status: 'IN_REVIEW' }],
+      })
+    ).toBe(false)
+    // Bezahlt, aber noch nichts freigegeben: expiresAt ist null.
+    expect(
+      isSicLandlordPdfReady({
+        holderName: 'Anna Muster',
+        status: 'ACTIVE',
+        expiresAt: null,
+        modules: [{ status: 'VERIFIED' }],
       })
     ).toBe(false)
   })

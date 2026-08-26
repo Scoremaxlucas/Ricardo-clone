@@ -4,7 +4,13 @@ import { sicPaths, sicUrl, SIC_BRAND_NAME } from '@/lib/sic/config'
 import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
 import { normalizeSicModuleIds, type SicModuleId } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
-import { normalizeEmail, SIC_SESSION_COOKIE, sicSessionCookieOptions, signSicSessionToken } from '@/lib/sic/session'
+import {
+  normalizeEmail,
+  SIC_POST_CHECKOUT_TTL_SECONDS,
+  SIC_SESSION_COOKIE,
+  sicSessionCookieOptions,
+  signSicSessionToken,
+} from '@/lib/sic/session'
 import { stripe } from '@/lib/stripe-server'
 import type { SicModuleKind } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
@@ -51,12 +57,14 @@ export async function POST(req: NextRequest) {
   let email = ''
   let requested: SicModuleId[] = []
   let holderName: string | null = null
+  let wantsRenewal = false
   try {
     const body = await req.json()
     email = normalizeEmail(typeof body?.email === 'string' ? body.email : '')
     requested = normalizeSicModuleIds(body?.moduleIds)
     const rawName = typeof body?.name === 'string' ? body.name.trim() : ''
     holderName = rawName ? rawName.slice(0, 120) : null
+    wantsRenewal = body?.renewal === true
   } catch {
     return NextResponse.json({ ok: false, message: 'Ungültige Anfrage.' }, { status: 400 })
   }
@@ -72,20 +80,28 @@ export async function POST(req: NextRequest) {
 
   const existing = await prisma.sicCertificate.findUnique({
     where: { email },
-    select: { modules: { select: { moduleKind: true } } },
+    select: { certifiedAt: true, status: true, modules: { select: { moduleKind: true } } },
   })
   const includeBaseFee = !existing
   const alreadyPaid = new Set<string>((existing?.modules ?? []).map(m => m.moduleKind))
   const candidate = requested.filter(id => !alreadyPaid.has(id))
 
-  if (!includeBaseFee && candidate.length === 0) {
+  const isRenewal = wantsRenewal && !!existing && !!existing.certifiedAt && existing.status !== 'REVOKED'
+  if (wantsRenewal && !isRenewal) {
+    return NextResponse.json(
+      { ok: false, message: 'Verlängern kannst du erst, wenn ein Zertifikat ausgestellt wurde.' },
+      { status: 400 }
+    )
+  }
+
+  if (!includeBaseFee && !isRenewal && candidate.length === 0) {
     return NextResponse.json(
       { ok: false, message: 'Alle gewählten Module sind bereits Teil deines Zertifikats.' },
       { status: 400 }
     )
   }
 
-  const quote = quoteSicOrder({ includeBaseFee, moduleIds: candidate })
+  const quote = quoteSicOrder({ includeBaseFee, moduleIds: candidate, isRenewal })
   if (quote.totalChf < 0) {
     return NextResponse.json({ ok: false, message: 'Kein gültiger Betrag.' }, { status: 400 })
   }
@@ -99,6 +115,7 @@ export async function POST(req: NextRequest) {
         email,
         holderName,
         includeBaseFee,
+        isRenewal,
         moduleKinds: candidate as SicModuleKind[],
         amountChf: 0,
         stripeCheckoutSessionId: sessionId,
@@ -110,7 +127,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, message: 'Zertifikat konnte nicht erstellt werden.' }, { status: 500 })
     }
     const res = NextResponse.json({ ok: true, url: sicPaths.certificateWorkspace })
-    res.cookies.set(SIC_SESSION_COOKIE, signSicSessionToken(email), sicSessionCookieOptions())
+    res.cookies.set(
+      SIC_SESSION_COOKIE,
+      signSicSessionToken(email, SIC_POST_CHECKOUT_TTL_SECONDS),
+      sicSessionCookieOptions(SIC_POST_CHECKOUT_TTL_SECONDS)
+    )
     return res
   }
 
@@ -127,8 +148,8 @@ export async function POST(req: NextRequest) {
             unit_amount: Math.round(quote.totalChf * 100),
             product_data: {
               name:
-                hasDiscount ?
-                  `${SIC_BRAND_NAME} — Komplett-Paket (Basis + 4 Module)`
+                isRenewal ? `${SIC_BRAND_NAME} — Verlängerung`
+                : hasDiscount ? `${SIC_BRAND_NAME} — Komplett-Paket (Basis + 4 Module)`
                 : `${SIC_BRAND_NAME} — Mieter-Zertifikat`,
             },
           },
@@ -140,7 +161,10 @@ export async function POST(req: NextRequest) {
           currency: 'chf' as const,
           unit_amount: Math.round(l.amountChf * 100),
           product_data: {
-            name: l.kind === 'base' ? `${SIC_BRAND_NAME} — Basis` : `Modul: ${l.label}`,
+            name:
+              l.kind === 'base' ? `${SIC_BRAND_NAME} — Basis`
+              : l.kind === 'renewal' ? `${SIC_BRAND_NAME} — Verlängerung`
+              : `Modul: ${l.label}`,
           },
         },
         quantity: 1,
@@ -150,6 +174,7 @@ export async function POST(req: NextRequest) {
     type: 'sic_certificate',
     email,
     includeBaseFee: includeBaseFee ? 'true' : 'false',
+    isRenewal: isRenewal ? 'true' : 'false',
     moduleKinds: candidate.join(','),
   }
 
@@ -169,6 +194,7 @@ export async function POST(req: NextRequest) {
         email,
         holderName,
         includeBaseFee,
+        isRenewal,
         moduleKinds: candidate as SicModuleKind[],
         amountChf: quote.totalChf,
         stripeCheckoutSessionId: session.id,

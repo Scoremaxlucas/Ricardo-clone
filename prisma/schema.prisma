@@ -2793,23 +2793,42 @@ model SicCertificate {
   holderFirstName String?
   holderLastName  String?
 
-  status    SicCertificateStatus @default(ACTIVE)
-  issuedAt  DateTime             @default(now())
-  expiresAt DateTime
+  status   SicCertificateStatus @default(ACTIVE)
+  /**
+   * Kaufdatum (Buchhaltung/Fristen). Das Datum auf dem Dokument ist `certifiedAt`.
+   */
+  issuedAt DateTime             @default(now())
+  /**
+   * Tag der ersten Modulfreigabe = Ausstellungsdatum auf dem Zertifikat.
+   * Null solange nichts freigegeben ist.
+   */
+  certifiedAt DateTime?
+  /**
+   * Gültigkeit. Null bis zur ersten Freigabe — vorher gibt es kein Zertifikat,
+   * das ablaufen könnte. Gekaufte Module verfallen unabhängig davon nie.
+   */
+  expiresAt   DateTime?
 
   verificationCount Int       @default(0)
   lastVerifiedAt    DateTime?
 
   expiryReminder14dSentAt DateTime?
   expiryReminder3dSentAt  DateTime?
+  /**
+   * Vorwarnung vor der Löschung unfertiger Unterlagen (Datenschutzfrist).
+   */
+  docsPurgeWarningSentAt  DateTime?
 
   modules   SicCertificateModule[]
   documents SicDocument[]
   payments  SicPayment[]
+  scans     SicVerifyScan[]
+  events    SicEvent[]
 
   @@index([certificateCode])
   @@index([email])
   @@index([status, expiresAt])
+  @@index([certifiedAt])
   @@map("sic_certificates")
 }
 
@@ -2820,6 +2839,12 @@ model SicCertificateModule {
 
   moduleKind SicModuleKind
   status     SicModuleStatus @default(PENDING_DOCS)
+
+  /**
+   * Bei der Freigabe erfasste, geprüfte Werte (Struktur je Modul in `src/lib/sic/facts.ts`).
+   * Aus ihnen entstehen die Zeilen auf dem Zertifikat.
+   */
+  verifiedFacts Json?
 
   paidAt           DateTime  @default(now())
   reviewedAt       DateTime?
@@ -2878,6 +2903,10 @@ model SicPayment {
 
   includeBaseFee Boolean
   /**
+   * Verlängerung: setzt alternde Module zurück, statt neue Module zu verkaufen.
+   */
+  isRenewal      Boolean @default(false)
+  /**
    * Modul-IDs als Text (validiert in Code über normalizeSicModuleIds).
    */
   moduleKinds    String[]
@@ -2909,4 +2938,52 @@ model SicMagicLink {
   @@index([token])
   @@index([expiresAt])
   @@map("sic_magic_links")
+}
+
+/**
+ * Ein Scan der Prüfseite durch Dritte — entdoppelt pro Zertifikat, Tag und IP.
+ * Aufrufe des Inhabers selbst zählen nicht, sonst misst die Zahl nichts.
+ */
+model SicVerifyScan {
+  id            String         @id @default(cuid())
+  certificateId String
+  certificate   SicCertificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+
+  /** YYYY-MM-DD (UTC) */
+  dayKey    String
+  ipHash    String
+  createdAt DateTime @default(now())
+
+  @@unique([certificateId, dayKey, ipHash])
+  @@index([certificateId, createdAt])
+  @@index([createdAt])
+  @@map("sic_verify_scans")
+}
+
+enum SicEventKind {
+  CERTIFICATE_CREATED
+  FIRST_UPLOAD
+  MODULE_VERIFIED
+  MODULE_REJECTED
+  PDF_DOWNLOADED
+  VERIFY_SCANNED
+  RENEWAL_PURCHASED
+}
+
+/**
+ * Funnel-Ereignisse — abfragbar, im Gegensatz zu Logzeilen.
+ */
+model SicEvent {
+  id            String         @id @default(cuid())
+  createdAt     DateTime       @default(now())
+  kind          SicEventKind
+  certificateId String?
+  certificate   SicCertificate? @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  email         String?
+  moduleKind    SicModuleKind?
+  meta          Json?
+
+  @@index([kind, createdAt])
+  @@index([certificateId, kind])
+  @@map("sic_events")
 }

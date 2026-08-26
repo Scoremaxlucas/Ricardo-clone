@@ -1,15 +1,31 @@
 import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
-import { SIC_SESSION_COOKIE, sicSessionCookieOptions, signSicSessionToken } from '@/lib/sic/session'
+import {
+  SIC_POST_CHECKOUT_TTL_SECONDS,
+  SIC_SESSION_COOKIE,
+  sicSessionCookieOptions,
+  signSicSessionToken,
+} from '@/lib/sic/session'
 import { stripe } from '@/lib/stripe-server'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
+function setShortSession(res: NextResponse, email: string): NextResponse {
+  res.cookies.set(
+    SIC_SESSION_COOKIE,
+    signSicSessionToken(email, SIC_POST_CHECKOUT_TTL_SECONDS),
+    sicSessionCookieOptions(SIC_POST_CHECKOUT_TTL_SECONDS)
+  )
+  return res
+}
+
 /**
  * Bestätigt eine Checkout-Session serverseitig (Fallback zum Webhook). Idempotent:
  * verifiziert bei Stripe, ob bezahlt, und wendet sie auf das Dossier an.
- * Bei Erfolg: SIC-Session-Cookie setzen → Sofort-Zugang zu «Mein Zertifikat»
- * ohne Magic-Link (der weiterhin per Mail als Wiedereinstieg geht).
+ *
+ * Bei Erfolg gibt es eine **kurze** Sitzung, damit der Kauf ohne Umweg weitergeht.
+ * Für den dauerhaften Zugang dient der Magic-Link aus der Bestätigungsmail —
+ * die Session-ID allein soll kein Dauerticket in ein fremdes Dossier sein.
  */
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get('session_id') || ''
@@ -24,14 +40,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ ok: false, message: 'Verarbeitung fehlgeschlagen.' }, { status: 500 })
       }
       const res = NextResponse.json({ ok: true, email: result.email })
-      if (result.email) {
-        res.cookies.set(
-          SIC_SESSION_COOKIE,
-          signSicSessionToken(result.email),
-          sicSessionCookieOptions()
-        )
-      }
-      return res
+      return result.email ? setShortSession(res, result.email) : res
     }
 
     const session = await stripe.checkout.sessions.retrieve(sessionId)
@@ -52,14 +61,7 @@ export async function GET(req: NextRequest) {
     }
 
     const res = NextResponse.json({ ok: true, email: result.email })
-    if (result.email) {
-      res.cookies.set(
-        SIC_SESSION_COOKIE,
-        signSicSessionToken(result.email),
-        sicSessionCookieOptions()
-      )
-    }
-    return res
+    return result.email ? setShortSession(res, result.email) : res
   } catch (err) {
     console.error('[sic/checkout/confirm]', err)
     return NextResponse.json({ ok: false, message: 'Fehler bei der Bestätigung.' }, { status: 502 })

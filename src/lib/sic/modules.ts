@@ -25,6 +25,12 @@ export const SIC_MODULE_FEE_CHF: number = 0.1
 export const SIC_BUNDLE_ALL_MODULES_CHF: number = 0.5
 
 /**
+ * Verlängerung: setzt die alternden Angaben zurück (frischer Betreibungsauszug),
+ * die dauerhaften bleiben stehen. Produktion wiederherstellen: 30.
+ */
+export const SIC_RENEWAL_FEE_CHF: number = 0.1
+
+/**
  * Stripe verrechnet keine Zahlung unter diesem Betrag (docs.stripe.com/currencies,
  * CHF: 0.50). Kleinere Summen scheitern mit `amount_too_small`.
  */
@@ -48,8 +54,13 @@ export type SicModuleId = 'BONITAET' | 'ARBEIT_EINKOMMEN' | 'ZUVERLAESSIGKEIT' |
 
 export type SicModuleDefinition = {
   id: SicModuleId
-  /** Reihenfolge auf Zertifikat/Checkout. */
+  /**
+   * Reihenfolge auf Zertifikat/Checkout/Dossier. Selbst beschaffbare Angaben
+   * stehen zuerst, damit nach wenigen Tagen ein brauchbares Zertifikat existiert.
+   */
   order: number
+  /** Ohne Unterschrift Dritter beschaffbar — bestimmt die Reihenfolge. */
+  selfObtainable: boolean
   /** Titel in Alltagssprache: das Dokument, das jeder Mieter kennt — keine Fachbegriffe. */
   title: string
   /** Kurz und ohne Fachwort: was das Dokument zeigt (Dossier, FAQ). */
@@ -73,10 +84,11 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
   {
     id: 'BONITAET',
     order: 1,
+    selfObtainable: true,
     title: 'Betreibungsauszug',
     summary: 'Der Auszug vom Betreibungsamt zeigt, ob offene Betreibungen bestehen.',
     landlordQuestion: 'Hast du offene Betreibungen?',
-    landlordSees: 'Ob ein aktueller Betreibungsauszug vorliegt.',
+    landlordSees: 'Dass keine offenen Betreibungen bestehen — mit Datum und Amt.',
     youUpload: 'Auszug vom Betreibungsamt, max. 3 Monate alt',
     scopeItems: ['Betreibungsauszug'],
     lineItems: ['Betreibungsauszug eingereicht und geprüft'],
@@ -84,12 +96,27 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     priceChf: SIC_MODULE_FEE_CHF,
   },
   {
-    id: 'ARBEIT_EINKOMMEN',
+    id: 'AUFENTHALT',
     order: 2,
+    selfObtainable: true,
+    title: 'Ausweis',
+    summary: 'Pass, ID oder Bewilligung zeigen, wer du bist und dass der Aufenthalt geregelt ist.',
+    landlordQuestion: 'Ist dein Ausweis gültig?',
+    landlordSees: 'Ausweisart und Gültigkeit.',
+    youUpload: 'Pass, ID oder Aufenthaltsbewilligung',
+    scopeItems: ['Pass / ID oder Aufenthaltsbewilligung'],
+    lineItems: ['Aufenthaltsstatus (entsprechender Nachweis geprüft)'],
+    requiredDocuments: ['Pass, ID oder Aufenthaltsbewilligung (C, B, L)'],
+    priceChf: SIC_MODULE_FEE_CHF,
+  },
+  {
+    id: 'ARBEIT_EINKOMMEN',
+    order: 3,
+    selfObtainable: false,
     title: 'Lohn & Arbeitsstelle',
     summary: 'Lohnabrechnung und Arbeitgeberbestätigung zeigen, was du verdienst und wo du arbeitest.',
     landlordQuestion: 'Was verdienst du, und wo arbeitest du?',
-    landlordSees: 'Lohn und Arbeitsstelle auf einer Zeile.',
+    landlordSees: 'Einkommensband, Anstellungsart und die tragbare Monatsmiete.',
     youUpload: 'Lohnabrechnung und ein kurzes Formular für den Arbeitgeber',
     scopeItems: [
       'Einkommensnachweis',
@@ -109,28 +136,16 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
   },
   {
     id: 'ZUVERLAESSIGKEIT',
-    order: 3,
+    order: 4,
+    selfObtainable: false,
     title: 'Referenz vom Vermieter',
     summary: 'Dein bisheriger Vermieter bestätigt schriftlich, wie das Mietverhältnis lief.',
     landlordQuestion: 'Wie war es bei deinem letzten Vermieter?',
-    landlordSees: 'Eine schriftliche Referenz — er muss nicht selbst anrufen.',
+    landlordSees: 'Mietdauer und Zahlungsverhalten — er muss nicht selbst anrufen.',
     youUpload: 'Ein kurzes Formular für deinen bisherigen Vermieter',
     scopeItems: ['Vermieterreferenz'],
     lineItems: ['Vermieterreferenz (Referenzschreiben eingereicht und geprüft)'],
     requiredDocuments: ['Vermieter-Referenz — SIC-Formular, vom Vermieter unterschrieben'],
-    priceChf: SIC_MODULE_FEE_CHF,
-  },
-  {
-    id: 'AUFENTHALT',
-    order: 4,
-    title: 'Ausweis',
-    summary: 'Pass, ID oder Bewilligung zeigen, wer du bist und dass der Aufenthalt geregelt ist.',
-    landlordQuestion: 'Ist dein Ausweis gültig?',
-    landlordSees: 'Dass ein gültiger Ausweis oder eine Bewilligung vorliegt.',
-    youUpload: 'Pass, ID oder Aufenthaltsbewilligung',
-    scopeItems: ['Pass / ID oder Aufenthaltsbewilligung'],
-    lineItems: ['Aufenthaltsstatus (entsprechender Nachweis geprüft)'],
-    requiredDocuments: ['Pass, ID oder Aufenthaltsbewilligung (C, B, L)'],
     priceChf: SIC_MODULE_FEE_CHF,
   },
 ] as const
@@ -172,6 +187,18 @@ export function sicCatalogListTotalChf(): number {
  */
 export function sicBundleSavingsChf(): number {
   return Math.max(0, roundSicChf(sicCatalogListTotalChf() - SIC_BUNDLE_ALL_MODULES_CHF))
+}
+
+/**
+ * Umfangssatz auf Dokument und Prüfseite. Verhindert, dass ein Vermieter eine
+ * fehlende Angabe als «geprüft und negativ» missversteht.
+ */
+export const SIC_SCOPE_NOTE =
+  'Dieses Zertifikat weist die aufgeführten Angaben aus. Nicht aufgeführte Angaben wurden nicht geprüft.'
+
+/** «2 von 4 Angaben geprüft» — Bezugsgrösse ist immer der ganze Katalog. */
+export function sicCompletenessLabel(verifiedCount: number): string {
+  return `${verifiedCount} von ${SIC_MODULES.length} Angaben geprüft`
 }
 
 /** Kostet aktuell überhaupt etwas? Steuert «Kostenlos»-Copy in der Oberfläche. */

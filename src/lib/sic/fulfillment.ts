@@ -2,13 +2,22 @@ import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe-server'
 import { generateSicCertificateCode } from '@/lib/sic/certificate-code'
 import { sendSicMagicLinkEmail } from '@/lib/sic/email'
+import { recordSicEvent } from '@/lib/sic/events'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
-import { sicExtendedExpiresAt, sicValidityExpiresAt } from '@/lib/sic/validity'
-import type { SicModuleKind } from '@prisma/client'
+import { modulesResetByRenewal } from '@/lib/sic/renewal'
+import type { SicModuleId } from '@/lib/sic/modules'
+import { Prisma, type SicModuleKind } from '@prisma/client'
 
 export type FulfillResult =
-  | { ok: true; certificateId: string; certificateCode: string; email: string; alreadyDone: boolean; refundedDuplicate?: boolean }
+  | {
+      ok: true
+      certificateId: string
+      certificateCode: string
+      email: string
+      alreadyDone: boolean
+      refundedDuplicate?: boolean
+    }
   | { ok: false; reason: string }
 
 /** Zerlegt einen frei eingegebenen Namen in Vor-/Nachname (erstes Token = Vorname, Rest = Nachname). */
@@ -44,9 +53,73 @@ async function refundPaymentIntent(paymentIntentId: string | null | undefined): 
 }
 
 /**
+ * Verlängerung anwenden: die alternden Angaben zurück auf «Unterlagen fehlen»,
+ * ihre Nachweise löschen, damit die Prüfung nicht auf ein altes Dokument schaut.
+ * Die dauerhaften Angaben bleiben verifiziert.
+ */
+async function applyRenewal(certificateId: string): Promise<SicModuleId[]> {
+  const modules = await prisma.sicCertificateModule.findMany({
+    where: { certificateId },
+    select: { moduleKind: true, status: true, reviewedAt: true, verifiedFacts: true },
+  })
+
+  const toReset = modulesResetByRenewal(
+    modules.map(m => ({
+      moduleKind: m.moduleKind as SicModuleId,
+      status: m.status,
+      reviewedAt: m.reviewedAt,
+      verifiedFacts: m.verifiedFacts,
+    }))
+  )
+  if (toReset.length === 0) return []
+
+  const staleDocs = await prisma.sicDocument.findMany({
+    where: { certificateId, moduleKind: { in: toReset as SicModuleKind[] } },
+    select: { id: true, blobUrl: true },
+  })
+
+  await prisma.$transaction(async tx => {
+    await tx.sicCertificateModule.updateMany({
+      where: { certificateId, moduleKind: { in: toReset as SicModuleKind[] } },
+      data: {
+        status: 'PENDING_DOCS',
+        verifiedFacts: Prisma.DbNull,
+        reviewedAt: null,
+        reviewedByUserId: null,
+        reviewNote: null,
+        uploadReminderSentAt: null,
+      },
+    })
+    if (staleDocs.length > 0) {
+      await tx.sicDocument.deleteMany({ where: { id: { in: staleDocs.map(d => d.id) } } })
+    }
+    await tx.sicCertificate.update({
+      where: { id: certificateId },
+      data: { status: 'ACTIVE', docsPurgeWarningSentAt: null },
+    })
+  })
+
+  if (staleDocs.length > 0) {
+    try {
+      const { del } = await import('@vercel/blob')
+      await Promise.all(
+        staleDocs.map(d => del(d.blobUrl).catch(() => undefined))
+      )
+    } catch {
+      // Blobs evtl. schon weg — DB-Zustand ist bereits korrekt.
+    }
+  }
+
+  return toReset
+}
+
+/**
  * Wendet eine bezahlte Checkout-Session auf das Dossier an (idempotent).
- * Findet/erstellt das Zertifikat per E-Mail, fügt bezahlte Module hinzu (PENDING_DOCS),
- * verlängert die Gültigkeit und schickt einen Magic-Link zum Upload.
+ * Findet/erstellt das Zertifikat per E-Mail, fügt bezahlte Module hinzu (PENDING_DOCS)
+ * bzw. wendet eine Verlängerung an und schickt einen Magic-Link zum Upload.
+ *
+ * Die Gültigkeit wird hier **nicht** gesetzt: sie beginnt erst mit der ersten
+ * Freigabe, damit der Kunde keine Wartetage aus seiner Laufzeit verliert.
  */
 export async function fulfillSicPaidCheckout(input: {
   stripeCheckoutSessionId: string
@@ -77,9 +150,9 @@ export async function fulfillSicPaidCheckout(input: {
 
   const now = new Date()
   const email = payment.email
+  const isRenewal = payment.isRenewal
   const moduleKinds = (payment.moduleKinds as SicModuleKind[]) ?? []
-  const pi =
-    input.stripePaymentIntentId ?? payment.stripePaymentIntentId
+  const pi = input.stripePaymentIntentId ?? payment.stripePaymentIntentId
 
   // Race: Zertifikat erneut laden — Module die schon existieren, nicht nochmals «verkaufen».
   let existing = await prisma.sicCertificate.findUnique({
@@ -90,7 +163,7 @@ export async function fulfillSicPaidCheckout(input: {
   const newKinds = moduleKinds.filter(k => !alreadyOwned.has(k))
 
   // Doppelzahlung: nichts Neues zu erfüllen → Stripe full refund (nur REFUNDED wenn Refund OK)
-  if (existing && newKinds.length === 0) {
+  if (existing && newKinds.length === 0 && !isRenewal) {
     const refunded = await refundPaymentIntent(pi)
     if (refunded) {
       await prisma.sicPayment.update({
@@ -140,8 +213,14 @@ export async function fulfillSicPaidCheckout(input: {
     }
   }
 
+  // Verlängerung ohne bestehendes Zertifikat ist gegenstandslos.
+  if (isRenewal && !existing) {
+    return { ok: false, reason: 'RENEWAL_WITHOUT_CERTIFICATE' }
+  }
+
   const code = existing ? existing.certificateCode : await ensureUniqueCode()
   const prefillName = splitHolderName(payment.holderName)
+  const isFirstCertificate = !existing
 
   let cert
   try {
@@ -151,8 +230,6 @@ export async function fulfillSicPaidCheckout(input: {
           await tx.sicCertificate.update({
             where: { id: existing!.id },
             data: {
-              status: 'ACTIVE',
-              expiresAt: sicExtendedExpiresAt(existing!.expiresAt, now),
               ...(prefillName && !existing!.holderFirstName && !existing!.holderLastName ?
                 { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName || null }
               : {}),
@@ -164,7 +241,7 @@ export async function fulfillSicPaidCheckout(input: {
               certificateCode: code,
               status: 'ACTIVE',
               issuedAt: now,
-              expiresAt: sicValidityExpiresAt(now),
+              expiresAt: null,
               ...(prefillName ?
                 { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName || null }
               : {}),
@@ -207,6 +284,25 @@ export async function fulfillSicPaidCheckout(input: {
     }
     existing = again
     return fulfillSicPaidCheckout(input)
+  }
+
+  if (isRenewal) {
+    const reset = await applyRenewal(cert.id)
+    await recordSicEvent({
+      kind: 'RENEWAL_PURCHASED',
+      certificateId: cert.id,
+      email,
+      meta: { resetModules: reset },
+    })
+  }
+
+  if (isFirstCertificate) {
+    await recordSicEvent({
+      kind: 'CERTIFICATE_CREATED',
+      certificateId: cert.id,
+      email,
+      meta: { modules: newKinds },
+    })
   }
 
   try {

@@ -1,7 +1,16 @@
 import { prisma } from '@/lib/prisma'
-import { getSicModule, SIC_MODULES, type SicModuleId } from '@/lib/sic/modules'
+import { readSicFacts, sicFactLines } from '@/lib/sic/facts'
+import {
+  getSicModule,
+  SIC_MODULES,
+  SIC_RENEWAL_FEE_CHF,
+  SIC_VALIDITY_MONTHS,
+  type SicModuleId,
+} from '@/lib/sic/modules'
+import { modulesResetByRenewal } from '@/lib/sic/renewal'
 import { templatesForModule } from '@/lib/sic/templates'
 import { normalizeEmail } from '@/lib/sic/session'
+import { isSicExpired } from '@/lib/sic/validity'
 import type { SicModuleStatus } from '@prisma/client'
 
 export type SicChecklistItem = {
@@ -30,24 +39,41 @@ export type SicDossierModuleView = {
   documentCount: number
   documents: SicUploadedDocMeta[]
   reviewNote: string | null
+  /** Die geprüften Zeilen, wie sie auf dem Zertifikat stehen (nur bei VERIFIED). */
+  certificateLines: string[]
 }
 
 export type SicDossierView = {
   email: string
   certificateCode: string
   status: string
+  /** Kaufdatum. */
   issuedAt: string
-  expiresAt: string
+  /** Ausstellungsdatum = erste Freigabe. Null solange nichts geprüft ist. */
+  certifiedAt: string | null
+  /** Null solange kein Zertifikat existiert — dann läuft auch keine Frist. */
+  expiresAt: string | null
+  expired: boolean
+  validityMonths: number
   holderName: string | null
   hasVerifiedModule: boolean
-  /** Vermieter-PDF/QR nur wenn alle erworbenen Module VERIFIED sind. */
+  /** Vermieter-PDF/QR sobald mindestens ein Modul geprüft ist und der Name steht. */
   landlordPdfReady: boolean
   progress: {
     totalModules: number
+    /** Alle vier Angaben des Katalogs — Bezugsgrösse für «X von 4 geprüft». */
+    catalogModules: number
     verifiedCount: number
     pendingDocsCount: number
     inReviewCount: number
     rejectedCount: number
+  }
+  renewal: {
+    available: boolean
+    recommended: boolean
+    priceChf: number
+    /** Angaben, die eine Verlängerung neu einfordert. */
+    refreshes: { moduleKind: SicModuleId; title: string }[]
   }
   purchasedModules: SicDossierModuleView[]
   availableModules: {
@@ -59,37 +85,54 @@ export type SicDossierView = {
   }[]
 }
 
-/** Baut die Liste verifizierter Module (mit Zertifikatszeilen) für PDF und Verifikation. */
+export type SicVerifiedModuleView = { id: SicModuleId; title: string; lines: string[] }
+
+/**
+ * Baut die Liste verifizierter Module für PDF und Prüfseite.
+ * Bevorzugt die bei der Freigabe erfassten Werte; bereits freigegebene Module
+ * ohne Werte fallen auf die generischen Zeilen aus `modules.ts` zurück.
+ */
 export function verifiedModuleLineItems(
-  modules: { moduleKind: string; status: SicModuleStatus }[]
-): { id: SicModuleId; title: string; lines: string[] }[] {
-  const verified = new Set(modules.filter(m => m.status === 'VERIFIED').map(m => m.moduleKind))
-  return SIC_MODULES.filter(def => verified.has(def.id)).map(def => ({
-    id: def.id,
-    title: def.title,
-    lines: def.lineItems,
-  }))
+  modules: { moduleKind: string; status: SicModuleStatus; verifiedFacts?: unknown }[]
+): SicVerifiedModuleView[] {
+  const verified = new Map(
+    modules.filter(m => m.status === 'VERIFIED').map(m => [m.moduleKind, m.verifiedFacts])
+  )
+  return SIC_MODULES.filter(def => verified.has(def.id)).map(def => {
+    const facts = readSicFacts(def.id, verified.get(def.id))
+    const lines = sicFactLines(def.id, facts)
+    return {
+      id: def.id,
+      title: def.title,
+      lines: lines.length > 0 ? lines : def.lineItems,
+    }
+  })
 }
+
 
 export function joinHolderName(first: string | null, last: string | null): string | null {
   const name = `${(first ?? '').trim()} ${(last ?? '').trim()}`.trim()
   return name || null
 }
 
-/** Fertiges Zertifikat für Vermieter: alle gekauften Module verifiziert, Name gesetzt, nicht abgelaufen. */
+/**
+ * Abrufbares Zertifikat: mindestens eine geprüfte Angabe, Name gesetzt,
+ * nicht widerrufen und nicht abgelaufen. Ein Teil-Zertifikat ist gültig —
+ * der Umfang steht im Dokument.
+ */
 export function isSicLandlordPdfReady(opts: {
   holderName: string | null
   status: string
-  expiresAt: Date | string
+  expiresAt: Date | string | null
   modules: { status: string }[]
 }): boolean {
+  if (opts.status === 'REVOKED' || opts.status === 'EXPIRED') return false
+  if (!opts.holderName) return false
+  if (!opts.modules.some(m => m.status === 'VERIFIED')) return false
+  if (opts.expiresAt === null) return false
   const expiresAt =
     typeof opts.expiresAt === 'string' ? new Date(opts.expiresAt).getTime() : opts.expiresAt.getTime()
-  if (opts.status === 'REVOKED' || opts.status === 'EXPIRED') return false
-  if (expiresAt <= Date.now()) return false
-  if (!opts.holderName) return false
-  if (opts.modules.length === 0) return false
-  return opts.modules.every(m => m.status === 'VERIFIED')
+  return expiresAt > Date.now()
 }
 
 function buildChecklist(moduleKind: SicModuleId, requiredDocuments: string[]): SicChecklistItem[] {
@@ -160,6 +203,10 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
 
   const purchasedKinds = new Set(cert.modules.map(m => m.moduleKind))
 
+  const certificateLinesByKind = new Map(
+    verifiedModuleLineItems(cert.modules).map(m => [m.id as string, m.lines])
+  )
+
   const purchasedModules: SicDossierModuleView[] = SIC_MODULES.filter(def => purchasedKinds.has(def.id)).map(def => {
     const row = cert.modules.find(m => m.moduleKind === def.id)!
     const documents = docsByKind.get(def.id) ?? []
@@ -174,6 +221,7 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
       documentCount: documents.length,
       documents,
       reviewNote: row.reviewNote,
+      certificateLines: certificateLinesByKind.get(def.id) ?? [],
     }
   })
 
@@ -198,12 +246,27 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     else if (m.status === 'REJECTED') rejectedCount++
   }
 
+  const expired = isSicExpired(cert.expiresAt)
+  const renewalRefreshes = modulesResetByRenewal(
+    cert.modules.map(m => ({
+      moduleKind: m.moduleKind as SicModuleId,
+      status: m.status,
+      reviewedAt: m.reviewedAt,
+      verifiedFacts: m.verifiedFacts,
+    }))
+  )
+  const expiresSoon =
+    !!cert.expiresAt && cert.expiresAt.getTime() - Date.now() <= 30 * 24 * 60 * 60 * 1000
+
   return {
     email,
     certificateCode: cert.certificateCode,
     status: cert.status,
     issuedAt: cert.issuedAt.toISOString(),
-    expiresAt: cert.expiresAt.toISOString(),
+    certifiedAt: cert.certifiedAt ? cert.certifiedAt.toISOString() : null,
+    expiresAt: cert.expiresAt ? cert.expiresAt.toISOString() : null,
+    expired,
+    validityMonths: SIC_VALIDITY_MONTHS,
     holderName,
     hasVerifiedModule: verifiedCount > 0,
     landlordPdfReady: isSicLandlordPdfReady({
@@ -214,10 +277,17 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     }),
     progress: {
       totalModules: purchasedModules.length,
+      catalogModules: SIC_MODULES.length,
       verifiedCount,
       pendingDocsCount,
       inReviewCount,
       rejectedCount,
+    },
+    renewal: {
+      available: !!cert.certifiedAt && cert.status !== 'REVOKED',
+      recommended: !!cert.certifiedAt && (expired || expiresSoon),
+      priceChf: SIC_RENEWAL_FEE_CHF,
+      refreshes: renewalRefreshes.map(id => ({ moduleKind: id, title: getSicModule(id).title })),
     },
     purchasedModules,
     availableModules,

@@ -89,34 +89,34 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
     <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-5 py-20 text-center">
       {state.status === 'loading' && (
         <>
-          <Loader2 className="h-10 w-10 animate-spin text-[#0f2b5e]" />
+          <Loader2 className="h-10 w-10 animate-spin text-sic-navy" />
           <p className="mt-4 text-slate-600">Zahlung wird bestätigt …</p>
         </>
       )}
 
       {state.status === 'ok' && (
         <>
-          <CheckCircle2 className="h-12 w-12 text-[#2f9e44]" />
-          <h1 className="mt-4 text-2xl font-bold text-[#0f2b5e]">Zahlung erfolgreich</h1>
+          <CheckCircle2 className="h-12 w-12 text-sic-verified" />
+          <h1 className="mt-4 text-2xl font-bold text-sic-navy">Zahlung erfolgreich</h1>
           <p className="mt-3 text-slate-600">Dein Zertifikat ist angelegt. So geht’s weiter:</p>
 
           <ol className="mt-6 w-full space-y-3 text-left text-sm text-slate-700">
             <li className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4">
-              <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-[#0f2b5e] text-xs font-bold text-white">
+              <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-sic-navy text-xs font-bold text-white">
                 1
               </span>
               <span>
-                <strong className="font-semibold text-[#0f2b5e]">Zahlung bestätigt</strong>
+                <strong className="font-semibold text-sic-navy">Zahlung bestätigt</strong>
                 <br />
                 Dein Zertifikat ist angelegt. Du kannst jetzt Unterlagen hochladen.
               </span>
             </li>
-            <li className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4 ring-2 ring-[#0f2b5e]/15">
-              <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-[#0f2b5e] text-xs font-bold text-white">
+            <li className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4 ring-2 ring-sic-action/25">
+              <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-sic-navy text-xs font-bold text-white">
                 2
               </span>
               <span>
-                <strong className="font-semibold text-[#0f2b5e]">Formulare &amp; Nachweise</strong>
+                <strong className="font-semibold text-sic-navy">Formulare &amp; Nachweise</strong>
                 <br />
                 Unter «Mein Zertifikat» lädst du Belege hoch und holst PDF-Formulare für Arbeitgeber
                 bzw. Vermieter.
@@ -138,7 +138,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
 
           <Link
             href={sicPaths.certificateWorkspace}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f2b5e] px-5 py-3.5 text-sm font-semibold text-white hover:bg-[#0a1f45]"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep"
           >
             <FileCheck2 className="h-4 w-4" /> Zertifikat ausfüllen
           </Link>
@@ -148,7 +148,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
               type="button"
               onClick={resendLink}
               disabled={resendBusy}
-              className="mt-4 text-sm font-semibold text-[#0f2b5e] hover:underline disabled:opacity-60"
+              className="mt-4 text-sm font-semibold text-sic-navy hover:underline disabled:opacity-60"
             >
               {resendBusy ? 'Wird gesendet …' : 'Anmeldelink erneut senden'}
             </button>
@@ -158,14 +158,14 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
 
       {state.status === 'pending' && (
         <>
-          <Loader2 className="h-10 w-10 animate-spin text-[#0f2b5e]" />
-          <h1 className="mt-4 text-xl font-bold text-[#0f2b5e]">Zahlung wird verarbeitet</h1>
+          <Loader2 className="h-10 w-10 animate-spin text-sic-navy" />
+          <h1 className="mt-4 text-xl font-bold text-sic-navy">Zahlung wird verarbeitet</h1>
           <p className="mt-3 text-slate-600">Das kann einen Moment dauern. Wir prüfen die Zahlung automatisch weiter …</p>
           {polls.current >= POLL_MAX ?
             <button
               type="button"
               onClick={retryConfirm}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#0f2b5e] px-5 py-3 text-sm font-semibold text-white"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep"
             >
               <RefreshCw className="h-4 w-4" /> Erneut prüfen
             </button>
@@ -182,11 +182,11 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
           <button
             type="button"
             onClick={retryConfirm}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#0f2b5e] px-5 py-3 text-sm font-semibold text-white"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep"
           >
             <RefreshCw className="h-4 w-4" /> Erneut prüfen
           </button>
-          <Link href={sicPaths.landing} className="mt-4 text-sm font-semibold text-[#0f2b5e] hover:underline">
+          <Link href={sicPaths.landing} className="mt-4 text-sm font-semibold text-sic-navy hover:underline">
             Zurück zur Startseite
           </Link>
         </>

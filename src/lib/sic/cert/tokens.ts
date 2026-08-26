@@ -18,6 +18,8 @@ export const CERT = {
     navy: '#0f2b5e',
     navyDeep: '#0a1f45',
     gold: '#b8912f',
+    /** Gold für Text — der helle Ton trägt auf Elfenbein zu wenig Kontrast. */
+    goldText: '#8a6a1d',
     goldLight: '#d8b25a',
     goldPale: '#e8d5a3',
     ivory: '#fbf9f3',
@@ -42,5 +44,6 @@ export const CERT = {
     legal: 6.2,
     code: 7.5,
     seal: 11,
+    completeness: 7.5,
   },
 } as const

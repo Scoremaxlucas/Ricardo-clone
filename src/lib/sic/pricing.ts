@@ -7,12 +7,16 @@ import {
   SIC_CURRENCY,
   SIC_MIN_CHARGE_CHF,
   SIC_MODULES,
+  SIC_RENEWAL_FEE_CHF,
   type SicModuleId,
 } from '@/lib/sic/modules'
 
 export type SicOrderLine = {
-  /** `minimum`: Aufschlag auf den Stripe-Mindestbetrag, damit angezeigt = belastet. */
-  kind: 'base' | 'module' | 'discount' | 'minimum'
+  /**
+   * `minimum`: Aufschlag auf den Stripe-Mindestbetrag, damit angezeigt = belastet.
+   * `renewal`: Verlängerung der Gültigkeit mit frischem Betreibungsauszug.
+   */
+  kind: 'base' | 'module' | 'discount' | 'minimum' | 'renewal'
   moduleId?: SicModuleId
   label: string
   amountChf: number
@@ -21,6 +25,7 @@ export type SicOrderLine = {
 export type SicOrderQuote = {
   currency: typeof SIC_CURRENCY
   includeBaseFee: boolean
+  isRenewal: boolean
   moduleIds: SicModuleId[]
   lines: SicOrderLine[]
   totalChf: number
@@ -30,12 +35,20 @@ export type SicOrderQuote = {
  * Berechnet den Preis einer Bestellung.
  * @param includeBaseFee true bei Erst-Erstellung (neues Zertifikat), false bei Nachkauf weiterer Module.
  * @param moduleIds gewählte Module (roh; wird normalisiert/dedupliziert).
+ * @param isRenewal Verlängerung statt Neukauf — schliesst Basisgebühr aus.
  */
-export function quoteSicOrder(opts: { includeBaseFee: boolean; moduleIds: unknown }): SicOrderQuote {
+export function quoteSicOrder(opts: {
+  includeBaseFee: boolean
+  moduleIds: unknown
+  isRenewal?: boolean
+}): SicOrderQuote {
   const moduleIds = normalizeSicModuleIds(opts.moduleIds)
+  const isRenewal = opts.isRenewal === true
   const lines: SicOrderLine[] = []
 
-  if (opts.includeBaseFee) {
+  if (isRenewal) {
+    lines.push({ kind: 'renewal', label: 'Verlängerung · 3 Monate', amountChf: SIC_RENEWAL_FEE_CHF })
+  } else if (opts.includeBaseFee) {
     lines.push({ kind: 'base', label: 'Basis · Zertifikat', amountChf: SIC_BASE_FEE_CHF })
   }
 
@@ -45,7 +58,7 @@ export function quoteSicOrder(opts: { includeBaseFee: boolean; moduleIds: unknow
   }
 
   // Komplett-Paket: Basis + alle 4 Module → Bundle-Rabatt (nur bei Erst-Erstellung).
-  const isBundle = opts.includeBaseFee && moduleIds.length === SIC_MODULES.length
+  const isBundle = !isRenewal && opts.includeBaseFee && moduleIds.length === SIC_MODULES.length
   if (isBundle) {
     const beforeDiscount = lines.reduce((sum, l) => sum + l.amountChf, 0)
     const discount = beforeDiscount - SIC_BUNDLE_ALL_MODULES_CHF
@@ -69,7 +82,8 @@ export function quoteSicOrder(opts: { includeBaseFee: boolean; moduleIds: unknow
 
   return {
     currency: SIC_CURRENCY,
-    includeBaseFee: opts.includeBaseFee,
+    includeBaseFee: !isRenewal && opts.includeBaseFee,
+    isRenewal,
     moduleIds,
     lines,
     totalChf,

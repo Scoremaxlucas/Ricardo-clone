@@ -103,7 +103,25 @@ const s = StyleSheet.create({
     letterSpacing: 0.4,
   },
 
-  holderWrap: { marginTop: 18, alignItems: 'center' },
+  completenessWrap: {
+    marginTop: 10,
+    alignSelf: 'center',
+    borderWidth: 0.8,
+    borderColor: C.goldLight,
+    backgroundColor: C.ivorySoft,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 2,
+  },
+  completenessText: {
+    fontSize: T.completeness,
+    color: C.goldText,
+    fontFamily: 'Helvetica-Bold',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+
+  holderWrap: { marginTop: 14, alignItems: 'center' },
   holderLabel: {
     fontSize: T.holderLabel,
     color: C.muted,
@@ -224,14 +242,28 @@ export function SicCertificatePdfDocument(props: {
   certificateCode: string
   holderName: string | null
   email?: string
+  /** Tag der ersten Freigabe — nicht der Kauftag. */
   issuedAt: Date
   expiresAt: Date
   verifiedModules: SicPdfModule[]
+  /** «2 von 4 Angaben geprüft» — macht ein Teil-Zertifikat ehrlich. */
+  completenessLabel: string
+  /** Umfangssatz: nicht aufgeführte Angaben wurden nicht geprüft. */
+  scopeNote: string
   verifyUrl: string
   qrDataUrl: string
 }) {
-  const { certificateCode, holderName, issuedAt, expiresAt, verifiedModules, verifyUrl, qrDataUrl } =
-    props
+  const {
+    certificateCode,
+    holderName,
+    issuedAt,
+    expiresAt,
+    verifiedModules,
+    completenessLabel,
+    scopeNote,
+    verifyUrl,
+    qrDataUrl,
+  } = props
 
   return (
     <Document title={`Swiss Immo Cert ${certificateCode}`}>
@@ -263,6 +295,10 @@ export function SicCertificatePdfDocument(props: {
                 <View style={s.brandRule} />
               </View>
               <Text style={s.tagline}>Geprüft. Verifiziert. Vertrauenswürdig.</Text>
+            </View>
+
+            <View style={s.completenessWrap}>
+              <Text style={s.completenessText}>{completenessLabel}</Text>
             </View>
 
             <View style={s.holderWrap}>
@@ -339,9 +375,9 @@ export function SicCertificatePdfDocument(props: {
             </View>
 
             <Text style={s.legal}>
-              Swiss Immo Cert bestätigt die Prüfung der eingereichten Nachweise zum
-              Ausstellungszeitpunkt. Das Zertifikat ersetzt keine behördliche Auskunft.
-              Online-Verifikation: {verifyUrl}
+              {scopeNote} Swiss Immo Cert bestätigt die Prüfung der eingereichten Nachweise zum
+              Ausstellungszeitpunkt und ersetzt keine behördliche Auskunft. Online-Verifikation:{' '}
+              {verifyUrl}
             </Text>
           </View>
         </View>
