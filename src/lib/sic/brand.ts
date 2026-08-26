@@ -42,11 +42,11 @@ export const SIC_TAGLINE = 'Der Fast Track zur Wunschwohnung'
 export const SIC_CERT_TAGLINE = 'Geprüft. Verifiziert. Vertrauenswürdig.'
 
 /**
- * Slot für ein warmes Hero-Bild (Wohnung, Licht, Menschen — kein Stock-Handschlag).
- * Als CSS-Hintergrund eingebunden: fehlt die Datei, bleibt der Verlauf allein
- * stehen, ohne kaputtes Bild-Element. Datei ablegen unter `public/sic/`.
+ * Hero-Hintergrund. Bis ein eigenes Wohnungsfoto liegt, nutzen wir die
+ * vorhandene Alpen-Aufnahme — warm und schweizerisch, ohne Stock-Handschlag.
+ * Eigenes Motiv: `public/sic/hero-wohnung.jpg` und diesen Pfad umstellen.
  */
-export const SIC_HERO_IMAGE = '/sic/hero-wohnung.jpg'
+export const SIC_HERO_IMAGE = '/sic/cert/backdrop-alps.png'
 
 /**
  * Akzentfarbe je Modul — bewusst für alle vier gleich (Navy).

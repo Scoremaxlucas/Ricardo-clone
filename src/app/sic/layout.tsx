@@ -1,7 +1,15 @@
 import { SicLogo } from '@/components/sic/SicLogo'
 import { SIC_BASE_PATH, SIC_BRAND_NAME, sicPaths } from '@/lib/sic/config'
 import type { Metadata } from 'next'
+import { Source_Serif_4 } from 'next/font/google'
 import Link from 'next/link'
+
+const sicSerif = Source_Serif_4({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sic-serif',
+  weight: ['400', '600', '700'],
+})
 
 // Titel/Marke werden im Root-Layout (host-abhängig) gesetzt; hier NICHT erneut
 // definieren, sonst wird die Marke im <title> doppelt angehängt.
@@ -13,8 +21,8 @@ export const metadata: Metadata = {
 
 export default function SicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-slate-900">
-      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/90 backdrop-blur">
+    <div className={`${sicSerif.variable} flex min-h-screen flex-col bg-sic-paper text-slate-900`}>
+      <header className="sticky top-0 z-40 border-b border-sic-hairline/80 bg-sic-paper/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
           <Link href={sicPaths.landing} aria-label={SIC_BRAND_NAME}>
             <SicLogo size={32} />
