@@ -1,3 +1,4 @@
+import { SicHeaderCta } from '@/components/sic/SicHeaderCta'
 import { SicLogo } from '@/components/sic/SicLogo'
 import { SIC_BASE_PATH, SIC_BRAND_NAME, sicPaths } from '@/lib/sic/config'
 import type { Metadata } from 'next'
@@ -28,12 +29,7 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
             <SicLogo size={32} />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href={`${sicPaths.landing}#module`}
-              className="rounded-lg bg-sic-action px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-sic-action-deep"
-            >
-              Zertifikat anlegen
-            </Link>
+            <SicHeaderCta />
             <Link
               href={sicPaths.certificateWorkspace}
               className="rounded-lg border border-sic-navy/15 px-3.5 py-2 text-sm font-semibold text-sic-navy transition-colors hover:bg-sic-navy/5"

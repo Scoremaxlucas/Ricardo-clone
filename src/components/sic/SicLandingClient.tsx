@@ -230,10 +230,15 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
     }
     if (!EMAIL_RE.test(email.trim())) {
       toast.error('Bitte gib eine gültige E-Mail-Adresse an.')
+      const field = document.getElementById(isReturning ? 'sic-email' : 'sic-hero-email')
+      const anchor = document.getElementById('anlegen') || document.getElementById('module')
+      anchor?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (field instanceof HTMLInputElement) field.focus()
       return
     }
     if (isBaseOnly && !baseOnlyAck) {
       toast.error('Bitte bestätige, dass du das Zertifikat ohne Angaben anlegen möchtest.')
+      document.getElementById('module')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
     if (isReturning && moduleIds.length === 0) {
@@ -312,7 +317,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 Status und Uploads findest du unter «Mein Zertifikat». Hier kannst du fehlende Angaben
                 ergänzen.
               </p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <div id="anlegen" className="mt-8 flex scroll-mt-24 flex-col items-center justify-center gap-3 sm:flex-row">
                 {!nothingToBuy ?
                   <a
                     href="#module"
@@ -350,12 +355,58 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   dasselbe schicken. Ein Mieter-Zertifikat ist das eine PDF, das der Vermieter in Sekunden
                   scannen und verstehen kann.
                 </p>
-                <a
-                  href="#module"
-                  className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl bg-sic-action hover:bg-sic-action-deep px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
+                <form
+                  id="anlegen"
+                  className="mt-8 max-w-md scroll-mt-24"
+                  onSubmit={e => {
+                    e.preventDefault()
+                    void checkout()
+                  }}
                 >
-                  Zertifikat anlegen <ArrowRight className="h-4 w-4" />
-                </a>
+                  <label htmlFor="sic-hero-name" className="block text-xs font-semibold text-white/75">
+                    Vorname und Nachname
+                  </label>
+                  <input
+                    id="sic-hero-name"
+                    type="text"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="Vorname Nachname"
+                    autoComplete="name"
+                    className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-sm text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
+                  />
+                  <label htmlFor="sic-hero-email" className="mt-3.5 block text-xs font-semibold text-white/75">
+                    E-Mail-Adresse
+                  </label>
+                  <input
+                    id="sic-hero-email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="name@beispiel.ch"
+                    autoComplete="email"
+                    className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-sm text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
+                  />
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5 hover:bg-sic-action-deep disabled:translate-y-0 disabled:opacity-60 sm:w-auto"
+                  >
+                    {submitting ? 'Wird erstellt …' : 'Zertifikat anlegen'}
+                    {!submitting && <ArrowRight className="h-4 w-4" />}
+                  </button>
+                  <p className="mt-2.5 text-xs leading-relaxed text-white/50">
+                    {coveredCount} von {SIC_MODULES.length} Angaben ·{' '}
+                    {quote.totalChf > 0 ? formatSicChf(quote.totalChf) : 'Kostenlos'}. Unterlagen danach.
+                  </p>
+                  <a
+                    href="#module"
+                    className="mt-3 inline-block text-sm font-semibold text-white/80 underline-offset-4 hover:text-white hover:underline"
+                  >
+                    Angaben anpassen
+                  </a>
+                </form>
                 <p className="mt-3 max-w-md text-xs leading-relaxed text-white/45">
                   Keine Wohnungszusage – aber eine übersichtliche Bewerbung, die Vertrauen schafft.
                 </p>
@@ -451,7 +502,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 </div>
               </div>
               <p className="mx-auto mt-8 max-w-xl text-center text-sm text-slate-500">
-                <a href="#module" className="font-semibold text-sic-action hover:underline">
+                <a href="#anlegen" className="font-semibold text-sic-action hover:underline">
                   Zertifikat anlegen
                 </a>
                 <span className="text-slate-400">
@@ -503,7 +554,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             <p className="mx-auto mt-2 max-w-xl text-slate-500">
               {isReturning ?
                 'Was du schon hast, ist markiert. Fehlendes kannst du ergänzen.'
-              : 'Vier Dinge will fast jeder Vermieter sehen. Alle vier sind vorausgewählt — du kannst etwas weglassen.'}
+              : 'Vier Dinge will fast jeder Vermieter sehen. Alle vier sind vorausgewählt — hier kannst du etwas weglassen.'}
             </p>
           </div>
 
@@ -716,6 +767,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             : null}
 
             <button
+              id="sic-checkout-submit"
               type="button"
               onClick={checkout}
               disabled={
@@ -834,16 +886,23 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           {isReturning && nothingToBuy ?
             <a
               href={sicPaths.certificateWorkspace}
-              className="ml-auto inline-flex items-center gap-2 rounded-full bg-sic-action px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-sic-action-deep"
+              className="ml-auto inline-flex items-center gap-2 rounded-xl bg-sic-action px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-sic-action-deep"
             >
               Zum Zertifikat <ArrowRight className="h-4 w-4" />
             </a>
-          : <a
-              href="#module"
-              className="ml-auto inline-flex items-center gap-2 rounded-full bg-sic-action px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-sic-action-deep"
+          : <button
+              type="button"
+              onClick={() => void checkout()}
+              disabled={submitting}
+              className="ml-auto inline-flex items-center gap-2 rounded-xl bg-sic-action px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-sic-action-deep disabled:translate-y-0 disabled:opacity-60"
             >
-              {isReturning ? 'Angabe ergänzen' : 'Zertifikat anlegen'} <ArrowRight className="h-4 w-4" />
-            </a>
+              {submitting ?
+                'Wird erstellt …'
+              : isReturning ?
+                'Angabe ergänzen'
+              : 'Zertifikat anlegen'}{' '}
+              {!submitting && <ArrowRight className="h-4 w-4" />}
+            </button>
           }
         </div>
       </div>
