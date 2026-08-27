@@ -1,6 +1,9 @@
+import { getAuthOptionsForHost } from '@/lib/auth'
 import NextAuth from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
+import type { NextRequest } from 'next/server'
 
-const handler = NextAuth(authOptions)
+function handler(req: NextRequest, context: { params: { nextauth: string[] } }) {
+  return NextAuth(getAuthOptionsForHost(req.headers.get('host')))(req as never, context as never)
+}
 
 export { handler as GET, handler as POST }

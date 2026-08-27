@@ -1,7 +1,6 @@
 import { sendEmail } from '@/lib/email/sender'
-import { getFromEmail } from '@/lib/email/config'
 import { SIC_COLORS } from '@/lib/sic/brand'
-import { SIC_BRAND_NAME, sicPaths, sicUrl } from '@/lib/sic/config'
+import { SIC_BRAND_NAME, SIC_SUPPORT_EMAIL, sicPaths, sicUrl } from '@/lib/sic/config'
 import { getSicModule, SIC_MODULES, type SicModuleId } from '@/lib/sic/modules'
 
 const ACTION = SIC_COLORS.action
@@ -12,10 +11,20 @@ const INK = '#0f172a'
 const MUTED = '#64748b'
 
 function sicFromAddress(): string {
-  return process.env.SIC_FROM_EMAIL || getFromEmail()
+  const explicit = process.env.SIC_FROM_EMAIL?.trim()
+  if (explicit) return explicit
+  return `${SIC_BRAND_NAME} <noreply@swissimmocert.ch>`
 }
 
-/** Minimalistisches, seriöses Template für Swiss Immo Cert (kein Marketplace-Branding). */
+function sicMail(opts: { to: string; subject: string; html: string; text: string }) {
+  return sendEmail({
+    ...opts,
+    from: sicFromAddress(),
+    replyTo: SIC_SUPPORT_EMAIL,
+  })
+}
+
+/** Minimalistisches, seriöses Template für Swiss Immo Cert. */
 export function sicEmailShell(opts: {
   preheader?: string
   heading: string
@@ -58,7 +67,7 @@ export function sicEmailShell(opts: {
           : ''
         }
         <tr><td style="padding:20px 40px;border-top:1px solid ${HAIRLINE};font-size:12px;line-height:1.6;color:#94a3b8;">
-          Diese Nachricht wurde automatisch von ${SIC_BRAND_NAME} versendet. Fragen? Antworte einfach auf diese E-Mail.
+          Diese Nachricht wurde automatisch von ${SIC_BRAND_NAME} versendet. Fragen: ${SIC_SUPPORT_EMAIL}
         </td></tr>
       </table>
     </td></tr>
@@ -79,9 +88,8 @@ export async function sendSicMagicLinkEmail(email: string, url: string) {
       'Falls du diese Anmeldung nicht angefordert hast, kannst du diese E-Mail ignorieren. Es wird kein Zugriff gewährt, solange der Link nicht geöffnet wird.',
   })
 
-  return sendEmail({
+  return sicMail({
     to: email,
-    from: sicFromAddress(),
     subject: 'Dein Anmeldelink für Swiss Immo Cert',
     html,
     text: `Anmeldung bei ${SIC_BRAND_NAME}\n\nMit diesem Link anmelden (30 Minuten gültig, einmalig):\n${url}\n\nVorlagen und Uploads dürfen über Tage dauern. Danach unter «Mein Zertifikat» einen neuen Link anfordern.`,
@@ -125,9 +133,8 @@ export async function sendSicCertificateReadyEmail(opts: {
       : `<p style="margin:0;">Für das PDF fehlt noch dein Name auf dem Zertifikat — das ist in einer Minute erledigt.</p>`
     }`
 
-  return sendEmail({
+  return sicMail({
     to: opts.email,
-    from: sicFromAddress(),
     subject:
       opts.firstVerification ?
         `${SIC_BRAND_NAME}: Dein Zertifikat ist bereit`
@@ -153,9 +160,8 @@ export async function sendSicModuleRejectedEmail(opts: {
   const title = getSicModule(opts.moduleKind).title
   const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
 
-  return sendEmail({
+  return sicMail({
     to: opts.email,
-    from: sicFromAddress(),
     subject: `${SIC_BRAND_NAME}: «${title}» — Nachweis bitte nachreichen`,
     html: sicEmailShell({
       preheader: `${title} — Nacharbeit nötig`,
@@ -178,9 +184,8 @@ export async function sendSicDocumentsReceivedEmail(opts: {
   magicLinkUrl?: string
 }) {
   const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
-  return sendEmail({
+  return sicMail({
     to: opts.email,
-    from: sicFromAddress(),
     subject: `${SIC_BRAND_NAME}: Unterlagen angekommen`,
     html: sicEmailShell({
       preheader: 'Wir haben deine Unterlagen erhalten',
@@ -207,9 +212,8 @@ export async function sendSicDocsPurgeWarningEmail(opts: {
     month: '2-digit',
     year: 'numeric',
   })
-  return sendEmail({
+  return sicMail({
     to: opts.email,
-    from: sicFromAddress(),
     subject: `${SIC_BRAND_NAME}: Unterlagen werden am ${dateStr} gelöscht`,
     html: sicEmailShell({
       preheader: `Unterlagen werden am ${dateStr} gelöscht`,
@@ -245,9 +249,8 @@ export async function sendSicExpiryReminderEmail(opts: {
     buttonText: 'Jetzt verlängern',
     buttonUrl,
   })
-  return sendEmail({
+  return sicMail({
     to: opts.email,
-    from: sicFromAddress(),
     subject: `${SIC_BRAND_NAME}: Zertifikat läuft in ${opts.daysLeft} Tagen ab`,
     html,
     text: `Dein Zertifikat läuft am ${dateStr} ab (${opts.daysLeft} Tage).\n\n${buttonUrl}`,
@@ -268,9 +271,8 @@ export async function sendSicUploadReminderEmail(opts: {
     buttonText: 'Nachweise hochladen',
     buttonUrl,
   })
-  return sendEmail({
+  return sicMail({
     to: opts.email,
-    from: sicFromAddress(),
     subject: `${SIC_BRAND_NAME}: Noch offen — «${opts.moduleTitle}»`,
     html,
     text: `Für «${opts.moduleTitle}» fehlen noch Nachweise.\n\n${buttonUrl}`,

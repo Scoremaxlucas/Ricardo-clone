@@ -1,5 +1,6 @@
 import { isDebug } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
+import { isSicProductionHostname } from '@/lib/sic/config'
 import bcrypt from 'bcryptjs'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
@@ -9,41 +10,48 @@ const nextAuthSharedCookieDomain =
   process.env.NEXTAUTH_COOKIE_DOMAIN ||
   (process.env.VERCEL_ENV === 'production' ? '.helvenda.ch' : undefined)
 
-const crossSubdomainCookies =
-  nextAuthSharedCookieDomain != null
-    ? {
-        cookies: {
-          sessionToken: {
-            name: `${useSecureCookies ? '__Secure-' : ''}next-auth.session-token`,
-            options: {
-              httpOnly: true,
-              sameSite: 'lax' as const,
-              path: '/',
-              secure: useSecureCookies,
-              domain: nextAuthSharedCookieDomain,
-            },
-          },
-          callbackUrl: {
-            name: `${useSecureCookies ? '__Secure-' : ''}next-auth.callback-url`,
-            options: {
-              httpOnly: true,
-              sameSite: 'lax' as const,
-              path: '/',
-              secure: useSecureCookies,
-              domain: nextAuthSharedCookieDomain,
-            },
-          },
-        },
-      }
-    : {}
+function nextAuthCookieBlock(sharedHelvendaDomain: boolean) {
+  const options = {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    path: '/',
+    secure: useSecureCookies,
+    ...(sharedHelvendaDomain && nextAuthSharedCookieDomain
+      ? { domain: nextAuthSharedCookieDomain }
+      : {}),
+  }
+  return {
+    cookies: {
+      sessionToken: {
+        name: `${useSecureCookies ? '__Secure-' : ''}next-auth.session-token`,
+        options,
+      },
+      callbackUrl: {
+        name: `${useSecureCookies ? '__Secure-' : ''}next-auth.callback-url`,
+        options,
+      },
+    },
+  }
+}
 
-export const authOptions = {
+function cookieConfigForHost(host?: string | null) {
+  const h = (host || '').split(':')[0].toLowerCase()
+  if (h && isSicProductionHostname(h)) {
+    return nextAuthCookieBlock(false)
+  }
+  return nextAuthSharedCookieDomain != null ? nextAuthCookieBlock(true) : {}
+}
+
+export function getAuthOptionsForHost(host?: string | null) {
+  return { ...authOptionsBase, ...cookieConfigForHost(host) }
+}
+
+const authOptionsBase = {
   secret: process.env.NEXTAUTH_SECRET || '',
   adapter: undefined, // Disable adapter for now
   debug: isDebug(), // Enable debug when DEBUG=true or NODE_ENV=development
   // WICHTIG: Trust host für Vercel/Production
   trustHost: true,
-  ...crossSubdomainCookies,
   providers: [
     // Google OAuth Provider
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
@@ -345,3 +353,5 @@ export const authOptions = {
     signUp: '/register',
   },
 }
+
+export const authOptions = getAuthOptionsForHost(null)

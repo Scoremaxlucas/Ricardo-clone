@@ -1,3 +1,4 @@
+import { SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -30,8 +31,8 @@ export default function SicImpressumPage() {
         <div>
           <dt className="font-semibold text-sic-navy">Kontakt</dt>
           <dd className="mt-1 text-slate-700">
-            <a href="mailto:support@helvenda.ch" className="text-sic-action underline-offset-2 hover:underline">
-              support@helvenda.ch
+            <a href={`mailto:${SIC_SUPPORT_EMAIL}`} className="text-sic-action underline-offset-2 hover:underline">
+              {SIC_SUPPORT_EMAIL}
             </a>
           </dd>
         </div>

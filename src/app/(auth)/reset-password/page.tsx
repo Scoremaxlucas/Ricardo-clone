@@ -1,7 +1,7 @@
 'use client'
 
+import { AuthBrandLogo } from '@/components/layout/AuthBrandLogo'
 import { Button } from '@/components/ui/Button'
-import { Logo } from '@/components/ui/Logo'
 import { useAuthWohnenSurface } from '@/contexts/AuthSurfaceContext'
 import { authCardShellClass, authInputClass, authLabelClass, authLinkAccentClass } from '@/lib/auth-surface-classes'
 import { cn } from '@/lib/utils'
@@ -95,7 +95,7 @@ function ResetPasswordContent() {
         <div className={cardClass}>
           <div className="text-center">
             <div className="mb-6 flex justify-center">
-              <Logo size="lg" />
+              <AuthBrandLogo isSic={isWohnen} />
             </div>
             <h2
               className={cn(
@@ -123,7 +123,7 @@ function ResetPasswordContent() {
         <div className={cardClass}>
           <div className="text-center">
             <div className="mb-6 flex justify-center">
-              <Logo size="lg" />
+              <AuthBrandLogo isSic={isWohnen} />
             </div>
             <h2
               className={cn(
@@ -147,7 +147,7 @@ function ResetPasswordContent() {
       <div className={cardClass}>
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <Logo size="lg" />
+            <AuthBrandLogo isSic={isWohnen} />
           </div>
           <h2
             className={cn(

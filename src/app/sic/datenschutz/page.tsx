@@ -1,4 +1,5 @@
 import { SIC_MODULES, SIC_VALIDITY_MONTHS } from '@/lib/sic/modules'
+import { SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
 import { SIC_DOCS_RETENTION_DAYS, SIC_UNFINISHED_DOCS_RETENTION_MONTHS } from '@/lib/sic/validity'
 import type { Metadata } from 'next'
 
@@ -22,8 +23,8 @@ export default function SicDatenschutzPage() {
           <h2 className="font-semibold text-sic-navy">Verantwortliche Stelle</h2>
           <p className="mt-1.5">
             Score-Max GmbH, In der Hauswiese 2, CH-Zollikerberg. Kontakt für Datenschutzfragen:{' '}
-            <a href="mailto:support@helvenda.ch" className="text-sic-action underline-offset-2 hover:underline">
-              support@helvenda.ch
+            <a href={`mailto:${SIC_SUPPORT_EMAIL}`} className="text-sic-action underline-offset-2 hover:underline">
+              {SIC_SUPPORT_EMAIL}
             </a>
             .
           </p>
@@ -116,7 +117,7 @@ export default function SicDatenschutzPage() {
           <h2 className="font-semibold text-sic-navy">Deine Rechte</h2>
           <p className="mt-1.5">
             Du kannst Auskunft über deine Daten verlangen, sie berichtigen oder löschen lassen und die Löschung
-            deines Zertifikats verlangen. Eine Anfrage an support@helvenda.ch genügt. Wird das Zertifikat
+            deines Zertifikats verlangen. Eine Anfrage an {SIC_SUPPORT_EMAIL} genügt. Wird das Zertifikat
             gelöscht, zeigt die Prüfseite anschliessend keine Angaben mehr — auch nicht gegenüber Vermietern,
             denen du den Link gegeben hast. Alle {SIC_MODULES.length} Angaben sind freiwillig; du wählst selbst,
             welche du prüfen lässt.

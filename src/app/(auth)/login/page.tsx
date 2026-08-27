@@ -1,8 +1,8 @@
 'use client'
 
+import { AuthBrandLogo } from '@/components/layout/AuthBrandLogo'
 import { Button } from '@/components/ui/Button'
-import { Logo } from '@/components/ui/Logo'
-import { useAuthWohnenSurface } from '@/contexts/AuthSurfaceContext'
+import { useAuthSicSurface } from '@/contexts/AuthSurfaceContext'
 import {
   authCardShellClass,
   authCheckboxClass,
@@ -21,7 +21,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 
 function LoginPageContent() {
-  const isWohnen = useAuthWohnenSurface()
+  const isSic = useAuthSicSurface()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -32,10 +32,9 @@ function LoginPageContent() {
   const rawCallbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect') || '/'
   const callbackUrl = validateCallbackUrl(rawCallbackUrl)
 
-  /** Default `/` keeps Marktplatz on helvenda.ch; `/meine-matches` is redirected to wohnen by middleware. */
   const determinePostLoginRoute = () => {
     if (callbackUrl && callbackUrl !== '/') return callbackUrl
-    return '/'
+    return isSic ? '/sic/admin' : '/'
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,14 +100,16 @@ function LoginPageContent() {
 
   return (
     <div className="w-full max-w-md">
-      <div className={authCardShellClass(isWohnen)}>
+      <div className={authCardShellClass(isSic)}>
         {/* Header - Kompakter */}
         <div className="text-center">
           <div className="mb-4 flex justify-center">
-            <Logo size="md" />
+            <AuthBrandLogo isSic={isSic} />
           </div>
-          <h1 className={authTitleClass(isWohnen)}>Willkommen zurück</h1>
-          <p className={`mt-2 ${authMutedTextClass(isWohnen)}`}>Melden Sie sich bei Ihrem Konto an</p>
+          <h1 className={authTitleClass(isSic)}>{isSic ? 'Interner Zugang' : 'Willkommen zurück'}</h1>
+          <p className={`mt-2 ${authMutedTextClass(isSic)}`}>
+            {isSic ? 'Prüfung und Administration von Swiss Immo Cert' : 'Melden Sie sich bei Ihrem Konto an'}
+          </p>
         </div>
 
         <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
@@ -121,7 +122,7 @@ function LoginPageContent() {
           <div className="space-y-4">
             {/* E-Mail Input */}
             <div>
-              <label htmlFor="email" className={authLabelClass(isWohnen)}>
+              <label htmlFor="email" className={authLabelClass(isSic)}>
                 E-Mail-Adresse
               </label>
               <input
@@ -132,14 +133,14 @@ function LoginPageContent() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className={authInputClass(isWohnen)}
+                className={authInputClass(isSic)}
                 placeholder="ihre@email.com"
               />
             </div>
 
             {/* Passwort Input */}
             <div>
-              <label htmlFor="password" className={authLabelClass(isWohnen)}>
+              <label htmlFor="password" className={authLabelClass(isSic)}>
                 Passwort
               </label>
               <div className="relative">
@@ -151,15 +152,15 @@ function LoginPageContent() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className={`${authInputClass(isWohnen)} pr-12`}
+                  className={`${authInputClass(isSic)} pr-12`}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className={
-                    isWohnen
-                      ? 'absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-[#107a5a]'
+                    isSic
+                      ? 'absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-[#0e7c6b]'
                       : 'absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600'
                   }
                 >
@@ -180,12 +181,12 @@ function LoginPageContent() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className={authCheckboxClass(isWohnen)}
+                className={authCheckboxClass(isSic)}
               />
-              <span className={isWohnen ? 'text-sm text-[#5a7a6e]' : 'text-sm text-gray-600'}>Angemeldet bleiben</span>
+              <span className={isSic ? 'text-sm text-slate-500' : 'text-sm text-gray-600'}>Angemeldet bleiben</span>
             </label>
 
-            <Link href="/forgot-password" className={authLinkAccentClass(isWohnen, 'medium')}>
+            <Link href="/forgot-password" className={authLinkAccentClass(isSic, 'medium')}>
               Passwort vergessen?
             </Link>
           </div>
@@ -196,7 +197,7 @@ function LoginPageContent() {
             variant="primary"
             disabled={isLoading}
             loading={isLoading}
-            className="w-full py-3"
+            className={isSic ? 'w-full bg-[#0e7c6b] py-3 hover:bg-[#0a6357]' : 'w-full py-3'}
           >
             {isLoading ? 'Wird angemeldet...' : 'Anmelden'}
           </Button>
@@ -205,10 +206,10 @@ function LoginPageContent() {
         {/* Divider */}
         <div className="relative mt-6">
           <div className="absolute inset-0 flex items-center">
-            <div className={cn('w-full border-t', isWohnen ? 'border-[#d4eee4]' : 'border-gray-200')} />
+            <div className={cn('w-full border-t', isSic ? 'border-[#e7ddc4]' : 'border-gray-200')} />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className={cn('bg-white px-3', isWohnen ? 'text-[#8aa89e]' : 'text-gray-400')}>oder</span>
+            <span className={cn('bg-white px-3', isSic ? 'text-slate-400' : 'text-gray-400')}>oder</span>
           </div>
         </div>
 
@@ -222,8 +223,8 @@ function LoginPageContent() {
           disabled={isLoading}
           className={cn(
             'mt-4 flex w-full items-center justify-center gap-3 rounded-lg border bg-white px-4 py-3 text-sm font-medium shadow-sm transition-all disabled:opacity-50',
-            isWohnen
-              ? 'border-[#cfe8dc] text-[#2d4a3d] hover:bg-[#f5fdfb]'
+            isSic
+              ? 'border-[#e7ddc4] text-[#0f2b5e] hover:bg-[#fbf9f3]'
               : 'border-gray-300 text-gray-700 hover:bg-gray-50'
           )}
         >
@@ -237,12 +238,14 @@ function LoginPageContent() {
         </button>
 
         {/* Footer Link */}
-        <p className={cn('mt-6 text-center text-sm', authMutedTextClass(isWohnen))}>
-          Noch kein Konto?{' '}
-          <Link href="/register" className={authLinkAccentClass(isWohnen)}>
-            Jetzt registrieren
-          </Link>
-        </p>
+        {!isSic && (
+          <p className={cn('mt-6 text-center text-sm', authMutedTextClass(false))}>
+            Noch kein Konto?{' '}
+            <Link href="/register" className={authLinkAccentClass(false)}>
+              Jetzt registrieren
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   )

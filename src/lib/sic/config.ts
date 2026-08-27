@@ -16,7 +16,12 @@ export const SIC_SITE_ORIGIN = (
 /** Alle SIC-Seiten leben unter diesem Präfix (Koexistenz mit bestehender App). */
 export const SIC_BASE_PATH = '/sic'
 
-export const SIC_PREVIEW_COOKIE = 'helvenda-sic-preview'
+export const SIC_PREVIEW_COOKIE = 'sic-preview'
+/** Altes Cookie — weiterhin akzeptieren, damit lokale Previews nicht aussteigen. */
+export const SIC_PREVIEW_COOKIE_LEGACY = 'helvenda-sic-preview'
+
+export const SIC_SUPPORT_EMAIL =
+  process.env.SIC_SUPPORT_EMAIL?.trim() || 'support@swissimmocert.ch'
 
 /** Hostnamen, auf denen SIC gerendert wird (ohne Port). */
 export function sicProductionHosts(): string[] {
@@ -36,9 +41,19 @@ export function isSicProductionHostname(host: string): boolean {
   return sicProductionHosts().includes(h)
 }
 
+export function isSicBrowserHost(): boolean {
+  if (typeof window === 'undefined') return false
+  const h = window.location.hostname.toLowerCase()
+  if (isSicProductionHostname(h)) return true
+  if (h === 'localhost' || h === '127.0.0.1') {
+    const c = document.cookie
+    return c.includes(`${SIC_PREVIEW_COOKIE}=1`) || c.includes(`${SIC_PREVIEW_COOKIE_LEGACY}=1`)
+  }
+  return false
+}
+
 /**
- * Frühere SIC-Adresse — leitet Middleware permanent auf {@link SIC_SITE_ORIGIN} um.
- * Wohnen bleibt separat über {@link WOHNEN_SITE_ORIGIN} referenzierbar.
+ * Frühere Adresse, unter der SIC kurz erreichbar war — Middleware leitet auf {@link SIC_SITE_ORIGIN} um.
  */
 export function isLegacySicHostname(host: string): boolean {
   const h = host.split(':')[0].toLowerCase()

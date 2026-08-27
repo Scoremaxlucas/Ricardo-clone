@@ -1,6 +1,7 @@
 'use client'
 
-import { Logo } from '@/components/ui/Logo'
+import { AuthBrandLogo } from '@/components/layout/AuthBrandLogo'
+import { isSicBrowserHost, SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
 import Link from 'next/link'
@@ -13,6 +14,7 @@ function normalizeOrigin(origin: string) {
 
 function isWohnenTenantHost(): boolean {
   if (typeof window === 'undefined') return false
+  if (isSicBrowserHost()) return false
   return normalizeOrigin(window.location.origin) === normalizeOrigin(WOHNEN_SITE_ORIGIN)
 }
 
@@ -21,9 +23,11 @@ function VerifyEmailPageContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
   const [wohnenFlow, setWohnenFlow] = useState(false)
+  const [sicFlow, setSicFlow] = useState(false)
 
   useEffect(() => {
     const token = searchParams.get('token')
+    setSicFlow(isSicBrowserHost())
 
     if (!token) {
       setStatus('error')
@@ -42,9 +46,9 @@ function VerifyEmailPageContent() {
         const data = await response.json()
 
         if (response.ok) {
-          setWohnenFlow(isWohnenTenantHost() || intentWohnen)
           setStatus('success')
-          setMessage(data.message || 'Ihre E-Mail-Adresse wurde erfolgreich bestätigt!')
+          setMessage(data.message || 'E-Mail bestätigt')
+          setWohnenFlow(!isSicBrowserHost() && (isWohnenTenantHost() || intentWohnen))
         } else {
           setStatus('error')
           setMessage(data.message || 'Error confirming email address')
@@ -59,7 +63,13 @@ function VerifyEmailPageContent() {
   }, [searchParams])
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-50 px-4 sm:px-6 lg:px-8">
+    <div
+      className={
+        sicFlow
+          ? 'relative flex min-h-screen items-center justify-center overflow-hidden bg-[#fbf9f3] px-4 sm:px-6 lg:px-8'
+          : 'relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-50 px-4 sm:px-6 lg:px-8'
+      }
+    >
       {/* Subtle background patterns */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-gradient-to-br from-primary-100 to-transparent opacity-30 blur-3xl"></div>
@@ -71,7 +81,7 @@ function VerifyEmailPageContent() {
           <div className="text-center">
             {/* Logo/Icon */}
             <div className="mx-auto mb-8">
-              <Logo size="lg" />
+              <AuthBrandLogo isSic={sicFlow} />
             </div>
 
             {/* Status Icon */}
@@ -126,7 +136,27 @@ function VerifyEmailPageContent() {
                 <h1 className="mb-4 text-3xl font-semibold text-gray-900">Konto bestätigt!</h1>
                 <p className="mb-6 text-lg text-gray-600">{message}</p>
 
-                {wohnenFlow ?
+                {sicFlow ?
+                  <>
+                    <p className="mb-6 text-sm text-slate-600">
+                      Du kannst dich jetzt anmelden — für die Prüfung unter internem Zugang oder für dein Zertifikat.
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      <Link
+                        href="/login?callbackUrl=%2Fsic%2Fadmin"
+                        className="inline-flex w-full items-center justify-center rounded-2xl bg-[#0e7c6b] px-6 py-3 font-medium text-white hover:bg-[#0a6357]"
+                      >
+                        Zur Prüfung
+                      </Link>
+                      <Link
+                        href="/sic/zertifikat"
+                        className="inline-flex w-full items-center justify-center rounded-2xl border border-[#e7ddc4] bg-white px-6 py-3 font-medium text-[#0f2b5e]"
+                      >
+                        Mein Zertifikat
+                      </Link>
+                    </div>
+                  </>
+                : wohnenFlow ?
                   <>
                     <div className="mb-6 rounded-xl border border-primary-100 bg-primary-50 p-4 text-left">
                       <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary-600">Nächster Schritt</p>
@@ -194,7 +224,7 @@ function VerifyEmailPageContent() {
                 <p className="mt-6 text-sm text-gray-500">
                   If you have any issue confirming your account, please{' '}
                   <a
-                    href="mailto:support@helvenda.ch"
+                    href={`mailto:${sicFlow ? SIC_SUPPORT_EMAIL : 'support@helvenda.ch'}`}
                     className="font-medium text-primary-600 hover:text-primary-700 hover:underline"
                   >
                     contact support

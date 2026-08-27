@@ -23,6 +23,7 @@ async function sicSitemap(): Promise<MetadataRoute.Sitemap> {
     { url: joinUrl(base, '/sic/faq'), lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
     { url: joinUrl(base, '/sic/agb'), lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     { url: joinUrl(base, '/sic/datenschutz'), lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: joinUrl(base, '/sic/impressum'), lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
   ]
 }
 

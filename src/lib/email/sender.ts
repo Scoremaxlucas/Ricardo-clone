@@ -19,6 +19,8 @@ export interface SendEmailOptions {
   from?: string
   /** Optional BCC (Resend/SMTP) */
   bcc?: string | string[]
+  /** Override Reply-To (default: support@helvenda.ch for marketplace mail) */
+  replyTo?: string
 }
 
 export interface SendEmailResult {
@@ -44,6 +46,7 @@ export async function sendEmail({
   userId,
   from,
   bcc,
+  replyTo: replyToOverride,
 }: SendEmailOptions): Promise<SendEmailResult> {
   // Auto-inject unsubscribe link if userId is provided
   if (userId) {
@@ -75,7 +78,7 @@ export async function sendEmail({
       console.log(`  To: ${to}`)
 
       const bccList = normalizeBcc(bcc)
-      const replyTo = process.env.RESEND_REPLY_TO || 'support@helvenda.ch'
+      const replyTo = replyToOverride || process.env.RESEND_REPLY_TO || 'support@helvenda.ch'
       const result = await resend.emails.send({
         from: fromEmail,
         to: [to],
@@ -110,7 +113,7 @@ export async function sendEmail({
       console.log('[sendEmail] Versuche SMTP Fallback...')
       const bccList = normalizeBcc(bcc)
       const smtpFrom = from || process.env.SMTP_FROM || process.env.SMTP_USER
-      const replyTo = process.env.RESEND_REPLY_TO || 'support@helvenda.ch'
+      const replyTo = replyToOverride || process.env.RESEND_REPLY_TO || 'support@helvenda.ch'
       const info = await transporter.sendMail({
         from: smtpFrom.includes('<') ? smtpFrom : `Helvenda <${smtpFrom}>`,
         replyTo,

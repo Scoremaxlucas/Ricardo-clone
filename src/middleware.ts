@@ -6,6 +6,7 @@ import {
   isLegacySicHostname,
   isSicProductionHostname,
   SIC_PREVIEW_COOKIE,
+  SIC_PREVIEW_COOKIE_LEGACY,
   SIC_SITE_ORIGIN,
 } from '@/lib/sic/config'
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
@@ -27,6 +28,7 @@ function isSicHost(request: NextRequest): boolean {
     const sub = request.nextUrl.searchParams.get('subdomain')
     if (sub === 'sic' || sub === 'wohnen') return true
     if (request.cookies.get(SIC_PREVIEW_COOKIE)?.value === '1') return true
+    if (request.cookies.get(SIC_PREVIEW_COOKIE_LEGACY)?.value === '1') return true
     if (request.cookies.get(WOHNEN_PREVIEW_COOKIE)?.value === '1') return true
   }
   return false
@@ -106,6 +108,7 @@ function setSicPreviewCookie(res: NextResponse) {
     maxAge: 60 * 60 * 24 * 7,
   }
   res.cookies.set(SIC_PREVIEW_COOKIE, '1', opts)
+  res.cookies.set(SIC_PREVIEW_COOKIE_LEGACY, '1', opts)
   res.cookies.set(WOHNEN_PREVIEW_COOKIE, '1', opts)
 }
 
@@ -134,6 +137,15 @@ export async function middleware(request: NextRequest) {
   // Marktplatz: alte Mieter-/Wohnungs-Pfade → SIC
   if (!onSicHost && isMainHelvendaMarketplaceHost(host) && marketplacePathsRedirectToSic(pathname)) {
     return NextResponse.redirect(new URL('/' + search, SIC_SITE_ORIGIN))
+  }
+
+  // SIC darf nicht unter helvenda.ch laufen — gleiche App, eigene Marke
+  if (
+    !onSicHost &&
+    isMainHelvendaMarketplaceHost(host) &&
+    (pathname === '/sic' || pathname.startsWith('/sic/'))
+  ) {
+    return NextResponse.redirect(new URL(pathname + search, SIC_SITE_ORIGIN))
   }
 
   // localhost Preview für SIC-Host

@@ -1,9 +1,10 @@
 'use client'
 
+import { AuthBrandLogo } from '@/components/layout/AuthBrandLogo'
 import { Button } from '@/components/ui/Button'
-import { Logo } from '@/components/ui/Logo'
 import { useAuthWohnenSurface } from '@/contexts/AuthSurfaceContext'
 import { authCardShellClass } from '@/lib/auth-surface-classes'
+import { SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
 import { cn } from '@/lib/utils'
 import { CheckCircle, Loader2, Mail, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
@@ -14,7 +15,6 @@ function VerifyEmailNoticeContent() {
   const isWohnen = useAuthWohnenSurface()
   const searchParams = useSearchParams()
   const email = searchParams.get('email') || ''
-  const intentWohnen = searchParams.get('intent') === 'wohnen'
   const [isResending, setIsResending] = useState(false)
   const [resendSuccess, setResendSuccess] = useState(false)
   const [resendError, setResendError] = useState('')
@@ -52,7 +52,7 @@ function VerifyEmailNoticeContent() {
       <div className={cn(authCardShellClass(isWohnen), 'space-y-8 px-8 py-10')}>
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <Logo size="lg" />
+            <AuthBrandLogo isSic={isWohnen} />
           </div>
 
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-teal-50">
@@ -70,8 +70,8 @@ function VerifyEmailNoticeContent() {
           </p>
 
           <p className="mt-4 text-sm text-gray-500">
-            {intentWohnen
-              ? 'Klicken Sie auf den Bestätigungslink in der E-Mail, um Ihr Konto für Helvenda Wohnungen zu aktivieren.'
+            {isWohnen
+              ? 'Klicke auf den Bestätigungslink in der E-Mail, um fortzufahren.'
               : 'Klicken Sie auf den Bestätigungslink in der E-Mail, um Ihr Konto zu aktivieren.'}
           </p>
         </div>
@@ -84,7 +84,9 @@ function VerifyEmailNoticeContent() {
               <ul className="mt-1 list-inside list-disc space-y-1">
                 <li>Der Link ist 24 Stunden gültig</li>
                 <li>Prüfen Sie auch Ihren Spam-Ordner</li>
-                <li>Die E-Mail kommt von noreply@helvenda.ch</li>
+                <li>
+                  Die E-Mail kommt von {isWohnen ? 'Swiss Immo Cert' : 'noreply@helvenda.ch'}
+                </li>
               </ul>
             </div>
           </div>
@@ -136,8 +138,11 @@ function VerifyEmailNoticeContent() {
 
         <p className="text-center text-xs text-gray-500">
           Haben Sie Probleme? Kontaktieren Sie uns unter{' '}
-          <a href="mailto:support@helvenda.ch" className="text-teal-600 hover:underline">
-            support@helvenda.ch
+          <a
+            href={`mailto:${isWohnen ? SIC_SUPPORT_EMAIL : 'support@helvenda.ch'}`}
+            className="text-teal-600 hover:underline"
+          >
+            {isWohnen ? SIC_SUPPORT_EMAIL : 'support@helvenda.ch'}
           </a>
         </p>
       </div>

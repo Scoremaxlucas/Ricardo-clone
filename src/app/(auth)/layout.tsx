@@ -1,20 +1,13 @@
 /**
- * Auth Layout - Minimal layout for authentication pages
- *
- * Provides:
- * - Minimal header (logo + optional back link)
- * - Centered auth card content
- * - Consistent background + spacing (Wohnen: teal-tinted surface)
- * - No footer
- *
- * Used for: /login, /register, /forgot-password, /reset-password
+ * Auth Layout — minimal chrome for login / password flows.
+ * On swissimmocert.ch: Swiss Immo Cert branding. Otherwise Helvenda marketplace.
  */
 
-import { isWohnenMatchingHostFromHeaders } from '@/lib/tenant-host'
+import { isSicSiteHostFromHeaders } from '@/lib/tenant-host'
 import { headers } from 'next/headers'
 import { AuthLayoutClient } from './AuthLayoutClient'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  const isWohnen = isWohnenMatchingHostFromHeaders(headers())
-  return <AuthLayoutClient isWohnen={isWohnen}>{children}</AuthLayoutClient>
+  const isSic = isSicSiteHostFromHeaders(headers())
+  return <AuthLayoutClient isSic={isSic}>{children}</AuthLayoutClient>
 }

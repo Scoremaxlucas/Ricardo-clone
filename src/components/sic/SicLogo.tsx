@@ -1,4 +1,4 @@
-import { SIC_COLORS } from '@/lib/sic/brand'
+import { SIC_COLORS, SIC_TAGLINE } from '@/lib/sic/brand'
 
 /**
  * SIC-Logo: Haus-Umriss mit Schweizer Kreuz + Wortmarke «SwissImmoCert».
@@ -55,7 +55,7 @@ export function SicLogo({
             className="mt-1 text-[10px] font-medium tracking-wide"
             style={{ color: onDark ? 'rgba(255,255,255,0.7)' : SIC_COLORS.navySoft }}
           >
-            SIC — Der Fast Track zur Wunschwohnung
+            {SIC_TAGLINE}
           </span>
         )}
       </span>

@@ -3,7 +3,7 @@ import { CookieConsent } from '@/components/CookieConsent'
 import { DeferredComponents } from '@/components/DeferredComponents'
 import { SkipLinks } from '@/components/accessibility/SkipLinks'
 import { Providers } from '@/components/providers'
-import { isWohnenMatchingHostFromHeaders } from '@/lib/tenant-host'
+import { isSicSiteHostFromHeaders } from '@/lib/tenant-host'
 import { BASE_URL } from '@/lib/seo'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { headers } from 'next/headers'
@@ -45,7 +45,7 @@ function requestOriginUrl(h: { get(name: string): string | null }): URL {
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers()
   // SIC-Host (früher Helvenda Wohnen): nur noch Swiss Immo Cert
-  if (isWohnenMatchingHostFromHeaders(h) || h.get('x-sic-host') === '1' || h.get('x-sic-route') === '1') {
+  if (isSicSiteHostFromHeaders(h) || h.get('x-sic-host') === '1' || h.get('x-sic-route') === '1') {
     return {
       metadataBase: requestOriginUrl(h),
       title: {
@@ -94,7 +94,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export async function generateViewport(): Promise<Viewport> {
   const h = await headers()
-  const sicHost = isWohnenMatchingHostFromHeaders(h) || h.get('x-sic-host') === '1'
+  const sicHost = isSicSiteHostFromHeaders(h) || h.get('x-sic-host') === '1'
   return {
     width: 'device-width',
     initialScale: 1,
@@ -106,7 +106,7 @@ export async function generateViewport(): Promise<Viewport> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const h = await headers()
   // Hard pivot: auf dem SIC-Host (swissimmocert.ch) nie die Marktplatz-/Wohnen-Shell.
-  const isSic = h.get('x-sic-route') === '1' || h.get('x-sic-host') === '1' || isWohnenMatchingHostFromHeaders(h)
+  const isSic = h.get('x-sic-route') === '1' || h.get('x-sic-host') === '1' || isSicSiteHostFromHeaders(h)
   const htmlLang = isSic ? 'de-CH' : 'de'
 
   const toastPad = { padding: '12px 16px', fontSize: '14px' as const }

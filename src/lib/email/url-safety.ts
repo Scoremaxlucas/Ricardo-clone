@@ -1,3 +1,4 @@
+import { SIC_SITE_ORIGIN } from '@/lib/sic/config'
 import { getEmailBaseUrl } from './config'
 
 const ALLOWED_EXTERNAL_EMAIL_HOSTS = new Set([
@@ -11,7 +12,19 @@ const ALLOWED_EXTERNAL_EMAIL_HOSTS = new Set([
 
 function isAllowedHost(hostname: string): boolean {
   const h = hostname.toLowerCase()
-  return h === 'helvenda.ch' || h === 'www.helvenda.ch' || h.endsWith('.helvenda.ch')
+  if (h === 'helvenda.ch' || h === 'www.helvenda.ch' || h.endsWith('.helvenda.ch')) return true
+  if (h === 'swissimmocert.ch' || h === 'www.swissimmocert.ch' || h.endsWith('.swissimmocert.ch')) {
+    return true
+  }
+  try {
+    const sicHost = new URL(SIC_SITE_ORIGIN).hostname.toLowerCase()
+    if (h === sicHost) return true
+    if (sicHost.startsWith('www.') && h === sicHost.slice(4)) return true
+    if (!sicHost.startsWith('www.') && h === `www.${sicHost}`) return true
+  } catch {
+    /* ignore */
+  }
+  return false
 }
 
 /**

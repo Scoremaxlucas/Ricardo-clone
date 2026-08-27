@@ -9,6 +9,7 @@ import {
   SIC_VALIDITY_MONTHS,
   sicBundleSavingsChf,
 } from '@/lib/sic/modules'
+import { SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
 import { SIC_DOCS_RETENTION_DAYS, SIC_UNFINISHED_DOCS_RETENTION_MONTHS } from '@/lib/sic/validity'
 import type { Metadata } from 'next'
 
@@ -118,7 +119,7 @@ export default function SicAgbPage() {
             Können wir eine bezahlte Angabe aus Gründen, die bei uns liegen, nicht prüfen, erstatten wir den
             entsprechenden Betrag. Keine Rückerstattung erfolgt, wenn du die nötigen Unterlagen nicht
             einreichst, wenn eine Angabe wegen ihres Inhalts nicht freigegeben werden kann oder wenn ein
-            Vermieter dich trotz Zertifikat nicht berücksichtigt. Anfragen an support@helvenda.ch.
+            Vermieter dich trotz Zertifikat nicht berücksichtigt. Anfragen an {SIC_SUPPORT_EMAIL}.
           </p>
         </section>
 

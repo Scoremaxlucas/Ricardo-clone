@@ -38,7 +38,7 @@ export const SIC_COLORS = {
   greenDeep: '#1f7a34',
 } as const
 
-export const SIC_TAGLINE = 'Der Fast Track zur Wunschwohnung'
+export const SIC_TAGLINE = 'Das geprüfte Schweizer Mieter-Zertifikat'
 export const SIC_CERT_TAGLINE = 'Geprüft. Verifiziert. Vertrauenswürdig.'
 
 /**

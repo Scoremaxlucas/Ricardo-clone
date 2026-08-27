@@ -1,5 +1,6 @@
 const WOHNEN_PREVIEW_COOKIE = 'helvenda-wohnen-preview'
-const SIC_PREVIEW_COOKIE = 'helvenda-sic-preview'
+const SIC_PREVIEW_COOKIE = 'sic-preview'
+const SIC_PREVIEW_COOKIE_LEGACY = 'helvenda-sic-preview'
 
 type HeaderBag = { get(name: string): string | null }
 
@@ -27,7 +28,9 @@ export function isSicSiteHostFromHeaders(h: HeaderBag): boolean {
   const cookie = h.get('cookie') || ''
   if (
     (host === 'localhost' || host === '127.0.0.1') &&
-    (cookie.includes(`${SIC_PREVIEW_COOKIE}=1`) || cookie.includes(`${WOHNEN_PREVIEW_COOKIE}=1`))
+    (cookie.includes(`${SIC_PREVIEW_COOKIE}=1`) ||
+      cookie.includes(`${SIC_PREVIEW_COOKIE_LEGACY}=1`) ||
+      cookie.includes(`${WOHNEN_PREVIEW_COOKIE}=1`))
   ) {
     return true
   }
@@ -35,8 +38,7 @@ export function isSicSiteHostFromHeaders(h: HeaderBag): boolean {
 }
 
 /**
- * @deprecated Use {@link isSicSiteHostFromHeaders}. Kept for Wohnen-era call sites;
- * in Production war `wohnen.helvenda.ch` vorübergehend SIC — Redirect übernimmt Middleware.
+ * @deprecated Use {@link isSicSiteHostFromHeaders}. Alias for SIC-Host detection.
  */
 export function isWohnenMatchingHostFromHeaders(h: HeaderBag): boolean {
   return isSicSiteHostFromHeaders(h)
