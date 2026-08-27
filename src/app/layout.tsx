@@ -19,13 +19,22 @@ const inter = Inter({
   weight: ['400', '500', '600', '700'],
 })
 
-const sharedIcons: Metadata['icons'] = {
+const helvendaIcons: Metadata['icons'] = {
   icon: [
     { url: '/icons/favicon.svg', type: 'image/svg+xml' },
     { url: '/icons/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
     { url: '/icons/icon-512x512.svg', sizes: '512x512', type: 'image/svg+xml' },
   ],
   apple: [{ url: '/icons/apple-touch-icon.svg', sizes: '180x180', type: 'image/svg+xml' }],
+}
+
+const sicIcons: Metadata['icons'] = {
+  icon: [
+    { url: '/sic/icons/favicon.svg', type: 'image/svg+xml' },
+    { url: '/sic/icons/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
+    { url: '/sic/icons/icon-512x512.svg', sizes: '512x512', type: 'image/svg+xml' },
+  ],
+  apple: [{ url: '/sic/icons/apple-touch-icon.svg', sizes: '180x180', type: 'image/svg+xml' }],
 }
 
 /** Canonical origin for the current request (avoids wrong metadataBase from env on wohnen.helvenda.ch). */
@@ -73,7 +82,7 @@ export async function generateMetadata(): Promise<Metadata> {
         statusBarStyle: 'default',
         title: 'Swiss Immo Cert',
       },
-      icons: sharedIcons,
+      icons: sicIcons,
     }
   }
 
@@ -88,7 +97,7 @@ export async function generateMetadata(): Promise<Metadata> {
       statusBarStyle: 'default',
       title: 'Helvenda',
     },
-    icons: sharedIcons,
+    icons: helvendaIcons,
   }
 }
 
@@ -174,8 +183,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={htmlLang} className="h-full">
       <head>
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
-        <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+        <link rel="apple-touch-icon" href={isSic ? '/sic/icons/apple-touch-icon.svg' : '/icons/apple-touch-icon.svg'} />
+        <link rel="icon" type="image/svg+xml" href={isSic ? '/sic/icons/favicon.svg' : '/icons/favicon.svg'} />
         <link rel="dns-prefetch" href="https://vercel.live" />
         <link rel="preconnect" href="https://vercel.live" crossOrigin="anonymous" />
       </head>
