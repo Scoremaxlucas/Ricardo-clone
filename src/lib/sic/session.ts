@@ -9,11 +9,11 @@ export const SIC_SESSION_COOKIE = 'sic_session'
 export const SIC_SESSION_TTL_DAYS = 30
 
 /**
- * Sitzung direkt nach der Zahlung. Kurz gehalten, weil dafür nur die Kenntnis
- * der Checkout-Session-ID nötig ist — und die steht in der Browser-History.
- * Der dauerhafte Zugang läuft über den Magic-Link, der ohnehin per Mail geht.
+ * Sitzung direkt nach der Zahlung. 24 Stunden: lang genug für Uploads am selben
+ * und nächsten Tag, kurz genug, weil die Checkout-Session-ID in der History steht.
+ * Dauerhafter Zugang bleibt der Magic-Link.
  */
-export const SIC_POST_CHECKOUT_TTL_SECONDS = 60 * 60
+export const SIC_POST_CHECKOUT_TTL_SECONDS = 24 * 60 * 60
 
 function sessionSecret(): string {
   const s = process.env.SIC_SESSION_SECRET || process.env.NEXTAUTH_SECRET

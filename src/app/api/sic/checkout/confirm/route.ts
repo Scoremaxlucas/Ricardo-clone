@@ -23,9 +23,8 @@ function setShortSession(res: NextResponse, email: string): NextResponse {
  * Bestätigt eine Checkout-Session serverseitig (Fallback zum Webhook). Idempotent:
  * verifiziert bei Stripe, ob bezahlt, und wendet sie auf das Dossier an.
  *
- * Bei Erfolg gibt es eine **kurze** Sitzung, damit der Kauf ohne Umweg weitergeht.
- * Für den dauerhaften Zugang dient der Magic-Link aus der Bestätigungsmail —
- * die Session-ID allein soll kein Dauerticket in ein fremdes Dossier sein.
+ * Bei Erfolg gibt es eine Sitzung für 24 Stunden, damit Uploads ohne Magic-Link
+ * weitergehen. Die Session-ID allein soll kein Dauerticket in ein fremdes Dossier sein.
  */
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get('session_id') || ''
@@ -37,7 +36,10 @@ export async function GET(req: NextRequest) {
     if (sessionId.startsWith('free_')) {
       const result = await fulfillSicPaidCheckout({ stripeCheckoutSessionId: sessionId })
       if (!result.ok) {
-        return NextResponse.json({ ok: false, message: 'Verarbeitung fehlgeschlagen.' }, { status: 500 })
+        return NextResponse.json(
+          { ok: false, message: 'Verarbeitung fehlgeschlagen.' },
+          { status: 500 }
+        )
       }
       const res = NextResponse.json({ ok: true, email: result.email })
       return result.email ? setShortSession(res, result.email) : res
@@ -45,19 +47,26 @@ export async function GET(req: NextRequest) {
 
     const session = await stripe.checkout.sessions.retrieve(sessionId)
     if (session.payment_status !== 'paid') {
-      return NextResponse.json({ ok: false, pending: true, message: 'Zahlung noch nicht bestätigt.' })
+      return NextResponse.json({
+        ok: false,
+        pending: true,
+        message: 'Zahlung noch nicht bestätigt.',
+      })
     }
 
     const result = await fulfillSicPaidCheckout({
       stripeCheckoutSessionId: session.id,
       stripePaymentIntentId:
-        typeof session.payment_intent === 'string' ?
-          session.payment_intent
-        : (session.payment_intent?.id ?? null),
+        typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : (session.payment_intent?.id ?? null),
     })
 
     if (!result.ok) {
-      return NextResponse.json({ ok: false, message: 'Verarbeitung fehlgeschlagen.' }, { status: 500 })
+      return NextResponse.json(
+        { ok: false, message: 'Verarbeitung fehlgeschlagen.' },
+        { status: 500 }
+      )
     }
 
     const res = NextResponse.json({ ok: true, email: result.email })

@@ -1,5 +1,10 @@
+import {
+  normalizeEmail,
+  SIC_POST_CHECKOUT_TTL_SECONDS,
+  signSicSessionToken,
+  verifySicSessionToken,
+} from '@/lib/sic/session'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { normalizeEmail, signSicSessionToken, verifySicSessionToken } from '@/lib/sic/session'
 
 beforeAll(() => {
   process.env.SIC_SESSION_SECRET = 'test-secret-for-sic-session-xxxxxxxxxxxx'
@@ -25,5 +30,11 @@ describe('sic session token', () => {
     process.env.SIC_SESSION_SECRET = 'a-completely-different-secret-value-yyyy'
     expect(verifySicSessionToken(token)).toBeNull()
     process.env.SIC_SESSION_SECRET = 'test-secret-for-sic-session-xxxxxxxxxxxx'
+  })
+})
+
+describe('post-checkout session', () => {
+  it('lasts a working day, not one hour', () => {
+    expect(SIC_POST_CHECKOUT_TTL_SECONDS).toBe(24 * 60 * 60)
   })
 })
