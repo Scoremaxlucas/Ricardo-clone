@@ -1,9 +1,10 @@
 'use client'
 
 import { SicTemplateForm } from '@/components/sic/SicTemplateForm'
-import { sicPaths, SIC_REVIEW_SLA } from '@/lib/sic/config'
+import { sicPaths, SIC_REVIEW_SLA, sicVerifyUrl } from '@/lib/sic/config'
 import type { SicDossierView, SicUploadedDocMeta } from '@/lib/sic/dossier'
 import { formatSicChf, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
+import { sicVerifyMailtoHref, sicVerifyWhatsAppHref } from '@/lib/sic/share'
 import { templatesForModule } from '@/lib/sic/templates'
 import {
   AlertCircle,
@@ -13,6 +14,9 @@ import {
   FileText,
   FileUp,
   KeyRound,
+  Link2,
+  Mail,
+  MessageCircle,
   Plus,
   RefreshCw,
   ShieldCheck,
@@ -199,6 +203,32 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
     }
   }
 
+  async function copyVerifyLink() {
+    const text = sicVerifyUrl(dossier.certificateCode)
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.success('Prüf-Link kopiert')
+      return
+    } catch {
+      /* fallback below */
+    }
+    try {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.setAttribute('readonly', '')
+      ta.style.position = 'fixed'
+      ta.style.left = '-9999px'
+      document.body.appendChild(ta)
+      ta.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(ta)
+      if (ok) toast.success('Prüf-Link kopiert')
+      else toast.error('Kopieren fehlgeschlagen')
+    } catch {
+      toast.error('Kopieren fehlgeschlagen')
+    }
+  }
+
   async function upload(moduleKind: SicModuleId, file: File) {
     setUploading(moduleKind)
     try {
@@ -353,21 +383,46 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             </div>
           </div>
         : pdfReady ?
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <a
-              href={`/api/sic/certificate/${encodeURIComponent(dossier.certificateCode)}/pdf`}
-              className="inline-flex items-center gap-2 rounded-xl bg-sic-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-sic-action-deep"
-            >
-              <Download className="h-4 w-4" /> Zertifikat als PDF
-            </a>
-            <button
-              type="button"
-              onClick={regenerateCode}
-              disabled={recoding}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-60"
-            >
-              <KeyRound className="h-3.5 w-3.5" /> Neuen Code erzeugen
-            </button>
+          <div className="mt-5">
+            <div className="flex flex-wrap items-center gap-3">
+              <a
+                href={`/api/sic/certificate/${encodeURIComponent(dossier.certificateCode)}/pdf`}
+                className="inline-flex items-center gap-2 rounded-xl bg-sic-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-sic-action-deep"
+              >
+                <Download className="h-4 w-4" /> Zertifikat als PDF
+              </a>
+              <button
+                type="button"
+                onClick={() => void copyVerifyLink()}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-sic-navy hover:bg-slate-50"
+              >
+                <Link2 className="h-4 w-4" /> Link kopieren
+              </button>
+              <button
+                type="button"
+                onClick={regenerateCode}
+                disabled={recoding}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+              >
+                <KeyRound className="h-3.5 w-3.5" /> Neuen Code erzeugen
+              </button>
+            </div>
+            <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              <a
+                href={sicVerifyMailtoHref(dossier.certificateCode)}
+                className="inline-flex items-center gap-1.5 font-semibold text-sic-navy hover:underline"
+              >
+                <Mail className="h-3.5 w-3.5" /> Per E-Mail senden
+              </a>
+              <a
+                href={sicVerifyWhatsAppHref(dossier.certificateCode)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 font-semibold text-sic-navy hover:underline"
+              >
+                <MessageCircle className="h-3.5 w-3.5" /> Per WhatsApp senden
+              </a>
+            </p>
           </div>
         : <div className="mt-5">
             <span
