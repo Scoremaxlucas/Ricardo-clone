@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { joinHolderName } from '@/lib/sic/dossier'
 import { recordSicEvent } from '@/lib/sic/events'
 import type { SicFacts } from '@/lib/sic/facts'
 import type { SicModuleId } from '@/lib/sic/modules'
@@ -95,7 +96,7 @@ export async function approveSicModule(opts: {
     meta: { firstVerification, verifiedCount: result.verifiedCount },
   })
 
-  const holderName = `${cert.holderFirstName ?? ''} ${cert.holderLastName ?? ''}`.trim() || null
+  const holderName = joinHolderName(cert.holderFirstName, cert.holderLastName)
 
   return {
     certificateId: cert.id,

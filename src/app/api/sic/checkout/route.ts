@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { sicPaths, sicUrl, SIC_BRAND_NAME } from '@/lib/sic/config'
+import { encodePaymentHolderName } from '@/lib/sic/dossier'
 import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
 import { normalizeSicModuleIds, type SicModuleId } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
@@ -62,9 +63,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     email = normalizeEmail(typeof body?.email === 'string' ? body.email : '')
     requested = normalizeSicModuleIds(body?.moduleIds)
-    const rawName = typeof body?.name === 'string' ? body.name.trim() : ''
-    holderName = rawName ? rawName.slice(0, 120) : null
     wantsRenewal = body?.renewal === true
+    const firstName = typeof body?.firstName === 'string' ? body.firstName.trim().replace(/\s+/g, ' ').slice(0, 80) : ''
+    const lastName = typeof body?.lastName === 'string' ? body.lastName.trim().replace(/\s+/g, ' ').slice(0, 80) : ''
+    if (firstName && lastName) {
+      holderName = encodePaymentHolderName(firstName, lastName)
+    } else if (!wantsRenewal) {
+      return NextResponse.json({ ok: false, message: 'Bitte Vor- und Nachname angeben.' }, { status: 400 })
+    }
   } catch {
     return NextResponse.json({ ok: false, message: 'Ungültige Anfrage.' }, { status: 400 })
   }

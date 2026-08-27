@@ -104,7 +104,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
   }, [isReturning, owned])
 
   const [selected, setSelected] = useState<Set<SicModuleId>>(initialSelected)
-  const [name, setName] = useState(account?.holderName ?? '')
+  const [firstName, setFirstName] = useState(account?.holderFirstName ?? '')
+  const [lastName, setLastName] = useState(account?.holderLastName ?? '')
   const [email, setEmail] = useState(account?.email ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
@@ -228,6 +229,17 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       toast.error('Alles ist bereits Teil deines Zertifikats.')
       return
     }
+    if (!firstName.trim() || !lastName.trim()) {
+      toast.error('Bitte Vor- und Nachname angeben.')
+      const missingFirst = !firstName.trim()
+      const field = document.getElementById(
+        isReturning ? (missingFirst ? 'sic-first' : 'sic-last') : missingFirst ? 'sic-hero-first' : 'sic-hero-last'
+      )
+      const anchor = document.getElementById('anlegen') || document.getElementById('module')
+      anchor?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (field instanceof HTMLInputElement) field.focus()
+      return
+    }
     if (!EMAIL_RE.test(email.trim())) {
       toast.error('Bitte gib eine gültige E-Mail-Adresse an.')
       const field = document.getElementById(isReturning ? 'sic-email' : 'sic-hero-email')
@@ -250,7 +262,12 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       const res = await fetch('/api/sic/checkout', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), moduleIds, name: name.trim() || undefined }),
+        body: JSON.stringify({
+          email: email.trim(),
+          moduleIds,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data?.url) {
@@ -363,18 +380,38 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     void checkout()
                   }}
                 >
-                  <label htmlFor="sic-hero-name" className="block text-xs font-semibold text-white/75">
-                    Vorname und Nachname
-                  </label>
-                  <input
-                    id="sic-hero-name"
-                    type="text"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="Vorname Nachname"
-                    autoComplete="name"
-                    className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-sm text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
-                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="sic-hero-first" className="block text-xs font-semibold text-white/75">
+                        Vorname
+                      </label>
+                      <input
+                        id="sic-hero-first"
+                        type="text"
+                        required
+                        value={firstName}
+                        onChange={e => setFirstName(e.target.value)}
+                        placeholder="Vorname"
+                        autoComplete="given-name"
+                        className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-sm text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="sic-hero-last" className="block text-xs font-semibold text-white/75">
+                        Nachname
+                      </label>
+                      <input
+                        id="sic-hero-last"
+                        type="text"
+                        required
+                        value={lastName}
+                        onChange={e => setLastName(e.target.value)}
+                        placeholder="Nachname"
+                        autoComplete="family-name"
+                        className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-sm text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
+                      />
+                    </div>
+                  </div>
                   <label htmlFor="sic-hero-email" className="mt-3.5 block text-xs font-semibold text-white/75">
                     E-Mail-Adresse
                   </label>
@@ -684,19 +721,45 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
 
           {/* Ein Formular, eine Spalte — die Auswahl steht bereits oben */}
           <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-sic-navy/10 bg-sic-navy/[0.03] p-6 sm:p-7">
-            <label htmlFor="sic-name" className="block text-sm font-semibold text-sic-navy">
-              Dein Name
-            </label>
-            <input
-              id="sic-name"
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Vorname Nachname"
-              autoComplete="name"
-              className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-sic-navy/15 focus:border-sic-navy focus:ring-2"
-            />
-            <p className="mt-1.5 text-xs text-slate-500">So steht er später auf dem Zertifikat.</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor="sic-first" className="block text-sm font-semibold text-sic-navy">
+                  Vorname
+                </label>
+                <input
+                  id="sic-first"
+                  type="text"
+                  required
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  placeholder="Vorname"
+                  autoComplete="given-name"
+                  readOnly={Boolean(account?.holderFirstName && account?.holderLastName)}
+                  className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-sic-navy/15 focus:border-sic-navy focus:ring-2 ${
+                    account?.holderFirstName && account?.holderLastName ? 'cursor-default bg-slate-50 text-slate-600' : ''
+                  }`}
+                />
+              </div>
+              <div>
+                <label htmlFor="sic-last" className="block text-sm font-semibold text-sic-navy">
+                  Nachname
+                </label>
+                <input
+                  id="sic-last"
+                  type="text"
+                  required
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  placeholder="Nachname"
+                  autoComplete="family-name"
+                  readOnly={Boolean(account?.holderFirstName && account?.holderLastName)}
+                  className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-sic-navy/15 focus:border-sic-navy focus:ring-2 ${
+                    account?.holderFirstName && account?.holderLastName ? 'cursor-default bg-slate-50 text-slate-600' : ''
+                  }`}
+                />
+              </div>
+            </div>
+            <p className="mt-1.5 text-xs text-slate-500">So steht er auf dem Zertifikat — Vor- und Nachname.</p>
 
             <label htmlFor="sic-email" className="mt-5 block text-sm font-semibold text-sic-navy">
               E-Mail-Adresse

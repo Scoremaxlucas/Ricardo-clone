@@ -6,6 +6,7 @@ import { recordSicEvent } from '@/lib/sic/events'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { modulesResetByRenewal } from '@/lib/sic/renewal'
+import { decodePaymentHolderName } from '@/lib/sic/dossier'
 import type { SicModuleId } from '@/lib/sic/modules'
 import { Prisma, type SicModuleKind } from '@prisma/client'
 
@@ -19,15 +20,6 @@ export type FulfillResult =
       refundedDuplicate?: boolean
     }
   | { ok: false; reason: string }
-
-/** Zerlegt einen frei eingegebenen Namen in Vor-/Nachname (erstes Token = Vorname, Rest = Nachname). */
-function splitHolderName(raw?: string | null): { firstName: string; lastName: string } | null {
-  const cleaned = (raw ?? '').trim().replace(/\s+/g, ' ')
-  if (!cleaned) return null
-  const parts = cleaned.split(' ')
-  if (parts.length === 1) return { firstName: parts[0], lastName: '' }
-  return { firstName: parts[0], lastName: parts.slice(1).join(' ') }
-}
 
 async function ensureUniqueCode(): Promise<string> {
   for (let i = 0; i < 6; i++) {
@@ -219,7 +211,9 @@ export async function fulfillSicPaidCheckout(input: {
   }
 
   const code = existing ? existing.certificateCode : await ensureUniqueCode()
-  const prefillName = splitHolderName(payment.holderName)
+  const decoded = decodePaymentHolderName(payment.holderName)
+  const prefillName =
+    decoded?.firstName && decoded.lastName ? { firstName: decoded.firstName, lastName: decoded.lastName } : null
   const isFirstCertificate = !existing
 
   let cert
@@ -231,7 +225,7 @@ export async function fulfillSicPaidCheckout(input: {
             where: { id: existing!.id },
             data: {
               ...(prefillName && !existing!.holderFirstName && !existing!.holderLastName ?
-                { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName || null }
+                { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName }
               : {}),
             },
           })
@@ -243,7 +237,7 @@ export async function fulfillSicPaidCheckout(input: {
               issuedAt: now,
               expiresAt: null,
               ...(prefillName ?
-                { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName || null }
+                { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName }
               : {}),
             },
           })

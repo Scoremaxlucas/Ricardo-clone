@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
+import { joinHolderName } from '@/lib/sic/dossier'
 import { getSicSession } from '@/lib/sic/session-cookie'
 
 export type SicLandingAccount = {
@@ -7,6 +8,8 @@ export type SicLandingAccount = {
   certificateCode: string
   status: string
   holderName: string | null
+  holderFirstName: string | null
+  holderLastName: string | null
   ownedModules: SicModuleId[]
   verifiedModules: SicModuleId[]
 }
@@ -36,13 +39,17 @@ export async function getSicLandingAccount(): Promise<SicLandingAccount | null> 
     .filter(m => m.status === 'VERIFIED' && isSicModuleId(m.moduleKind))
     .map(m => m.moduleKind)
 
-  const holderName = `${cert.holderFirstName ?? ''} ${cert.holderLastName ?? ''}`.trim() || null
+  const holderFirstName = cert.holderFirstName?.trim() || null
+  const holderLastName = cert.holderLastName?.trim() || null
+  const holderName = joinHolderName(holderFirstName, holderLastName)
 
   return {
     email: session.email,
     certificateCode: cert.certificateCode,
     status: cert.status,
     holderName,
+    holderFirstName,
+    holderLastName,
     ownedModules,
     verifiedModules,
   }

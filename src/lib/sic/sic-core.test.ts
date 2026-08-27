@@ -16,7 +16,7 @@ import {
   sicBundleSavingsChf,
 } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
-import { isSicLandlordPdfReady } from '@/lib/sic/dossier'
+import { isSicLandlordPdfReady, joinHolderName, encodePaymentHolderName, decodePaymentHolderName } from '@/lib/sic/dossier'
 import { addCalendarMonths, isSicExpired, sicExtendedExpiresAt, sicValidityExpiresAt } from '@/lib/sic/validity'
 
 describe('certificate code', () => {
@@ -239,5 +239,24 @@ describe('landlord PDF gate', () => {
         modules: [{ status: 'VERIFIED' }],
       })
     ).toBe(false)
+  })
+})
+
+describe('holder name', () => {
+  it('joins only when both parts exist', () => {
+    expect(joinHolderName('Anna', 'Muster')).toBe('Anna Muster')
+    expect(joinHolderName('Lara', '')).toBeNull()
+    expect(joinHolderName('Lara', null)).toBeNull()
+    expect(joinHolderName(null, 'Muster')).toBeNull()
+  })
+
+  it('round-trips compound first names without splitting on space', () => {
+    const stored = encodePaymentHolderName('Anna Maria', 'de la Cruz')
+    expect(decodePaymentHolderName(stored)).toEqual({ firstName: 'Anna Maria', lastName: 'de la Cruz' })
+  })
+
+  it('still reads legacy space-separated checkout names', () => {
+    expect(decodePaymentHolderName('Anna Muster')).toEqual({ firstName: 'Anna', lastName: 'Muster' })
+    expect(decodePaymentHolderName('Lara')).toEqual({ firstName: 'Lara', lastName: '' })
   })
 })

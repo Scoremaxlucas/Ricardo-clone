@@ -111,8 +111,36 @@ export function verifiedModuleLineItems(
 
 
 export function joinHolderName(first: string | null, last: string | null): string | null {
-  const name = `${(first ?? '').trim()} ${(last ?? '').trim()}`.trim()
-  return name || null
+  const f = (first ?? '').trim()
+  const l = (last ?? '').trim()
+  if (!f || !l) return null
+  return `${f} ${l}`
+}
+
+const HOLDER_NAME_SEP = '\t'
+
+/** Speichert Vor- und Nachname verlustfrei auf der Zahlung (nicht am Leerzeichen trennen). */
+export function encodePaymentHolderName(first: string, last: string): string {
+  return `${first.trim()}${HOLDER_NAME_SEP}${last.trim()}`
+}
+
+/**
+ * Liest den Checkout-Namen. Neue Zahlungen: Tab-getrennt.
+ * Alte Einträge: erstes Wort = Vorname, Rest = Nachname.
+ */
+export function decodePaymentHolderName(raw?: string | null): { firstName: string; lastName: string } | null {
+  const cleaned = (raw ?? '').trim()
+  if (!cleaned) return null
+  if (cleaned.includes(HOLDER_NAME_SEP)) {
+    const idx = cleaned.indexOf(HOLDER_NAME_SEP)
+    const firstName = cleaned.slice(0, idx).trim()
+    const lastName = cleaned.slice(idx + 1).trim()
+    if (!firstName || !lastName) return null
+    return { firstName, lastName }
+  }
+  const parts = cleaned.replace(/\s+/g, ' ').split(' ')
+  if (parts.length === 1) return { firstName: parts[0], lastName: '' }
+  return { firstName: parts[0], lastName: parts.slice(1).join(' ') }
 }
 
 /**
