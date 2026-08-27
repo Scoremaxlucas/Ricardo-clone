@@ -129,8 +129,13 @@ export async function sendSicCertificateReadyEmail(opts: {
     <p style="margin:0 0 12px;">Aktueller Stand: <strong>${completeness}</strong>. Gültig bis <strong>${validUntil}</strong>.</p>
     ${
       opts.pdfReady ?
-        `<p style="margin:0;">Melde dich an, lade das PDF herunter und leg es deiner Bewerbung bei. Nicht geprüfte Angaben sind auf dem Dokument nicht aufgeführt.</p>`
-      : `<p style="margin:0;">Für das PDF fehlt noch dein Name auf dem Zertifikat — das ist in einer Minute erledigt.</p>`
+        `<p style="margin:0 0 12px;">Melde dich an, lade das PDF herunter und leg es deiner Bewerbung bei. Nicht geprüfte Angaben sind auf dem Dokument nicht aufgeführt.</p>`
+      : `<p style="margin:0 0 12px;">Für das PDF fehlt noch dein Name auf dem Zertifikat — das ist in einer Minute erledigt.</p>`
+    }
+    ${
+      opts.firstVerification && opts.verifiedCount < SIC_MODULES.length ?
+        `<p style="margin:0;">Angaben mit Unterschrift Dritter — etwa die Referenz vom Vermieter — dürfen länger dauern. Du kannst das PDF trotzdem schon beilegen; auf dem Dokument steht, wie viele Angaben geprüft sind.</p>`
+      : ''
     }`
 
   return sicMail({
@@ -147,7 +152,11 @@ export async function sendSicCertificateReadyEmail(opts: {
       buttonUrl,
       footnoteHtml: opts.magicLinkUrl ? MAGIC_LINK_FOOTNOTE : undefined,
     }),
-    text: `«${title}» ist geprüft. ${completeness}. Gültig bis ${validUntil}.\n\nZertifikat öffnen: ${buttonUrl}`,
+    text: `«${title}» ist geprüft. ${completeness}. Gültig bis ${validUntil}.${
+      opts.firstVerification && opts.verifiedCount < SIC_MODULES.length ?
+        '\n\nAngaben mit Unterschrift Dritter — etwa die Referenz vom Vermieter — dürfen länger dauern. Du kannst das PDF trotzdem schon beilegen.'
+      : ''
+    }\n\nZertifikat öffnen: ${buttonUrl}`,
   })
 }
 

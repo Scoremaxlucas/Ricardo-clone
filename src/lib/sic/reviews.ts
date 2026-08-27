@@ -1,35 +1,34 @@
 /**
- * Stimmen für die Landing — Cold-Start-Sozialbeweis.
- * Inhaltlich nah an echten Nutzungsmomenten, ohne Wohnungszusagen zu behaupten.
- * Später 1:1 durch echte Zitate ersetzen.
+ * Beispielszenarien für die Landing — ausdrücklich fiktiv.
+ * Keine Kundenstimmen, bis echte Zitate mit Einwilligung vorliegen.
  */
-export type SicReview = {
+export type SicScenario = {
   quote: string
   name: string
+  initials: string
   place: string
-  role: string
 }
 
-export const SIC_REVIEWS: readonly SicReview[] = [
+export const SIC_SCENARIOS: readonly SicScenario[] = [
   {
     quote:
-      'Ich habe das PDF der Bewerbung beigelegt statt fünf Anhänge. Der Vermieter hat den QR gescannt und mich am selben Abend für die Besichtigung bestätigt.',
+      'Statt fünf Anhänge lege ich das PDF bei. Der Vermieter scannt den QR und sieht, welche Angaben geprüft sind.',
     name: 'Lara M.',
+    initials: 'LM',
     place: 'Zürich',
-    role: 'Wohnungssuchende',
   },
   {
     quote:
-      'Endlich musste ich nicht erklären, was mein Betreibungsauszug und meine Lohnabrechnung bedeuten. Ein Dokument, und er hat verstanden.',
+      'Betreibungsauszug und Lohnabrechnung muss ich nicht mehr einzeln erklären. Auf dem Zertifikat steht, was geprüft wurde.',
     name: 'Marco S.',
+    initials: 'MS',
     place: 'Bern',
-    role: 'Wohnungssuchender',
   },
   {
     quote:
-      'Die Referenz vom Vermieter hat zwei Wochen gedauert — mit dem Teil-Zertifikat konnte ich mich trotzdem schon bewerben. Das hat den Unterschied gemacht.',
+      'Die Referenz vom bisherigen Vermieter dauert oft zwei Wochen. Mit den schon geprüften Angaben kann ich das PDF trotzdem beilegen.',
     name: 'Sofie K.',
+    initials: 'SK',
     place: 'Basel',
-    role: 'Wohnungssuchende',
   },
 ] as const
