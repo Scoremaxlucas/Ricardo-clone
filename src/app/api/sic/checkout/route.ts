@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
       metadata,
       payment_intent_data: { metadata },
       success_url: `${sicUrl(sicPaths.checkoutSuccess)}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: sicUrl(sicPaths.checkoutCancel),
+      cancel_url: `${sicUrl(sicPaths.checkoutCancel)}?session_id={CHECKOUT_SESSION_ID}`,
     })
 
     await prisma.sicPayment.create({

@@ -16,6 +16,11 @@ import {
   sicBundleSavingsChf,
 } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
+import {
+  canResumeSicCheckout,
+  sicCheckoutRetryFromPayment,
+  sicCheckoutRetryRequestBody,
+} from '@/lib/sic/checkout-retry'
 import { isSicLandlordPdfReady, joinHolderName, encodePaymentHolderName, decodePaymentHolderName } from '@/lib/sic/dossier'
 import { addCalendarMonths, isSicExpired, sicExtendedExpiresAt, sicValidityExpiresAt } from '@/lib/sic/validity'
 
@@ -258,5 +263,69 @@ describe('holder name', () => {
   it('still reads legacy space-separated checkout names', () => {
     expect(decodePaymentHolderName('Anna Muster')).toEqual({ firstName: 'Anna', lastName: 'Muster' })
     expect(decodePaymentHolderName('Lara')).toEqual({ firstName: 'Lara', lastName: '' })
+  })
+})
+
+describe('checkout retry', () => {
+  it('restores modules, names and email from a pending payment', () => {
+    const retry = sicCheckoutRetryFromPayment({
+      email: '  Max@Example.CH ',
+      moduleKinds: ['BONITAET', 'AUFENTHALT'],
+      holderName: encodePaymentHolderName('Anna Maria', 'de la Cruz'),
+      isRenewal: false,
+      status: 'PENDING',
+    })
+    expect(retry).toEqual({
+      email: 'max@example.ch',
+      moduleIds: ['BONITAET', 'AUFENTHALT'],
+      firstName: 'Anna Maria',
+      lastName: 'de la Cruz',
+      renewal: false,
+    })
+    expect(canResumeSicCheckout(retry!)).toBe(true)
+    expect(sicCheckoutRetryRequestBody(retry!)).toEqual({
+      email: 'max@example.ch',
+      moduleIds: ['BONITAET', 'AUFENTHALT'],
+      firstName: 'Anna Maria',
+      lastName: 'de la Cruz',
+    })
+  })
+
+  it('does not retry a paid or refunded payment', () => {
+    const base = {
+      email: 'a@b.ch',
+      moduleKinds: ['BONITAET'],
+      holderName: encodePaymentHolderName('Anna', 'Muster'),
+      isRenewal: false,
+    }
+    expect(sicCheckoutRetryFromPayment({ ...base, status: 'PAID' })).toBeNull()
+    expect(sicCheckoutRetryFromPayment({ ...base, status: 'REFUNDED' })).toBeNull()
+  })
+
+  it('renews without names', () => {
+    const retry = sicCheckoutRetryFromPayment({
+      email: 'a@b.ch',
+      moduleKinds: [],
+      holderName: null,
+      isRenewal: true,
+      status: 'CANCELLED',
+    })
+    expect(canResumeSicCheckout(retry!)).toBe(true)
+    expect(sicCheckoutRetryRequestBody(retry!)).toEqual({
+      email: 'a@b.ch',
+      moduleIds: [],
+      renewal: true,
+    })
+  })
+
+  it('cannot resume a first purchase without both names', () => {
+    const retry = sicCheckoutRetryFromPayment({
+      email: 'a@b.ch',
+      moduleKinds: ['BONITAET'],
+      holderName: 'Lara',
+      isRenewal: false,
+      status: 'PENDING',
+    })
+    expect(canResumeSicCheckout(retry!)).toBe(false)
   })
 })

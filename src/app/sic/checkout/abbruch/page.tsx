@@ -1,21 +1,33 @@
+import { SicCheckoutCancel } from '@/components/sic/SicCheckoutCancel'
+import { prisma } from '@/lib/prisma'
+import { sicCheckoutRetryFromPayment } from '@/lib/sic/checkout-retry'
 import { sicPaths } from '@/lib/sic/config'
-import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
-export default function SicCheckoutCancelPage() {
-  return (
-    <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-5 py-20 text-center">
-      <h1 className="text-2xl font-bold text-sic-navy">Zahlung abgebrochen</h1>
-      <p className="mt-3 text-slate-600">
-        Es wurde nichts belastet. Sie können Ihr Zertifikat jederzeit erneut zusammenstellen.
-      </p>
-      <Link
-        href={sicPaths.landing}
-        className="mt-6 rounded-xl bg-sic-action hover:bg-sic-action-deep px-5 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
-      >
-        Zurück zur Startseite
-      </Link>
-    </div>
-  )
+export default async function SicCheckoutCancelPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ session_id?: string }>
+}) {
+  const { session_id } = await searchParams
+  if (!session_id) return <SicCheckoutCancel retry={null} />
+
+  const payment = await prisma.sicPayment.findUnique({
+    where: { stripeCheckoutSessionId: session_id },
+    select: {
+      email: true,
+      moduleKinds: true,
+      holderName: true,
+      isRenewal: true,
+      status: true,
+    },
+  })
+
+  if (payment?.status === 'PAID') {
+    redirect(`${sicPaths.checkoutSuccess}?session_id=${encodeURIComponent(session_id)}`)
+  }
+
+  return <SicCheckoutCancel retry={payment ? sicCheckoutRetryFromPayment(payment) : null} />
 }
