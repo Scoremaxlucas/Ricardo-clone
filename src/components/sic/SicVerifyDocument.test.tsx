@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { SicVerifyDocument } from '@/components/sic/SicVerifyDocument'
+import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
 import { SIC_SCOPE_NOTE } from '@/lib/sic/modules'
 
 describe('SicVerifyDocument', () => {
@@ -28,6 +29,8 @@ describe('SicVerifyDocument', () => {
     expect(html).toContain('2 von 4 Angaben geprüft')
     expect(html).toContain('VERIFIZIERT')
     expect(html).toContain(SIC_SCOPE_NOTE)
+    expect(html).toContain(SIC_CERT_TAGLINE)
+    expect(html).not.toContain('Vertrauenswürdig')
     expect(html).toContain('Gültiges Zertifikat')
     expect(html).not.toContain('lucide')
   })

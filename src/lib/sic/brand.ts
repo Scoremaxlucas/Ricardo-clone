@@ -39,7 +39,8 @@ export const SIC_COLORS = {
 } as const
 
 export const SIC_TAGLINE = 'Das geprüfte Schweizer Mieter-Zertifikat'
-export const SIC_CERT_TAGLINE = 'Geprüft. Verifiziert. Vertrauenswürdig.'
+/** Drei Wörter, die die AGB tragen: Plausibilität, einheitliches Format, QR. */
+export const SIC_CERT_TAGLINE = 'Geprüft. Standardisiert. Prüfbar.'
 
 /**
  * Hero-Hintergrund. Bis ein eigenes Wohnungsfoto liegt, nutzen wir die

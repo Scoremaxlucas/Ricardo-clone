@@ -1,7 +1,7 @@
 'use client'
 
 import { SicLogoMark } from '@/components/sic/SicLogo'
-import { SIC_HERO_IMAGE, SIC_MODULE_ACCENT } from '@/lib/sic/brand'
+import { SIC_CERT_TAGLINE, SIC_HERO_IMAGE, SIC_MODULE_ACCENT } from '@/lib/sic/brand'
 import { SIC_FAQ } from '@/lib/sic/faq'
 import { SIC_SCENARIOS } from '@/lib/sic/reviews'
 import {
@@ -882,7 +882,7 @@ function CertUrkundeCard() {
             ))}
           </dl>
           <div className="mt-3 flex items-center justify-between border-t border-sic-hairline pt-3 text-[10px] text-slate-400">
-            <span>Geprüft. Verifiziert. Vertrauenswürdig.</span>
+            <span>{SIC_CERT_TAGLINE}</span>
             <span className="rounded bg-sic-navy px-2 py-0.5 font-semibold text-white">QR-geschützt</span>
           </div>
         </div>

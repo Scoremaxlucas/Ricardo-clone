@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
 
 export const runtime = 'edge'
 
@@ -43,7 +44,7 @@ export default function SicOgImage() {
           Mieter-Zertifikat
         </div>
         <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 26, marginTop: 18 }}>
-          Geprüft. Verifiziert. Vertrauenswürdig.
+          {SIC_CERT_TAGLINE}
         </div>
       </div>
     ),

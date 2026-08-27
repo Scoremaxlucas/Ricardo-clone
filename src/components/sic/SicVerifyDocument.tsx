@@ -175,7 +175,7 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
         <div className="mb-1 hidden flex-1 flex-col items-center sm:flex">
           <span className="h-px w-36 bg-sic-navy" />
           <p className="mt-1.5 text-center text-[10px] text-slate-500">
-            {SIC_BRAND_NAME} · Geprüft. Verifiziert.
+            {SIC_BRAND_NAME} · {SIC_CERT_TAGLINE}
           </p>
         </div>
         <div className="mb-0.5 max-w-[5.5rem] text-center">

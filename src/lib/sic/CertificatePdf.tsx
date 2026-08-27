@@ -6,6 +6,7 @@ import {
   ModuleGlyph,
   Seal,
 } from '@/lib/sic/cert/art'
+import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
 import { SIC_CERT_BACKDROP_DATA_URL } from '@/lib/sic/cert/backdrop-asset'
 import { CERT } from '@/lib/sic/cert/tokens'
 import type { SicModuleId } from '@/lib/sic/modules'
@@ -294,7 +295,7 @@ export function SicCertificatePdfDocument(props: {
                 <Text style={s.brandSub}>MIETER-ZERTIFIKAT</Text>
                 <View style={s.brandRule} />
               </View>
-              <Text style={s.tagline}>Geprüft. Verifiziert. Vertrauenswürdig.</Text>
+              <Text style={s.tagline}>{SIC_CERT_TAGLINE}</Text>
             </View>
 
             <View style={s.completenessWrap}>
@@ -364,7 +365,7 @@ export function SicCertificatePdfDocument(props: {
 
                 <View style={s.signCol}>
                   <View style={s.signLine} />
-                  <Text style={s.signLabel}>Swiss Immo Cert · Geprüft. Verifiziert.</Text>
+                  <Text style={s.signLabel}>Swiss Immo Cert · {SIC_CERT_TAGLINE}</Text>
                 </View>
 
                 <View style={s.qrCol}>
