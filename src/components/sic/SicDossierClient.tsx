@@ -1,7 +1,7 @@
 'use client'
 
 import { SicTemplateForm } from '@/components/sic/SicTemplateForm'
-import { sicPaths } from '@/lib/sic/config'
+import { sicPaths, SIC_REVIEW_SLA } from '@/lib/sic/config'
 import type { SicDossierView, SicUploadedDocMeta } from '@/lib/sic/dossier'
 import { formatSicChf, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
 import { templatesForModule } from '@/lib/sic/templates'
@@ -496,7 +496,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
 
               {m.status === 'IN_REVIEW' ?
                 <p className="mt-3 text-sm text-slate-500">
-                  Wir schauen es an, meist innert 24 Stunden. Du bekommst eine E-Mail, sobald es durch ist.
+                  Wir schauen es an, {SIC_REVIEW_SLA}. Du bekommst eine E-Mail, sobald es durch ist.
                 </p>
               : null}
 

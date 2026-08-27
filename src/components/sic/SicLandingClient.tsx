@@ -15,7 +15,7 @@ import {
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { SIC_DOCS_RETENTION_DAYS } from '@/lib/sic/validity'
 import type { SicLandingAccount } from '@/lib/sic/landing-account'
-import { sicPaths } from '@/lib/sic/config'
+import { sicPaths, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
 import {
   ArrowRight,
   Briefcase,
@@ -67,7 +67,7 @@ const HOW_STEPS: { icon: LucideIcon; title: string; note: string }[] = [
   {
     icon: ListChecks,
     title: 'Wir prüfen jede Angabe einzeln',
-    note: 'Meist innert eines Werktags nach Eingang.',
+    note: SIC_REVIEW_SLA_SENTENCE,
   },
   {
     icon: QrCode,
@@ -456,7 +456,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 </a>
                 <span className="text-slate-400">
                   {' '}
-                  · {IS_FREE ? 'kostenlos' : PRICE_LABEL}, meist innert 24 Stunden geprüft
+                  · {IS_FREE ? 'kostenlos' : PRICE_LABEL}, Prüfung {SIC_REVIEW_SLA}
                 </span>
               </p>
             </div>

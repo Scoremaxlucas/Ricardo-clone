@@ -9,7 +9,7 @@ import {
   SIC_VALIDITY_MONTHS,
   sicBundleSavingsChf,
 } from '@/lib/sic/modules'
-import { SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
+import { SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
 import { SIC_DOCS_RETENTION_DAYS, SIC_UNFINISHED_DOCS_RETENTION_MONTHS } from '@/lib/sic/validity'
 import type { Metadata } from 'next'
 
@@ -69,8 +69,8 @@ export default function SicAgbPage() {
             Nach der Zahlung lädst du deine Unterlagen hoch. Zwei Angaben kannst du selbst beschaffen
             (Betreibungsauszug, Ausweis); für die beiden anderen brauchst du eine Unterschrift von Arbeitgeber
             oder bisherigem Vermieter. Bis alle Unterlagen vorliegen, dauert es erfahrungsgemäss einige Tage bis
-            wenige Wochen — dieser Teil liegt bei dir. Unsere Prüfung selbst erfolgt in der Regel innerhalb eines
-            Werktages nach Eingang der Unterlagen.
+            wenige Wochen — dieser Teil liegt bei dir. Unsere Prüfung selbst erfolgt {SIC_REVIEW_SLA} der
+            Unterlagen.
           </p>
           <p className="mt-1.5">
             Bezahlte Angaben verfallen nicht. Du kannst die zugehörigen Unterlagen auch Wochen später nachreichen,

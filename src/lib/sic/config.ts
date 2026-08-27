@@ -4,6 +4,13 @@ export const SIC_BRAND_NAME = 'Swiss Immo Cert'
 export const SIC_BRAND_SHORT = 'SIC'
 
 /**
+ * Prüfung eingereichter Unterlagen — derselbe Satz in AGB, FAQ, Landing, Dossier, Mail.
+ * Nicht «24 Stunden»: Wochenende und Feiertage sind keine Werktage.
+ */
+export const SIC_REVIEW_SLA = 'in der Regel innerhalb eines Werktags nach Eingang'
+export const SIC_REVIEW_SLA_SENTENCE = 'In der Regel innerhalb eines Werktags nach Eingang.'
+
+/**
  * Kanonische Origin der SIC-Plattform (Apex — nicht www).
  * Vercel: www → Apex redirecten (nicht Apex → www), sonst SSL-Warnung:
  * Zertifikat deckt oft nur swissimmocert.ch ab, Redirect auf www schlägt fehl.

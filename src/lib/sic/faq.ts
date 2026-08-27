@@ -6,6 +6,7 @@ import {
   SIC_VALIDITY_MONTHS,
   sicIsFree,
 } from '@/lib/sic/modules'
+import { SIC_REVIEW_SLA } from '@/lib/sic/config'
 import { SIC_DOCS_RETENTION_DAYS, SIC_UNFINISHED_DOCS_RETENTION_MONTHS } from '@/lib/sic/validity'
 
 const PRICE_ANSWER =
@@ -33,7 +34,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Wie lange dauert es insgesamt?',
-    a: 'Deine Unterlagen prüfen wir meist innert eines Werktags. Bis die unterschriebenen Formulare von Arbeitgeber und Vermieter zurück sind, gehen oft einige Tage bis mehrere Wochen ins Land — dieser Teil liegt nicht bei uns. Deshalb kannst du das PDF schon nutzen, wenn nur ein Teil geprüft ist.',
+    a: `Deine Unterlagen prüfen wir ${SIC_REVIEW_SLA}. Bis die unterschriebenen Formulare von Arbeitgeber und Vermieter zurück sind, gehen oft einige Tage bis mehrere Wochen ins Land — dieser Teil liegt nicht bei uns. Deshalb kannst du das PDF schon nutzen, wenn nur ein Teil geprüft ist.`,
   },
   {
     q: 'Was steht am Ende auf dem Zertifikat?',

@@ -1,6 +1,6 @@
 import { sendEmail } from '@/lib/email/sender'
 import { SIC_COLORS } from '@/lib/sic/brand'
-import { SIC_BRAND_NAME, SIC_SUPPORT_EMAIL, sicPaths, sicUrl } from '@/lib/sic/config'
+import { SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL, sicPaths, sicUrl } from '@/lib/sic/config'
 import { getSicModule, SIC_MODULES, type SicModuleId } from '@/lib/sic/modules'
 
 const ACTION = SIC_COLORS.action
@@ -199,13 +199,13 @@ export async function sendSicDocumentsReceivedEmail(opts: {
     html: sicEmailShell({
       preheader: 'Wir haben deine Unterlagen erhalten',
       heading: 'Unterlagen angekommen',
-      bodyHtml: `<p style="margin:0 0 12px;">Wir haben deinen Nachweis für <strong>${escapeHtml(opts.moduleTitle)}</strong> erhalten und schauen ihn an — meist innert 24 Stunden.</p>
+      bodyHtml: `<p style="margin:0 0 12px;">Wir haben deinen Nachweis für <strong>${escapeHtml(opts.moduleTitle)}</strong> erhalten und schauen ihn an — ${SIC_REVIEW_SLA}.</p>
         <p style="margin:0;">Du bekommst eine E-Mail, sobald die Angabe auf deinem Zertifikat steht. Bis dahin kannst du weitere Unterlagen nachreichen.</p>`,
       buttonText: 'Zum Zertifikat',
       buttonUrl,
       footnoteHtml: opts.magicLinkUrl ? MAGIC_LINK_FOOTNOTE : undefined,
     }),
-    text: `Wir haben deinen Nachweis für «${opts.moduleTitle}» erhalten und prüfen ihn.\n\n${buttonUrl}`,
+    text: `Wir haben deinen Nachweis für «${opts.moduleTitle}» erhalten und prüfen ihn ${SIC_REVIEW_SLA}.\n\n${buttonUrl}`,
   })
 }
 
