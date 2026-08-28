@@ -38,6 +38,11 @@ export const SIC_COLORS = {
   greenDeep: '#1f7a34',
 } as const
 
+/** Haus-Umriss der Marke: auf Paper Navy, auf Navy Paper — sonst bleibt nur das Kreuz. */
+export function sicLogoMarkHouseStroke(onDark: boolean): string {
+  return onDark ? SIC_COLORS.paper : SIC_COLORS.navy
+}
+
 export const SIC_TAGLINE = 'Das geprüfte Schweizer Mieter-Zertifikat'
 /** Drei Wörter, die die AGB tragen: Plausibilität, einheitliches Format, QR. */
 export const SIC_CERT_TAGLINE = 'Geprüft. Standardisiert. Prüfbar.'

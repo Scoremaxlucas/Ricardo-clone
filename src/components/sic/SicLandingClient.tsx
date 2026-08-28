@@ -982,7 +982,7 @@ function CertUrkundeCard() {
       <div className="overflow-hidden rounded-xl border border-sic-gold/60">
         <div className="bg-sic-navy px-5 py-5 text-center">
           <div className="mx-auto flex w-fit justify-center">
-            <SicLogoMark size={36} />
+            <SicLogoMark size={36} onDark />
           </div>
           <p className="mt-2 text-sm font-bold tracking-wide text-white">{SIC_BRAND_NAME}</p>
           <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-sic-gold-light">Mieter-Zertifikat</p>
