@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
-import { SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
+import { SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
+
+describe('SIC_BRAND_NAME', () => {
+  it('is one public wordmark', () => {
+    expect(SIC_BRAND_NAME).toBe('Swiss Immo Cert')
+    expect(SIC_BRAND_NAME).not.toMatch(/SwissImmoCert/)
+    expect(SIC_BRAND_NAME).not.toMatch(/SWISS IMMO CERT/)
+  })
+})
 
 describe('SIC_CERT_TAGLINE', () => {
   it('stays within what the AGB can defend', () => {

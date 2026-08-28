@@ -15,7 +15,7 @@ import {
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { SIC_DOCS_RETENTION_DAYS } from '@/lib/sic/validity'
 import type { SicLandingAccount } from '@/lib/sic/landing-account'
-import { sicPaths, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
+import { sicPaths, SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
 import {
   ArrowRight,
   Briefcase,
@@ -984,7 +984,7 @@ function CertUrkundeCard() {
           <div className="mx-auto flex w-fit justify-center">
             <SicLogoMark size={36} />
           </div>
-          <p className="mt-2 text-sm font-bold tracking-[0.18em] text-white">SWISS IMMO CERT</p>
+          <p className="mt-2 text-sm font-bold tracking-wide text-white">{SIC_BRAND_NAME}</p>
           <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-sic-gold-light">Mieter-Zertifikat</p>
         </div>
         <div className="bg-sic-paper px-5 pb-5 pt-4">

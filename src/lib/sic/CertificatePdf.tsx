@@ -7,6 +7,7 @@ import {
   Seal,
 } from '@/lib/sic/cert/art'
 import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
+import { SIC_BRAND_NAME } from '@/lib/sic/config'
 import { SIC_CERT_BACKDROP_DATA_URL } from '@/lib/sic/cert/backdrop-asset'
 import { CERT } from '@/lib/sic/cert/tokens'
 import type { SicModuleId } from '@/lib/sic/modules'
@@ -79,7 +80,7 @@ const s = StyleSheet.create({
     fontFamily: 'Times-Bold',
     fontSize: T.brand,
     color: C.white,
-    letterSpacing: 3.2,
+    letterSpacing: 1.2,
     textAlign: 'center',
   },
   brandRuleRow: {
@@ -267,7 +268,7 @@ export function SicCertificatePdfDocument(props: {
   } = props
 
   return (
-    <Document title={`Swiss Immo Cert ${certificateCode}`}>
+    <Document title={`${SIC_BRAND_NAME} ${certificateCode}`}>
       <Page size="A4" style={s.page}>
         <View style={s.frameOuter}>
           <View style={s.frameInner}>
@@ -289,7 +290,7 @@ export function SicCertificatePdfDocument(props: {
             <View style={s.headerBand}>
               <Text style={s.code}>{certificateCode}</Text>
               <CrestWithLaurel size={72} />
-              <Text style={s.brand}>SWISS IMMO CERT</Text>
+              <Text style={s.brand}>{SIC_BRAND_NAME}</Text>
               <View style={s.brandRuleRow}>
                 <View style={s.brandRule} />
                 <Text style={s.brandSub}>MIETER-ZERTIFIKAT</Text>
@@ -365,7 +366,9 @@ export function SicCertificatePdfDocument(props: {
 
                 <View style={s.signCol}>
                   <View style={s.signLine} />
-                  <Text style={s.signLabel}>Swiss Immo Cert · {SIC_CERT_TAGLINE}</Text>
+                  <Text style={s.signLabel}>
+                    {SIC_BRAND_NAME} · {SIC_CERT_TAGLINE}
+                  </Text>
                 </View>
 
                 <View style={s.qrCol}>
@@ -376,7 +379,7 @@ export function SicCertificatePdfDocument(props: {
             </View>
 
             <Text style={s.legal}>
-              {scopeNote} Swiss Immo Cert bestätigt die Prüfung der eingereichten Nachweise zum
+              {scopeNote} {SIC_BRAND_NAME} bestätigt die Prüfung der eingereichten Nachweise zum
               Ausstellungszeitpunkt und ersetzt keine behördliche Auskunft. Online-Verifikation:{' '}
               {verifyUrl}
             </Text>

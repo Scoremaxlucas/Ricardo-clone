@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { certificateVerifyQrDataUrl } from '@/lib/certificate/qrDataUrl'
 import { SicCertificatePdfDocument } from '@/lib/sic/CertificatePdf'
-import { sicVerifyUrl } from '@/lib/sic/config'
+import { SIC_BRAND_NAME, sicVerifyUrl } from '@/lib/sic/config'
 import { isSicLandlordPdfReady, joinHolderName, verifiedModuleLineItems } from '@/lib/sic/dossier'
 import { recordSicEventOnce } from '@/lib/sic/events'
 import { SIC_SCOPE_NOTE, sicCompletenessLabel } from '@/lib/sic/modules'
@@ -70,7 +70,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
 
   try {
     const buffer = await renderToBuffer(doc)
-    const filename = `SwissImmoCert-${cert.certificateCode}.pdf`
+    const filename = `${SIC_BRAND_NAME.replace(/ /g, '-')}-${cert.certificateCode}.pdf`
     await recordSicEventOnce({
       kind: 'PDF_DOWNLOADED',
       certificateId: cert.id,

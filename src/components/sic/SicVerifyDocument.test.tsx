@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { SicVerifyDocument } from '@/components/sic/SicVerifyDocument'
 import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
 import { SIC_SCOPE_NOTE } from '@/lib/sic/modules'
+import { SIC_BRAND_NAME } from '@/lib/sic/config'
 
 describe('SicVerifyDocument', () => {
   it('renders the certificate hierarchy for a valid code', () => {
@@ -23,7 +24,9 @@ describe('SicVerifyDocument', () => {
         ]}
       />
     )
-    expect(html).toContain('SWISS IMMO CERT')
+    expect(html).toContain(SIC_BRAND_NAME)
+    expect(html).not.toContain('SWISS IMMO CERT')
+    expect(html).not.toContain('SwissImmoCert')
     expect(html).toContain('MIETER-ZERTIFIKAT')
     expect(html).toContain('Anna Muster')
     expect(html).toContain('2 von 4 Angaben geprüft')

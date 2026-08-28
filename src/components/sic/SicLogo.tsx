@@ -1,9 +1,9 @@
 import { SIC_COLORS, SIC_TAGLINE } from '@/lib/sic/brand'
+import { SIC_BRAND_NAME } from '@/lib/sic/config'
 
 /**
- * SIC-Logo: Haus-Umriss mit Schweizer Kreuz + Wortmarke «SwissImmoCert».
- * Referenz: offizielle SIC-Marke. `onDark` invertiert die Wortmarke für
- * dunkle (Navy-)Hintergründe.
+ * SIC-Logo: Haus-Umriss mit Schweizer Kreuz + Wortmarke «Swiss Immo Cert».
+ * «Immo» bleibt rot — der lesbare Name ist derselbe wie auf PDF, Mail und AGB.
  */
 export function SicLogoMark({ size = 34, className }: { size?: number; className?: string }) {
   return (
@@ -44,11 +44,14 @@ export function SicLogo({
 }) {
   const primary = onDark ? '#ffffff' : SIC_COLORS.navy
   return (
-    <span className={`inline-flex items-center gap-2.5 ${className ?? ''}`}>
+    <span className={`inline-flex items-center gap-2.5 ${className ?? ''}`} aria-label={SIC_BRAND_NAME}>
       <SicLogoMark size={size} />
       <span className="flex flex-col leading-none">
-        <span className="text-[19px] font-bold tracking-tight" style={{ color: primary }}>
-          Swiss<span style={{ color: SIC_COLORS.red }}>Immo</span>Cert
+        <span
+          className="whitespace-nowrap text-[17px] font-bold tracking-tight sm:text-[19px]"
+          style={{ color: primary }}
+        >
+          Swiss <span style={{ color: SIC_COLORS.red }}>Immo</span> Cert
         </span>
         {showTagline && (
           <span

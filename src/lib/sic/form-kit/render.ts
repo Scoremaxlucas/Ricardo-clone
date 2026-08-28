@@ -10,6 +10,7 @@ import {
   type RGB,
 } from 'pdf-lib'
 import type { SicTemplateId, SicTemplateValues } from '@/lib/sic/templates'
+import { SIC_BRAND_NAME } from '@/lib/sic/config'
 import { A4, COLORS, COL, LAYOUT, MARGIN, TYPE } from './tokens'
 
 type Ctx = {
@@ -110,7 +111,7 @@ function drawHeader(ctx: Ctx) {
   const logoY = top - logoSize
   drawLogo(ctx, MARGIN.x, logoY, logoSize)
 
-  drawText(ctx, 'SWISS IMMO CERT', MARGIN.x + logoSize + 8, logoY + 8, TYPE.brand, c(COLORS.navy), true)
+  drawText(ctx, SIC_BRAND_NAME, MARGIN.x + logoSize + 8, logoY + 8, TYPE.brand, c(COLORS.navy), true)
   drawText(
     ctx,
     'MIETER-ZERTIFIKAT',
@@ -306,7 +307,7 @@ function drawFooter(ctx: Ctx) {
   const y = MARGIN.bottom - 2
   drawLine(ctx, MARGIN.x, MARGIN.bottom + 14, A4.width - MARGIN.x, MARGIN.bottom + 14, c(COLORS.rule), 0.5)
 
-  const brand = 'Swiss Immo Cert · Schweizer Mieter-Zertifikat'
+  const brand = `${SIC_BRAND_NAME} · Schweizer Mieter-Zertifikat`
   drawText(ctx, brand, MARGIN.x, y + 6, TYPE.footer, c(COLORS.muted))
 
   const legend = '* Pflichtfeld  ·  Ausgefüllt unterzeichnen und unter «Mein Zertifikat» hochladen'

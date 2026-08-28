@@ -71,8 +71,8 @@ function NavyBand({
         </p>
       : null}
       <CrestWithLaurel size={quiet ? 56 : 72} />
-      <p className="mt-1 font-sic-serif text-lg font-bold tracking-[0.28em] text-white sm:text-xl">
-        SWISS IMMO CERT
+      <p className="mt-1 font-sic-serif text-lg font-bold tracking-[0.08em] text-white sm:text-xl">
+        {SIC_BRAND_NAME}
       </p>
       <div className="mt-2 flex items-center gap-2.5">
         <span className="h-px w-8 bg-sic-gold sm:w-10" />

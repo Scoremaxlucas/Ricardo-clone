@@ -243,7 +243,7 @@ export async function sendSicExpiryReminderEmail(opts: {
   const html = sicEmailShell({
     preheader: `Dein Zertifikat läuft in ${opts.daysLeft} Tagen ab`,
     heading: `Gültigkeit endet in ${opts.daysLeft} Tagen`,
-    bodyHtml: `<p style="margin:0 0 12px;">Dein Swiss-Immo-Cert-Zertifikat läuft am <strong>${dateStr}</strong> ab.</p>
+    bodyHtml: `<p style="margin:0 0 12px;">Dein ${SIC_BRAND_NAME}-Zertifikat läuft am <strong>${dateStr}</strong> ab.</p>
       <p style="margin:0 0 12px;">Für die Verlängerung brauchst du einen frischen Auszug vom Betreibungsamt — dessen Alter ist der Grund für die Gültigkeitsdauer. Alles andere bleibt stehen.</p>
       <p style="margin:0;">Bist du angemeldet, geht es mit einem Klick zur Zahlung. Sonst zuerst der Anmeldelink auf der Seite — danach dieselbe Verlängerung.</p>`,
     buttonText: 'Jetzt verlängern',
