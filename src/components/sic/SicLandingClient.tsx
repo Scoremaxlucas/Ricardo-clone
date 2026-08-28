@@ -6,9 +6,11 @@ import { SIC_FAQ } from '@/lib/sic/faq'
 import { SIC_SCENARIOS } from '@/lib/sic/reviews'
 import {
   formatSicChf,
+  getSicModule,
   SIC_BUNDLE_ALL_MODULES_CHF,
   SIC_MODULES,
   SIC_VALIDITY_MONTHS,
+  sicCompletenessLabel,
   sicIsFree,
   type SicModuleId,
 } from '@/lib/sic/modules'
@@ -16,6 +18,13 @@ import { quoteSicOrder } from '@/lib/sic/pricing'
 import { SIC_DOCS_RETENTION_DAYS } from '@/lib/sic/validity'
 import type { SicLandingAccount } from '@/lib/sic/landing-account'
 import { sicPaths, SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
+import {
+  CornerFlourish,
+  CrestWithLaurel,
+  GuillocheRule,
+  ModuleGlyph,
+  Seal,
+} from '@/lib/sic/cert/art-web'
 import {
   ArrowRight,
   Briefcase,
@@ -81,14 +90,15 @@ const TODAY_SCENES = [
   'Der Vermieter öffnet ein paar Dossiers. Der Rest — Lohn, Betreibung, Ausweis — bleibt ungelesen. Die Wohnung ist trotzdem weg.',
 ]
 
-/** Beispielzeilen — inhaltlich gleich aufgebaut wie die geprüften Angaben auf dem PDF. */
-const CERT_PREVIEW: { label: string; value: string; module: SicModuleId }[] = [
-  { label: 'Betreibungen', value: 'Keine offenen · Auszug vom 12.06.2026', module: 'BONITAET' },
-  { label: 'Bruttojahreslohn', value: 'CHF 90’000 – 110’000', module: 'ARBEIT_EINKOMMEN' },
-  { label: 'Arbeitsstelle', value: 'Unbefristet seit März 2020, ungekündigt', module: 'ARBEIT_EINKOMMEN' },
-  { label: 'Tragbare Miete', value: 'Bis CHF 2’500 im Monat (3×-Regel)', module: 'ARBEIT_EINKOMMEN' },
-  { label: 'Referenz Vermieter', value: 'Seit 2021, Miete immer pünktlich', module: 'ZUVERLAESSIGKEIT' },
-  { label: 'Ausweis', value: 'Schweizer Pass, gültig bis Mai 2031', module: 'AUFENTHALT' },
+/** Beispiel wie auf dem PDF: eine Angabe, geprüfte Zeilen, Badge VERIFIZIERT. */
+const CERT_PREVIEW: { id: SicModuleId; lines: string[] }[] = [
+  { id: 'BONITAET', lines: ['Keine offenen Betreibungen · Auszug vom 12.06.2026'] },
+  {
+    id: 'ARBEIT_EINKOMMEN',
+    lines: ['CHF 90’000 – 110’000', 'Unbefristet seit März 2020', 'Tragbare Miete bis CHF 2’500 (3×-Regel)'],
+  },
+  { id: 'ZUVERLAESSIGKEIT', lines: ['Seit 2021, Miete immer pünktlich'] },
+  { id: 'AUFENTHALT', lines: ['Schweizer Pass, gültig bis Mai 2031'] },
 ]
 
 export function SicLandingClient({ account }: { account?: SicLandingAccount | null }) {
@@ -975,40 +985,93 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
 
 function CertUrkundeCard() {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-sic-paper p-1.5 shadow-xl shadow-black/25 ring-1 ring-sic-gold/50">
-      <span className="absolute right-4 top-4 z-10 rounded-full bg-sic-navy-deep/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
+    <div className="relative">
+      <span className="absolute right-3 top-3 z-20 rounded-full bg-sic-navy-deep/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
         Beispiel
       </span>
-      <div className="overflow-hidden rounded-xl border border-sic-gold/60">
-        <div className="bg-sic-navy px-5 py-5 text-center">
-          <div className="mx-auto flex w-fit justify-center">
-            <SicLogoMark size={36} onDark />
+      <article className="relative border-[2.4px] border-sic-navy bg-sic-paper p-1 shadow-xl shadow-black/25">
+        <div className="relative overflow-hidden border border-sic-gold px-4 pb-5 pt-0 sm:px-5">
+          <span className="pointer-events-none absolute left-1 top-1">
+            <CornerFlourish corner="tl" size={22} />
+          </span>
+          <span className="pointer-events-none absolute right-1 top-1">
+            <CornerFlourish corner="tr" size={22} />
+          </span>
+          <span className="pointer-events-none absolute bottom-1 left-1">
+            <CornerFlourish corner="bl" size={22} />
+          </span>
+          <span className="pointer-events-none absolute bottom-1 right-1">
+            <CornerFlourish corner="br" size={22} />
+          </span>
+
+          <header className="relative -mx-4 mt-2 flex flex-col items-center bg-sic-navy px-3 pb-3 pt-4 sm:-mx-5">
+            <p className="absolute right-2.5 top-1.5 font-mono text-[9px] font-semibold tracking-[0.12em] text-sic-gold-light/90">
+              SIC-2026-BEISPIEL
+            </p>
+            <CrestWithLaurel size={56} />
+            <p className="mt-0.5 font-sic-serif text-base font-bold tracking-[0.08em] text-white">
+              {SIC_BRAND_NAME}
+            </p>
+            <div className="mt-1.5 flex items-center gap-2">
+              <span className="h-px w-7 bg-sic-gold" />
+              <span className="text-[9px] font-semibold tracking-[0.28em] text-sic-gold-light">
+                MIETER-ZERTIFIKAT
+              </span>
+              <span className="h-px w-7 bg-sic-gold" />
+            </div>
+            <p className="mt-1.5 text-[10px] tracking-wide text-[#e8d5a3]">{SIC_CERT_TAGLINE}</p>
+          </header>
+
+          <p className="mx-auto mt-3 w-fit border border-sic-gold-light bg-sic-paper-soft px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-sic-gold-text">
+            {sicCompletenessLabel(SIC_MODULES.length)}
+          </p>
+
+          <div className="mt-3 text-center">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">Ausgestellt für</p>
+            <p className="mt-0.5 font-sic-serif text-lg font-bold text-sic-navy">Beispiel · Inhaberin</p>
+            <div className="mt-1.5 flex justify-center">
+              <GuillocheRule width={120} />
+            </div>
           </div>
-          <p className="mt-2 text-sm font-bold tracking-wide text-white">{SIC_BRAND_NAME}</p>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-sic-gold-light">Mieter-Zertifikat</p>
-        </div>
-        <div className="bg-sic-paper px-5 pb-5 pt-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ausgestellt für</p>
-          <p className="font-sic-serif text-base font-bold text-sic-navy">Beispiel · Inhaberin</p>
-          <dl className="mt-3 divide-y divide-sic-hairline">
+
+          <ul className="mt-3 divide-y divide-sic-hairline">
             {CERT_PREVIEW.map(row => (
-              <div key={row.label} className="flex items-center justify-between gap-3 py-2">
-                <div className="min-w-0">
-                  <dt className="text-xs font-semibold text-sic-navy">{row.label}</dt>
-                  <dd className="truncate text-xs text-slate-500">{row.value}</dd>
-                </div>
-                <span className="inline-flex flex-shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-sic-gold-text">
-                  <Check className="h-3 w-3" /> Verifiziert
+              <li key={row.id} className="flex items-start gap-2.5 py-2.5">
+                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-sic-gold bg-sic-paper-soft">
+                  <ModuleGlyph moduleId={row.id} size={14} />
                 </span>
-              </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-sic-navy">{getSicModule(row.id).title}</p>
+                  <ul className="mt-0.5 space-y-0.5">
+                    {row.lines.map(line => (
+                      <li key={line} className="flex items-start gap-1.5 text-[11px] leading-snug text-slate-600">
+                        <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-gold" />
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <span className="mt-0.5 flex-shrink-0 border border-sic-gold bg-sic-paper-soft px-1 py-0.5 text-[8px] font-bold tracking-[0.1em] text-sic-gold">
+                  VERIFIZIERT
+                </span>
+              </li>
             ))}
-          </dl>
-          <div className="mt-3 flex items-center justify-between border-t border-sic-hairline pt-3 text-[10px] text-slate-400">
-            <span>{SIC_CERT_TAGLINE}</span>
-            <span className="rounded bg-sic-navy px-2 py-0.5 font-semibold text-white">QR-geschützt</span>
+          </ul>
+
+          <div className="mt-3 flex items-end justify-between gap-2 border-t border-sic-hairline pt-3">
+            <Seal size={44} />
+            <div className="mb-0.5 hidden flex-1 flex-col items-center sm:flex">
+              <span className="h-px w-24 bg-sic-navy" />
+              <p className="mt-1 text-center text-[9px] text-slate-500">
+                {SIC_BRAND_NAME} · {SIC_CERT_TAGLINE}
+              </p>
+            </div>
+            <p className="mb-0.5 max-w-[4.75rem] border border-sic-gold bg-sic-paper-soft px-1.5 py-1.5 text-center text-[8px] font-bold uppercase leading-tight tracking-[0.08em] text-sic-gold-text">
+              Online bestätigt
+            </p>
           </div>
         </div>
-      </div>
+      </article>
     </div>
   )
 }
