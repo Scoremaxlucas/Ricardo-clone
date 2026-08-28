@@ -1,9 +1,13 @@
 import { SicHeaderCta } from '@/components/sic/SicHeaderCta'
 import { SicLogo } from '@/components/sic/SicLogo'
 import { SIC_BASE_PATH, SIC_BRAND_NAME, sicPaths } from '@/lib/sic/config'
+import { getSicLandingAccount } from '@/lib/sic/landing-account'
+import { SIC_MODULES } from '@/lib/sic/modules'
 import type { Metadata } from 'next'
 import { Source_Serif_4 } from 'next/font/google'
 import Link from 'next/link'
+
+export const dynamic = 'force-dynamic'
 
 const sicSerif = Source_Serif_4({
   subsets: ['latin'],
@@ -20,7 +24,11 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 }
 
-export default function SicLayout({ children }: { children: React.ReactNode }) {
+export default async function SicLayout({ children }: { children: React.ReactNode }) {
+  const account = await getSicLandingAccount()
+  const hasCertificate = Boolean(account)
+  const canAddModules = Boolean(account && account.ownedModules.length < SIC_MODULES.length)
+
   return (
     <div className={`${sicSerif.variable} flex min-h-screen flex-col bg-sic-paper text-slate-900`}>
       <header className="sticky top-0 z-40 border-b border-sic-hairline/80 bg-sic-paper/90 backdrop-blur">
@@ -29,13 +37,7 @@ export default function SicLayout({ children }: { children: React.ReactNode }) {
             <SicLogo size={32} />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
-            <SicHeaderCta />
-            <Link
-              href={sicPaths.certificateWorkspace}
-              className="rounded-lg border border-sic-navy/15 px-3.5 py-2 text-sm font-semibold text-sic-navy transition-colors hover:bg-sic-navy/5"
-            >
-              Mein Zertifikat
-            </Link>
+            <SicHeaderCta hasCertificate={hasCertificate} canAddModules={canAddModules} />
           </div>
         </div>
       </header>
