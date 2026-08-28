@@ -51,7 +51,7 @@ export default async function SicLayout({ children }: { children: React.ReactNod
           <div>
             <SicLogo size={30} onDark />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
-              Das geprüfte Schweizer Mieter-Zertifikat. Sichtbar, prüfbar, ernst genommen — keine
+              Das geprüfte Schweizer Mieter-Zertifikat. Sichtbar, lesbar und prüfbar — keine
               Wohnungszusage, ein Dossier, das Vermieter nicht überblättern.
             </p>
           </div>
