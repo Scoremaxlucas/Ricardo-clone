@@ -77,6 +77,8 @@ export const sicPaths = {
   landing: '/',
   /** Post-Purchase-Workspace (früher „Dossier“). */
   certificateWorkspace: `${SIC_BASE_PATH}/zertifikat`,
+  /** Ein Klick aus der Ablauf-Mail: Session → Stripe, sonst Anmeldung. */
+  renew: `${SIC_BASE_PATH}/verlaengern`,
   checkoutSuccess: `${SIC_BASE_PATH}/checkout/erfolg`,
   checkoutCancel: `${SIC_BASE_PATH}/checkout/abbruch`,
   verify: (code: string) => `${SIC_BASE_PATH}/verify/${encodeURIComponent(code)}`,

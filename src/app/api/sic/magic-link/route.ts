@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { createSicMagicLink } from '@/lib/sic/magic-link'
+import { createSicMagicLink, safeSicNextPath } from '@/lib/sic/magic-link'
 import { sendSicMagicLinkEmail } from '@/lib/sic/email'
 import { normalizeEmail } from '@/lib/sic/session'
 import { NextRequest, NextResponse } from 'next/server'
@@ -19,9 +19,11 @@ function clientIp(req: NextRequest): string {
  */
 export async function POST(req: NextRequest) {
   let email = ''
+  let nextPath = ''
   try {
     const body = await req.json()
     email = normalizeEmail(typeof body?.email === 'string' ? body.email : '')
+    nextPath = safeSicNextPath(body?.next)
   } catch {
     return NextResponse.json({ ok: false, message: 'Ungültige Anfrage.' }, { status: 400 })
   }
@@ -51,7 +53,7 @@ export async function POST(req: NextRequest) {
   if (!certificate) return generic
 
   try {
-    const { url } = await createSicMagicLink(email)
+    const { url } = await createSicMagicLink(email, { next: nextPath })
     await sendSicMagicLinkEmail(email, url)
   } catch (err) {
     console.error('[sic/magic-link] send failed', err)

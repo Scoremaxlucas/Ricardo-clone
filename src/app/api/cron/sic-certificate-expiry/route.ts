@@ -107,12 +107,10 @@ export async function GET(request: NextRequest) {
         if (!expiresAt) continue
         const daysLeft = Math.max(1, Math.ceil((expiresAt.getTime() - now.getTime()) / DAY_MS))
         try {
-          const { url } = await createSicMagicLink(c.email)
           await sendSicExpiryReminderEmail({
             email: c.email,
             daysLeft,
             expiresAt,
-            magicLinkUrl: url,
           })
           await prisma.sicCertificate.update({
             where: { id: c.id },
@@ -145,12 +143,10 @@ export async function GET(request: NextRequest) {
         if (!expiresAt) continue
         const daysLeft = Math.max(1, Math.ceil((expiresAt.getTime() - now.getTime()) / DAY_MS))
         try {
-          const { url } = await createSicMagicLink(c.email)
           await sendSicExpiryReminderEmail({
             email: c.email,
             daysLeft,
             expiresAt,
-            magicLinkUrl: url,
           })
           await prisma.sicCertificate.update({
             where: { id: c.id },

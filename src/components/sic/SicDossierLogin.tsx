@@ -1,12 +1,21 @@
 'use client'
 
+import { sicPaths } from '@/lib/sic/config'
 import { MailCheck } from 'lucide-react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export function SicDossierLogin() {
+export function SicDossierLogin({
+  nextPath,
+  title = 'Mein Zertifikat',
+  intro = 'Hier siehst du Status, Formulare und Uploads. Der Anmeldelink ist 30 Minuten gültig; den Vorgang kannst du über Tage fortsetzen. Fordere jederzeit einen neuen Link an.',
+}: {
+  nextPath?: string
+  title?: string
+  intro?: string
+}) {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -21,7 +30,7 @@ export function SicDossierLogin() {
       const res = await fetch('/api/sic/magic-link', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ email: email.trim(), next: nextPath }),
       })
       if (res.ok) setSent(true)
       else toast.error('Bitte später erneut versuchen.')
@@ -34,11 +43,8 @@ export function SicDossierLogin() {
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-5 py-16">
-      <h1 className="text-2xl font-bold text-sic-navy">Mein Zertifikat</h1>
-      <p className="mt-2 text-slate-600">
-        Hier siehst du Status, Formulare und Uploads. Der Anmeldelink ist 30 Minuten gültig; den Vorgang
-        kannst du über Tage fortsetzen. Fordere jederzeit einen neuen Link an.
-      </p>
+      <h1 className="text-2xl font-bold text-sic-navy">{title}</h1>
+      <p className="mt-2 text-slate-600">{intro}</p>
 
       {sent ?
         <div className="mt-6 flex items-start gap-3 rounded-2xl bg-sic-navy/5 p-5 text-sm text-sic-navy">
@@ -71,7 +77,7 @@ export function SicDossierLogin() {
           </button>
           <p className="mt-3 text-center text-xs text-slate-400">
             Noch nichts angelegt?{' '}
-            <a href="/" className="font-semibold text-sic-navy hover:underline">
+            <a href={sicPaths.landing} className="font-semibold text-sic-navy hover:underline">
               Zertifikat anlegen
             </a>
           </p>

@@ -1,11 +1,11 @@
 import { sicPaths, sicUrl } from '@/lib/sic/config'
-import { consumeSicMagicLink } from '@/lib/sic/magic-link'
+import { consumeSicMagicLink, safeSicNextPath } from '@/lib/sic/magic-link'
 import { SIC_SESSION_COOKIE, sicSessionCookieOptions, signSicSessionToken } from '@/lib/sic/session'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-/** Löst den Magic-Link ein, setzt die Session und leitet zum Zertifikat-Bereich weiter. */
+/** Löst den Magic-Link ein, setzt die Session und leitet weiter (Workspace oder Verlängerung). */
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token') || ''
   const result = await consumeSicMagicLink(token)
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(failed)
   }
 
-  const dest = new URL(sicUrl(sicPaths.certificateWorkspace))
+  const dest = new URL(sicUrl(safeSicNextPath(req.nextUrl.searchParams.get('next'))))
   const res = NextResponse.redirect(dest)
   res.cookies.set(SIC_SESSION_COOKIE, signSicSessionToken(result.email), sicSessionCookieOptions())
   return res

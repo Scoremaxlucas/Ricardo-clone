@@ -163,7 +163,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       const res = await fetch('/api/sic/checkout', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: dossier.email, moduleIds: [], renewal: true }),
+        credentials: 'same-origin',
+        body: JSON.stringify({ renewal: true, moduleIds: [] }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data?.url) {

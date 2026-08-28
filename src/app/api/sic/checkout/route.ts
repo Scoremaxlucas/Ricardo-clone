@@ -12,6 +12,7 @@ import {
   sicSessionCookieOptions,
   signSicSessionToken,
 } from '@/lib/sic/session'
+import { getSicSession } from '@/lib/sic/session-cookie'
 import { stripe } from '@/lib/stripe-server'
 import type { SicModuleKind } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
@@ -73,6 +74,14 @@ export async function POST(req: NextRequest) {
     }
   } catch {
     return NextResponse.json({ ok: false, message: 'Ungültige Anfrage.' }, { status: 400 })
+  }
+
+  if (wantsRenewal) {
+    const sess = getSicSession()
+    if (!sess) {
+      return NextResponse.json({ ok: false, message: 'Bitte anmelden, um zu verlängern.' }, { status: 401 })
+    }
+    email = sess.email
   }
 
   if (!EMAIL_RE.test(email)) {

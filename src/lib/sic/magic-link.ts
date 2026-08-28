@@ -6,22 +6,38 @@ import { normalizeEmail } from '@/lib/sic/session'
 /** Kurzlebiger, einmalig verwendbarer Anmeldelink. */
 export const SIC_MAGIC_LINK_TTL_MINUTES = 30
 
+const SAFE_NEXT = new Set<string>([sicPaths.certificateWorkspace, sicPaths.renew])
+
+/** Nur interne SIC-Pfade — kein Open Redirect über den Magic-Link. */
+export function safeSicNextPath(raw: unknown): string {
+  if (typeof raw !== 'string') return sicPaths.certificateWorkspace
+  const path = raw.trim()
+  return SAFE_NEXT.has(path) ? path : sicPaths.certificateWorkspace
+}
+
 export function generateSicMagicToken(): string {
   return randomBytes(32).toString('base64url')
 }
 
-export function buildSicMagicLinkUrl(token: string): string {
-  return sicUrl(`${sicPaths.authCallback}?token=${encodeURIComponent(token)}`)
+export function buildSicMagicLinkUrl(token: string, next?: string): string {
+  const url = new URL(sicUrl(sicPaths.authCallback))
+  url.searchParams.set('token', token)
+  const dest = safeSicNextPath(next)
+  if (dest !== sicPaths.certificateWorkspace) {
+    url.searchParams.set('next', dest)
+  }
+  return url.toString()
 }
 
 export async function createSicMagicLink(
-  emailRaw: string
+  emailRaw: string,
+  opts?: { next?: string }
 ): Promise<{ token: string; url: string; expiresAt: Date }> {
   const email = normalizeEmail(emailRaw)
   const token = generateSicMagicToken()
   const expiresAt = new Date(Date.now() + SIC_MAGIC_LINK_TTL_MINUTES * 60_000)
   await prisma.sicMagicLink.create({ data: { email, token, expiresAt } })
-  return { token, url: buildSicMagicLinkUrl(token), expiresAt }
+  return { token, url: buildSicMagicLinkUrl(token, opts?.next), expiresAt }
 }
 
 /** Verbraucht einen Token (einmalig). Gibt die E-Mail zurück oder null bei ungültig/abgelaufen/verbraucht. */
