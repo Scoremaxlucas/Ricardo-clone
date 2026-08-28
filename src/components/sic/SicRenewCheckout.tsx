@@ -37,7 +37,9 @@ export function SicRenewCheckout() {
   if (error) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-5 py-20 text-center">
-        <h1 className="text-2xl font-bold text-sic-navy">Verlängerung nicht gestartet</h1>
+        <h1 className="font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
+          Verlängerung nicht gestartet
+        </h1>
         <p className="mt-3 text-slate-600">{error}</p>
         <Link
           href={sicPaths.certificateWorkspace}
@@ -52,7 +54,7 @@ export function SicRenewCheckout() {
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-5 py-20 text-center">
       <Loader2 className="h-10 w-10 animate-spin text-sic-navy" />
-      <h1 className="mt-4 text-2xl font-bold text-sic-navy">Weiter zur Zahlung</h1>
+      <h1 className="mt-4 font-sic-serif text-2xl font-bold tracking-tight text-sic-navy">Weiter zur Zahlung</h1>
       <p className="mt-3 text-slate-600">Verlängerung wird vorbereitet …</p>
     </div>
   )

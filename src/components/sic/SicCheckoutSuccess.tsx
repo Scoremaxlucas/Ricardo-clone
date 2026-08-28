@@ -93,7 +93,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
       {state.status === 'ok' && (
         <>
           <Loader2 className="h-10 w-10 animate-spin text-sic-navy" />
-          <h1 className="mt-4 text-2xl font-bold text-sic-navy">Zahlung erfolgreich</h1>
+          <h1 className="mt-4 font-sic-serif text-2xl font-bold tracking-tight text-sic-navy">Zahlung erfolgreich</h1>
           <p className="mt-3 text-slate-600">Weiter zu deinen Unterlagen …</p>
           <Link
             href={sicPaths.certificateWorkspace}
@@ -111,7 +111,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
       {state.status === 'pending' && (
         <>
           <Loader2 className="h-10 w-10 animate-spin text-sic-navy" />
-          <h1 className="mt-4 text-xl font-bold text-sic-navy">Zahlung wird verarbeitet</h1>
+          <h1 className="mt-4 font-sic-serif text-xl font-bold tracking-tight text-sic-navy">Zahlung wird verarbeitet</h1>
           <p className="mt-3 text-slate-600">
             Das kann einen Moment dauern. Wir prüfen die Zahlung automatisch weiter …
           </p>
@@ -129,7 +129,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
 
       {state.status === 'error' && (
         <>
-          <h1 className="text-xl font-bold text-slate-900">Etwas ist schiefgelaufen</h1>
+          <h1 className="font-sic-serif text-xl font-bold tracking-tight text-sic-navy">Etwas ist schiefgelaufen</h1>
           <p className="mt-3 text-slate-600">
             {state.message || 'Bitte prüfe später «Mein Zertifikat» oder kontaktiere uns.'}
           </p>

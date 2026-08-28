@@ -25,7 +25,9 @@ export default function SicAgbPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-16">
-      <h1 className="text-2xl font-bold text-sic-navy">Allgemeine Geschäftsbedingungen</h1>
+      <h1 className="font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
+        Allgemeine Geschäftsbedingungen
+      </h1>
       <p className="mt-2 text-sm text-slate-500">
         Swiss Immo Cert — Stand {new Date().getFullYear()}. Anbieterin: Score-Max GmbH.
       </p>

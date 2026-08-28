@@ -43,7 +43,7 @@ export function SicDossierLogin({
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-5 py-16">
-      <h1 className="text-2xl font-bold text-sic-navy">{title}</h1>
+      <h1 className="font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">{title}</h1>
       <p className="mt-2 text-slate-600">{intro}</p>
 
       {sent ?
@@ -65,7 +65,7 @@ export function SicDossierLogin({
             onChange={e => setEmail(e.target.value)}
             placeholder="name@beispiel.ch"
             autoComplete="email"
-            className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none ring-sic-action/20 focus:border-sic-action focus:ring-2"
+            className="mt-1.5 w-full rounded-xl border border-sic-hairline bg-sic-paper px-4 py-3 text-sm outline-none ring-sic-action/20 focus:border-sic-action focus:ring-2"
           />
           <button
             type="button"

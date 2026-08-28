@@ -44,7 +44,7 @@ export function SicCheckoutCancel({ retry }: { retry: SicCheckoutRetry | null })
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-5 py-20 text-center">
-      <h1 className="text-2xl font-bold text-sic-navy">Zahlung abgebrochen</h1>
+      <h1 className="font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">Zahlung abgebrochen</h1>
       <p className="mt-3 text-slate-600">
         Es wurde nichts belastet.
         {canResume ?

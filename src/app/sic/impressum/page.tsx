@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function SicImpressumPage() {
   return (
     <div className="mx-auto max-w-2xl px-5 py-16">
-      <h1 className="text-2xl font-bold text-sic-navy">Impressum</h1>
+      <h1 className="font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">Impressum</h1>
       <p className="mt-2 text-sm text-slate-500">
         Angaben gemäss gesetzlicher Informationspflicht für Swiss Immo Cert.
       </p>
