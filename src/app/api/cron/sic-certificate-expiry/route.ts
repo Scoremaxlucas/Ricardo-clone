@@ -15,8 +15,12 @@ import {
 } from '@/lib/sic/email'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
-import { getSicModule, type SicModuleId } from '@/lib/sic/modules'
+import { isSicModuleId } from '@/lib/sic/modules'
 import { cronBudgetState } from '@/lib/sic/refund-gate'
+import {
+  sicUploadNudgeRepeatAfter,
+  sicUploadNudgeWindows,
+} from '@/lib/sic/upload-nudge'
 import {
   addCalendarMonths,
   SIC_DOCS_RETENTION_DAYS,
@@ -269,53 +273,58 @@ export async function GET(request: NextRequest) {
       if (!stillBudget(toPurge.length)) break
     }
 
-    // — Upload nudges —
-    const nudgeCutoff = new Date(now.getTime() - 3 * DAY_MS)
-    const remIn7d = new Date(now.getTime() - 7 * DAY_MS)
-    while (stillBudget(BATCH)) {
-      const pendingModules = await prisma.sicCertificateModule.findMany({
-        where: {
-          status: 'PENDING_DOCS',
-          paidAt: { lte: nudgeCutoff },
-          OR: [{ uploadReminderSentAt: null }, { uploadReminderSentAt: { lt: remIn7d } }],
-        },
-        include: {
-          certificate: { select: { email: true, id: true } },
-        },
-        take: BATCH,
-        orderBy: { paidAt: 'asc' },
-      })
-      if (pendingModules.length === 0) break
-      let processed = 0
-      for (const m of pendingModules) {
-        if (!stillBudget(1)) break
-        const docCount = await prisma.sicDocument.count({
-          where: { certificateId: m.certificateId, moduleKind: m.moduleKind },
+    // — Upload nudges: Tag 1 selbst beschaffbar, ~3 Tage bei Unterschrift Dritter —
+    const remAfter = sicUploadNudgeRepeatAfter(now)
+    for (const window of sicUploadNudgeWindows(now)) {
+      while (stillBudget(BATCH)) {
+        const pendingModules = await prisma.sicCertificateModule.findMany({
+          where: {
+            status: 'PENDING_DOCS',
+            moduleKind: { in: window.moduleKinds },
+            paidAt: { lte: window.paidBefore },
+            OR: [{ uploadReminderSentAt: null }, { uploadReminderSentAt: { lt: remAfter } }],
+          },
+          include: {
+            certificate: { select: { email: true, id: true } },
+          },
+          take: BATCH,
+          orderBy: { paidAt: 'asc' },
         })
-        if (docCount > 0) {
+        if (pendingModules.length === 0) break
+        let processed = 0
+        for (const m of pendingModules) {
+          if (!stillBudget(1)) break
+          const docCount = await prisma.sicDocument.count({
+            where: { certificateId: m.certificateId, moduleKind: m.moduleKind },
+          })
+          if (docCount > 0) {
+            processed++
+            continue
+          }
+          if (!isSicModuleId(m.moduleKind)) {
+            processed++
+            continue
+          }
+          try {
+            const { url } = await createSicMagicLink(m.certificate.email)
+            await sendSicUploadReminderEmail({
+              email: m.certificate.email,
+              moduleKind: m.moduleKind,
+              magicLinkUrl: url,
+            })
+            await prisma.sicCertificateModule.update({
+              where: { id: m.id },
+              data: { uploadReminderSentAt: now },
+            })
+            stats.uploadNudges++
+          } catch (e) {
+            console.error('[sic-certificate-expiry] upload nudge', m.id, e)
+          }
           processed++
-          continue
         }
-        try {
-          const { url } = await createSicMagicLink(m.certificate.email)
-          const title = getSicModule(m.moduleKind as SicModuleId).title
-          await sendSicUploadReminderEmail({
-            email: m.certificate.email,
-            moduleTitle: title,
-            magicLinkUrl: url,
-          })
-          await prisma.sicCertificateModule.update({
-            where: { id: m.id },
-            data: { uploadReminderSentAt: now },
-          })
-          stats.uploadNudges++
-        } catch (e) {
-          console.error('[sic-certificate-expiry] upload nudge', m.id, e)
-        }
-        processed++
+        if (pendingModules.length < BATCH) break
+        if (!stillBudget(processed)) break
       }
-      if (pendingModules.length < BATCH) break
-      if (!stillBudget(processed)) break
     }
 
     // — Cleanup Magic Links (expiresAt < now - 7d) —

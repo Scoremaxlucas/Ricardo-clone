@@ -1,7 +1,8 @@
 import { sendEmail } from '@/lib/email/sender'
 import { SIC_COLORS } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL, sicPaths, sicUrl } from '@/lib/sic/config'
-import { getSicModule, SIC_MODULES, type SicModuleId } from '@/lib/sic/modules'
+import { sicCertificateReadyCopy, sicUploadReminderCopy } from '@/lib/sic/email-copy'
+import { getSicModule, type SicModuleId } from '@/lib/sic/modules'
 
 const ACTION = SIC_COLORS.action
 const NAVY = SIC_COLORS.navy
@@ -114,49 +115,39 @@ export async function sendSicCertificateReadyEmail(opts: {
   pdfReady: boolean
   magicLinkUrl?: string
 }) {
-  const title = getSicModule(opts.moduleKind).title
   const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
   const validUntil = opts.expiresAt.toLocaleDateString('de-CH', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   })
-  const completeness = `${opts.verifiedCount} von ${SIC_MODULES.length} Angaben geprüft`
-  const heading = opts.firstVerification ? 'Dein Zertifikat ist da' : 'Dein Zertifikat wurde aktualisiert'
-
-  const bodyHtml = `
-    <p style="margin:0 0 12px;">Die Angabe <strong>${escapeHtml(title)}</strong> ist geprüft und steht auf deinem Zertifikat.</p>
-    <p style="margin:0 0 12px;">Aktueller Stand: <strong>${completeness}</strong>. Gültig bis <strong>${validUntil}</strong>.</p>
-    ${
-      opts.pdfReady ?
-        `<p style="margin:0 0 12px;">Melde dich an, lade das PDF herunter und leg es deiner Bewerbung bei. Nicht geprüfte Angaben sind auf dem Dokument nicht aufgeführt.</p>`
-      : `<p style="margin:0 0 12px;">Für das PDF fehlt noch dein Name auf dem Zertifikat — das ist in einer Minute erledigt.</p>`
-    }
-    ${
-      opts.firstVerification && opts.verifiedCount < SIC_MODULES.length ?
-        `<p style="margin:0;">Angaben mit Unterschrift Dritter — etwa die Referenz vom Vermieter — dürfen länger dauern. Du kannst das PDF trotzdem schon beilegen; auf dem Dokument steht, wie viele Angaben geprüft sind.</p>`
-      : ''
-    }`
+  const copy = sicCertificateReadyCopy({
+    moduleKind: opts.moduleKind,
+    verifiedCount: opts.verifiedCount,
+    firstVerification: opts.firstVerification,
+    pdfReady: opts.pdfReady,
+    validUntil,
+  })
+  const bodyHtml = copy.paragraphs
+    .map((p, i) =>
+      i === copy.paragraphs.length - 1
+        ? `<p style="margin:0;">${escapeHtml(p)}</p>`
+        : `<p style="margin:0 0 12px;">${escapeHtml(p)}</p>`
+    )
+    .join('')
 
   return sicMail({
     to: opts.email,
-    subject:
-      opts.firstVerification ?
-        `${SIC_BRAND_NAME}: Dein Zertifikat ist bereit`
-      : `${SIC_BRAND_NAME}: «${title}» geprüft — Zertifikat aktualisiert`,
+    subject: `${SIC_BRAND_NAME}: ${copy.subject}`,
     html: sicEmailShell({
-      preheader: `${title} geprüft — ${completeness}`,
-      heading,
+      preheader: copy.preheader,
+      heading: copy.heading,
       bodyHtml,
       buttonText: opts.pdfReady ? 'Zertifikat öffnen' : 'Namen ergänzen',
       buttonUrl,
       footnoteHtml: opts.magicLinkUrl ? MAGIC_LINK_FOOTNOTE : undefined,
     }),
-    text: `«${title}» ist geprüft. ${completeness}. Gültig bis ${validUntil}.${
-      opts.firstVerification && opts.verifiedCount < SIC_MODULES.length ?
-        '\n\nAngaben mit Unterschrift Dritter — etwa die Referenz vom Vermieter — dürfen länger dauern. Du kannst das PDF trotzdem schon beilegen.'
-      : ''
-    }\n\nZertifikat öffnen: ${buttonUrl}`,
+    text: `${copy.paragraphs.join('\n\n')}\n\n${opts.pdfReady ? 'Zertifikat öffnen' : 'Namen ergänzen'}: ${buttonUrl}`,
   })
 }
 
@@ -268,23 +259,30 @@ export async function sendSicExpiryReminderEmail(opts: {
 
 export async function sendSicUploadReminderEmail(opts: {
   email: string
-  moduleTitle: string
+  moduleKind: SicModuleId
   magicLinkUrl?: string
 }) {
   const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
-  const html = sicEmailShell({
-    preheader: `Noch offen: ${opts.moduleTitle}`,
-    heading: 'Nachweis noch offen',
-    bodyHtml: `<p style="margin:0 0 12px;">Für das Modul <strong>${escapeHtml(opts.moduleTitle)}</strong> fehlt noch ein Nachweis — zum Beispiel eine unterzeichnete Vorlage.</p>
-      <p style="margin:0;">Lade die Belege hoch, sobald sie vorliegen. Das darfst du über mehrere Tage machen.</p>`,
-    buttonText: 'Nachweise hochladen',
-    buttonUrl,
-  })
+  const copy = sicUploadReminderCopy(opts.moduleKind)
+  const title = getSicModule(opts.moduleKind).title
+  const bodyHtml = copy.paragraphs
+    .map((p, i) =>
+      i === copy.paragraphs.length - 1
+        ? `<p style="margin:0;">${escapeHtml(p)}</p>`
+        : `<p style="margin:0 0 12px;">${escapeHtml(p)}</p>`
+    )
+    .join('')
   return sicMail({
     to: opts.email,
-    subject: `${SIC_BRAND_NAME}: Noch offen — «${opts.moduleTitle}»`,
-    html,
-    text: `Für «${opts.moduleTitle}» fehlen noch Nachweise.\n\n${buttonUrl}`,
+    subject: `${SIC_BRAND_NAME}: Noch offen — «${title}»`,
+    html: sicEmailShell({
+      preheader: copy.preheader,
+      heading: copy.heading,
+      bodyHtml,
+      buttonText: 'Nachweise hochladen',
+      buttonUrl,
+    }),
+    text: `${copy.paragraphs.join('\n\n')}\n\n${buttonUrl}`,
   })
 }
 
