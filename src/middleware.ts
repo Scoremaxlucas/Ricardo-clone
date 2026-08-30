@@ -9,6 +9,7 @@ import {
   SIC_PREVIEW_COOKIE_LEGACY,
   SIC_SITE_ORIGIN,
 } from '@/lib/sic/config'
+import { shouldRedirectSicWwwToApex } from '@/lib/sic/google-oauth'
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 
 const WOHNEN_PREVIEW_COOKIE = 'helvenda-wohnen-preview'
@@ -162,6 +163,10 @@ export async function middleware(request: NextRequest) {
 
   // ─── SIC-Host: nur Swiss Immo Cert ───────────────────────────────────────
   if (onSicHost) {
+    if (shouldRedirectSicWwwToApex(host, pathname)) {
+      return NextResponse.redirect(new URL(pathname + search, SIC_SITE_ORIGIN), 308)
+    }
+
     if (pathname === '/') {
       const rewrite = request.nextUrl.clone()
       rewrite.pathname = '/sic'

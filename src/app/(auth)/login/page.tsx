@@ -13,6 +13,7 @@ import {
   authTitleClass,
 } from '@/lib/auth-surface-classes'
 import { validateCallbackUrl } from '@/lib/url-validation'
+import { sicPostLoginPath } from '@/lib/sic/google-oauth'
 import { cn } from '@/lib/utils'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { getSession, signIn } from 'next-auth/react'
@@ -33,8 +34,9 @@ function LoginPageContent() {
   const callbackUrl = validateCallbackUrl(rawCallbackUrl)
 
   const determinePostLoginRoute = () => {
+    if (isSic) return sicPostLoginPath(callbackUrl === '/' ? null : callbackUrl)
     if (callbackUrl && callbackUrl !== '/') return callbackUrl
-    return isSic ? '/sic/admin' : '/'
+    return '/'
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

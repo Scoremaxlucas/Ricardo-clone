@@ -1,6 +1,6 @@
 import { isDebug } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
-import { isSicProductionHostname } from '@/lib/sic/config'
+import { isSicProductionHostname, SIC_SITE_ORIGIN } from '@/lib/sic/config'
 import bcrypt from 'bcryptjs'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
@@ -42,8 +42,60 @@ function cookieConfigForHost(host?: string | null) {
   return nextAuthSharedCookieDomain != null ? nextAuthCookieBlock(true) : {}
 }
 
+function isSicAuthHost(host?: string | null): boolean {
+  const h = (host || '').split(':')[0].toLowerCase()
+  return !!h && isSicProductionHostname(h)
+}
+
+/** SIC: kein neues Konto per Google — nur bestehende Admins. */
+async function signInGoogleOnSic(user: { email?: string | null; id?: string }): Promise<boolean> {
+  const email = user.email?.toLowerCase().trim()
+  if (!email) return false
+  const dbUser = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, isBlocked: true, isAdmin: true },
+  })
+  if (!dbUser || dbUser.isBlocked || !dbUser.isAdmin) {
+    console.log('[AUTH] SIC Google denied (no admin account):', email)
+    return false
+  }
+  user.id = dbUser.id
+  return true
+}
+
 export function getAuthOptionsForHost(host?: string | null) {
-  return { ...authOptionsBase, ...cookieConfigForHost(host) }
+  const sicHost = isSicAuthHost(host)
+  return {
+    ...authOptionsBase,
+    ...cookieConfigForHost(host),
+    callbacks: {
+      ...authOptionsBase.callbacks,
+      async signIn(params: any) {
+        if (params.account?.provider === 'google' && sicHost) {
+          return signInGoogleOnSic(params.user)
+        }
+        return authOptionsBase.callbacks.signIn(params)
+      },
+      async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
+        if (sicHost) {
+          if (url.startsWith('/') && !url.startsWith('//')) return `${SIC_SITE_ORIGIN}${url}`
+          try {
+            if (isSicProductionHostname(new URL(url).hostname)) return url
+          } catch {
+            /* ignore */
+          }
+          return `${SIC_SITE_ORIGIN}/sic/admin`
+        }
+        if (url.startsWith('/') && !url.startsWith('//')) return `${baseUrl}${url}`
+        try {
+          if (new URL(url).origin === baseUrl) return url
+        } catch {
+          /* ignore */
+        }
+        return baseUrl
+      },
+    },
+  }
 }
 
 const authOptionsBase = {
