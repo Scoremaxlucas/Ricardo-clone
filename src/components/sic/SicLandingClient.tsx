@@ -613,11 +613,12 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               </p>
             </div>
             <div className="mt-2.5 flex gap-1.5" aria-hidden>
-              {SIC_MODULES.map((m, i) => (
+              {SIC_MODULES.map(m => (
                 <span
                   key={m.id}
+                  title={m.title}
                   className={`h-2 flex-1 rounded-full ${
-                    i < coveredCount ? 'bg-sic-navy' : 'bg-slate-200'
+                    owned.has(m.id) || selected.has(m.id) ? 'bg-sic-navy' : 'bg-slate-200'
                   }`}
                 />
               ))}
