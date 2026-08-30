@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { isSicWwwHostname, sicApexHostname, sicApiBlockedOffHost, SIC_SITE_ORIGIN } from '@/lib/sic/config'
 
 describe('SIC apex canonical host', () => {
-  it('treats www as the alias that must redirect, apex as the destination', () => {
+  it('treats www as an alias of the apex, not a second product', () => {
     expect(sicApexHostname()).toBe('swissimmocert.ch')
     expect(SIC_SITE_ORIGIN).not.toMatch(/www\./)
     expect(isSicWwwHostname('www.swissimmocert.ch')).toBe(true)

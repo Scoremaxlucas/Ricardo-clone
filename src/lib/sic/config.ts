@@ -14,9 +14,10 @@ export const SIC_REVIEW_SLA_SENTENCE = 'In der Regel innerhalb eines Werktags na
 
 /**
  * Kanonische Origin der SIC-Plattform (Apex — nicht www).
- * Vercel: www → Apex redirecten (nicht Apex → www), sonst SSL-Warnung:
- * Zertifikat deckt oft nur swissimmocert.ch ab, Redirect auf www schlägt fehl.
  * Env: `NEXT_PUBLIC_SIC_URL=https://swissimmocert.ch`
+ *
+ * Vercel kann den Apex trotzdem auf www umleiten. Dann darf die Middleware
+ * nicht www → Apex schicken — das ist die Safari-Schleife «Too many redirects».
  */
 export const SIC_SITE_ORIGIN = (
   process.env.NEXT_PUBLIC_SIC_URL || 'https://swissimmocert.ch'
@@ -94,7 +95,7 @@ export function sicApexHostname(): string {
   }
 }
 
-/** www-Variante — Middleware leitet 308 auf {@link SIC_SITE_ORIGIN}. */
+/** www-Variante des Apex — Alias, kein Gegen-Redirect in der Middleware. */
 export function isSicWwwHostname(host: string): boolean {
   const h = host.split(':')[0].toLowerCase()
   if (!h.startsWith('www.')) return false

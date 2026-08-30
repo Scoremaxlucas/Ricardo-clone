@@ -5,7 +5,6 @@ import type { NextRequest } from 'next/server'
 import {
   isLegacySicHostname,
   isSicProductionHostname,
-  isSicWwwHostname,
   sicApiBlockedOffHost,
   SIC_PREVIEW_COOKIE,
   SIC_PREVIEW_COOKIE_LEGACY,
@@ -168,11 +167,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // ─── SIC-Host: nur Swiss Immo Cert ───────────────────────────────────────
+  // www und Apex beide bedienen. Vercel leitet den Apex auf www (308, vor Next).
+  // Ein Gegen-Redirect www → Apex in der Middleware erzeugt eine Schleife
+  // (Safari: Too many redirects).
   if (onSicHost) {
-    if (isSicWwwHostname(host)) {
-      return NextResponse.redirect(new URL(pathname + search, SIC_SITE_ORIGIN), 308)
-    }
-
     if (pathname === '/') {
       const rewrite = request.nextUrl.clone()
       rewrite.pathname = '/sic'

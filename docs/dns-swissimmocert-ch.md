@@ -7,20 +7,18 @@ Code erwartet **`https://swissimmocert.ch`** (Apex) als SIC-Host (`NEXT_PUBLIC_S
 
 Vercel-Zertifikat deckt oft nur **`swissimmocert.ch`** ab, **nicht** `www`.
 
-Wenn **«Redirect apex → www»** aktiv ist:
+Wenn **«Redirect apex → www»** in Vercel aktiv ist **und** die App www → Apex umleitet, entsteht eine Schleife. Safari: **Too many redirects** (`www.swissimmocert.ch`).
 
-1. Browser öffnet Apex (TLS ok)
-2. Redirect auf `https://www.swissimmocert.ch`
-3. Safari: **«This Connection Is Not Private»** — Cert hat kein `www` in den SANs
+Die Middleware leitet deshalb **nicht** www → Apex. www wird wie Apex bedient. Apex bleibt die Origin in Links (`NEXT_PUBLIC_SIC_URL`); Vercel darf Apex einmal auf www schicken.
 
-**Fix:** Redirect umdrehen → **www → Apex**.
+**Besser in Vercel (optional):** Apex als Primary, www zeigt auf Apex — dann landet alles ohne www. Nicht beides gegeneinander.
 
 ### Klick-Schritte in Vercel
 
 1. Projekt → **Settings → Domains**
 2. Bei **`swissimmocert.ch`** / **`www.swissimmocert.ch`**: Redirect- oder Edit-Option öffnen
-3. **Nicht** «Redirect apex to www» — stattdessen Apex als Primary, www zeigt/redirectet auf Apex
-4. Speichern, 1–2 Min warten, hart neu laden (`https://swissimmocert.ch`)
+3. Entweder Apex primary (www → Apex) **oder** www primary (Apex → www) — nie beide Richtungen
+4. Speichern, 1–2 Min warten, hart neu laden
 
 ### Metanet CNAME
 
@@ -45,9 +43,9 @@ Nach Env-Änderung: Redeploy.
 
 ## Checkliste
 
-- [ ] Redirect **www → Apex** (nicht Apex → www)
+- [ ] Nur **eine** Redirect-Richtung (nie Middleware und Vercel gegeneinander)
 - [ ] Vercel Domains **Valid**
-- [ ] `https://swissimmocert.ch` ohne Safari-Warnung
+- [ ] `https://www.swissimmocert.ch` ohne Safari-Schleife
 - [ ] Env `NEXT_PUBLIC_SIC_URL=https://swissimmocert.ch` + Redeploy
 
 ## Lokal
