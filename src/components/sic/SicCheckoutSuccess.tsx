@@ -14,7 +14,6 @@ type State = {
 
 const POLL_MS = 2500
 const POLL_MAX = 24 // ~60s
-const REDIRECT_MS = 800
 
 export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
   const router = useRouter()
@@ -40,6 +39,10 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
     }
   }, [sessionId])
 
+  const goToWorkspace = useCallback(() => {
+    router.replace(sicPaths.certificateWorkspace)
+  }, [router])
+
   useEffect(() => {
     if (done.current) return
     let cancelled = false
@@ -49,7 +52,12 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
       const next = await confirm()
       if (cancelled) return
       setState(next)
-      if (next.status === 'ok' || next.status === 'error') {
+      if (next.status === 'ok') {
+        done.current = true
+        goToWorkspace()
+        return
+      }
+      if (next.status === 'error') {
         done.current = true
         return
       }
@@ -63,22 +71,19 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
       cancelled = true
       if (timer) clearTimeout(timer)
     }
-  }, [confirm])
-
-  useEffect(() => {
-    if (state.status !== 'ok') return
-    const t = setTimeout(() => {
-      router.replace(sicPaths.certificateWorkspace)
-    }, REDIRECT_MS)
-    return () => clearTimeout(t)
-  }, [state.status, router])
+  }, [confirm, goToWorkspace])
 
   async function retryConfirm() {
     done.current = false
     setState({ status: 'loading' })
     const next = await confirm()
     setState(next)
-    if (next.status === 'ok' || next.status === 'error') done.current = true
+    if (next.status === 'ok') {
+      done.current = true
+      goToWorkspace()
+      return
+    }
+    if (next.status === 'error') done.current = true
   }
 
   return (
@@ -92,9 +97,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
 
       {state.status === 'ok' && (
         <>
-          <Loader2 className="h-10 w-10 animate-spin text-sic-navy" />
-          <h1 className="mt-4 font-sic-serif text-2xl font-bold tracking-tight text-sic-navy">Zahlung erfolgreich</h1>
-          <p className="mt-3 text-slate-600">Weiter zu deinen Unterlagen …</p>
+          <h1 className="font-sic-serif text-2xl font-bold tracking-tight text-sic-navy">Zahlung bestätigt</h1>
           <Link
             href={sicPaths.certificateWorkspace}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep"
@@ -118,7 +121,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
           {polls.current >= POLL_MAX ?
             <button
               type="button"
-              onClick={retryConfirm}
+              onClick={() => void retryConfirm()}
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep"
             >
               <RefreshCw className="h-4 w-4" /> Erneut prüfen
@@ -135,7 +138,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
           </p>
           <button
             type="button"
-            onClick={retryConfirm}
+            onClick={() => void retryConfirm()}
             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep"
           >
             <RefreshCw className="h-4 w-4" /> Erneut prüfen
