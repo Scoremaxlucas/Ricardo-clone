@@ -5,17 +5,18 @@ import type { NextRequest } from 'next/server'
 import {
   isLegacySicHostname,
   isSicProductionHostname,
+  isSicWwwHostname,
   SIC_PREVIEW_COOKIE,
   SIC_PREVIEW_COOKIE_LEGACY,
   SIC_SITE_ORIGIN,
 } from '@/lib/sic/config'
-import { shouldRedirectSicWwwToApex } from '@/lib/sic/google-oauth'
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 
 const WOHNEN_PREVIEW_COOKIE = 'helvenda-wohnen-preview'
 
 function rawHost(request: NextRequest): string {
-  return (request.headers.get('host') || '').split(':')[0].toLowerCase()
+  const forwarded = (request.headers.get('x-forwarded-host') || '').split(',')[0].trim()
+  return (forwarded || request.headers.get('host') || '').split(':')[0].toLowerCase()
 }
 
 /**
@@ -163,7 +164,7 @@ export async function middleware(request: NextRequest) {
 
   // ─── SIC-Host: nur Swiss Immo Cert ───────────────────────────────────────
   if (onSicHost) {
-    if (shouldRedirectSicWwwToApex(host, pathname)) {
+    if (isSicWwwHostname(host)) {
       return NextResponse.redirect(new URL(pathname + search, SIC_SITE_ORIGIN), 308)
     }
 

@@ -67,6 +67,23 @@ export function isSicProductionHostname(host: string): boolean {
   return sicProductionHosts().includes(h)
 }
 
+export function sicApexHostname(): string {
+  try {
+    return new URL(SIC_SITE_ORIGIN).hostname.toLowerCase()
+  } catch {
+    return 'swissimmocert.ch'
+  }
+}
+
+/** www-Variante — Middleware leitet 308 auf {@link SIC_SITE_ORIGIN}. */
+export function isSicWwwHostname(host: string): boolean {
+  const h = host.split(':')[0].toLowerCase()
+  if (!h.startsWith('www.')) return false
+  const apex = sicApexHostname()
+  if (h === apex) return false
+  return h === `www.${apex}` || isSicProductionHostname(h)
+}
+
 export function isSicBrowserHost(): boolean {
   if (typeof window === 'undefined') return false
   const h = window.location.hostname.toLowerCase()

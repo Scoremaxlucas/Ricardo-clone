@@ -4,6 +4,7 @@ import { DeferredComponents } from '@/components/DeferredComponents'
 import { SkipLinks } from '@/components/accessibility/SkipLinks'
 import { Providers } from '@/components/providers'
 import { isSicSiteHostFromHeaders } from '@/lib/tenant-host'
+import { SIC_SITE_ORIGIN } from '@/lib/sic/config'
 import { BASE_URL } from '@/lib/seo'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { headers } from 'next/headers'
@@ -56,7 +57,7 @@ export async function generateMetadata(): Promise<Metadata> {
   // SIC-Host (früher Helvenda Wohnen): nur noch Swiss Immo Cert
   if (isSicSiteHostFromHeaders(h) || h.get('x-sic-host') === '1' || h.get('x-sic-route') === '1') {
     return {
-      metadataBase: requestOriginUrl(h),
+      metadataBase: new URL(SIC_SITE_ORIGIN),
       title: {
         default: 'Swiss Immo Cert — Das geprüfte Schweizer Mieter-Zertifikat',
         template: '%s | Swiss Immo Cert',

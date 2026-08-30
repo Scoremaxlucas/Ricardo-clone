@@ -19,24 +19,6 @@ export function googleOAuthCallbackUrlForHost(host?: string | null): string {
   return `${base}${GOOGLE_OAUTH_CALLBACK_PATH}`
 }
 
-/** www.swissimmocert.ch → Apex, sonst landet Google-OAuth auf dem falschen Host. */
-export function shouldRedirectSicWwwToApex(host: string, pathname: string): boolean {
-  const h = host.split(':')[0].toLowerCase()
-  if (!h.startsWith('www.')) return false
-  if (!isSicProductionHostname(h)) return false
-  try {
-    const apex = new URL(SIC_SITE_ORIGIN).hostname.toLowerCase()
-    if (h === apex) return false
-  } catch {
-    if (h === 'swissimmocert.ch') return false
-  }
-  return (
-    pathname.startsWith('/api/auth') ||
-    pathname === '/login' ||
-    pathname.startsWith('/sic/admin')
-  )
-}
-
 export function sicPostLoginPath(callbackUrl?: string | null): string {
   if (callbackUrl && callbackUrl.startsWith('/') && !callbackUrl.startsWith('//')) {
     return callbackUrl
