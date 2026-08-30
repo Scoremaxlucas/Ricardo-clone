@@ -2,6 +2,8 @@ import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 
 export const SIC_BRAND_NAME = 'Swiss Immo Cert'
 export const SIC_BRAND_SHORT = 'SIC'
+/** Rechtsträgerin der Prüfung — auf dem PDF statt einer leeren Unterschriftslinie. */
+export const SIC_ISSUER_LINE = 'Score-Max GmbH · Prüfung'
 
 /**
  * Prüfung eingereichter Unterlagen — derselbe Satz in AGB, FAQ, Landing, Dossier, Mail.

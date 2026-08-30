@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { SicVerifyDocument } from '@/components/sic/SicVerifyDocument'
 import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
 import { SIC_SCOPE_NOTE } from '@/lib/sic/modules'
-import { SIC_BRAND_NAME } from '@/lib/sic/config'
+import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
 
 describe('SicVerifyDocument', () => {
   it('renders the certificate hierarchy for a valid code', () => {
@@ -33,6 +33,8 @@ describe('SicVerifyDocument', () => {
     expect(html).toContain('VERIFIZIERT')
     expect(html).toContain(SIC_SCOPE_NOTE)
     expect(html).toContain(SIC_CERT_TAGLINE)
+    expect(html).toContain(SIC_ISSUER_LINE)
+    expect(html).toContain('01.08.2026')
     expect(html).not.toContain('Vertrauenswürdig')
     expect(html).toContain('Gültiges Zertifikat')
     expect(html).not.toContain('lucide')

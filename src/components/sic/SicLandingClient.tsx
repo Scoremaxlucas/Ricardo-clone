@@ -17,7 +17,7 @@ import {
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { SIC_DOCS_RETENTION_DAYS } from '@/lib/sic/validity'
 import type { SicLandingAccount } from '@/lib/sic/landing-account'
-import { sicPaths, SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
+import { sicPaths, SIC_BRAND_NAME, SIC_ISSUER_LINE, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
 import {
   CornerFlourish,
   CrestWithLaurel,
@@ -1062,10 +1062,8 @@ function CertUrkundeCard() {
           <div className="mt-3 flex items-end justify-between gap-2 border-t border-sic-hairline pt-3">
             <Seal size={44} />
             <div className="mb-0.5 hidden flex-1 flex-col items-center sm:flex">
-              <span className="h-px w-24 bg-sic-navy" />
-              <p className="mt-1 text-center text-[9px] text-slate-500">
-                {SIC_BRAND_NAME} · {SIC_CERT_TAGLINE}
-              </p>
+              <p className="text-center text-[10px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
+              <p className="mt-0.5 text-center text-[9px] text-slate-500">12.06.2026</p>
             </div>
             <p className="mb-0.5 max-w-[4.75rem] border border-sic-gold bg-sic-paper-soft px-1.5 py-1.5 text-center text-[8px] font-bold uppercase leading-tight tracking-[0.08em] text-sic-gold-text">
               Online bestätigt

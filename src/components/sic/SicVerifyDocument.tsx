@@ -7,7 +7,7 @@ import {
   Seal,
 } from '@/lib/sic/cert/art-web'
 import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
-import { SIC_BRAND_NAME } from '@/lib/sic/config'
+import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
 import type { SicVerifiedModuleView } from '@/lib/sic/dossier'
 import { SIC_SCOPE_NOTE } from '@/lib/sic/modules'
 import type { ReactNode } from 'react'
@@ -173,10 +173,8 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
       <div className="mt-6 flex items-end justify-between gap-3">
         <Seal size={58} />
         <div className="mb-1 hidden flex-1 flex-col items-center sm:flex">
-          <span className="h-px w-36 bg-sic-navy" />
-          <p className="mt-1.5 text-center text-[10px] text-slate-500">
-            {SIC_BRAND_NAME} · {SIC_CERT_TAGLINE}
-          </p>
+          <p className="text-center text-[11px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
+          <p className="mt-0.5 text-center text-[10px] text-slate-500">{fmt(issuedAt)}</p>
         </div>
         <div className="mb-0.5 max-w-[5.5rem] text-center">
           <p className="border border-sic-gold bg-sic-paper-soft px-1.5 py-2 text-[9px] font-bold uppercase leading-tight tracking-[0.08em] text-sic-gold-text">

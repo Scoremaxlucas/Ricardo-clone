@@ -7,7 +7,7 @@ import {
   Seal,
 } from '@/lib/sic/cert/art'
 import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
-import { SIC_BRAND_NAME } from '@/lib/sic/config'
+import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
 import { SIC_CERT_BACKDROP_DATA_URL } from '@/lib/sic/cert/backdrop-asset'
 import { CERT } from '@/lib/sic/cert/tokens'
 import type { SicModuleId } from '@/lib/sic/modules'
@@ -210,8 +210,13 @@ const s = StyleSheet.create({
 
   signRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
   signCol: { alignItems: 'center', flex: 1, marginHorizontal: 12 },
-  signLine: { width: 150, borderBottomWidth: 1, borderBottomColor: C.navy, height: 20 },
-  signLabel: { marginTop: 4, fontSize: 7.5, color: C.muted, textAlign: 'center' },
+  signIssuer: {
+    fontSize: 8.5,
+    fontFamily: 'Helvetica-Bold',
+    color: C.navy,
+    textAlign: 'center',
+  },
+  signDate: { marginTop: 3, fontSize: 7.5, color: C.muted, textAlign: 'center' },
   qrCol: { alignItems: 'center' },
   qr: { width: 58, height: 58 },
   qrText: { fontSize: 6.2, color: C.muted, marginTop: 3, textAlign: 'center', maxWidth: 78 },
@@ -357,10 +362,8 @@ export function SicCertificatePdfDocument(props: {
                 <Seal size={58} />
 
                 <View style={s.signCol}>
-                  <View style={s.signLine} />
-                  <Text style={s.signLabel}>
-                    {SIC_BRAND_NAME} · {SIC_CERT_TAGLINE}
-                  </Text>
+                  <Text style={s.signIssuer}>{SIC_ISSUER_LINE}</Text>
+                  <Text style={s.signDate}>{fmt(issuedAt)}</Text>
                 </View>
 
                 <View style={s.qrCol}>
