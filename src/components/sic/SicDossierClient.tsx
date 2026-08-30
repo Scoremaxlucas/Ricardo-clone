@@ -77,15 +77,18 @@ function certificateStatusMeta(dossier: SicDossierView): { label: string; classN
 
 function DocumentChip({
   doc,
+  status,
   canRemove,
   onRemove,
   removing,
 }: {
   doc: SicUploadedDocMeta
+  status: ModuleStatus
   canRemove: boolean
   onRemove: () => void
   removing: boolean
 }) {
+  const meta = STATUS_META[status]
   return (
     <li className="flex items-center gap-3 rounded-xl border border-sic-hairline bg-sic-paper px-3 py-2.5">
       <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-sic-hairline bg-sic-paper-soft">
@@ -97,8 +100,10 @@ function DocumentChip({
         </p>
         <p className="mt-0.5 text-[11px] text-slate-500">{formatBytes(doc.sizeBytes)}</p>
       </div>
-      <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-md bg-sic-review-bg px-2 py-0.5 text-[10px] font-semibold text-sic-review-text">
-        <Clock className="h-3 w-3" /> In Prüfung
+      <span
+        className={`inline-flex flex-shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${meta.className}`}
+      >
+        <meta.Icon className="h-3 w-3" /> {meta.label}
       </span>
       {canRemove ?
         <button
@@ -536,20 +541,22 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                   <p className="mt-1.5 text-[11px] text-slate-400">
                     PDF oder Foto. Mehrere Dateien nacheinander sind möglich.
                   </p>
-                  {m.documents.length > 0 ?
-                    <ul className="mt-3 space-y-2">
-                      {m.documents.map(d => (
-                        <DocumentChip
-                          key={d.id}
-                          doc={d}
-                          canRemove={canRemoveDocs}
-                          removing={removingId === d.id}
-                          onRemove={() => removeDocument(d.id)}
-                        />
-                      ))}
-                    </ul>
-                  : null}
                 </div>
+              : null}
+
+              {m.documents.length > 0 ?
+                <ul className="mt-3 space-y-2">
+                  {m.documents.map(d => (
+                    <DocumentChip
+                      key={d.id}
+                      doc={d}
+                      status={m.status}
+                      canRemove={canRemoveDocs}
+                      removing={removingId === d.id}
+                      onRemove={() => removeDocument(d.id)}
+                    />
+                  ))}
+                </ul>
               : null}
 
               {m.status === 'IN_REVIEW' ?
