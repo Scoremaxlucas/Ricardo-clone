@@ -7,7 +7,9 @@ import {
   encodeAdminQueueCursor,
   moduleStatusesForQueueFilter,
   parseSicAdminQueueFilter,
+  parseSicAdminSearchQuery,
 } from '@/lib/sic/admin-queue'
+import { normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
 import { sendSicCertificateReadyEmail, sendSicModuleRejectedEmail } from '@/lib/sic/email'
 import { normalizeSicFacts, readSicFacts } from '@/lib/sic/facts'
 import { sicLog } from '@/lib/sic/log'
@@ -15,9 +17,105 @@ import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { getSicModule, isSicModuleId } from '@/lib/sic/modules'
 import { approveSicModule, rejectSicModule } from '@/lib/sic/review'
 import { sicReviewSlaOverdue } from '@/lib/sic/review-sla'
+import { normalizeEmail } from '@/lib/sic/session'
 import { NextRequest, NextResponse } from 'next/server'
+import type { Prisma } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
+
+const CERT_INCLUDE = {
+  modules: { orderBy: { createdAt: 'asc' as const } },
+  documents: {
+    select: { id: true, moduleKind: true, fileName: true, contentType: true, uploadedAt: true },
+    orderBy: { uploadedAt: 'asc' as const },
+  },
+} satisfies Prisma.SicCertificateInclude
+
+type CertWithReview = Prisma.SicCertificateGetPayload<{ include: typeof CERT_INCLUDE }>
+
+function mapCertToReviewItem(c: CertWithReview) {
+  return {
+    id: c.id,
+    email: c.email,
+    certificateCode: c.certificateCode,
+    holderName: `${c.holderFirstName ?? ''} ${c.holderLastName ?? ''}`.trim() || null,
+    certifiedAt: c.certifiedAt ? c.certifiedAt.toISOString() : null,
+    expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
+    updatedAt: c.updatedAt.toISOString(),
+    modules: c.modules.map(m => {
+      const docs = c.documents.filter(d => d.moduleKind === m.moduleKind)
+      return {
+        moduleKind: m.moduleKind,
+        title: isSicModuleId(m.moduleKind) ? getSicModule(m.moduleKind).title : m.moduleKind,
+        status: m.status,
+        reviewNote: m.reviewNote,
+        reviewedAt: m.reviewedAt ? m.reviewedAt.toISOString() : null,
+        reviewedByUserId: m.reviewedByUserId,
+        paidAt: m.paidAt.toISOString(),
+        firstUploadAt: docs[0]?.uploadedAt.toISOString() ?? null,
+        verifiedFacts: isSicModuleId(m.moduleKind) ? readSicFacts(m.moduleKind, m.verifiedFacts) : null,
+        documents: docs.map(d => ({
+          id: d.id,
+          fileName: d.fileName,
+          contentType: d.contentType,
+          uploadedAt: d.uploadedAt.toISOString(),
+        })),
+      }
+    }),
+  }
+}
+
+async function searchCertificates(q: string): Promise<CertWithReview[]> {
+  const email = normalizeEmail(q)
+  const code = normalizeSicCertificateCode(q)
+
+  const [direct, payments] = await Promise.all([
+    prisma.sicCertificate.findMany({
+      where: {
+        OR: [{ email: { contains: email } }, { certificateCode: { contains: code } }],
+      },
+      include: CERT_INCLUDE,
+      orderBy: { updatedAt: 'desc' },
+      take: 30,
+    }),
+    prisma.sicPayment.findMany({
+      where: {
+        OR: [
+          { id: q },
+          { stripeCheckoutSessionId: q },
+          { stripePaymentIntentId: q },
+          ...(q.includes('@') ? [{ email }] : []),
+        ],
+      },
+      select: { certificateId: true, email: true },
+      take: 10,
+    }),
+  ])
+
+  const have = new Set(direct.map(c => c.id))
+  const missingIds = payments
+    .map(p => p.certificateId)
+    .filter((id): id is string => !!id && !have.has(id))
+  const missingEmails = payments
+    .map(p => p.email)
+    .filter(e => !direct.some(c => c.email === e))
+
+  if (missingIds.length === 0 && missingEmails.length === 0) return direct
+
+  const extra = await prisma.sicCertificate.findMany({
+    where: {
+      OR: [
+        ...(missingIds.length > 0 ? [{ id: { in: missingIds } }] : []),
+        ...(missingEmails.length > 0 ? [{ email: { in: missingEmails } }] : []),
+      ],
+    },
+    include: CERT_INCLUDE,
+  })
+
+  const byId = new Map(direct.map(c => [c.id, c]))
+  for (const c of extra) byId.set(c.id, c)
+  return Array.from(byId.values())
+}
 
 /** Liste Zertifikate mit offenen Modulen — Filter, oldest-first, Cursor-Pagination. */
 export async function GET(req: NextRequest) {
@@ -28,28 +126,11 @@ export async function GET(req: NextRequest) {
   const statuses = moduleStatusesForQueueFilter(filter)
   const limit = clampAdminQueueLimit(req.nextUrl.searchParams.get('limit'))
   const decoded = decodeAdminQueueCursor(req.nextUrl.searchParams.get('cursor'))
+  const search = parseSicAdminSearchQuery(req.nextUrl.searchParams.get('q'))
 
-  const [inReview, pendingDocs, certs, inReviewModules] = await Promise.all([
+  const [inReview, pendingDocs, inReviewModules] = await Promise.all([
     prisma.sicCertificateModule.count({ where: { status: 'IN_REVIEW' } }),
     prisma.sicCertificateModule.count({ where: { status: 'PENDING_DOCS' } }),
-    prisma.sicCertificate.findMany({
-      where: {
-        AND: [
-          { modules: { some: { status: { in: statuses } } } },
-          ...(decoded ? [adminQueueCursorWhere(decoded)] : []),
-        ],
-      },
-      // Oldest open work first (cert updated when module changes / upload).
-      orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
-      include: {
-        modules: { orderBy: { createdAt: 'asc' } },
-        documents: {
-          select: { id: true, moduleKind: true, fileName: true, contentType: true, uploadedAt: true },
-          orderBy: { uploadedAt: 'asc' },
-        },
-      },
-      take: limit + 1,
-    }),
     prisma.sicCertificateModule.findMany({
       where: { status: 'IN_REVIEW' },
       select: { certificateId: true, moduleKind: true },
@@ -78,52 +159,49 @@ export async function GET(req: NextRequest) {
     return at ? sicReviewSlaOverdue(at) : false
   }).length
 
+  const counts = {
+    inReview,
+    pendingDocs,
+    totalOpen: inReview + pendingDocs,
+    slaOverdue,
+  }
+
+  if (search) {
+    const found = await searchCertificates(search)
+    return NextResponse.json({
+      ok: true,
+      filter,
+      search,
+      items: found.map(mapCertToReviewItem),
+      nextCursor: null,
+      counts,
+    })
+  }
+
+  const certs = await prisma.sicCertificate.findMany({
+    where: {
+      AND: [
+        { modules: { some: { status: { in: statuses } } } },
+        ...(decoded ? [adminQueueCursorWhere(decoded)] : []),
+      ],
+    },
+    orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
+    include: CERT_INCLUDE,
+    take: limit + 1,
+  })
+
   const page = certs.slice(0, limit)
   const hasMore = certs.length > limit
   const last = page[page.length - 1]
   const nextCursor = hasMore && last ? encodeAdminQueueCursor(last.updatedAt, last.id) : null
 
-  const items = page.map(c => ({
-    id: c.id,
-    email: c.email,
-    certificateCode: c.certificateCode,
-    holderName: `${c.holderFirstName ?? ''} ${c.holderLastName ?? ''}`.trim() || null,
-    certifiedAt: c.certifiedAt ? c.certifiedAt.toISOString() : null,
-    expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
-    updatedAt: c.updatedAt.toISOString(),
-    modules: c.modules.map(m => {
-      const docs = c.documents.filter(d => d.moduleKind === m.moduleKind)
-      return {
-        moduleKind: m.moduleKind,
-        title: isSicModuleId(m.moduleKind) ? getSicModule(m.moduleKind).title : m.moduleKind,
-        status: m.status,
-        reviewNote: m.reviewNote,
-        reviewedAt: m.reviewedAt ? m.reviewedAt.toISOString() : null,
-        reviewedByUserId: m.reviewedByUserId,
-        paidAt: m.paidAt.toISOString(),
-        firstUploadAt: docs[0]?.uploadedAt.toISOString() ?? null,
-        verifiedFacts: isSicModuleId(m.moduleKind) ? readSicFacts(m.moduleKind, m.verifiedFacts) : null,
-        documents: docs.map(d => ({
-          id: d.id,
-          fileName: d.fileName,
-          contentType: d.contentType,
-          uploadedAt: d.uploadedAt.toISOString(),
-        })),
-      }
-    }),
-  }))
-
   return NextResponse.json({
     ok: true,
     filter,
-    items,
+    search: null,
+    items: page.map(mapCertToReviewItem),
     nextCursor,
-    counts: {
-      inReview,
-      pendingDocs,
-      totalOpen: inReview + pendingDocs,
-      slaOverdue,
-    },
+    counts,
   })
 }
 

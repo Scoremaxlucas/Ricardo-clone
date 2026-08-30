@@ -1,10 +1,11 @@
 'use client'
 
+import { parseSicAdminSearchQuery } from '@/lib/sic/admin-queue'
 import { sicFactFields, type SicFactField, type SicFacts } from '@/lib/sic/facts'
 import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
 import { SIC_REJECTION_REASONS } from '@/lib/sic/review'
 import { sicReviewSlaLabel, sicReviewSlaState } from '@/lib/sic/review-sla'
-import { AlertTriangle, Check, ExternalLink, Loader2, Sparkles, X } from 'lucide-react'
+import { AlertTriangle, Check, ExternalLink, Loader2, Search, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
@@ -179,14 +180,17 @@ export function SicAdminReview() {
   const [rejecting, setRejecting] = useState<{ certificateId: string; moduleKind: string; title: string } | null>(
     null
   )
+  const [queryInput, setQueryInput] = useState('')
+  const [activeQuery, setActiveQuery] = useState<string | null>(null)
 
-  const fetchPage = useCallback(async (opts: { filter: Filter; cursor?: string | null }) => {
+  const fetchPage = useCallback(async (opts: { filter: Filter; cursor?: string | null; q?: string | null }) => {
     const params = new URLSearchParams({ status: opts.filter, limit: '50' })
     if (opts.cursor) params.set('cursor', opts.cursor)
+    if (opts.q) params.set('q', opts.q)
     const res = await fetch(`/api/sic/admin/review?${params}`)
     const data = await res.json().catch(() => ({}))
     if (!res.ok || !data?.ok) throw new Error(data?.message || 'Laden fehlgeschlagen.')
-    return data as { items: Item[]; nextCursor: string | null; counts: Counts }
+    return data as { items: Item[]; nextCursor: string | null; counts: Counts; search?: string | null }
   }, [])
 
   const seedFacts = useCallback((rows: Item[]) => {
@@ -203,10 +207,10 @@ export function SicAdminReview() {
   }, [])
 
   const load = useCallback(
-    async (nextFilter: Filter = filter) => {
+    async (nextFilter: Filter = filter, q: string | null = activeQuery) => {
       setLoading(true)
       try {
-        const data = await fetchPage({ filter: nextFilter })
+        const data = await fetchPage({ filter: nextFilter, q })
         setItems(data.items)
         setNextCursor(data.nextCursor)
         setCounts(data.counts)
@@ -218,18 +222,18 @@ export function SicAdminReview() {
         setLoading(false)
       }
     },
-    [fetchPage, filter, seedFacts]
+    [fetchPage, filter, activeQuery, seedFacts]
   )
 
   useEffect(() => {
-    void load(filter)
-  }, [filter]) // eslint-disable-line react-hooks/exhaustive-deps -- reload on filter change only
+    void load(filter, activeQuery)
+  }, [filter, activeQuery]) // eslint-disable-line react-hooks/exhaustive-deps -- reload on filter/search change only
 
   async function loadMore() {
     if (!nextCursor || loadingMore) return
     setLoadingMore(true)
     try {
-      const data = await fetchPage({ filter, cursor: nextCursor })
+      const data = await fetchPage({ filter, cursor: nextCursor, q: activeQuery })
       setItems(prev => [...prev, ...data.items])
       setNextCursor(data.nextCursor)
       setCounts(data.counts)
@@ -284,7 +288,7 @@ export function SicAdminReview() {
         return
       }
       toast.success('Freigegeben — Zertifikat aktualisiert.')
-      await load(filter)
+      await load(filter, activeQuery)
     } catch {
       toast.error('Netzwerkfehler.')
     } finally {
@@ -308,7 +312,7 @@ export function SicAdminReview() {
       }
       toast.success('Abgelehnt — Bewerber benachrichtigt.')
       setRejecting(null)
-      await load(filter)
+      await load(filter, activeQuery)
     } catch {
       toast.error('Netzwerkfehler.')
     } finally {
@@ -342,6 +346,54 @@ export function SicAdminReview() {
         : 'Nichts überfällig.'}
       </p>
 
+      <form
+        className="mt-4 flex flex-wrap items-center gap-2"
+        onSubmit={e => {
+          e.preventDefault()
+          const parsed = parseSicAdminSearchQuery(queryInput)
+          if (!parsed) {
+            toast.error('Mindestens 3 Zeichen: E-Mail, SIC-Code oder Zahlungs-ID.')
+            return
+          }
+          setActiveQuery(parsed)
+        }}
+      >
+        <label htmlFor="sic-admin-search" className="sr-only">
+          Suche
+        </label>
+        <input
+          id="sic-admin-search"
+          type="search"
+          value={queryInput}
+          onChange={e => setQueryInput(e.target.value)}
+          placeholder="E-Mail, SIC-Code oder Zahlungs-ID"
+          className="min-w-[16rem] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-sic-navy"
+        />
+        <button
+          type="submit"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-sic-navy px-3.5 py-2 text-sm font-semibold text-white hover:bg-sic-navy-soft"
+        >
+          <Search className="h-4 w-4" /> Suchen
+        </button>
+        {activeQuery ?
+          <button
+            type="button"
+            onClick={() => {
+              setQueryInput('')
+              setActiveQuery(null)
+            }}
+            className="text-sm font-semibold text-slate-600 hover:underline"
+          >
+            Queue zeigen
+          </button>
+        : null}
+      </form>
+      {activeQuery ?
+        <p className="mt-2 text-xs text-slate-500">
+          Suche nach «{activeQuery}» — alle Zertifikate, nicht nur die Queue.
+        </p>
+      : null}
+
       <div className="mt-4 flex flex-wrap gap-2">
         {TABS.map(t => {
           const badge =
@@ -371,7 +423,7 @@ export function SicAdminReview() {
         })}
       </div>
 
-      {depthForFilter > items.length && items.length > 0 ?
+      {depthForFilter > items.length && items.length > 0 && !activeQuery ?
         <p className="mt-3 text-xs text-slate-500">
           Zeige {items.length} von {depthForFilter} — älteste zuerst. Weitere Seiten laden.
         </p>
@@ -382,7 +434,9 @@ export function SicAdminReview() {
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       : items.length === 0 ?
-        <p className="mt-10 text-slate-500">Nichts zu prüfen in diesem Filter.</p>
+        <p className="mt-10 text-slate-500">
+          {activeQuery ? 'Kein Zertifikat zu dieser Suche.' : 'Nichts zu prüfen in diesem Filter.'}
+        </p>
       : <div className="mt-6 space-y-5">
           {items.map(item => (
             <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-5">

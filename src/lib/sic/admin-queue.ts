@@ -19,6 +19,21 @@ export function clampAdminQueueLimit(raw: string | null, fallback = 50, max = 10
   return Math.min(max, n)
 }
 
+/** Freitextsuche: E-Mail, SIC-Code oder Zahlungs-ID. Unter 3 Zeichen = Queue. */
+export function parseSicAdminSearchQuery(raw: string | null): string | null {
+  const q = (raw ?? '').trim().replace(/\s+/g, ' ')
+  if (q.length < 3) return null
+  return q.slice(0, 120)
+}
+
+const STRIPE_PAYMENT_ID_RE = /^(cs|pi)_[A-Za-z0-9_]+$/i
+const CUID_RE = /^c[a-z0-9]{20,}$/i
+
+export function sicAdminSearchLooksLikePaymentId(q: string): boolean {
+  const t = q.trim()
+  return STRIPE_PAYMENT_ID_RE.test(t) || CUID_RE.test(t)
+}
+
 /** Cursor = `${updatedAtISO}|${id}` für Sortierung updatedAt asc, id asc. */
 export function encodeAdminQueueCursor(updatedAt: Date, id: string): string {
   return `${updatedAt.toISOString()}|${id}`

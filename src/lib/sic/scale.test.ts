@@ -6,6 +6,8 @@ import {
   encodeAdminQueueCursor,
   moduleStatusesForQueueFilter,
   parseSicAdminQueueFilter,
+  parseSicAdminSearchQuery,
+  sicAdminSearchLooksLikePaymentId,
 } from '@/lib/sic/admin-queue'
 import { cronBudgetState, isFullStripeRefund } from '@/lib/sic/refund-gate'
 
@@ -73,5 +75,23 @@ describe('admin queue helpers', () => {
     const at = new Date('2026-08-01T12:00:00.000Z')
     const w = adminQueueCursorWhere({ updatedAt: at, id: 'abc' })
     expect(w.OR).toHaveLength(2)
+  })
+})
+
+describe('admin search query', () => {
+  it('rejects empty and short input', () => {
+    expect(parseSicAdminSearchQuery(null)).toBeNull()
+    expect(parseSicAdminSearchQuery('  ab  ')).toBeNull()
+  })
+  it('trims and caps length', () => {
+    expect(parseSicAdminSearchQuery('  max@sic.ch  ')).toBe('max@sic.ch')
+    expect(parseSicAdminSearchQuery('x'.repeat(200))?.length).toBe(120)
+  })
+  it('recognises Stripe and cuid payment ids', () => {
+    expect(sicAdminSearchLooksLikePaymentId('cs_test_abc123')).toBe(true)
+    expect(sicAdminSearchLooksLikePaymentId('pi_3AbcDef')).toBe(true)
+    expect(sicAdminSearchLooksLikePaymentId('clxyz01234567890123456789')).toBe(true)
+    expect(sicAdminSearchLooksLikePaymentId('max@sic.ch')).toBe(false)
+    expect(sicAdminSearchLooksLikePaymentId('SIC-2026-ABCDEFGH')).toBe(false)
   })
 })
