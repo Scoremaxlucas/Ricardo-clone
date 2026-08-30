@@ -1,5 +1,6 @@
 'use client'
 
+import { SicAdminFunnel } from '@/components/sic/SicAdminFunnel'
 import { SicAdminReviewPreview } from '@/components/sic/SicAdminReviewPreview'
 import { parseSicAdminSearchQuery } from '@/lib/sic/admin-queue'
 import { sicFactFields, type SicFactField, type SicFacts } from '@/lib/sic/facts'
@@ -542,6 +543,8 @@ export function SicAdminReview() {
           `${counts.slaOverdue} ${counts.slaOverdue === 1 ? 'Angabe ist' : 'Angaben sind'} überfällig.`
         : 'Nichts überfällig.'}
       </p>
+
+      <SicAdminFunnel />
 
       <form
         className="mt-4 flex flex-wrap items-center gap-2"
