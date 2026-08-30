@@ -3,6 +3,7 @@
 import { sicFactFields, type SicFactField, type SicFacts } from '@/lib/sic/facts'
 import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
 import { SIC_REJECTION_REASONS } from '@/lib/sic/review'
+import { sicReviewSlaLabel, sicReviewSlaState } from '@/lib/sic/review-sla'
 import { AlertTriangle, Check, ExternalLink, Loader2, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -30,7 +31,7 @@ type Item = {
   updatedAt: string
   modules: Module[]
 }
-type Counts = { inReview: number; pendingDocs: number; totalOpen: number }
+type Counts = { inReview: number; pendingDocs: number; totalOpen: number; slaOverdue: number }
 type Filter = 'IN_REVIEW' | 'PENDING_DOCS' | 'all'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -168,7 +169,7 @@ function RejectDialog({
 export function SicAdminReview() {
   const [filter, setFilter] = useState<Filter>('IN_REVIEW')
   const [items, setItems] = useState<Item[]>([])
-  const [counts, setCounts] = useState<Counts>({ inReview: 0, pendingDocs: 0, totalOpen: 0 })
+  const [counts, setCounts] = useState<Counts>({ inReview: 0, pendingDocs: 0, totalOpen: 0, slaOverdue: 0 })
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -326,7 +327,19 @@ export function SicAdminReview() {
       <p className="mt-1 text-sm text-slate-500">
         Queue: <span className="font-semibold text-sic-navy">{counts.inReview}</span> in Prüfung ·{' '}
         <span className="font-semibold text-sic-pending-text">{counts.pendingDocs}</span> Nachweise ausstehend ·{' '}
-        {counts.totalOpen} offen
+        {counts.totalOpen} offen · älteste zuerst
+      </p>
+      <p
+        className={`mt-2 rounded-lg px-3 py-2 text-sm ${
+          counts.slaOverdue > 0 ?
+            'bg-sic-danger-bg font-semibold text-sic-danger-text'
+          : 'bg-sic-navy/5 text-sic-navy'
+        }`}
+      >
+        SLA intern: 1 Werktag nach Eingang (Mo–Fr).{' '}
+        {counts.slaOverdue > 0 ?
+          `${counts.slaOverdue} ${counts.slaOverdue === 1 ? 'Angabe ist' : 'Angaben sind'} überfällig.`
+        : 'Nichts überfällig.'}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -389,14 +402,32 @@ export function SicAdminReview() {
                   const actionable = m.status === 'IN_REVIEW' || m.status === 'PENDING_DOCS'
                   const moduleId = isSicModuleId(m.moduleKind) ? m.moduleKind : null
                   const waiting = waitingLabel(m.firstUploadAt ?? m.paidAt)
+                  const sla =
+                    m.status === 'IN_REVIEW' && m.firstUploadAt ?
+                      sicReviewSlaState(new Date(m.firstUploadAt))
+                    : null
+                  const slaText =
+                    m.status === 'IN_REVIEW' && m.firstUploadAt ?
+                      sicReviewSlaLabel(new Date(m.firstUploadAt))
+                    : null
                   const moduleWarnings = warnings[key] ?? []
                   return (
-                    <li key={m.moduleKind} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                    <li
+                      key={m.moduleKind}
+                      className={`rounded-xl border p-4 ${
+                        sla === 'overdue' ?
+                          'border-sic-danger/40 bg-sic-danger-bg/40'
+                        : sla === 'due_today' ?
+                          'border-sic-pending-text/30 bg-sic-pending-bg'
+                        : 'border-slate-100 bg-slate-50'
+                      }`}
+                    >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="text-sm font-semibold text-slate-800">{m.title}</span>
                         <span className="text-xs font-medium text-slate-500">
                           {STATUS_LABEL[m.status] ?? m.status}
                           {waiting && actionable ? ` · ${waiting}` : ''}
+                          {slaText ? ` · ${slaText}` : ''}
                         </span>
                       </div>
 

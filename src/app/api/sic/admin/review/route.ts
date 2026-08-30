@@ -14,6 +14,7 @@ import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { getSicModule, isSicModuleId } from '@/lib/sic/modules'
 import { approveSicModule, rejectSicModule } from '@/lib/sic/review'
+import { sicReviewSlaOverdue } from '@/lib/sic/review-sla'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
   const limit = clampAdminQueueLimit(req.nextUrl.searchParams.get('limit'))
   const decoded = decodeAdminQueueCursor(req.nextUrl.searchParams.get('cursor'))
 
-  const [inReview, pendingDocs, certs] = await Promise.all([
+  const [inReview, pendingDocs, certs, inReviewModules] = await Promise.all([
     prisma.sicCertificateModule.count({ where: { status: 'IN_REVIEW' } }),
     prisma.sicCertificateModule.count({ where: { status: 'PENDING_DOCS' } }),
     prisma.sicCertificate.findMany({
@@ -49,7 +50,33 @@ export async function GET(req: NextRequest) {
       },
       take: limit + 1,
     }),
+    prisma.sicCertificateModule.findMany({
+      where: { status: 'IN_REVIEW' },
+      select: { certificateId: true, moduleKind: true },
+    }),
   ])
+
+  const firstUploadByKey = new Map<string, Date>()
+  if (inReviewModules.length > 0) {
+    const reviewDocs = await prisma.sicDocument.findMany({
+      where: {
+        OR: inReviewModules.map(m => ({
+          certificateId: m.certificateId,
+          moduleKind: m.moduleKind,
+        })),
+      },
+      select: { certificateId: true, moduleKind: true, uploadedAt: true },
+      orderBy: { uploadedAt: 'asc' },
+    })
+    for (const d of reviewDocs) {
+      const key = `${d.certificateId}:${d.moduleKind}`
+      if (!firstUploadByKey.has(key)) firstUploadByKey.set(key, d.uploadedAt)
+    }
+  }
+  const slaOverdue = inReviewModules.filter(m => {
+    const at = firstUploadByKey.get(`${m.certificateId}:${m.moduleKind}`)
+    return at ? sicReviewSlaOverdue(at) : false
+  }).length
 
   const page = certs.slice(0, limit)
   const hasMore = certs.length > limit
@@ -95,6 +122,7 @@ export async function GET(req: NextRequest) {
       inReview,
       pendingDocs,
       totalOpen: inReview + pendingDocs,
+      slaOverdue,
     },
   })
 }
