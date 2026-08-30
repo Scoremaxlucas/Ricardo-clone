@@ -3,7 +3,7 @@
 import { SicLogoMark } from '@/components/sic/SicLogo'
 import { SIC_CERT_TAGLINE, SIC_HERO_IMAGE, SIC_MODULE_ACCENT } from '@/lib/sic/brand'
 import { SIC_FAQ } from '@/lib/sic/faq'
-import { SIC_SCENARIOS } from '@/lib/sic/reviews'
+import { SIC_REVIEWS, SIC_USE_CASES, sicLandingHasReviews } from '@/lib/sic/reviews'
 import {
   formatSicChf,
   getSicModule,
@@ -881,38 +881,49 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       {!isReturning ?
         <section className="border-y border-sic-hairline/70 bg-sic-paper-soft py-16 sm:py-20">
           <div className="mx-auto max-w-5xl px-5">
-            <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-sic-gold-text">
-              Beispielszenarien
-            </p>
-            <h2 className="mt-3 text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
-              So kann eine Bewerbung laufen
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-relaxed text-slate-500">
-              Fiktive Beispiele — keine Kundenbewertungen. Echte Stimmen folgen, sobald wir sie haben.
-            </p>
-            <div className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
-              {SIC_SCENARIOS.map(scenario => (
-                <figure key={scenario.name} className="flex flex-col">
-                  <blockquote className="font-sic-serif text-lg leading-snug text-sic-navy sm:text-[1.15rem]">
-                    «{scenario.quote}»
-                  </blockquote>
-                  <figcaption className="mt-5 flex items-center gap-3 border-t border-sic-hairline pt-4 text-sm text-slate-600">
-                    <span
-                      className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-sic-navy text-[11px] font-semibold tracking-wide text-white"
-                      aria-hidden
-                    >
-                      {scenario.initials}
-                    </span>
-                    <span>
-                      <span className="font-semibold text-sic-navy">{scenario.name}</span>
-                      <span className="text-slate-400"> · </span>
-                      {scenario.place}
-                      <span className="mt-0.5 block text-xs text-slate-500">Beispiel</span>
-                    </span>
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
+            {sicLandingHasReviews() ?
+              <>
+                <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-sic-gold-text">
+                  Stimmen
+                </p>
+                <h2 className="mt-3 text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
+                  Was Bewerberinnen und Bewerber sagen
+                </h2>
+                <div className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
+                  {SIC_REVIEWS.map(review => (
+                    <figure key={`${review.name}-${review.place}`} className="flex flex-col">
+                      <blockquote className="font-sic-serif text-lg leading-snug text-sic-navy sm:text-[1.15rem]">
+                        «{review.quote}»
+                      </blockquote>
+                      <figcaption className="mt-5 border-t border-sic-hairline pt-4 text-sm text-slate-600">
+                        <span className="font-semibold text-sic-navy">{review.name}</span>
+                        <span className="text-slate-400"> · </span>
+                        {review.place}
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
+              </>
+            : <>
+                <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-sic-gold-text">
+                  So läuft es
+                </p>
+                <h2 className="mt-3 text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
+                  Drei Wege, das Zertifikat zu nutzen
+                </h2>
+                <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-relaxed text-slate-500">
+                  Keine Kundenbewertungen — das sind Abläufe, die das Produkt hergibt.
+                </p>
+                <div className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
+                  {SIC_USE_CASES.map(item => (
+                    <article key={item.title} className="flex flex-col">
+                      <h3 className="font-sic-serif text-lg font-bold text-sic-navy">{item.title}</h3>
+                      <p className="mt-3 text-sm leading-relaxed text-slate-600">{item.body}</p>
+                    </article>
+                  ))}
+                </div>
+              </>
+            }
           </div>
         </section>
       : null}
