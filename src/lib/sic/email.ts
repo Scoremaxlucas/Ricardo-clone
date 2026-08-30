@@ -1,6 +1,6 @@
 import { sendEmail } from '@/lib/email/sender'
 import { SIC_COLORS } from '@/lib/sic/brand'
-import { SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL, sicPaths, sicUrl } from '@/lib/sic/config'
+import { SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL, sicFromAddress, sicPaths, sicUrl } from '@/lib/sic/config'
 import {
   sicCertificateReadyCopy,
   sicMagicLinkEmailCopy,
@@ -15,12 +15,6 @@ const PAPER = SIC_COLORS.paper
 const HAIRLINE = SIC_COLORS.hairline
 const INK = '#0f172a'
 const MUTED = '#64748b'
-
-function sicFromAddress(): string {
-  const explicit = process.env.SIC_FROM_EMAIL?.trim()
-  if (explicit) return explicit
-  return `${SIC_BRAND_NAME} <noreply@swissimmocert.ch>`
-}
 
 function sicMail(opts: { to: string; subject: string; html: string; text: string }) {
   return sendEmail({

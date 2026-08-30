@@ -32,6 +32,23 @@ export const SIC_PREVIEW_COOKIE_LEGACY = 'helvenda-sic-preview'
 export const SIC_SUPPORT_EMAIL =
   process.env.SIC_SUPPORT_EMAIL?.trim() || 'support@swissimmocert.ch'
 
+/**
+ * Absender-Postfach — nicht `noreply@` (Spamfilter). Reply-To bleibt Support.
+ * Override: `SIC_FROM_EMAIL` (nackte Adresse oder `Name <addr>`).
+ */
+export const SIC_FROM_MAILBOX = 'hello@swissimmocert.ch'
+
+export function formatSicFromAddress(raw?: string | null): string {
+  const explicit = typeof raw === 'string' ? raw.trim() : ''
+  if (!explicit) return `${SIC_BRAND_NAME} <${SIC_FROM_MAILBOX}>`
+  if (explicit.includes('<')) return explicit
+  return `${SIC_BRAND_NAME} <${explicit}>`
+}
+
+export function sicFromAddress(): string {
+  return formatSicFromAddress(process.env.SIC_FROM_EMAIL)
+}
+
 /** Hostnamen, auf denen SIC gerendert wird (ohne Port). */
 export function sicProductionHosts(): string[] {
   try {
