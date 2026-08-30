@@ -34,7 +34,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
     expiresAt: cert.expiresAt,
     modules: cert.modules,
   })
-  if (!landlordPdfReady || !cert.expiresAt) {
+  const verifiedModules = verifiedModuleLineItems(cert.modules)
+  if (!landlordPdfReady || !cert.expiresAt || verifiedModules.length === 0) {
     return NextResponse.json(
       {
         message:
@@ -43,8 +44,6 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       { status: 403 }
     )
   }
-
-  const verifiedModules = verifiedModuleLineItems(cert.modules)
   const verifyUrl = sicVerifyUrl(cert.certificateCode)
   let qrDataUrl = ''
   try {

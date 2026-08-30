@@ -182,8 +182,6 @@ const s = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  emptyNote: { fontSize: 10, color: C.muted, marginTop: 6, lineHeight: 1.5 },
-
   footer: { position: 'absolute', bottom: 28, left: CERT.frame.padH, right: CERT.frame.padH },
   validityRow: {
     flexDirection: 'row',
@@ -312,31 +310,25 @@ export function SicCertificatePdfDocument(props: {
             </View>
 
             <View style={s.rows}>
-              {verifiedModules.length === 0 ?
-                <Text style={s.emptyNote}>
-                  Basiszertifikat — es wurden noch keine Module verifiziert. Fügen Sie Module hinzu,
-                  um geprüfte Angaben anzuzeigen.
-                </Text>
-              : verifiedModules.map((m, i) => (
-                  <View key={i} style={s.block} wrap={false}>
-                    <View style={s.glyphWrap}>
-                      <ModuleGlyph moduleId={m.id} size={16} />
-                    </View>
-                    <View style={s.blockBody}>
-                      <Text style={s.blockTitle}>{m.title}</Text>
-                      {m.lines.map((line, j) => (
-                        <View key={j} style={s.lineRow}>
-                          <Text style={s.lineDot}>•</Text>
-                          <Text style={s.lineText}>{line}</Text>
-                        </View>
-                      ))}
-                    </View>
-                    <View style={s.badge}>
-                      <Text style={s.badgeText}>VERIFIZIERT</Text>
-                    </View>
+              {verifiedModules.map((m, i) => (
+                <View key={i} style={s.block} wrap={false}>
+                  <View style={s.glyphWrap}>
+                    <ModuleGlyph moduleId={m.id} size={16} />
                   </View>
-                ))
-              }
+                  <View style={s.blockBody}>
+                    <Text style={s.blockTitle}>{m.title}</Text>
+                    {m.lines.map((line, j) => (
+                      <View key={j} style={s.lineRow}>
+                        <Text style={s.lineDot}>•</Text>
+                        <Text style={s.lineText}>{line}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <View style={s.badge}>
+                    <Text style={s.badgeText}>VERIFIZIERT</Text>
+                  </View>
+                </View>
+              ))}
             </View>
 
             <View style={s.footer}>

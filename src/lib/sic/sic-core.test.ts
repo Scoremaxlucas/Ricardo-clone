@@ -247,6 +247,17 @@ describe('landlord PDF gate', () => {
   })
 })
 
+describe('certificate PDF copy', () => {
+  it('has no empty-state Sie/Module wording', async () => {
+    const { readFile } = await import('node:fs/promises')
+    const { join } = await import('node:path')
+    const src = await readFile(join(process.cwd(), 'src/lib/sic/CertificatePdf.tsx'), 'utf8')
+    expect(src).not.toMatch(/Fügen Sie/)
+    expect(src).not.toMatch(/keine Module/)
+    expect(src).not.toMatch(/emptyNote/)
+  })
+})
+
 describe('holder name', () => {
   it('joins only when both parts exist', () => {
     expect(joinHolderName('Anna', 'Muster')).toBe('Anna Muster')
