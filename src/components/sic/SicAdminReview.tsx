@@ -1,5 +1,6 @@
 'use client'
 
+import { SicAdminReviewPreview } from '@/components/sic/SicAdminReviewPreview'
 import { parseSicAdminSearchQuery } from '@/lib/sic/admin-queue'
 import { sicFactFields, type SicFactField, type SicFacts } from '@/lib/sic/facts'
 import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
@@ -772,6 +773,15 @@ export function SicAdminReview() {
                             moduleId={moduleId}
                             values={facts[key] ?? {}}
                             onChange={(field, value) => setFact(key, field, value)}
+                          />
+                          <SicAdminReviewPreview
+                            certificateCode={item.certificateCode}
+                            holderName={item.holderName}
+                            certifiedAt={item.certifiedAt}
+                            expiresAt={item.expiresAt}
+                            modules={item.modules}
+                            draftModuleId={moduleId}
+                            draftFacts={facts[key] ?? {}}
                           />
                           <div className="mt-3 flex flex-wrap gap-2">
                             <button

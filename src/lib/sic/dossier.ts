@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { readSicFacts, sicFactLines } from '@/lib/sic/facts'
+import { readSicFacts, sicFactLines, type SicFacts } from '@/lib/sic/facts'
 import {
   getSicModule,
   SIC_MODULES,
@@ -107,6 +107,29 @@ export function verifiedModuleLineItems(
       lines: lines.length > 0 ? lines : def.lineItems,
     }
   })
+}
+
+/**
+ * Was der Vermieter sähe, wenn diese Angabe jetzt freigegeben würde.
+ * Andere noch offene Angaben bleiben draussen — wie auf PDF und QR-Seite.
+ */
+export function previewSicVerifiedModules(
+  modules: { moduleKind: string; status: string; verifiedFacts?: unknown }[],
+  draft: { moduleKind: SicModuleId; facts: SicFacts }
+): SicVerifiedModuleView[] {
+  const merged = modules.map(m =>
+    m.moduleKind === draft.moduleKind ?
+      { ...m, status: 'VERIFIED' as const, verifiedFacts: draft.facts }
+    : m
+  )
+  if (!merged.some(m => m.moduleKind === draft.moduleKind)) {
+    merged.push({
+      moduleKind: draft.moduleKind,
+      status: 'VERIFIED',
+      verifiedFacts: draft.facts,
+    })
+  }
+  return verifiedModuleLineItems(merged as { moduleKind: string; status: SicModuleStatus; verifiedFacts?: unknown }[])
 }
 
 

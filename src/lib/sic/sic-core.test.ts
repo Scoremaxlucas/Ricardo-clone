@@ -21,7 +21,7 @@ import {
   sicCheckoutRetryFromPayment,
   sicCheckoutRetryRequestBody,
 } from '@/lib/sic/checkout-retry'
-import { isSicLandlordPdfReady, joinHolderName, encodePaymentHolderName, decodePaymentHolderName } from '@/lib/sic/dossier'
+import { isSicLandlordPdfReady, joinHolderName, encodePaymentHolderName, decodePaymentHolderName, previewSicVerifiedModules } from '@/lib/sic/dossier'
 import { addCalendarMonths, isSicExpired, sicExtendedExpiresAt, sicValidityExpiresAt } from '@/lib/sic/validity'
 
 describe('certificate code', () => {
@@ -244,6 +244,42 @@ describe('landlord PDF gate', () => {
         modules: [{ status: 'VERIFIED' }],
       })
     ).toBe(false)
+  })
+})
+
+describe('review preview lines', () => {
+  it('puts the draft Angabe on the document with already verified ones, in catalog order', () => {
+    const preview = previewSicVerifiedModules(
+      [
+        {
+          moduleKind: 'BONITAET',
+          status: 'VERIFIED',
+          verifiedFacts: { extractDate: '2026-06-12', office: 'Betreibungsamt Zürich' },
+        },
+        { moduleKind: 'AUFENTHALT', status: 'IN_REVIEW' },
+        { moduleKind: 'ARBEIT_EINKOMMEN', status: 'PENDING_DOCS' },
+      ],
+      { moduleKind: 'AUFENTHALT', facts: { documentType: 'ch_pass' } }
+    )
+    expect(preview.map(m => m.id)).toEqual(['BONITAET', 'AUFENTHALT'])
+    expect(preview[1].lines.some(l => /Schweizer Pass/.test(l))).toBe(true)
+    expect(preview.some(m => m.id === 'ARBEIT_EINKOMMEN')).toBe(false)
+  })
+
+  it('replaces stored facts when re-previewing an already verified Angabe', () => {
+    const preview = previewSicVerifiedModules(
+      [
+        {
+          moduleKind: 'BONITAET',
+          status: 'VERIFIED',
+          verifiedFacts: { extractDate: '2026-01-01', office: 'Alt' },
+        },
+      ],
+      { moduleKind: 'BONITAET', facts: { extractDate: '2026-08-01', office: 'Betreibungsamt Bern' } }
+    )
+    expect(preview).toHaveLength(1)
+    expect(preview[0].lines.join(' ')).toMatch(/Bern/)
+    expect(preview[0].lines.join(' ')).not.toMatch(/Alt/)
   })
 })
 
