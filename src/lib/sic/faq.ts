@@ -7,7 +7,13 @@ import {
   sicIsFree,
 } from '@/lib/sic/modules'
 import { SIC_REVIEW_SLA } from '@/lib/sic/config'
+import { SIC_CERT_PREVIEW_FACTS, sicFactLines } from '@/lib/sic/facts'
 import { SIC_DOCS_RETENTION_DAYS, SIC_UNFINISHED_DOCS_RETENTION_MONTHS } from '@/lib/sic/validity'
+
+const PREVIEW_BONITAET = sicFactLines('BONITAET', SIC_CERT_PREVIEW_FACTS.BONITAET)
+const PREVIEW_INCOME = sicFactLines('ARBEIT_EINKOMMEN', SIC_CERT_PREVIEW_FACTS.ARBEIT_EINKOMMEN)
+const PREVIEW_INCOME_BAND = PREVIEW_INCOME.find(l => l.startsWith('Bruttojahreslohn')) ?? ''
+const PREVIEW_CEILING = PREVIEW_INCOME.find(l => l.startsWith('Tragbar')) ?? ''
 
 const PRICE_ANSWER =
   sicIsFree() ?
@@ -38,7 +44,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was steht am Ende auf dem Zertifikat?',
-    a: 'Nicht deine Dokumente, sondern die geprüften Angaben in klarer Form: «Keine offenen Betreibungen, Auszug vom 12.06.2026», «Bruttojahreslohn CHF 90’000 – 110’000», «Tragbar bis CHF 2’500 Monatsmiete». Der exakte Lohn steht nie da.',
+    a: `Nicht deine Dokumente, sondern die geprüften Angaben in klarer Form: «${PREVIEW_BONITAET.join(', ')}», «${PREVIEW_INCOME_BAND}», «${PREVIEW_CEILING}». Der exakte Lohn steht nie da.`,
   },
   {
     q: 'Was heisst «geprüft»?',
@@ -70,7 +76,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was, wenn mein QR-Code in falsche Hände gerät?',
-    a: 'Im Dossier kannst du jederzeit einen neuen Code erzeugen. Der alte Link zeigt danach nichts mehr an — auch nicht bei Vermietern, denen du ihn schon gegeben hast.',
+    a: 'Im Workspace «Mein Zertifikat» kannst du jederzeit einen neuen Code erzeugen. Der alte Link zeigt danach nichts mehr an — auch nicht bei Vermietern, denen du ihn schon gegeben hast.',
   },
   {
     q: 'Brauche ich ein Passwort?',

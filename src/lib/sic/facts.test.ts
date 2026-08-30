@@ -1,6 +1,7 @@
 import {
   normalizeSicFacts,
   readSicFacts,
+  sicCatalogPreviewRows,
   sicFactFields,
   sicFactLines,
   sicRentCeilingChf,
@@ -93,6 +94,17 @@ describe('sicFactLines', () => {
 
   it('liefert ohne Werte keine Zeilen, damit der Aufrufer generisch zurückfällt', () => {
     expect(sicFactLines('ARBEIT_EINKOMMEN', null)).toEqual([])
+  })
+
+  it('keeps landing/FAQ preview inside real bands and 3× ceilings', () => {
+    const blob = sicCatalogPreviewRows()
+      .flatMap(r => r.lines)
+      .join(' ')
+    expect(blob).toContain('CHF 80’000 – 100’000')
+    expect(blob).toContain('CHF 2’200')
+    expect(blob).not.toMatch(/90.?000/)
+    expect(blob).not.toMatch(/2.?500/)
+    expect(blob).not.toMatch(/110.?000/)
   })
 
   it('formuliert die Vermieter-Referenz ohne Negativurteil', () => {

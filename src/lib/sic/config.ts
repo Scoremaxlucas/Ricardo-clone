@@ -32,6 +32,25 @@ export const SIC_PREVIEW_COOKIE_LEGACY = 'helvenda-sic-preview'
 export const SIC_SUPPORT_EMAIL =
   process.env.SIC_SUPPORT_EMAIL?.trim() || 'support@swissimmocert.ch'
 
+/** Betreiberin — dieselben Registerdaten wie Helvenda, damit das Impressum vollständig ist. */
+export const SIC_OPERATOR = {
+  legalName: 'Score-Max GmbH',
+  street: 'In der Hauswiese 2',
+  zip: '8125',
+  city: 'Zollikerberg',
+  country: 'Schweiz',
+  uid: 'CHE-241.917.894',
+  commercialRegisterNo: 'CH-020.4.087.913-9',
+  commercialRegisterCanton: 'Zürich',
+  representative: 'Lucas Rodrigues, Geschäftsführer',
+  phoneDisplay: '+41 44 508 28 90',
+  phoneHref: 'tel:+41445082890',
+} as const
+
+export function sicOperatorAddressBlock(): string {
+  return `${SIC_OPERATOR.street}\n${SIC_OPERATOR.zip} ${SIC_OPERATOR.city}\n${SIC_OPERATOR.country}`
+}
+
 /**
  * Absender-Postfach — nicht `noreply@` (Spamfilter). Reply-To bleibt Support.
  * Override: `SIC_FROM_EMAIL` (nackte Adresse oder `Name <addr>`).
@@ -82,6 +101,11 @@ export function isSicWwwHostname(host: string): boolean {
   const apex = sicApexHostname()
   if (h === apex) return false
   return h === `www.${apex}` || isSicProductionHostname(h)
+}
+
+/** `/api/sic` nur auf dem SIC-Host — sonst Enumeration von helvenda.ch aus. */
+export function sicApiBlockedOffHost(onSicHost: boolean, pathname: string): boolean {
+  return !onSicHost && pathname.startsWith('/api/sic')
 }
 
 export function isSicBrowserHost(): boolean {

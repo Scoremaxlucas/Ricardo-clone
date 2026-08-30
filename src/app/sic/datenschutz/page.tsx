@@ -1,5 +1,5 @@
 import { SIC_MODULES, SIC_VALIDITY_MONTHS } from '@/lib/sic/modules'
-import { SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
+import { SIC_OPERATOR, SIC_SUPPORT_EMAIL, sicOperatorAddressBlock } from '@/lib/sic/config'
 import { SIC_DOCS_RETENTION_DAYS, SIC_UNFINISHED_DOCS_RETENTION_MONTHS } from '@/lib/sic/validity'
 import type { Metadata } from 'next'
 
@@ -22,7 +22,8 @@ export default function SicDatenschutzPage() {
         <section>
           <h2 className="font-semibold text-sic-navy">Verantwortliche Stelle</h2>
           <p className="mt-1.5">
-            Score-Max GmbH, In der Hauswiese 2, CH-Zollikerberg. Kontakt für Datenschutzfragen:{' '}
+            {SIC_OPERATOR.legalName}, {sicOperatorAddressBlock().replace(/\n/g, ', ')}. Kontakt für
+            Datenschutzfragen:{' '}
             <a href={`mailto:${SIC_SUPPORT_EMAIL}`} className="text-sic-action underline-offset-2 hover:underline">
               {SIC_SUPPORT_EMAIL}
             </a>
@@ -69,7 +70,7 @@ export default function SicDatenschutzPage() {
             Deine Unterlagen sehen nur die für die Prüfung zuständigen Personen bei Score-Max. Vermieter sehen
             nie das Original-Dokument, sondern nur das Zertifikat mit den geprüften Angaben — und nur, wenn du
             es teilst. Wer deinen Prüf-Link oder QR-Code hat, sieht den Status und die geprüften Angaben; du
-            kannst im Dossier jederzeit einen neuen Code erzeugen und den alten Link damit entwerten.
+            kannst unter «Mein Zertifikat» jederzeit einen neuen Code erzeugen und den alten Link damit entwerten.
           </p>
         </section>
 
@@ -80,7 +81,7 @@ export default function SicDatenschutzPage() {
             Verarbeitung in Rechenzentren in den USA) auslesen, um Felder wie Ausstellungsdatum oder
             Einkommensband vorzuschlagen. Diese Vorschläge sind nicht bindend: Die Freigabe erfolgt immer durch
             einen Menschen. Es findet keine automatisierte Einzelentscheidung im Sinne des revDSG statt. Wenn du
-            das nicht möchtest, schreib uns vor dem Upload — wir prüfen dann ohne diesen Schritt.
+            das nicht möchtest, schreib uns vor dem Hochladen — wir prüfen dann ohne diesen Schritt.
           </p>
         </section>
 
@@ -88,8 +89,8 @@ export default function SicDatenschutzPage() {
           <h2 className="font-semibold text-sic-navy">Sicherheit</h2>
           <p className="mt-1.5">
             Hochgeladene Dateien werden vor der Ablage verschlüsselt (AES-256-GCM) und liegen in einem privaten,
-            nicht öffentlich adressierbaren Speicher. Ist die Verschlüsselung nicht verfügbar, wird der Upload
-            abgewiesen statt unverschlüsselt gespeichert. Der Zugriff auf das Dossier erfolgt über einen
+            nicht öffentlich adressierbaren Speicher. Ist die Verschlüsselung nicht verfügbar, wird das
+            Hochladen abgewiesen statt unverschlüsselt gespeichert. Der Zugriff auf das Zertifikat erfolgt über einen
             zeitlich begrenzten Anmelde-Link an deine E-Mail-Adresse.
           </p>
         </section>
@@ -107,9 +108,9 @@ export default function SicDatenschutzPage() {
           </p>
           <p className="mt-1.5">
             Wichtig zu unterscheiden: Gelöscht werden die <strong>Dateien</strong>. Die daraus geprüften{' '}
-            <strong>Angaben</strong> (zum Beispiel «Einkommen CHF 6’000–8’000, geprüft am …») bleiben so lange
-            gespeichert, wie dein Zertifikat existiert, weil sie dessen Inhalt sind. Zahlungsbelege bewahren wir
-            gemäss Buchführungspflicht zehn Jahre auf.
+            <strong>Angaben</strong> (zum Beispiel «Bruttojahreslohn CHF 80’000 – 100’000, geprüft am …»)
+            bleiben so lange gespeichert, wie dein Zertifikat existiert, weil sie dessen Inhalt sind.
+            Zahlungsbelege bewahren wir gemäss Buchführungspflicht zehn Jahre auf.
           </p>
         </section>
 

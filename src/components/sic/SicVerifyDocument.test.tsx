@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { SicVerifyDocument } from '@/components/sic/SicVerifyDocument'
 import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
-import { SIC_SCOPE_NOTE } from '@/lib/sic/modules'
+import { SIC_MODULE_BADGE, SIC_PLAUSIBILITY_FOOTER, SIC_SCOPE_NOTE } from '@/lib/sic/modules'
 import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
 
 describe('SicVerifyDocument', () => {
@@ -30,8 +30,10 @@ describe('SicVerifyDocument', () => {
     expect(html).toContain('MIETER-ZERTIFIKAT')
     expect(html).toContain('Anna Muster')
     expect(html).toContain('2 von 4 Angaben geprüft')
-    expect(html).toContain('VERIFIZIERT')
+    expect(html).toContain(SIC_MODULE_BADGE)
+    expect(html).not.toContain('VERIFIZIERT')
     expect(html).toContain(SIC_SCOPE_NOTE)
+    expect(html).toContain(SIC_PLAUSIBILITY_FOOTER)
     expect(html).toContain(SIC_CERT_TAGLINE)
     expect(html).toContain(SIC_ISSUER_LINE)
     expect(html).toContain('01.08.2026')
@@ -65,5 +67,21 @@ describe('SicVerifyDocument', () => {
     expect(html).toContain('SIC-2026-ABCDEFGH')
     expect(html).not.toContain('Ausgestellt für')
     expect(html).not.toContain('Anna Muster')
+  })
+
+  it('names expired without leaking holder data', () => {
+    const html = renderToStaticMarkup(
+      <SicVerifyDocument state="expired" code="SIC-2026-ABCDEFGH" />
+    )
+    expect(html).toContain('Abgelaufen')
+    expect(html).toContain('SIC-2026-ABCDEFGH')
+    expect(html).not.toContain('Ausgestellt für')
+    expect(html).not.toContain('Anna Muster')
+  })
+
+  it('uses Du-form on the rate-limit state', () => {
+    const html = renderToStaticMarkup(<SicVerifyDocument state="rate_limited" />)
+    expect(html).toContain('versuche es später')
+    expect(html).not.toContain('versuchen Sie')
   })
 })

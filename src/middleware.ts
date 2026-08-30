@@ -6,6 +6,7 @@ import {
   isLegacySicHostname,
   isSicProductionHostname,
   isSicWwwHostname,
+  sicApiBlockedOffHost,
   SIC_PREVIEW_COOKIE,
   SIC_PREVIEW_COOKIE_LEGACY,
   SIC_SITE_ORIGIN,
@@ -135,6 +136,10 @@ export async function middleware(request: NextRequest) {
   }
 
   const onSicHost = isSicHost(request)
+
+  if (sicApiBlockedOffHost(onSicHost, pathname)) {
+    return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 })
+  }
 
   // Marktplatz: alte Mieter-/Wohnungs-Pfade → SIC
   if (!onSicHost && isMainHelvendaMarketplaceHost(host) && marketplacePathsRedirectToSic(pathname)) {

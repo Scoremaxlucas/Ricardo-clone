@@ -7,6 +7,7 @@ import { isSicLandlordPdfReady, joinHolderName, verifiedModuleLineItems } from '
 import { recordSicVerifyScan } from '@/lib/sic/events'
 import { sicCompletenessLabel } from '@/lib/sic/modules'
 import { getSicSession } from '@/lib/sic/session-cookie'
+import { isSicExpired } from '@/lib/sic/validity'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { headers } from 'next/headers'
@@ -82,6 +83,8 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
         <SicVerifyDocument state="unknown" code={code} />
       : cert.status === 'REVOKED' ?
         <SicVerifyDocument state="revoked" code={cert.certificateCode} />
+      : cert.status === 'EXPIRED' || isSicExpired(cert.expiresAt) ?
+        <SicVerifyDocument state="expired" code={cert.certificateCode} />
       : !landlordReady ?
         <SicVerifyDocument state="not_ready" />
       : <SicVerifyDocument

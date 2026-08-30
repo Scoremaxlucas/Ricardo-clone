@@ -1,4 +1,4 @@
-import { SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
+import { SIC_OPERATOR, SIC_SUPPORT_EMAIL, sicOperatorAddressBlock } from '@/lib/sic/config'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -20,30 +20,48 @@ export default function SicImpressumPage() {
       <dl className="mt-8 space-y-6 text-sm">
         <div>
           <dt className="font-semibold text-sic-navy">Betreibergesellschaft</dt>
-          <dd className="mt-1 text-slate-700">Score-Max GmbH</dd>
+          <dd className="mt-1 text-slate-700">{SIC_OPERATOR.legalName}</dd>
         </div>
         <div>
           <dt className="font-semibold text-sic-navy">Adresse</dt>
-          <dd className="mt-1 whitespace-pre-line text-slate-700">
-            {'In der Hauswiese 2\nCH-Zollikerberg\nSchweiz'}
+          <dd className="mt-1 whitespace-pre-line text-slate-700">{sicOperatorAddressBlock()}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold text-sic-navy">Handelsregister</dt>
+          <dd className="mt-1 text-slate-700">
+            Eingetragen im Handelsregister des Kantons {SIC_OPERATOR.commercialRegisterCanton}
+            <br />
+            Handelsregister-Nr.: {SIC_OPERATOR.commercialRegisterNo}
           </dd>
+        </div>
+        <div>
+          <dt className="font-semibold text-sic-navy">UID</dt>
+          <dd className="mt-1 text-slate-700">{SIC_OPERATOR.uid}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold text-sic-navy">Vertretungsberechtigte Person</dt>
+          <dd className="mt-1 text-slate-700">{SIC_OPERATOR.representative}</dd>
         </div>
         <div>
           <dt className="font-semibold text-sic-navy">Kontakt</dt>
-          <dd className="mt-1 text-slate-700">
-            <a href={`mailto:${SIC_SUPPORT_EMAIL}`} className="text-sic-action underline-offset-2 hover:underline">
-              {SIC_SUPPORT_EMAIL}
-            </a>
+          <dd className="mt-1 space-y-1 text-slate-700">
+            <p>
+              <a href={SIC_OPERATOR.phoneHref} className="text-sic-action underline-offset-2 hover:underline">
+                {SIC_OPERATOR.phoneDisplay}
+              </a>
+            </p>
+            <p>
+              <a href={`mailto:${SIC_SUPPORT_EMAIL}`} className="text-sic-action underline-offset-2 hover:underline">
+                {SIC_SUPPORT_EMAIL}
+              </a>
+            </p>
           </dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-sic-navy">Zuständig für den Inhalt</dt>
-          <dd className="mt-1 text-slate-700">Geschäftsleitung der Score-Max GmbH</dd>
         </div>
       </dl>
 
       <p className="mt-10 text-xs leading-relaxed text-slate-400">
-        Swiss Immo Cert ist ein Angebot der Score-Max GmbH und keine amtliche Stelle. Für die Nutzung gelten die{' '}
+        Swiss Immo Cert ist ein Angebot der {SIC_OPERATOR.legalName} und keine amtliche Stelle. Für die Nutzung
+        gelten die{' '}
         <Link href="/sic/agb" className="underline-offset-2 hover:underline">
           AGB
         </Link>{' '}

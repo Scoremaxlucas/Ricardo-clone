@@ -51,7 +51,7 @@ function formatBytes(n: number): string {
 
 function progressSummary(p: SicDossierView['progress']): string {
   if (p.totalModules === 0) return 'Noch keine Angaben gewählt.'
-  const parts: string[] = [`${p.verifiedCount} von ${p.totalModules} geprüft`]
+  const parts: string[] = [`${p.verifiedCount} von ${p.catalogModules} Angaben geprüft`]
   if (p.pendingDocsCount > 0) parts.push(`${p.pendingDocsCount} wartet auf Unterlagen`)
   if (p.inReviewCount > 0) parts.push(`${p.inReviewCount} bei uns in Prüfung`)
   if (p.rejectedCount > 0) parts.push(`${p.rejectedCount} nachreichen`)
@@ -65,8 +65,8 @@ function certificateStatusMeta(dossier: SicDossierView): { label: string; classN
   if (dossier.expired) {
     return { label: 'Abgelaufen', className: 'bg-sic-danger-bg text-sic-danger-text' }
   }
-  const { verifiedCount, totalModules } = dossier.progress
-  if (totalModules > 0 && verifiedCount === totalModules) {
+  const { verifiedCount, catalogModules } = dossier.progress
+  if (catalogModules > 0 && verifiedCount >= catalogModules) {
     return { label: 'Vollständig', className: 'bg-sic-verified-bg text-sic-verified-text' }
   }
   if (verifiedCount > 0) {
@@ -505,7 +505,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                             : 'bg-slate-100 text-slate-600'
                           }`}
                         >
-                          {item.kind === 'template' ? 'Formular' : 'Upload'}
+                          {item.kind === 'template' ? 'Formular' : 'Datei'}
                         </span>
                         <span>{item.label}</span>
                       </li>

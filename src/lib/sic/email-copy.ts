@@ -18,9 +18,9 @@ export function sicCertificateReadyCopy(opts: {
 
   if (opts.firstVerification && opts.pdfReady) {
     const paragraphs = [
-      `Du kannst dich jetzt bewerben. ${onDoc}.`,
+      `Das PDF ist bereit. ${onDoc}.`,
       `Geprüft ist «${title}». Gültig bis ${opts.validUntil}.`,
-      'Lade das PDF herunter und leg es der Bewerbung bei. Nicht geprüfte Angaben stehen nicht auf dem Dokument.',
+      'Lade das PDF herunter und leg es der Bewerbung bei. Nicht geprüfte Angaben stehen nicht auf dem Dokument. Eine Zusage versprechen wir nicht.',
     ]
     if (moreOpen) {
       paragraphs.push(
@@ -28,8 +28,8 @@ export function sicCertificateReadyCopy(opts: {
       )
     }
     return {
-      subject: 'Du kannst dich jetzt bewerben',
-      heading: 'Du kannst dich jetzt bewerben',
+      subject: 'Dein PDF ist bereit',
+      heading: 'Dein PDF ist bereit',
       preheader: onDoc,
       paragraphs,
     }

@@ -1,6 +1,7 @@
 import {
   normalizeEmail,
   SIC_POST_CHECKOUT_TTL_SECONDS,
+  sicPaidCheckoutAllowsSessionCookie,
   signSicSessionToken,
   verifySicSessionToken,
 } from '@/lib/sic/session'
@@ -36,5 +37,12 @@ describe('sic session token', () => {
 describe('post-checkout session', () => {
   it('lasts a working day, not one hour', () => {
     expect(SIC_POST_CHECKOUT_TTL_SECONDS).toBe(24 * 60 * 60)
+  })
+
+  it('grants the cookie only for a few minutes after payment', () => {
+    const paidAt = new Date('2026-08-30T16:00:00.000Z')
+    expect(sicPaidCheckoutAllowsSessionCookie(paidAt, new Date('2026-08-30T16:05:00.000Z'))).toBe(true)
+    expect(sicPaidCheckoutAllowsSessionCookie(paidAt, new Date('2026-08-30T16:16:00.000Z'))).toBe(false)
+    expect(sicPaidCheckoutAllowsSessionCookie(null)).toBe(false)
   })
 })

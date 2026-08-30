@@ -9,14 +9,14 @@ import {
 import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
 import type { SicVerifiedModuleView } from '@/lib/sic/dossier'
-import { SIC_SCOPE_NOTE } from '@/lib/sic/modules'
+import { SIC_MODULE_BADGE, SIC_PLAUSIBILITY_FOOTER, SIC_SCOPE_NOTE } from '@/lib/sic/modules'
 import type { ReactNode } from 'react'
 
 function fmt(d: Date): string {
   return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-type QuietState = 'rate_limited' | 'unknown' | 'not_ready' | 'revoked'
+type QuietState = 'rate_limited' | 'unknown' | 'not_ready' | 'revoked' | 'expired'
 
 export type SicVerifyDocumentProps =
   | { state: QuietState; code?: string }
@@ -147,7 +147,7 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
               </ul>
             </div>
             <span className="mt-0.5 flex-shrink-0 border border-sic-gold bg-sic-paper-soft px-1.5 py-0.5 text-[9px] font-bold tracking-[0.12em] text-sic-gold">
-              VERIFIZIERT
+              {SIC_MODULE_BADGE}
             </span>
           </li>
         ))}
@@ -184,8 +184,7 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
       </div>
 
       <p className="mt-6 text-center text-[10px] leading-relaxed text-slate-400">
-        {SIC_SCOPE_NOTE} {SIC_BRAND_NAME} bestätigt die Prüfung der eingereichten Nachweise zum
-        Ausstellungszeitpunkt und ersetzt keine behördliche Auskunft.
+        {SIC_SCOPE_NOTE} {SIC_PLAUSIBILITY_FOOTER}
       </p>
     </>
   )
@@ -209,7 +208,7 @@ export function SicVerifyDocument(props: SicVerifyDocumentProps) {
       <Frame>
         <NavyBand quiet />
         <QuietBody title="Zu viele Abfragen">
-          <p>Bitte versuchen Sie es später erneut.</p>
+          <p>Bitte versuche es später erneut.</p>
         </QuietBody>
       </Frame>
     )
@@ -245,13 +244,28 @@ export function SicVerifyDocument(props: SicVerifyDocumentProps) {
     )
   }
 
+  if (props.state === 'expired') {
+    return (
+      <Frame>
+        <NavyBand quiet code={props.code || undefined} />
+        <QuietBody title="Abgelaufen">
+          <p>
+            Die Gültigkeit dieses Zertifikats ist abgelaufen. Der Code{' '}
+            <span className="font-mono font-semibold text-sic-navy">{props.code || '—'}</span> weist
+            keine Angaben mehr aus.
+          </p>
+        </QuietBody>
+      </Frame>
+    )
+  }
+
   return (
     <Frame>
       <NavyBand quiet />
       <QuietBody title="Kein gültiges Zertifikat">
         <p>
-          Zu diesem Code liegt derzeit kein gültiges Zertifikat vor. Es ist abgelaufen, widerrufen
-          oder noch nicht ausgestellt.
+          Zu diesem Code liegt derzeit kein gültiges Zertifikat vor. Es ist noch nicht ausgestellt
+          oder der Name fehlt.
         </p>
       </QuietBody>
     </Frame>

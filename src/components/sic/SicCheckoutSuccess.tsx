@@ -8,7 +8,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 type State = {
   status: 'loading' | 'ok' | 'pending' | 'error'
-  email?: string
   message?: string
 }
 
@@ -31,7 +30,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
         }
       )
       const data = await res.json().catch(() => ({}))
-      if (data?.ok) return { status: 'ok', email: data.email }
+      if (data?.ok) return { status: 'ok' }
       if (data?.pending) return { status: 'pending' }
       return { status: 'error', message: data?.message }
     } catch {
@@ -105,8 +104,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
             <FileCheck2 className="h-4 w-4" /> Unterlagen hochladen
           </Link>
           <p className="mt-4 max-w-sm text-xs leading-relaxed text-slate-400">
-            Ein Anmeldelink kommt per Mail
-            {state.email ? <> an {state.email}</> : null}, falls du später zurückkehrst.
+            Ein Anmeldelink kommt per Mail, falls du später zurückkehrst.
           </p>
         </>
       )}

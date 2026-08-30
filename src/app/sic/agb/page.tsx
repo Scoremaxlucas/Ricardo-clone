@@ -137,9 +137,9 @@ export default function SicAgbPage() {
         <section>
           <h2 className="font-semibold text-sic-navy">9. Weitergabe und QR-Code</h2>
           <p className="mt-1.5">
-            Du entscheidest, wem du das Zertifikat gibst. Wer den Prüf-Link oder QR-Code kennt, sieht den Status
-            und die geprüften Angaben. Ist ein Link ungewollt in Umlauf, kannst du im Dossier jederzeit einen
-            neuen Code erzeugen; der alte Link ist damit sofort ungültig.
+            Du entscheidest, wem du das Zertifikat gibst.             Wer den Prüf-Link oder QR-Code kennt, sieht den Status
+            und die geprüften Angaben. Ist ein Link ungewollt in Umlauf, kannst du unter «Mein Zertifikat»
+            jederzeit einen neuen Code erzeugen; der alte Link ist damit sofort ungültig.
           </p>
         </section>
 

@@ -3,6 +3,7 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { normalizeSicModuleIds, type SicModuleId } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { normalizeEmail } from '@/lib/sic/session'
+import { getSicSession } from '@/lib/sic/session-cookie'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -34,10 +35,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Zu viele Anfragen.' }, { status: 429 })
   }
 
-  const existing = await prisma.sicCertificate.findUnique({
-    where: { email },
-    select: { modules: { select: { moduleKind: true } } },
-  })
+  const sess = getSicSession()
+  const knownSelf = sess?.email === email
+  const existing =
+    knownSelf ?
+      await prisma.sicCertificate.findUnique({
+        where: { email },
+        select: { modules: { select: { moduleKind: true } } },
+      })
+    : null
   const includeBaseFee = !existing
   const alreadyPaid = new Set<string>((existing?.modules ?? []).map(m => m.moduleKind))
   const candidate = requested.filter(id => !alreadyPaid.has(id))
@@ -46,11 +52,11 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     includeBaseFee,
-    alreadyOwned: Array.from(alreadyPaid),
+    alreadyOwned: knownSelf ? Array.from(alreadyPaid) : [],
     candidate,
     quote,
     note:
-      !includeBaseFee ?
+      knownSelf && !includeBaseFee ?
         candidate.length === 0 ?
           'Alle gewählten Module sind bereits Teil deines Zertifikats.'
         : 'Basis entfällt — Zertifikat existiert bereits.'

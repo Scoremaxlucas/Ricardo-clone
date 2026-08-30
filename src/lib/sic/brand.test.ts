@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { SIC_CERT_TAGLINE, SIC_COLORS, sicLogoMarkHouseStroke } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
+import { SIC_MODULE_BADGE } from '@/lib/sic/modules'
 
 describe('SIC_BRAND_NAME', () => {
   it('is one public wordmark', () => {
@@ -14,6 +15,12 @@ describe('SIC_CERT_TAGLINE', () => {
   it('stays within what the AGB can defend', () => {
     expect(SIC_CERT_TAGLINE).toBe('Geprüft. Standardisiert. Prüfbar.')
     expect(SIC_CERT_TAGLINE).not.toMatch(/Vertrauenswürdig/)
+  })
+})
+
+describe('SIC_MODULE_BADGE', () => {
+  it('says geprüft, not Auskunftei-verifiziert', () => {
+    expect(SIC_MODULE_BADGE).toBe('GEPRÜFT')
   })
 })
 

@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
 import { joinHolderName } from '@/lib/sic/dossier'
 import { getSicSession } from '@/lib/sic/session-cookie'
+import { isSicExpired } from '@/lib/sic/validity'
 
 export type SicLandingAccount = {
   email: string
@@ -24,6 +25,7 @@ export async function getSicLandingAccount(): Promise<SicLandingAccount | null> 
     select: {
       certificateCode: true,
       status: true,
+      expiresAt: true,
       holderFirstName: true,
       holderLastName: true,
       modules: { select: { moduleKind: true, status: true } },
@@ -43,10 +45,15 @@ export async function getSicLandingAccount(): Promise<SicLandingAccount | null> 
   const holderLastName = cert.holderLastName?.trim() || null
   const holderName = joinHolderName(holderFirstName, holderLastName)
 
+  const status =
+    cert.status === 'REVOKED' ? 'REVOKED'
+    : cert.status === 'EXPIRED' || isSicExpired(cert.expiresAt) ? 'EXPIRED'
+    : cert.status
+
   return {
     email: session.email,
     certificateCode: cert.certificateCode,
-    status: cert.status,
+    status,
     holderName,
     holderFirstName,
     holderLastName,

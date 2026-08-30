@@ -51,6 +51,12 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
   } catch (e) {
     console.error('[sic/pdf] QR', e)
   }
+  if (!qrDataUrl) {
+    return NextResponse.json(
+      { message: 'Der Prüf-Code konnte nicht erzeugt werden. Bitte später erneut herunterladen.' },
+      { status: 503 }
+    )
+  }
 
   const doc = (
     <SicCertificatePdfDocument

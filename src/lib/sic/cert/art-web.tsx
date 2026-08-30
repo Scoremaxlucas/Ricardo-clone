@@ -184,7 +184,7 @@ export function Seal({ size = 64 }: SizeProps) {
         fill={C.gold}
         style={{ fontSize: 5, fontFamily: 'Helvetica, Arial, sans-serif', fontWeight: 700, letterSpacing: 0.6 }}
       >
-        VERIFIZIERT
+        GEPRÜFT
       </text>
     </svg>
   )

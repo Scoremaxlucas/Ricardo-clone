@@ -10,7 +10,7 @@ import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
 import { SIC_CERT_BACKDROP_DATA_URL } from '@/lib/sic/cert/backdrop-asset'
 import { CERT } from '@/lib/sic/cert/tokens'
-import type { SicModuleId } from '@/lib/sic/modules'
+import { SIC_MODULE_BADGE, SIC_PLAUSIBILITY_FOOTER, type SicModuleId } from '@/lib/sic/modules'
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import React from 'react'
 
@@ -330,7 +330,7 @@ export function SicCertificatePdfDocument(props: {
                     ))}
                   </View>
                   <View style={s.badge}>
-                    <Text style={s.badgeText}>VERIFIZIERT</Text>
+                    <Text style={s.badgeText}>{SIC_MODULE_BADGE}</Text>
                   </View>
                 </View>
               ))}
@@ -368,15 +368,13 @@ export function SicCertificatePdfDocument(props: {
 
                 <View style={s.qrCol}>
                   {qrDataUrl ? <Image src={qrDataUrl} style={s.qr} /> : null}
-                  <Text style={s.qrText}>Echtheit prüfen: QR-Code scannen</Text>
+                  <Text style={s.qrText}>Prüfseite: QR-Code scannen</Text>
                 </View>
               </View>
             </View>
 
             <Text style={s.legal}>
-              {scopeNote} {SIC_BRAND_NAME} bestätigt die Prüfung der eingereichten Nachweise zum
-              Ausstellungszeitpunkt und ersetzt keine behördliche Auskunft. Online-Verifikation:{' '}
-              {verifyUrl}
+              {scopeNote} {SIC_PLAUSIBILITY_FOOTER} Online-Verifikation: {verifyUrl}
             </Text>
           </View>
         </View>

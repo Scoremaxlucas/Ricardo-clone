@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   const rl = await checkRateLimit({ identifier: `sic-upload:${session.email}`, limit: 50, window: 3600 })
   if (!rl.allowed) {
-    return NextResponse.json({ ok: false, message: 'Zu viele Uploads. Bitte später erneut.' }, { status: 429 })
+    return NextResponse.json({ ok: false, message: 'Zu viele Dateien. Bitte später erneut.' }, { status: 429 })
   }
 
   let form: FormData
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     console.error(`[sic/documents] ${SIC_DOC_ENCRYPTION_ENV} fehlt — Upload verweigert`)
     sicLog('sic.upload.blocked_no_encryption_key', {})
     return NextResponse.json(
-      { ok: false, message: 'Uploads sind vorübergehend nicht möglich. Bitte später erneut versuchen.' },
+      { ok: false, message: 'Hochladen ist vorübergehend nicht möglich. Bitte später erneut versuchen.' },
       { status: 503 }
     )
   }
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
   }
   if (moduleRow.status === 'VERIFIED') {
     return NextResponse.json(
-      { ok: false, message: 'Dieses Modul ist bereits verifiziert — kein weiterer Upload nötig.' },
+      { ok: false, message: 'Diese Angabe ist bereits geprüft — keine weitere Datei nötig.' },
       { status: 403 }
     )
   }
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
     console.error('[sic/documents] private blob upload failed', err)
     sicLog('sic.upload.private_put_failed', { certificateId: cert.id, moduleKind })
     return NextResponse.json(
-      { ok: false, message: 'Upload fehlgeschlagen. Bitte später erneut versuchen.' },
+      { ok: false, message: 'Hochladen fehlgeschlagen. Bitte später erneut versuchen.' },
       { status: 502 }
     )
   }

@@ -10,7 +10,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export function SicDossierLogin({
   nextPath,
   title = 'Mein Zertifikat',
-  intro = 'Hier siehst du Status, Formulare und Uploads. Der Anmeldelink ist 30 Minuten gültig; den Vorgang kannst du über Tage fortsetzen. Fordere jederzeit einen neuen Link an.',
+  intro = 'Hier siehst du Stand, Formulare und Nachweise. Der Anmeldelink ist 30 Minuten gültig; den Vorgang kannst du über Tage fortsetzen. Fordere jederzeit einen neuen Link an.',
 }: {
   nextPath?: string
   title?: string

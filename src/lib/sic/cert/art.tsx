@@ -189,7 +189,7 @@ export function Seal({ size = 64 }: SizeProps) {
         fill={C.gold}
         style={{ fontSize: 5, fontFamily: 'Helvetica-Bold', letterSpacing: 0.6 }}
       >
-        VERIFIZIERT
+        GEPRÜFT
       </SvgText>
     </Svg>
   )

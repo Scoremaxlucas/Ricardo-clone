@@ -3,7 +3,7 @@ import type { SicModuleId } from '@/lib/sic/modules'
 /**
  * SIC-Nachweis-Formulare (PDF): Vom Mieter optional vorausgefüllt (Name/Adresse),
  * vom Dritten (Arbeitgeber / Vermieter) ausgefüllt und unterzeichnet —
- * digital oder auf Papier — danach Upload im Dossier.
+ * digital oder auf Papier — danach hochladen unter «Mein Zertifikat».
  */
 
 export type SicTemplateId = 'employer_confirmation' | 'landlord_reference'

@@ -31,7 +31,7 @@ describe('upload nudge windows', () => {
 })
 
 describe('first verification copy', () => {
-  it('says you can apply now, with the count on the document', () => {
+  it('says the PDF is ready, with the count on the document, not a Zusage', () => {
     const copy = sicCertificateReadyCopy({
       moduleKind: 'BONITAET',
       verifiedCount: 1,
@@ -39,9 +39,11 @@ describe('first verification copy', () => {
       pdfReady: true,
       validUntil: '28.11.2026',
     })
-    expect(copy.heading).toBe('Du kannst dich jetzt bewerben')
-    expect(copy.paragraphs[0]).toBe(`Du kannst dich jetzt bewerben. ${sicStandsOnDocLine(1)}.`)
+    expect(copy.heading).toBe('Dein PDF ist bereit')
+    expect(copy.paragraphs[0]).toBe(`Das PDF ist bereit. ${sicStandsOnDocLine(1)}.`)
     expect(copy.paragraphs[0]).toContain('1 von 4 steht drauf')
+    expect(copy.paragraphs.join(' ')).toMatch(/Zusage/)
+    expect(copy.subject).not.toMatch(/bewerben/)
     expect(copy.subject).not.toMatch(/Helvenda/)
   })
 

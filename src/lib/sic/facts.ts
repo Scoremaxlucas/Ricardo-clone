@@ -332,3 +332,25 @@ export function sicFactSummary(moduleId: SicModuleId, facts: SicFacts | null): s
   const total = sicFactFields(moduleId).length
   return `${getSicModule(moduleId).title} — ${filled} von ${total} Werten erfasst`
 }
+
+/**
+ * Beispielwerte für Landing/FAQ — dieselben Bänder und 3×-Zahlen wie auf dem PDF.
+ * Keine erfundenen Intervalle wie «90–110k».
+ */
+export const SIC_CERT_PREVIEW_FACTS: Record<SicModuleId, SicFacts> = {
+  BONITAET: { extractDate: '2026-06-12', office: 'Betreibungsamt Zürich' },
+  ARBEIT_EINKOMMEN: {
+    incomeBand: '80_100k',
+    employmentType: 'unbefristet',
+    employedSince: '2020-03-01',
+  },
+  ZUVERLAESSIGKEIT: { tenancyFrom: '2021-01-01', paymentBehaviour: 'always_on_time' },
+  AUFENTHALT: { documentType: 'ch_pass', validUntil: '2031-05-31' },
+}
+
+export function sicCatalogPreviewRows(): { id: SicModuleId; lines: string[] }[] {
+  return (['BONITAET', 'ARBEIT_EINKOMMEN', 'ZUVERLAESSIGKEIT', 'AUFENTHALT'] as const).map(id => ({
+    id,
+    lines: sicFactLines(id, SIC_CERT_PREVIEW_FACTS[id]),
+  }))
+}

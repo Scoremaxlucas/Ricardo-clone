@@ -15,6 +15,20 @@ export const SIC_SESSION_TTL_DAYS = 30
  */
 export const SIC_POST_CHECKOUT_TTL_SECONDS = 24 * 60 * 60
 
+/**
+ * Das Stripe-`session_id` in der Erfolgs-URL darf nur kurz eine Sitzung ausstellen.
+ * Danach gilt der Magic-Link. Sonst wäre die History ein Dauerticket ins Dossier.
+ */
+export const SIC_CHECKOUT_COOKIE_GRANT_SECONDS = 15 * 60
+
+export function sicPaidCheckoutAllowsSessionCookie(
+  paidAt: Date | null | undefined,
+  now = new Date()
+): boolean {
+  if (!paidAt) return false
+  return now.getTime() - paidAt.getTime() <= SIC_CHECKOUT_COOKIE_GRANT_SECONDS * 1000
+}
+
 function sessionSecret(): string {
   const s = process.env.SIC_SESSION_SECRET || process.env.NEXTAUTH_SECRET
   if (!s) throw new Error('SIC_SESSION_SECRET oder NEXTAUTH_SECRET muss gesetzt sein')

@@ -3,7 +3,7 @@
  *
  * Modulares Mieter-Zertifikat: Basisgebühr erstellt das Zertifikat, jedes Modul
  * beantwortet eine konkrete Frage des Vermieters. Nur bezahlte + freigegebene
- * Module erscheinen als «VERIFIZIERT».
+ * Module erscheinen als «GEPRÜFT».
  *
  * Diese Datei ist die Single Source of Truth für Preise und Modulinhalte.
  */
@@ -195,6 +195,13 @@ export function sicBundleSavingsChf(): number {
  */
 export const SIC_SCOPE_NOTE =
   'Dieses Zertifikat weist die aufgeführten Angaben aus. Nicht aufgeführte Angaben wurden nicht geprüft.'
+
+/** Footer auf PDF und Prüfseite — derselbe Satz wie AGB §1, kein Gütesiegel. */
+export const SIC_PLAUSIBILITY_FOOTER =
+  'Die Prüfung ist eine Kontrolle auf Vollständigkeit und Plausibilität. Das Zertifikat ist keine Bonitätsbewertung, keine behördliche Auskunft und keine Empfehlung.'
+
+/** Badge auf Urkunde und Prüfseite — «geprüft», nicht «verifiziert» im Sinne einer Auskunftei. */
+export const SIC_MODULE_BADGE = 'GEPRÜFT'
 
 /** «2 von 4 Angaben geprüft» — Bezugsgrösse ist immer der ganze Katalog. */
 export function sicCompletenessLabel(verifiedCount: number): string {

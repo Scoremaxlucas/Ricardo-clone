@@ -3,11 +3,13 @@
 import { SicLogoMark } from '@/components/sic/SicLogo'
 import { SIC_CERT_TAGLINE, SIC_HERO_IMAGE, SIC_MODULE_ACCENT } from '@/lib/sic/brand'
 import { SIC_FAQ } from '@/lib/sic/faq'
+import { sicCatalogPreviewRows } from '@/lib/sic/facts'
 import { SIC_REVIEWS, SIC_USE_CASES, sicLandingHasReviews } from '@/lib/sic/reviews'
 import {
   formatSicChf,
   getSicModule,
   SIC_BUNDLE_ALL_MODULES_CHF,
+  SIC_MODULE_BADGE,
   SIC_MODULES,
   SIC_VALIDITY_MONTHS,
   sicCompletenessLabel,
@@ -65,8 +67,8 @@ const MODULE_ICON: Record<SicModuleId, LucideIcon> = {
 const HOW_STEPS: { icon: LucideIcon; title: string; note: string }[] = [
   {
     icon: Mail,
-    title: 'E-Mail angeben — dein Zertifikat ist angelegt',
-    note: 'Kein Passwort. Anmelden per Link.',
+    title: 'Name und E-Mail — dann die Zahlung',
+    note: 'Kein Passwort. Das Zertifikat entsteht mit der Zahlung. Danach ein Anmeldelink.',
   },
   {
     icon: Upload,
@@ -90,16 +92,8 @@ const TODAY_SCENES = [
   'Der Vermieter öffnet ein paar Dossiers. Der Rest — Lohn, Betreibung, Ausweis — bleibt ungelesen. Die Wohnung ist trotzdem weg.',
 ]
 
-/** Beispiel wie auf dem PDF: eine Angabe, geprüfte Zeilen, Badge VERIFIZIERT. */
-const CERT_PREVIEW: { id: SicModuleId; lines: string[] }[] = [
-  { id: 'BONITAET', lines: ['Keine offenen Betreibungen · Auszug vom 12.06.2026'] },
-  {
-    id: 'ARBEIT_EINKOMMEN',
-    lines: ['CHF 90’000 – 110’000', 'Unbefristet seit März 2020', 'Tragbare Miete bis CHF 2’500 (3×-Regel)'],
-  },
-  { id: 'ZUVERLAESSIGKEIT', lines: ['Seit 2021, Miete immer pünktlich'] },
-  { id: 'AUFENTHALT', lines: ['Schweizer Pass, gültig bis Mai 2031'] },
-]
+/** Beispiel wie auf dem PDF — Zeilen aus denselben Bändern und der 3×-Regel. */
+const CERT_PREVIEW = sicCatalogPreviewRows()
 
 export function SicLandingClient({ account }: { account?: SicLandingAccount | null }) {
   const owned = useMemo(() => new Set<SicModuleId>(account?.ownedModules ?? []), [account])
@@ -142,12 +136,11 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
   const isBaseOnly = !isReturning && moduleIds.length === 0
   const nothingToBuy = isReturning && availableModules.length === 0
   const verifiedCount = account?.verifiedModules.length ?? 0
-  const ownedCount = owned.size
   const statusLabel =
     account?.status === 'REVOKED' ? 'widerrufen'
     : account?.status === 'EXPIRED' ? 'abgelaufen'
-    : ownedCount > 0 && verifiedCount === ownedCount ? 'verifiziert'
-    : verifiedCount > 0 ? 'teilweise verifiziert'
+    : verifiedCount >= SIC_MODULES.length ? 'vollständig'
+    : verifiedCount > 0 ? 'teilweise geprüft'
     : 'in Bearbeitung'
 
   useEffect(() => {
@@ -341,11 +334,28 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 Dein Mieter-Zertifikat
               </h1>
               <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/70">
-                Status und Uploads findest du unter «Mein Zertifikat». Hier kannst du fehlende Angaben
-                ergänzen.
+                {account?.status === 'REVOKED' ?
+                  'Dieses Zertifikat ist widerrufen. Die Prüfseite weist es als ungültig aus.'
+                : account?.status === 'EXPIRED' ?
+                  'Die Gültigkeit ist abgelaufen. Mit einem frischen Betreibungsauszug kannst du verlängern.'
+                : 'Stand und Nachweise findest du unter «Mein Zertifikat». Hier kannst du fehlende Angaben ergänzen.'}
               </p>
               <div id="anlegen" className="mt-8 flex scroll-mt-24 flex-col items-center justify-center gap-3 sm:flex-row">
-                {!nothingToBuy ?
+                {account?.status === 'EXPIRED' ?
+                  <a
+                    href={sicPaths.renew}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-sic-action hover:bg-sic-action-deep px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
+                  >
+                    Jetzt verlängern <ArrowRight className="h-4 w-4" />
+                  </a>
+                : account?.status === 'REVOKED' ?
+                  <a
+                    href={sicPaths.certificateWorkspace}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-sic-action hover:bg-sic-action-deep px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
+                  >
+                    Zum Zertifikat <ArrowRight className="h-4 w-4" />
+                  </a>
+                : !nothingToBuy ?
                   <a
                     href="#module"
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-sic-action hover:bg-sic-action-deep px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
@@ -455,7 +465,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   </a>
                 </form>
                 <p className="mt-3 max-w-md text-xs leading-relaxed text-white/45">
-                  Keine Wohnungszusage – aber eine übersichtliche Bewerbung, die Vertrauen schafft.
+                  Keine Wohnungszusage – aber eine Bewerbung, die man liest.
                 </p>
               </div>
               <div id="zertifikat">
@@ -543,8 +553,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     </div>
                   </div>
                   <p className="mt-3 text-xs leading-relaxed text-sic-navy/70">
-                    Wir haben die Unterlagen vorher angeschaut. Über den QR-Code sieht er, dass das Dokument
-                    echt ist.
+                    Wir haben die Unterlagen vorher angeschaut. Über den QR-Code sieht er denselben Stand
+                    wie auf dem PDF.
                   </p>
                 </div>
               </div>
@@ -562,15 +572,15 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
         </>
       : null}
 
-      {/* ── So funktioniert's ────────────────────────────────────────────── */}
-      <section className="bg-sic-paper-soft py-16">
-        <div className="mx-auto max-w-6xl px-5">
-          <h2 className="text-center font-sic-serif text-3xl font-bold tracking-tight text-sic-navy">So läuft es ab</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-            Zum Start reicht deine E-Mail. Die Unterlagen sammelst du danach in deinem Tempo — das PDF gibt es
-            schon ab der ersten geprüften Angabe. {PRICE_LABEL}, {SIC_VALIDITY_MONTHS} Monate gültig ab der
-            ersten Freigabe.
-          </p>
+      {!isReturning ?
+        <section className="bg-sic-paper-soft py-16">
+          <div className="mx-auto max-w-6xl px-5">
+            <h2 className="text-center font-sic-serif text-3xl font-bold tracking-tight text-sic-navy">So läuft es ab</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
+              Nach der Zahlung sammelst du die Unterlagen in deinem Tempo — das PDF gibt es schon ab der
+              ersten geprüften Angabe. {PRICE_LABEL}, {SIC_VALIDITY_MONTHS} Monate gültig ab der ersten
+              Freigabe.
+            </p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_STEPS.map((step, i) => (
               <div key={step.title} className="relative rounded-2xl border border-slate-200 bg-white p-6">
@@ -587,6 +597,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           </div>
         </div>
       </section>
+      : null}
 
       {/* ── Module (Builder + Live-Vorschau) ─────────────────────────────── */}
       <section id="module" className="bg-sic-paper py-16">
@@ -625,7 +636,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             </div>
             <p className="mt-2.5 text-xs leading-relaxed text-slate-500">
               {coveredCount === SIC_MODULES.length ?
-                'Vollständig — der Vermieter muss nichts nachfragen. Dein Name und der Prüfcode sind immer dabei.'
+                'Vollständig — alle vier Angaben, die Vermieter meist sehen wollen. Dein Name und der Prüfcode sind immer dabei.'
               : `Noch offen: ${missingTitles.join(', ')}. Danach fragt der Vermieter vermutlich selbst.`}
             </p>
           </div>
@@ -722,7 +733,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
 
           {nothingToBuy ?
             <p className="mt-6 rounded-xl border border-sic-verified/20 bg-sic-verified/[0.06] px-4 py-3 text-center text-sm text-sic-verified-text">
-              Alle vier Angaben sind bereits Teil deines Zertifikats. Uploads und Status findest du unter{' '}
+              Alle vier Angaben sind bereits Teil deines Zertifikats. Nachweise und Status findest du unter{' '}
               <a href={sicPaths.certificateWorkspace} className="font-semibold underline">
                 Mein Zertifikat
               </a>{' '}
@@ -1064,7 +1075,7 @@ function CertUrkundeCard() {
                   </ul>
                 </div>
                 <span className="mt-0.5 flex-shrink-0 border border-sic-gold bg-sic-paper-soft px-1 py-0.5 text-[8px] font-bold tracking-[0.1em] text-sic-gold">
-                  VERIFIZIERT
+                  {SIC_MODULE_BADGE}
                 </span>
               </li>
             ))}
