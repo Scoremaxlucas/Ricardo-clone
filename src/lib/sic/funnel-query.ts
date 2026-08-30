@@ -25,9 +25,9 @@ export async function loadSicFunnel(days: SicFunnelDays): Promise<SicFunnelView>
     }),
   ])
 
-  const ids = [
-    ...new Set(created.map(c => c.certificateId).filter((id): id is string => !!id)),
-  ]
+  const ids = Array.from(
+    new Set(created.map(c => c.certificateId).filter((id): id is string => !!id)),
+  )
   const followUp =
     ids.length === 0 ?
       []

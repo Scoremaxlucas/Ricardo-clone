@@ -103,7 +103,7 @@ export function aggregateSicFunnel(opts: {
   }
 
   const reached = (kind: SicEventKind) =>
-    [...firstAt.values()].filter(slot => slot[kind] != null).length
+    Array.from(firstAt.values()).filter(slot => slot[kind] != null).length
 
   const checkoutSteps: SicFunnelStep[] = [
     {
@@ -132,7 +132,7 @@ export function aggregateSicFunnel(opts: {
 
   const paidToUpload: number[] = []
   const uploadToVerified: number[] = []
-  for (const slot of firstAt.values()) {
+  for (const slot of Array.from(firstAt.values())) {
     const paidAt = slot.CERTIFICATE_CREATED
     const uploadAt = slot.FIRST_UPLOAD
     const verifiedAt = slot.MODULE_VERIFIED
