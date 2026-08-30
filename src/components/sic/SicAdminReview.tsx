@@ -6,7 +6,7 @@ import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
 import { SIC_REJECTION_REASONS } from '@/lib/sic/review'
 import { SIC_REVOKE_REASONS } from '@/lib/sic/revoke'
 import { sicReviewSlaLabel, sicReviewSlaState } from '@/lib/sic/review-sla'
-import { AlertTriangle, Banknote, Check, ExternalLink, Loader2, Search, Sparkles, X } from 'lucide-react'
+import { AlertTriangle, Banknote, Check, ExternalLink, Loader2, Mail, Search, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
@@ -461,6 +461,31 @@ export function SicAdminReview() {
     }
   }
 
+  async function resendMagicLink(certificateId: string) {
+    setBusy(`magic:${certificateId}`)
+    try {
+      const res = await fetch('/api/sic/admin/magic-link', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ certificateId }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data?.message || 'Anmeldelink konnte nicht gesendet werden.')
+        return
+      }
+      toast.success(
+        typeof data?.email === 'string' ?
+          `Anmeldelink an ${data.email} gesendet.`
+        : 'Anmeldelink gesendet.'
+      )
+    } catch {
+      toast.error('Netzwerkfehler.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
   async function refundModule(certificateId: string, moduleKind: string) {
     const key = `refund:${certificateId}:${moduleKind}`
     setBusy(key)
@@ -623,15 +648,28 @@ export function SicAdminReview() {
                   <span className="ml-2 font-semibold text-sic-danger-text">Widerrufen</span>
                 : null}
               </p>
-              {item.status !== 'REVOKED' ?
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
                 <button
                   type="button"
-                  onClick={() => setRevoking({ certificateId: item.id, certificateCode: item.certificateCode })}
-                  className="mt-2 text-xs font-semibold text-sic-danger-text hover:underline"
+                  disabled={busy === `magic:${item.id}`}
+                  onClick={() => resendMagicLink(item.id)}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-sic-navy hover:underline disabled:opacity-50"
                 >
-                  Zertifikat widerrufen (AGB §8)
+                  {busy === `magic:${item.id}` ?
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  : <Mail className="h-3 w-3" />}
+                  Link erneut senden
                 </button>
-              : null}
+                {item.status !== 'REVOKED' ?
+                  <button
+                    type="button"
+                    onClick={() => setRevoking({ certificateId: item.id, certificateCode: item.certificateCode })}
+                    className="text-xs font-semibold text-sic-danger-text hover:underline"
+                  >
+                    Zertifikat widerrufen (AGB §8)
+                  </button>
+                : null}
+              </div>
 
               <ul className="mt-4 space-y-3">
                 {item.modules.map(m => {

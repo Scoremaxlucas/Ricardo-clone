@@ -1,7 +1,12 @@
 import { sendEmail } from '@/lib/email/sender'
 import { SIC_COLORS } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL, sicPaths, sicUrl } from '@/lib/sic/config'
-import { sicCertificateReadyCopy, sicUploadReminderCopy } from '@/lib/sic/email-copy'
+import {
+  sicCertificateReadyCopy,
+  sicMagicLinkEmailCopy,
+  sicUploadReminderCopy,
+  type SicMagicLinkMailSource,
+} from '@/lib/sic/email-copy'
 import { getSicModule, type SicModuleId } from '@/lib/sic/modules'
 
 const ACTION = SIC_COLORS.action
@@ -77,23 +82,28 @@ export function sicEmailShell(opts: {
 </html>`
 }
 
-export async function sendSicMagicLinkEmail(email: string, url: string) {
+export async function sendSicMagicLinkEmail(
+  email: string,
+  url: string,
+  source: SicMagicLinkMailSource = 'self'
+) {
+  const copy = sicMagicLinkEmailCopy(source)
   const html = sicEmailShell({
-    preheader: 'Dein Anmeldelink für Swiss Immo Cert',
-    heading: 'Anmeldung bei Swiss Immo Cert',
-    bodyHtml: `<p style="margin:0 0 12px;">Klicke auf den Button, um dich ohne Passwort anzumelden. Dieser Link ist 30 Minuten gültig und nur einmal verwendbar.</p>
-      <p style="margin:0;">Vorlagen und Uploads dürfen über Tage dauern. Ist der Link abgelaufen, forderst du unter «Mein Zertifikat» jederzeit einen neuen an.</p>`,
+    preheader: copy.preheader,
+    heading: copy.heading,
+    bodyHtml: copy.paragraphs
+      .map((p, i) => `<p style="margin:${i === 0 ? '0 0 12px' : '0'};">${p}</p>`)
+      .join(''),
     buttonText: 'Jetzt anmelden',
     buttonUrl: url,
-    footnoteHtml:
-      'Falls du diese Anmeldung nicht angefordert hast, kannst du diese E-Mail ignorieren. Es wird kein Zugriff gewährt, solange der Link nicht geöffnet wird.',
+    footnoteHtml: copy.footnote,
   })
 
   return sicMail({
     to: email,
-    subject: 'Dein Anmeldelink für Swiss Immo Cert',
+    subject: copy.subject,
     html,
-    text: `Anmeldung bei ${SIC_BRAND_NAME}\n\nMit diesem Link anmelden (30 Minuten gültig, einmalig):\n${url}\n\nVorlagen und Uploads dürfen über Tage dauern. Danach unter «Mein Zertifikat» einen neuen Link anfordern.`,
+    text: `${copy.heading}\n\n${copy.paragraphs.join('\n\n')}\n\n${url}\n\n${copy.footnote}`,
   })
 }
 

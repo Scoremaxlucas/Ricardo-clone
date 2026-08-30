@@ -1,4 +1,4 @@
-import { sicCertificateReadyCopy, sicStandsOnDocLine, sicUploadReminderCopy } from '@/lib/sic/email-copy'
+import { sicCertificateReadyCopy, sicMagicLinkEmailCopy, sicStandsOnDocLine, sicUploadReminderCopy } from '@/lib/sic/email-copy'
 import { SIC_MODULES } from '@/lib/sic/modules'
 import {
   SIC_UPLOAD_NUDGE_SELF_DAYS,
@@ -74,5 +74,20 @@ describe('upload reminder copy', () => {
     for (const m of SIC_MODULES) {
       expect(sicUploadReminderCopy(m.id).paragraphs.length).toBeGreaterThan(0)
     }
+  })
+})
+
+describe('magic link copy', () => {
+  it('keeps self-serve wording for a requested login', () => {
+    const copy = sicMagicLinkEmailCopy('self')
+    expect(copy.heading).toMatch(/Anmeldung/)
+    expect(copy.paragraphs.join(' ')).toMatch(/30 Minuten/)
+  })
+
+  it('does not sound like an unsolicited login when support resends', () => {
+    const copy = sicMagicLinkEmailCopy('support')
+    expect(copy.heading).toBe('Dein Anmeldelink')
+    expect(copy.paragraphs.join(' ')).toMatch(/Zertifikat/)
+    expect(copy.footnote).not.toMatch(/nicht angefordert/)
   })
 })

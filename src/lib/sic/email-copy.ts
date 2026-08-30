@@ -90,3 +90,38 @@ export function sicUploadReminderCopy(moduleKind: SicModuleId): {
     ],
   }
 }
+
+export type SicMagicLinkMailSource = 'self' | 'support'
+
+/** Anmeldelink: selbst angefordert oder vom Support nachgeschickt. */
+export function sicMagicLinkEmailCopy(source: SicMagicLinkMailSource): {
+  subject: string
+  heading: string
+  preheader: string
+  paragraphs: string[]
+  footnote: string
+} {
+  if (source === 'support') {
+    return {
+      subject: 'Dein Anmeldelink für Swiss Immo Cert',
+      heading: 'Dein Anmeldelink',
+      preheader: 'Neuer Anmeldelink für dein Zertifikat',
+      paragraphs: [
+        'Hier ist ein neuer Anmeldelink für dein Zertifikat. Er ist 30 Minuten gültig und nur einmal verwendbar.',
+        'Ist er abgelaufen, forderst du unter «Mein Zertifikat» jederzeit einen neuen an.',
+      ],
+      footnote: 'Falls du uns nicht geschrieben hast, kannst du diese E-Mail ignorieren.',
+    }
+  }
+  return {
+    subject: 'Dein Anmeldelink für Swiss Immo Cert',
+    heading: 'Anmeldung bei Swiss Immo Cert',
+    preheader: 'Dein Anmeldelink für Swiss Immo Cert',
+    paragraphs: [
+      'Klicke auf den Button, um dich ohne Passwort anzumelden. Dieser Link ist 30 Minuten gültig und nur einmal verwendbar.',
+      'Vorlagen und Uploads dürfen über Tage dauern. Ist der Link abgelaufen, forderst du unter «Mein Zertifikat» jederzeit einen neuen an.',
+    ],
+    footnote:
+      'Falls du diese Anmeldung nicht angefordert hast, kannst du diese E-Mail ignorieren. Es wird kein Zugriff gewährt, solange der Link nicht geöffnet wird.',
+  }
+}
