@@ -16,7 +16,7 @@ function fmt(d: Date): string {
   return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-type QuietState = 'rate_limited' | 'unknown' | 'not_ready'
+type QuietState = 'rate_limited' | 'unknown' | 'not_ready' | 'revoked'
 
 export type SicVerifyDocumentProps =
   | { state: QuietState; code?: string }
@@ -224,6 +224,21 @@ export function SicVerifyDocument(props: SicVerifyDocumentProps) {
             Der Code{' '}
             <span className="font-mono font-semibold text-sic-navy">{props.code || '—'}</span> ist
             unbekannt.
+          </p>
+        </QuietBody>
+      </Frame>
+    )
+  }
+
+  if (props.state === 'revoked') {
+    return (
+      <Frame>
+        <NavyBand quiet code={props.code || undefined} />
+        <QuietBody title="Widerrufen">
+          <p>
+            Dieses Zertifikat wurde widerrufen. Der Code{' '}
+            <span className="font-mono font-semibold text-sic-navy">{props.code || '—'}</span> ist
+            nicht mehr gültig.
           </p>
         </QuietBody>
       </Frame>

@@ -80,6 +80,8 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
     <VerifyShell>
       {!cert ?
         <SicVerifyDocument state="unknown" code={code} />
+      : cert.status === 'REVOKED' ?
+        <SicVerifyDocument state="revoked" code={cert.certificateCode} />
       : !landlordReady ?
         <SicVerifyDocument state="not_ready" />
       : <SicVerifyDocument

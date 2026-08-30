@@ -39,6 +39,7 @@ function mapCertToReviewItem(c: CertWithReview) {
     email: c.email,
     certificateCode: c.certificateCode,
     holderName: `${c.holderFirstName ?? ''} ${c.holderLastName ?? ''}`.trim() || null,
+    status: c.status,
     certifiedAt: c.certifiedAt ? c.certifiedAt.toISOString() : null,
     expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
     updatedAt: c.updatedAt.toISOString(),

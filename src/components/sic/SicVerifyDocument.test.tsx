@@ -56,4 +56,14 @@ describe('SicVerifyDocument', () => {
     expect(html).not.toContain('Ausgestellt für')
     expect(html).not.toContain('Online bestätigt')
   })
+
+  it('names revoked without leaking holder data', () => {
+    const html = renderToStaticMarkup(
+      <SicVerifyDocument state="revoked" code="SIC-2026-ABCDEFGH" />
+    )
+    expect(html).toContain('Widerrufen')
+    expect(html).toContain('SIC-2026-ABCDEFGH')
+    expect(html).not.toContain('Ausgestellt für')
+    expect(html).not.toContain('Anna Muster')
+  })
 })

@@ -4,6 +4,7 @@ import { parseSicAdminSearchQuery } from '@/lib/sic/admin-queue'
 import { sicFactFields, type SicFactField, type SicFacts } from '@/lib/sic/facts'
 import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
 import { SIC_REJECTION_REASONS } from '@/lib/sic/review'
+import { SIC_REVOKE_REASONS } from '@/lib/sic/revoke'
 import { sicReviewSlaLabel, sicReviewSlaState } from '@/lib/sic/review-sla'
 import { AlertTriangle, Check, ExternalLink, Loader2, Search, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
@@ -27,6 +28,7 @@ type Item = {
   email: string
   certificateCode: string
   holderName: string | null
+  status: string
   certifiedAt: string | null
   expiresAt: string | null
   updatedAt: string
@@ -167,6 +169,73 @@ function RejectDialog({
   )
 }
 
+function RevokeDialog({
+  certificateCode,
+  onCancel,
+  onConfirm,
+  busy,
+}: {
+  certificateCode: string
+  onCancel: () => void
+  onConfirm: (reason: string) => void
+  busy: boolean
+}) {
+  const [note, setNote] = useState('')
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+        <h3 className="text-base font-bold text-sic-navy">Zertifikat {certificateCode} widerrufen</h3>
+        <p className="mt-1 text-sm text-slate-600">
+          AGB §8: ohne Rückerstattung. Die Prüfseite zeigt den Code danach als widerrufen — ohne
+          Name, ohne Angaben.
+        </p>
+        <div className="mt-4 space-y-2">
+          {SIC_REVOKE_REASONS.map(reason => (
+            <button
+              key={reason}
+              type="button"
+              onClick={() => setNote(reason)}
+              className={`block w-full rounded-lg border px-3 py-2 text-left text-xs leading-relaxed transition-colors ${
+                note === reason ?
+                  'border-sic-navy bg-sic-navy/5 text-sic-navy'
+                : 'border-slate-200 text-slate-600 hover:border-slate-300'
+              }`}
+            >
+              {reason}
+            </button>
+          ))}
+        </div>
+        <textarea
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          rows={3}
+          placeholder="Grund anpassen oder frei formulieren"
+          className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sic-navy"
+        />
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+          >
+            Abbrechen
+          </button>
+          <button
+            type="button"
+            disabled={busy || note.trim().length < 8}
+            onClick={() => onConfirm(note.trim())}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-sic-danger px-4 py-2 text-sm font-semibold text-white hover:brightness-90 disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertTriangle className="h-4 w-4" />}
+            Widerrufen ohne Rückerstattung
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function SicAdminReview() {
   const [filter, setFilter] = useState<Filter>('IN_REVIEW')
   const [items, setItems] = useState<Item[]>([])
@@ -180,6 +249,7 @@ export function SicAdminReview() {
   const [rejecting, setRejecting] = useState<{ certificateId: string; moduleKind: string; title: string } | null>(
     null
   )
+  const [revoking, setRevoking] = useState<{ certificateId: string; certificateCode: string } | null>(null)
   const [queryInput, setQueryInput] = useState('')
   const [activeQuery, setActiveQuery] = useState<string | null>(null)
 
@@ -320,6 +390,31 @@ export function SicAdminReview() {
     }
   }
 
+  async function revoke(certificateId: string, reason: string) {
+    setBusy(`revoke:${certificateId}`)
+    try {
+      const res = await fetch('/api/sic/admin/revoke', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ certificateId, reason }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data?.message || 'Widerruf fehlgeschlagen.')
+        return
+      }
+      toast.success(
+        data?.already ? 'Dieses Zertifikat war bereits widerrufen.' : 'Zertifikat widerrufen — ohne Rückerstattung.'
+      )
+      setRevoking(null)
+      await load(filter, activeQuery)
+    } catch {
+      toast.error('Netzwerkfehler.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const depthForFilter =
     filter === 'IN_REVIEW' ? counts.inReview
     : filter === 'PENDING_DOCS' ? counts.pendingDocs
@@ -448,12 +543,25 @@ export function SicAdminReview() {
                 {item.holderName ?
                   `Inhaber: ${item.holderName}`
                 : 'Kein Name gesetzt — ohne Namen gibt es kein PDF.'}
+                {item.status === 'REVOKED' ?
+                  <span className="ml-2 font-semibold text-sic-danger-text">Widerrufen</span>
+                : null}
               </p>
+              {item.status !== 'REVOKED' ?
+                <button
+                  type="button"
+                  onClick={() => setRevoking({ certificateId: item.id, certificateCode: item.certificateCode })}
+                  className="mt-2 text-xs font-semibold text-sic-danger-text hover:underline"
+                >
+                  Zertifikat widerrufen (AGB §8)
+                </button>
+              : null}
 
               <ul className="mt-4 space-y-3">
                 {item.modules.map(m => {
                   const key = `${item.id}:${m.moduleKind}`
-                  const actionable = m.status === 'IN_REVIEW' || m.status === 'PENDING_DOCS'
+                  const actionable =
+                    item.status !== 'REVOKED' && (m.status === 'IN_REVIEW' || m.status === 'PENDING_DOCS')
                   const moduleId = isSicModuleId(m.moduleKind) ? m.moduleKind : null
                   const waiting = waitingLabel(m.firstUploadAt ?? m.paidAt)
                   const sla =
@@ -613,6 +721,14 @@ export function SicAdminReview() {
           busy={busy === `${rejecting.certificateId}:${rejecting.moduleKind}`}
           onCancel={() => setRejecting(null)}
           onConfirm={note => reject(rejecting.certificateId, rejecting.moduleKind, note)}
+        />
+      : null}
+      {revoking ?
+        <RevokeDialog
+          certificateCode={revoking.certificateCode}
+          busy={busy === `revoke:${revoking.certificateId}`}
+          onCancel={() => setRevoking(null)}
+          onConfirm={reason => revoke(revoking.certificateId, reason)}
         />
       : null}
     </div>

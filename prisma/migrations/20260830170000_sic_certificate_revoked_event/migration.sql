@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "SicEventKind" ADD VALUE 'CERTIFICATE_REVOKED';
