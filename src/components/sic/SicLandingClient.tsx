@@ -21,6 +21,7 @@ import { SIC_DOCS_RETENTION_DAYS } from '@/lib/sic/validity'
 import type { SicLandingAccount } from '@/lib/sic/landing-account'
 import { sicPaths, SIC_BRAND_NAME, SIC_ISSUER_LINE, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
 import {
+  CalendarMark,
   CornerFlourish,
   CrestWithLaurel,
   GuillocheRule,
@@ -388,8 +389,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   <span className="text-sic-gold-light">Der Vermieter versteht es in Sekunden.</span>
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-                  Lohn, Betreibung, Ausweis und Referenz — eine Seite statt fünf Anhänge. Er scannt den QR.
-                  Du erklärst nichts.
+                  Lohn, Betreibung, Ausweis und Referenz — eine Seite statt fünf Anhänge. Er scannt den QR
+                  und muss nichts nachfragen.
                 </p>
                 <form
                   id="anlegen"
@@ -470,7 +471,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               <div id="zertifikat">
                 <CertUrkundeCard />
                 <p className="mt-3 text-center text-xs leading-relaxed text-white/50">
-                  Er scannt den QR. Du musst nicht fünf Anhänge erklären.
+                  So sieht das PDF aus, das du der Bewerbung beilegst.
                 </p>
               </div>
             </div>
@@ -1080,15 +1081,42 @@ function CertUrkundeCard() {
             ))}
           </ul>
 
-          <div className="mt-3 flex items-end justify-between gap-2 border-t border-sic-hairline pt-3">
-            <Seal size={44} />
-            <div className="mb-0.5 hidden flex-1 flex-col items-center sm:flex">
-              <p className="text-center text-[10px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
-              <p className="mt-0.5 text-center text-[9px] text-slate-500">12.06.2026</p>
+          <div className="mt-3 border-t border-sic-hairline pt-3">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <CalendarMark size={16} />
+                <div>
+                  <p className="text-[8px] uppercase tracking-[0.12em] text-slate-500">Zertifikatsdatum</p>
+                  <p className="text-[10px] font-semibold text-sic-navy">12.06.2026</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CalendarMark size={16} />
+                <div>
+                  <p className="text-[8px] uppercase tracking-[0.12em] text-slate-500">Gültig bis</p>
+                  <p className="text-[10px] font-semibold text-sic-navy">12.09.2026</p>
+                </div>
+              </div>
             </div>
-            <p className="mb-0.5 max-w-[4.75rem] border border-sic-gold bg-sic-paper-soft px-1.5 py-1.5 text-center text-[8px] font-bold uppercase leading-tight tracking-[0.08em] text-sic-gold-text">
-              Online bestätigt
-            </p>
+            <div className="flex items-end justify-between gap-2">
+              <Seal size={44} />
+              <div className="mb-0.5 hidden flex-1 flex-col items-center sm:flex">
+                <p className="text-center text-[10px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
+                <p className="mt-0.5 text-center text-[9px] text-slate-500">12.06.2026</p>
+              </div>
+              <div className="mb-0.5 flex flex-col items-center">
+                <img
+                  src="/sic/beispiel-qr.svg"
+                  alt=""
+                  width={52}
+                  height={52}
+                  className="h-[52px] w-[52px] bg-sic-paper"
+                />
+                <p className="mt-1 max-w-[4.75rem] text-center text-[7px] leading-tight text-slate-500">
+                  Prüfseite: QR-Code scannen
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </article>
