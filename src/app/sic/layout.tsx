@@ -20,7 +20,7 @@ const sicSerif = Source_Serif_4({
 // definieren, sonst wird die Marke im <title> doppelt angehängt.
 export const metadata: Metadata = {
   description:
-    'Du bewirbst dich, und es reicht oft nicht. Swiss Immo Cert ist das geprüfte Mieter-Zertifikat: Betreibungen, Lohn und Arbeitsstelle, Referenz vom Vermieter, Ausweis — per QR-Code prüfbar. Keine Wohnungszusage, aber eine Bewerbung, die man liest.',
+    'Geprüftes Schweizer Mieter-Zertifikat: Betreibungen, Lohn, Vermieter-Referenz und Ausweis — eine Seite, per QR prüfbar. Der Vermieter versteht es in Sekunden. Kein Abo.',
   robots: { index: true, follow: true },
 }
 

@@ -384,13 +384,12 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   Für Wohnungssuchende in der Schweiz
                 </span>
                 <h1 className="mt-6 font-sic-serif text-3xl font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
-                  Du schickst die Unterlagen.{' '}
-                  <span className="text-sic-gold-light">Es kommt keine Antwort.</span>
+                  Ein geprüftes Mieter-Zertifikat.{' '}
+                  <span className="text-sic-gold-light">Der Vermieter versteht es in Sekunden.</span>
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-                  Lohn, Betreibung, Ausweis — und trotzdem still. Nicht weil du ungeeignet bist: weil Dutzende
-                  dasselbe schicken. Ein Mieter-Zertifikat ist das eine PDF, das der Vermieter in Sekunden
-                  scannen und verstehen kann.
+                  Lohn, Betreibung, Ausweis und Referenz — eine Seite statt fünf Anhänge. Er scannt den QR.
+                  Du erklärst nichts.
                 </p>
                 <form
                   id="anlegen"
@@ -465,7 +464,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   </a>
                 </form>
                 <p className="mt-3 max-w-md text-xs leading-relaxed text-white/45">
-                  Keine Wohnungszusage – aber eine Bewerbung, die man liest.
+                  Kein Abo. Nach der Zahlung lädst du die Unterlagen hoch — das PDF legst du der Bewerbung bei.
                 </p>
               </div>
               <div id="zertifikat">

@@ -63,7 +63,7 @@ export async function generateMetadata(): Promise<Metadata> {
         template: '%s | Swiss Immo Cert',
       },
       description:
-        'Du bewirbst dich, und es reicht oft nicht. Geprüftes Mieter-Zertifikat: Betreibungen, Lohn und Arbeitsstelle, Referenz vom Vermieter, Ausweis — per QR-Code prüfbar. Keine Wohnungszusage.',
+        'Geprüftes Schweizer Mieter-Zertifikat: Betreibungen, Lohn, Vermieter-Referenz und Ausweis — eine Seite, per QR prüfbar. Der Vermieter versteht es in Sekunden. Kein Abo.',
       keywords: [
         'Mieter-Zertifikat Schweiz',
         'Betreibungsauszug Mieter',
