@@ -99,7 +99,7 @@ export async function middleware(request: NextRequest) {
   ) {
     if (onSicHost) {
       const rewrite = request.nextUrl.clone()
-      rewrite.pathname = pathname === '/favicon.ico' ? '/icon' : '/apple-icon'
+      rewrite.pathname = pathname === '/favicon.ico' ? '/sic/icons/favicon.ico' : '/apple-icon'
       return withSicHostHeaders(request, rewrite)
     }
     return NextResponse.next()

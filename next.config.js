@@ -85,6 +85,14 @@ const nextConfig = {
         ],
       },
       {
+        source: '/sic/icons/favicon.ico',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' }],
+      },
+      {
+        source: '/sic/icons/favicon-32.png',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' }],
+      },
+      {
         // Security headers for all routes
         source: '/:path*',
         headers: [
@@ -151,6 +159,19 @@ const nextConfig = {
         ],
       },
     ]
+  },
+
+  async rewrites() {
+    const sicFavicon = {
+      source: '/favicon.ico',
+      destination: '/sic/icons/favicon.ico',
+    }
+    return {
+      beforeFiles: [
+        { ...sicFavicon, has: [{ type: 'host', value: 'www.swissimmocert.ch' }] },
+        { ...sicFavicon, has: [{ type: 'host', value: 'swissimmocert.ch' }] },
+      ],
+    }
   },
 
   webpack: (config, { isServer }) => {

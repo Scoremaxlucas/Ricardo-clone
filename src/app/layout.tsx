@@ -30,7 +30,8 @@ const helvendaIcons: Metadata['icons'] = {
 
 const sicIcons: Metadata['icons'] = {
   icon: [
-    { url: '/icon', type: 'image/png', sizes: '32x32' },
+    { url: '/sic/icons/favicon.ico', sizes: '32x32' },
+    { url: '/sic/icons/favicon-32.png', type: 'image/png', sizes: '32x32' },
     { url: '/sic/icons/favicon.svg', type: 'image/svg+xml' },
     { url: '/sic/icons/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
     { url: '/sic/icons/icon-512x512.svg', sizes: '512x512', type: 'image/svg+xml' },
@@ -171,8 +172,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={htmlLang} className="h-full">
       <head>
         <link rel="apple-touch-icon" href={isSic ? '/apple-icon' : '/icons/apple-touch-icon.svg'} />
-        <link rel="icon" type="image/png" sizes="32x32" href="/icon" />
-        <link rel="icon" type="image/svg+xml" href={isSic ? '/sic/icons/favicon.svg' : '/icons/favicon.svg'} />
+        {isSic ?
+          <>
+            <link rel="icon" href="/sic/icons/favicon.ico" sizes="any" />
+            <link rel="icon" type="image/png" sizes="32x32" href="/sic/icons/favicon-32.png" />
+            <link rel="icon" type="image/svg+xml" href="/sic/icons/favicon.svg" />
+          </>
+        : <>
+            <link rel="icon" type="image/png" sizes="32x32" href="/icon" />
+            <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+          </>}
         <link rel="dns-prefetch" href="https://vercel.live" />
         <link rel="preconnect" href="https://vercel.live" crossOrigin="anonymous" />
       </head>
