@@ -36,6 +36,7 @@ function isSicAppRoute(pathname: string): boolean {
 /** Was auf dem SIC-Host erlaubt bleibt (Rest → Redirect auf /). */
 function isAllowedOnSicHost(pathname: string): boolean {
   if (isSicAppRoute(pathname)) return true
+  if (pathname === '/icon' || pathname === '/apple-icon') return true
   if (pathname.startsWith('/api/auth')) return true
   if (pathname.startsWith('/api/stripe')) return true
   if (pathname.startsWith('/api/cron')) return true
@@ -81,7 +82,6 @@ export async function middleware(request: NextRequest) {
 
   if (
     pathname.startsWith('/_next') ||
-    pathname === '/favicon.ico' ||
     pathname.startsWith('/icons/') ||
     pathname.startsWith('/fonts/')
   ) {
@@ -89,8 +89,21 @@ export async function middleware(request: NextRequest) {
   }
 
   const host = rawHost(request)
-
   const onSicHost = isSicHost(request)
+
+  // Safari holt immer /favicon.ico — das App-Router-ICO war das Helvenda-H.
+  if (
+    pathname === '/favicon.ico' ||
+    pathname === '/apple-touch-icon.png' ||
+    pathname === '/apple-touch-icon-precomposed.png'
+  ) {
+    if (onSicHost) {
+      const rewrite = request.nextUrl.clone()
+      rewrite.pathname = pathname === '/favicon.ico' ? '/icon' : '/apple-icon'
+      return withSicHostHeaders(request, rewrite)
+    }
+    return NextResponse.next()
+  }
 
   if (sicApiBlockedOffHost(onSicHost, pathname)) {
     return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 })
@@ -224,5 +237,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|webmanifest)$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|.*\\.(?:svg|png|jpg|jpeg|gif|webp|txt|xml|webmanifest)$).*)',
+    '/favicon.ico',
+    '/apple-touch-icon.png',
+    '/apple-touch-icon-precomposed.png',
+  ],
 }
