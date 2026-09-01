@@ -6,7 +6,6 @@ import { Providers } from '@/components/providers'
 import { isSicSiteHostFromHeaders } from '@/lib/tenant-host'
 import { SIC_SITE_ORIGIN } from '@/lib/sic/config'
 import { BASE_URL } from '@/lib/seo'
-import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { headers } from 'next/headers'
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
@@ -38,23 +37,9 @@ const sicIcons: Metadata['icons'] = {
   apple: [{ url: '/sic/icons/apple-touch-icon.svg', sizes: '180x180', type: 'image/svg+xml' }],
 }
 
-/** Canonical origin for the current request (avoids wrong metadataBase from env on wohnen.helvenda.ch). */
-function requestOriginUrl(h: { get(name: string): string | null }): URL {
-  try {
-    const host = (h.get('host') || '').trim()
-    if (!host) return new URL(WOHNEN_SITE_ORIGIN)
-    const forwardedProto = h.get('x-forwarded-proto')?.split(',')[0]?.trim()
-    const isLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1')
-    const proto = forwardedProto || (isLocal ? 'http' : 'https')
-    return new URL(`${proto}://${host}`)
-  } catch {
-    return new URL(WOHNEN_SITE_ORIGIN)
-  }
-}
-
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers()
-  // SIC-Host (früher Helvenda Wohnen): nur noch Swiss Immo Cert
+  // SIC-Host: nur Swiss Immo Cert
   if (isSicSiteHostFromHeaders(h) || h.get('x-sic-host') === '1' || h.get('x-sic-route') === '1') {
     return {
       metadataBase: new URL(SIC_SITE_ORIGIN),
@@ -115,7 +100,7 @@ export async function generateViewport(): Promise<Viewport> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const h = await headers()
-  // Hard pivot: auf dem SIC-Host (swissimmocert.ch) nie die Marktplatz-/Wohnen-Shell.
+  // Auf dem SIC-Host nie die Marktplatz-Shell.
   const isSic = h.get('x-sic-route') === '1' || h.get('x-sic-host') === '1' || isSicSiteHostFromHeaders(h)
   const htmlLang = isSic ? 'de-CH' : 'de'
 

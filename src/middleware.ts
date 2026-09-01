@@ -3,16 +3,11 @@ import { getToken } from 'next-auth/jwt'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import {
-  isLegacySicHostname,
   isSicProductionHostname,
   sicApiBlockedOffHost,
+  sicAppBlockedOffHost,
   SIC_PREVIEW_COOKIE,
-  SIC_PREVIEW_COOKIE_LEGACY,
-  SIC_SITE_ORIGIN,
 } from '@/lib/sic/config'
-import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
-
-const WOHNEN_PREVIEW_COOKIE = 'helvenda-wohnen-preview'
 
 function rawHost(request: NextRequest): string {
   const forwarded = (request.headers.get('x-forwarded-host') || '').split(',')[0].trim()
@@ -21,47 +16,16 @@ function rawHost(request: NextRequest): string {
 
 /**
  * Swiss Immo Cert Host: swissimmocert.ch (+ www).
- * Lokal: ?subdomain=sic|wohnen oder Preview-Cookie.
+ * Lokal: ?subdomain=sic oder Preview-Cookie `sic-preview`.
  */
 function isSicHost(request: NextRequest): boolean {
   const host = rawHost(request)
   if (isSicProductionHostname(host)) return true
   if (host === 'localhost' || host === '127.0.0.1') {
     const sub = request.nextUrl.searchParams.get('subdomain')
-    if (sub === 'sic' || sub === 'wohnen') return true
+    if (sub === 'sic') return true
     if (request.cookies.get(SIC_PREVIEW_COOKIE)?.value === '1') return true
-    if (request.cookies.get(SIC_PREVIEW_COOKIE_LEGACY)?.value === '1') return true
-    if (request.cookies.get(WOHNEN_PREVIEW_COOKIE)?.value === '1') return true
   }
-  return false
-}
-
-function isMainHelvendaMarketplaceHost(host: string): boolean {
-  const h = host.toLowerCase()
-  if (!h || h === 'localhost' || h === '127.0.0.1') return false
-  try {
-    const mainHost = new URL(MAIN_SHOP_ORIGIN).hostname.toLowerCase()
-    if (h === mainHost) return true
-    if (mainHost.startsWith('www.')) {
-      const apex = mainHost.slice(4)
-      if (h === apex) return true
-    }
-  } catch {
-    /* ignore */
-  }
-  return h === 'helvenda.ch' || h === 'www.helvenda.ch'
-}
-
-/** Alte Wohnen-/Matching-Pfade auf dem Marktplatz → SIC-Homepage. */
-function marketplacePathsRedirectToSic(pathname: string): boolean {
-  if (pathname === '/meine-matches') return true
-  if (pathname === '/meine-bewerbungen') return true
-  if (pathname === '/verify' || pathname.startsWith('/verify/')) return true
-  if (pathname === '/zertifikat') return true
-  if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
-  if (pathname === '/profil' || pathname.startsWith('/profil/')) return true
-  if (pathname === '/matching' || pathname.startsWith('/matching/')) return true
-  if (pathname === '/einladung-inserat' || pathname.startsWith('/einladung-inserat/')) return true
   return false
 }
 
@@ -110,8 +74,6 @@ function setSicPreviewCookie(res: NextResponse) {
     maxAge: 60 * 60 * 24 * 7,
   }
   res.cookies.set(SIC_PREVIEW_COOKIE, '1', opts)
-  res.cookies.set(SIC_PREVIEW_COOKIE_LEGACY, '1', opts)
-  res.cookies.set(WOHNEN_PREVIEW_COOKIE, '1', opts)
 }
 
 export async function middleware(request: NextRequest) {
@@ -128,36 +90,20 @@ export async function middleware(request: NextRequest) {
 
   const host = rawHost(request)
 
-  // Legacy SIC-Host → kanonische Domain (Magic Links, Bookmarks)
-  if (isLegacySicHostname(host)) {
-    const target = new URL(pathname + search, SIC_SITE_ORIGIN)
-    return NextResponse.redirect(target, 308)
-  }
-
   const onSicHost = isSicHost(request)
 
   if (sicApiBlockedOffHost(onSicHost, pathname)) {
     return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 })
   }
 
-  // Marktplatz: alte Mieter-/Wohnungs-Pfade → SIC
-  if (!onSicHost && isMainHelvendaMarketplaceHost(host) && marketplacePathsRedirectToSic(pathname)) {
-    return NextResponse.redirect(new URL('/' + search, SIC_SITE_ORIGIN))
-  }
-
-  // SIC darf nicht unter helvenda.ch laufen — gleiche App, eigene Marke
-  if (
-    !onSicHost &&
-    isMainHelvendaMarketplaceHost(host) &&
-    (pathname === '/sic' || pathname.startsWith('/sic/'))
-  ) {
-    return NextResponse.redirect(new URL(pathname + search, SIC_SITE_ORIGIN))
+  if (sicAppBlockedOffHost(onSicHost, pathname)) {
+    return new NextResponse('Nicht gefunden', { status: 404 })
   }
 
   // localhost Preview für SIC-Host
   if (host === 'localhost' || host === '127.0.0.1') {
     const sub = request.nextUrl.searchParams.get('subdomain')
-    if (sub === 'sic' || sub === 'wohnen') {
+    if (sub === 'sic') {
       const clean = request.nextUrl.clone()
       clean.searchParams.delete('subdomain')
       const res = NextResponse.redirect(clean)

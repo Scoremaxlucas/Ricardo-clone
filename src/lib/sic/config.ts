@@ -1,5 +1,3 @@
-import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
-
 export const SIC_BRAND_NAME = 'Swiss Immo Cert'
 export const SIC_BRAND_SHORT = 'SIC'
 /** Öffentliche Ausstellerzeile auf PDF und Prüfseite — nicht die GmbH. */
@@ -27,13 +25,11 @@ export const SIC_SITE_ORIGIN = (
 export const SIC_BASE_PATH = '/sic'
 
 export const SIC_PREVIEW_COOKIE = 'sic-preview'
-/** Altes Cookie — weiterhin akzeptieren, damit lokale Previews nicht aussteigen. */
-export const SIC_PREVIEW_COOKIE_LEGACY = 'helvenda-sic-preview'
 
 export const SIC_SUPPORT_EMAIL =
   process.env.SIC_SUPPORT_EMAIL?.trim() || 'support@swissimmocert.ch'
 
-/** Betreiberin — dieselben Registerdaten wie Helvenda, damit das Impressum vollständig ist. */
+/** Betreiberin laut Handelsregister — auf Zertifikat und Landing nicht genannt. */
 export const SIC_OPERATOR = {
   legalName: 'Score-Max GmbH',
   street: 'In der Hauswiese 2',
@@ -104,9 +100,14 @@ export function isSicWwwHostname(host: string): boolean {
   return h === `www.${apex}` || isSicProductionHostname(h)
 }
 
-/** `/api/sic` nur auf dem SIC-Host — sonst Enumeration von helvenda.ch aus. */
+/** `/api/sic` nur auf dem SIC-Host. */
 export function sicApiBlockedOffHost(onSicHost: boolean, pathname: string): boolean {
   return !onSicHost && pathname.startsWith('/api/sic')
+}
+
+/** `/sic` nur auf dem SIC-Host — andere Hosts liefern die Fläche nicht. */
+export function sicAppBlockedOffHost(onSicHost: boolean, pathname: string): boolean {
+  return !onSicHost && (pathname === '/sic' || pathname.startsWith('/sic/'))
 }
 
 export function isSicBrowserHost(): boolean {
@@ -115,22 +116,9 @@ export function isSicBrowserHost(): boolean {
   if (isSicProductionHostname(h)) return true
   if (h === 'localhost' || h === '127.0.0.1') {
     const c = document.cookie
-    return c.includes(`${SIC_PREVIEW_COOKIE}=1`) || c.includes(`${SIC_PREVIEW_COOKIE_LEGACY}=1`)
+    return c.includes(`${SIC_PREVIEW_COOKIE}=1`)
   }
   return false
-}
-
-/**
- * Frühere Adresse, unter der SIC kurz erreichbar war — Middleware leitet auf {@link SIC_SITE_ORIGIN} um.
- */
-export function isLegacySicHostname(host: string): boolean {
-  const h = host.split(':')[0].toLowerCase()
-  try {
-    const legacy = new URL(WOHNEN_SITE_ORIGIN).hostname.toLowerCase()
-    return h === legacy
-  } catch {
-    return h === 'wohnen.helvenda.ch'
-  }
 }
 
 export const sicPaths = {

@@ -1,7 +1,7 @@
 # Domain-Umzug: Swiss Immo Cert → `swissimmocert.ch`
 
 Code erwartet **`https://swissimmocert.ch`** (Apex) als SIC-Host (`NEXT_PUBLIC_SIC_URL`).  
-`wohnen.helvenda.ch` leitet per **308** auf die neue Domain um (Pfad bleibt erhalten).
+Helvenda-Domains (`helvenda.ch`, `wohnen.helvenda.ch`) sind kein SIC-Host und leiten nicht auf Swiss Immo Cert um.
 
 ## Wichtig: Apex kanonisch (SSL)
 
