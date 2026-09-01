@@ -67,7 +67,7 @@ export default function SicDatenschutzPage() {
         <section>
           <h2 className="font-semibold text-sic-navy">Wer die Daten sieht</h2>
           <p className="mt-1.5">
-            Deine Unterlagen sehen nur die für die Prüfung zuständigen Personen bei Score-Max. Vermieter sehen
+            Deine Unterlagen sehen nur die für die Prüfung zuständigen Personen bei Swiss Immo Cert. Vermieter sehen
             nie das Original-Dokument, sondern nur das Zertifikat mit den geprüften Angaben — und nur, wenn du
             es teilst. Wer deinen Prüf-Link oder QR-Code hat, sieht den Status und die geprüften Angaben; du
             kannst unter «Mein Zertifikat» jederzeit einen neuen Code erzeugen und den alten Link damit entwerten.

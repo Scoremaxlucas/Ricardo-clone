@@ -10,7 +10,7 @@
  * - Navy: Text, Header, Flächen — das Fundament.
  * - Teal: alles, worauf man klickt. Nichts sonst.
  * - Rot: Marke (Schweizerkreuz, «Immo») und Warnsignal. Keine Kaufknöpfe.
- * - Gold: das Zertifikat selbst — Rahmen, Siegel, Urkundenoptik.
+ * - Gold: sparsam auf dem Zertifikat — eine Linie unter «Mieter-Zertifikat».
  * - Grün: «geprüft». Kein anderer Zweck.
  */
 
@@ -42,6 +42,19 @@ export const SIC_COLORS = {
 export function sicLogoMarkHouseStroke(onDark: boolean): string {
   return onDark ? SIC_COLORS.paper : SIC_COLORS.navy
 }
+
+/**
+ * Dieselbe Hausmarke auf Logo, Zertifikat-PDF, Prüfseite und OG.
+ * Kein Bundeswappen — das Kreuz sitzt im Haus, nicht im Schild.
+ */
+export const SIC_HOUSE_MARK = {
+  viewBox: '0 0 48 48',
+  outline: 'M8 21.5 24 8l16 13.5V41a1.5 1.5 0 0 1-1.5 1.5h-29A1.5 1.5 0 0 1 8 41z',
+  outlineStrokeWidth: 3,
+  square: { x: 16, y: 20, width: 16, height: 16, rx: 3 },
+  crossV: { x: 23, y: 23.5, width: 2.5, height: 9, rx: 1 },
+  crossH: { x: 19.75, y: 26.75, width: 9, height: 2.5, rx: 1 },
+} as const
 
 export const SIC_TAGLINE = 'Das geprüfte Schweizer Mieter-Zertifikat'
 /** Drei Wörter, die die AGB tragen: Plausibilität, einheitliches Format, QR. */

@@ -1,7 +1,7 @@
 'use client'
 
 import { SicLogoMark } from '@/components/sic/SicLogo'
-import { SIC_CERT_TAGLINE, SIC_HERO_IMAGE, SIC_MODULE_ACCENT } from '@/lib/sic/brand'
+import { SIC_CERT_TAGLINE, SIC_COLORS, SIC_HERO_IMAGE, SIC_MODULE_ACCENT } from '@/lib/sic/brand'
 import { SIC_FAQ } from '@/lib/sic/faq'
 import { sicCatalogPreviewRows } from '@/lib/sic/facts'
 import { SIC_REVIEWS, SIC_USE_CASES, sicLandingHasReviews } from '@/lib/sic/reviews'
@@ -19,15 +19,8 @@ import {
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { SIC_DOCS_RETENTION_DAYS } from '@/lib/sic/validity'
 import type { SicLandingAccount } from '@/lib/sic/landing-account'
-import { sicPaths, SIC_BRAND_NAME, SIC_ISSUER_LINE, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
-import {
-  CalendarMark,
-  CornerFlourish,
-  CrestWithLaurel,
-  GuillocheRule,
-  ModuleGlyph,
-  Seal,
-} from '@/lib/sic/cert/art-web'
+import { sicPaths, SIC_ISSUER_LINE, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
+import { DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/art-web'
 import {
   ArrowRight,
   Briefcase,
@@ -1012,55 +1005,42 @@ function CertUrkundeCard() {
       <span className="absolute right-3 top-3 z-20 rounded-full bg-sic-navy-deep/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
         Beispiel
       </span>
-      <article className="relative border-[2.4px] border-sic-navy bg-sic-paper p-1 shadow-xl shadow-black/25">
-        <div className="relative overflow-hidden border border-sic-gold px-4 pb-5 pt-0 sm:px-5">
-          <span className="pointer-events-none absolute left-1 top-1">
-            <CornerFlourish corner="tl" size={22} />
-          </span>
-          <span className="pointer-events-none absolute right-1 top-1">
-            <CornerFlourish corner="tr" size={22} />
-          </span>
-          <span className="pointer-events-none absolute bottom-1 left-1">
-            <CornerFlourish corner="bl" size={22} />
-          </span>
-          <span className="pointer-events-none absolute bottom-1 right-1">
-            <CornerFlourish corner="br" size={22} />
-          </span>
+      <article className="relative overflow-hidden border border-sic-navy bg-sic-paper shadow-xl shadow-black/25">
+        <header className="relative flex flex-col items-center bg-sic-navy px-4 pb-3.5 pt-5">
+          <p className="absolute right-3 top-2 font-mono text-[9px] font-semibold tracking-[0.12em] text-sic-gold-light/90">
+            SIC-2026-BEISPIEL
+          </p>
+          <HouseMark size={36} onDark />
+          <p className="mt-1.5 text-sm font-bold tracking-tight text-white">
+            Swiss <span style={{ color: SIC_COLORS.red }}>Immo</span> Cert
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="h-px w-6 bg-sic-gold" />
+            <span className="text-[9px] font-semibold tracking-[0.24em] text-sic-gold-light">
+              MIETER-ZERTIFIKAT
+            </span>
+            <span className="h-px w-6 bg-sic-gold" />
+          </div>
+          <p className="mt-1.5 text-[10px] tracking-wide text-[#e8d5a3]">{SIC_CERT_TAGLINE}</p>
+        </header>
 
-          <header className="relative -mx-4 mt-2 flex flex-col items-center bg-sic-navy px-3 pb-3 pt-4 sm:-mx-5">
-            <p className="absolute right-2.5 top-1.5 font-mono text-[9px] font-semibold tracking-[0.12em] text-sic-gold-light/90">
-              SIC-2026-BEISPIEL
-            </p>
-            <CrestWithLaurel size={56} />
-            <p className="mt-0.5 font-sic-serif text-base font-bold tracking-[0.08em] text-white">
-              {SIC_BRAND_NAME}
-            </p>
-            <div className="mt-1.5 flex items-center gap-2">
-              <span className="h-px w-7 bg-sic-gold" />
-              <span className="text-[9px] font-semibold tracking-[0.28em] text-sic-gold-light">
-                MIETER-ZERTIFIKAT
-              </span>
-              <span className="h-px w-7 bg-sic-gold" />
-            </div>
-            <p className="mt-1.5 text-[10px] tracking-wide text-[#e8d5a3]">{SIC_CERT_TAGLINE}</p>
-          </header>
-
-          <p className="mx-auto mt-3 w-fit border border-sic-gold-light bg-sic-paper-soft px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-sic-gold-text">
+        <div className="px-4 pb-4 pt-3 sm:px-5">
+          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.08em] text-sic-navy">
             {sicCompletenessLabel(SIC_MODULES.length)}
           </p>
 
           <div className="mt-3 text-center">
             <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">Ausgestellt für</p>
-            <p className="mt-0.5 font-sic-serif text-lg font-bold text-sic-navy">Beispiel · Inhaberin</p>
+            <p className="mt-0.5 text-base font-bold text-sic-navy">Beispiel · Inhaberin</p>
             <div className="mt-1.5 flex justify-center">
-              <GuillocheRule width={120} />
+              <DocumentRule width={120} />
             </div>
           </div>
 
           <ul className="mt-3 divide-y divide-sic-hairline">
             {CERT_PREVIEW.map(row => (
               <li key={row.id} className="flex items-start gap-2.5 py-2.5">
-                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-sic-gold bg-sic-paper-soft">
+                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-sic-navy bg-sic-paper-soft">
                   <ModuleGlyph moduleId={row.id} size={14} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -1068,13 +1048,13 @@ function CertUrkundeCard() {
                   <ul className="mt-0.5 space-y-0.5">
                     {row.lines.map(line => (
                       <li key={line} className="flex items-start gap-1.5 text-[11px] leading-snug text-slate-600">
-                        <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-gold" />
+                        <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-navy" />
                         {line}
                       </li>
                     ))}
                   </ul>
                 </div>
-                <span className="mt-0.5 flex-shrink-0 border border-sic-gold bg-sic-paper-soft px-1 py-0.5 text-[8px] font-bold tracking-[0.1em] text-sic-gold">
+                <span className="mt-0.5 flex-shrink-0 text-[8px] font-bold tracking-[0.1em] text-sic-navy">
                   {SIC_MODULE_BADGE}
                 </span>
               </li>
@@ -1083,28 +1063,21 @@ function CertUrkundeCard() {
 
           <div className="mt-3 border-t border-sic-hairline pt-3">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5">
-                <CalendarMark size={16} />
-                <div>
-                  <p className="text-[8px] uppercase tracking-[0.12em] text-slate-500">Zertifikatsdatum</p>
-                  <p className="text-[10px] font-semibold text-sic-navy">12.06.2026</p>
-                </div>
+              <div>
+                <p className="text-[8px] uppercase tracking-[0.12em] text-slate-500">Zertifikatsdatum</p>
+                <p className="text-[10px] font-semibold text-sic-navy">12.06.2026</p>
               </div>
-              <div className="flex items-center gap-1.5">
-                <CalendarMark size={16} />
-                <div>
-                  <p className="text-[8px] uppercase tracking-[0.12em] text-slate-500">Gültig bis</p>
-                  <p className="text-[10px] font-semibold text-sic-navy">12.09.2026</p>
-                </div>
+              <div className="text-right">
+                <p className="text-[8px] uppercase tracking-[0.12em] text-slate-500">Gültig bis</p>
+                <p className="text-[10px] font-semibold text-sic-navy">12.09.2026</p>
               </div>
             </div>
             <div className="flex items-end justify-between gap-2">
-              <Seal size={44} />
-              <div className="mb-0.5 hidden flex-1 flex-col items-center sm:flex">
-                <p className="text-center text-[10px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
-                <p className="mt-0.5 text-center text-[9px] text-slate-500">12.06.2026</p>
+              <div>
+                <p className="text-[10px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
+                <p className="mt-0.5 text-[9px] text-slate-500">12.06.2026</p>
               </div>
-              <div className="mb-0.5 flex flex-col items-center">
+              <div className="flex flex-col items-center">
                 <img
                   src="/sic/beispiel-qr.svg"
                   alt=""

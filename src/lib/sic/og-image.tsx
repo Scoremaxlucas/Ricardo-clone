@@ -1,29 +1,52 @@
 import { ImageResponse } from 'next/og'
-import { SIC_CERT_TAGLINE, SIC_COLORS } from '@/lib/sic/brand'
+import { SIC_CERT_TAGLINE, SIC_COLORS, SIC_HOUSE_MARK } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME } from '@/lib/sic/config'
 
 export const SIC_OG_SIZE = { width: 1200, height: 630 }
 export const SIC_OG_ALT = `${SIC_BRAND_NAME} — Mieter-Zertifikat`
 export const SIC_OG_TYPE = 'image/png'
 
-/** Wappen vom Zertifikat-PDF — nicht das rote Plus-Quadrat. */
-function CrestMark({ size = 88 }: { size?: number }) {
-  const h = Math.round(size * 1.2)
+function HouseMark({ size = 88 }: { size?: number }) {
+  const M = SIC_HOUSE_MARK
+  const stroke = SIC_COLORS.paper
   return (
-    <svg width={size} height={h} viewBox="0 0 40 48">
+    <svg width={size} height={size} viewBox={M.viewBox}>
       <path
-        d="M20 1 L36 6 L36 22 C36 34 28 42 20 47 C12 42 4 34 4 22 L4 6 Z"
-        fill={SIC_COLORS.red}
-        stroke={SIC_COLORS.gold}
-        strokeWidth={1.2}
+        d={M.outline}
+        stroke={stroke}
+        strokeWidth={M.outlineStrokeWidth}
+        strokeLinejoin="round"
+        fill="none"
       />
-      <rect x={17} y={12} width={6} height={18} fill="#ffffff" />
-      <rect x={11} y={18} width={18} height={6} fill="#ffffff" />
+      <rect
+        x={M.square.x}
+        y={M.square.y}
+        width={M.square.width}
+        height={M.square.height}
+        rx={M.square.rx}
+        fill={SIC_COLORS.red}
+      />
+      <rect
+        x={M.crossV.x}
+        y={M.crossV.y}
+        width={M.crossV.width}
+        height={M.crossV.height}
+        rx={M.crossV.rx}
+        fill="#ffffff"
+      />
+      <rect
+        x={M.crossH.x}
+        y={M.crossH.y}
+        width={M.crossH.width}
+        height={M.crossH.height}
+        rx={M.crossH.rx}
+        fill="#ffffff"
+      />
     </svg>
   )
 }
 
-/** Teilen-Vorschau: Navy, Paper, Wortmarke, Mieter-Zertifikat — wie die Urkunde. */
+/** Teilen-Vorschau: Navy, Paper, Hausmarke, Wortmarke — wie das Zertifikat. */
 export function sicOgImageResponse(): ImageResponse {
   const C = SIC_COLORS
   return new ImageResponse(
@@ -45,8 +68,8 @@ export function sicOgImageResponse(): ImageResponse {
             width: 1048,
             height: 518,
             background: C.navy,
-            border: `3px solid ${C.gold}`,
-            padding: 8,
+            border: `1.5px solid ${C.navy}`,
+            padding: 0,
           }}
         >
           <div
@@ -55,7 +78,6 @@ export function sicOgImageResponse(): ImageResponse {
               flexDirection: 'column',
               flexGrow: 1,
               background: C.paper,
-              border: `1px solid ${C.gold}`,
             }}
           >
             <div
@@ -69,15 +91,15 @@ export function sicOgImageResponse(): ImageResponse {
                 paddingBottom: 40,
               }}
             >
-              <CrestMark />
+              <HouseMark />
               <div
                 style={{
                   display: 'flex',
                   marginTop: 18,
-                  fontSize: 54,
+                  fontSize: 48,
                   fontWeight: 700,
                   color: '#ffffff',
-                  letterSpacing: 1,
+                  letterSpacing: 0.4,
                 }}
               >
                 <span>Swiss </span>
@@ -91,20 +113,20 @@ export function sicOgImageResponse(): ImageResponse {
                   marginTop: 20,
                 }}
               >
-                <div style={{ width: 72, height: 2, background: C.gold }} />
+                <div style={{ width: 56, height: 1, background: C.gold }} />
                 <div
                   style={{
                     color: C.goldLight,
-                    fontSize: 20,
-                    letterSpacing: 7,
+                    fontSize: 18,
+                    letterSpacing: 6,
                     fontWeight: 600,
-                    marginLeft: 18,
-                    marginRight: 18,
+                    marginLeft: 16,
+                    marginRight: 16,
                   }}
                 >
                   MIETER-ZERTIFIKAT
                 </div>
-                <div style={{ width: 72, height: 2, background: C.gold }} />
+                <div style={{ width: 56, height: 1, background: C.gold }} />
               </div>
             </div>
             <div
@@ -114,8 +136,8 @@ export function sicOgImageResponse(): ImageResponse {
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: C.navy,
-                fontSize: 28,
-                letterSpacing: 0.4,
+                fontSize: 26,
+                letterSpacing: 0.3,
               }}
             >
               {SIC_CERT_TAGLINE}

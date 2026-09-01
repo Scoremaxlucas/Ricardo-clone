@@ -2,8 +2,8 @@ import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 
 export const SIC_BRAND_NAME = 'Swiss Immo Cert'
 export const SIC_BRAND_SHORT = 'SIC'
-/** Rechtsträgerin der Prüfung — auf dem PDF statt einer leeren Unterschriftslinie. */
-export const SIC_ISSUER_LINE = 'Score-Max GmbH · Prüfung'
+/** Öffentliche Ausstellerzeile auf PDF und Prüfseite — nicht die GmbH. */
+export const SIC_ISSUER_LINE = 'Swiss Immo Cert · Prüfung'
 
 /**
  * Prüfung eingereichter Unterlagen — derselbe Satz in AGB, FAQ, Landing, Dossier, Mail.
@@ -144,6 +144,7 @@ export const sicPaths = {
   checkoutCancel: `${SIC_BASE_PATH}/checkout/abbruch`,
   verify: (code: string) => `${SIC_BASE_PATH}/verify/${encodeURIComponent(code)}`,
   faq: `${SIC_BASE_PATH}/faq`,
+  impressum: `${SIC_BASE_PATH}/impressum`,
   authCallback: '/api/sic/auth/callback',
 } as const
 

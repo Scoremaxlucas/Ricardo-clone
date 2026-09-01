@@ -1,4 +1,4 @@
-import { SIC_COLORS, SIC_TAGLINE, sicLogoMarkHouseStroke } from '@/lib/sic/brand'
+import { SIC_COLORS, SIC_HOUSE_MARK, SIC_TAGLINE, sicLogoMarkHouseStroke } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME } from '@/lib/sic/config'
 
 /**
@@ -15,25 +15,26 @@ export function SicLogoMark({
   onDark?: boolean
   className?: string
 }) {
+  const M = SIC_HOUSE_MARK
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 48 48"
+      viewBox={M.viewBox}
       fill="none"
       aria-hidden="true"
       className={className}
     >
       <path
-        d="M8 21.5 24 8l16 13.5V41a1.5 1.5 0 0 1-1.5 1.5h-29A1.5 1.5 0 0 1 8 41z"
+        d={M.outline}
         stroke={sicLogoMarkHouseStroke(onDark)}
-        strokeWidth={3}
+        strokeWidth={M.outlineStrokeWidth}
         strokeLinejoin="round"
         fill="none"
       />
-      <rect x="16" y="20" width="16" height="16" rx="3" fill={SIC_COLORS.red} />
-      <rect x="23" y="23.5" width="2.5" height="9" rx="1" fill="#fff" />
-      <rect x="19.75" y="26.75" width="9" height="2.5" rx="1" fill="#fff" />
+      <rect {...M.square} fill={SIC_COLORS.red} />
+      <rect {...M.crossV} fill="#fff" />
+      <rect {...M.crossH} fill="#fff" />
     </svg>
   )
 }

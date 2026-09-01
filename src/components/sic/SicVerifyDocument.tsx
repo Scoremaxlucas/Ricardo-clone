@@ -1,12 +1,5 @@
-import {
-  CalendarMark,
-  CornerFlourish,
-  CrestWithLaurel,
-  GuillocheRule,
-  ModuleGlyph,
-  Seal,
-} from '@/lib/sic/cert/art-web'
-import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
+import { DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/art-web'
+import { SIC_CERT_TAGLINE, SIC_COLORS } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
 import type { SicVerifiedModuleView } from '@/lib/sic/dossier'
 import { SIC_MODULE_BADGE, SIC_PLAUSIBILITY_FOOTER, SIC_SCOPE_NOTE } from '@/lib/sic/modules'
@@ -32,23 +25,17 @@ export type SicVerifyDocumentProps =
 
 function Frame({ children }: { children: ReactNode }) {
   return (
-    <article className="relative mx-auto max-w-[42rem] border-[2.4px] border-sic-navy bg-sic-paper p-1 shadow-[0_18px_50px_-24px_rgba(15,43,94,0.45)]">
-      <div className="relative overflow-hidden border border-sic-gold px-5 pb-7 pt-0 sm:px-8 sm:pb-8">
-        <span className="pointer-events-none absolute left-1.5 top-1.5">
-          <CornerFlourish corner="tl" />
-        </span>
-        <span className="pointer-events-none absolute right-1.5 top-1.5">
-          <CornerFlourish corner="tr" />
-        </span>
-        <span className="pointer-events-none absolute bottom-1.5 left-1.5">
-          <CornerFlourish corner="bl" />
-        </span>
-        <span className="pointer-events-none absolute bottom-1.5 right-1.5">
-          <CornerFlourish corner="br" />
-        </span>
-        {children}
-      </div>
+    <article className="relative mx-auto max-w-[42rem] border border-sic-navy bg-sic-paper shadow-[0_18px_50px_-24px_rgba(15,43,94,0.35)]">
+      <div className="overflow-hidden">{children}</div>
     </article>
+  )
+}
+
+function Wordmark({ className }: { className?: string }) {
+  return (
+    <p className={className}>
+      Swiss <span style={{ color: SIC_COLORS.red }}>Immo</span> Cert
+    </p>
   )
 }
 
@@ -61,25 +48,24 @@ function NavyBand({
 }) {
   return (
     <header
-      className={`relative -mx-5 mt-2 flex flex-col items-center bg-sic-navy px-4 pb-4 pt-5 sm:-mx-8 sm:px-5 ${
+      className={`relative flex flex-col items-center bg-sic-navy px-5 pb-5 pt-6 sm:px-8 ${
         quiet ? 'opacity-90' : ''
       }`}
     >
       {code ?
-        <p className="absolute right-3 top-2 font-mono text-[10px] font-semibold tracking-[0.12em] text-sic-gold-light/90 sm:right-4">
+        <p className="absolute right-4 top-3 font-mono text-[10px] font-semibold tracking-[0.12em] text-sic-gold-light/90">
           {code}
         </p>
       : null}
-      <CrestWithLaurel size={quiet ? 56 : 72} />
-      <p className="mt-1 font-sic-serif text-lg font-bold tracking-[0.08em] text-white sm:text-xl">
-        {SIC_BRAND_NAME}
-      </p>
-      <div className="mt-2 flex items-center gap-2.5">
-        <span className="h-px w-8 bg-sic-gold sm:w-10" />
-        <span className="text-[10px] font-semibold tracking-[0.28em] text-sic-gold-light">
+      <HouseMark size={quiet ? 36 : 42} onDark />
+      <span className="sr-only">{SIC_BRAND_NAME}</span>
+      <Wordmark className="mt-2 text-base font-bold tracking-tight text-white sm:text-lg" />
+      <div className="mt-2.5 flex items-center gap-2.5">
+        <span className="h-px w-7 bg-sic-gold" />
+        <span className="text-[10px] font-semibold tracking-[0.24em] text-sic-gold-light">
           MIETER-ZERTIFIKAT
         </span>
-        <span className="h-px w-8 bg-sic-gold sm:w-10" />
+        <span className="h-px w-7 bg-sic-gold" />
       </div>
       {!quiet ?
         <p className="mt-2 text-[11px] tracking-wide text-[#e8d5a3]">{SIC_CERT_TAGLINE}</p>
@@ -96,10 +82,10 @@ function QuietBody({
   children: ReactNode
 }) {
   return (
-    <div className="relative z-10 px-1 pb-4 pt-10 text-center sm:pt-12">
-      <h1 className="font-sic-serif text-xl font-semibold text-sic-navy sm:text-2xl">{title}</h1>
+    <div className="px-6 pb-8 pt-10 text-center sm:px-8 sm:pt-12">
+      <h1 className="text-xl font-semibold text-sic-navy sm:text-2xl">{title}</h1>
       <div className="mt-3 flex justify-center">
-        <GuillocheRule width={120} />
+        <DocumentRule width={120} />
       </div>
       <div className="mt-4 text-sm leading-relaxed text-slate-600">{children}</div>
     </div>
@@ -115,77 +101,65 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
 
       <p className="sr-only">Gültiges Zertifikat {certificateCode}</p>
 
-      <p className="mx-auto mt-4 w-fit border border-sic-gold-light bg-sic-paper-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-sic-gold-text">
-        {completenessLabel}
-      </p>
+      <div className="px-6 pb-8 pt-5 sm:px-8">
+        <p className="text-center text-[11px] font-semibold uppercase tracking-[0.08em] text-sic-navy">
+          {completenessLabel}
+        </p>
 
-      <div className="mt-6 text-center">
-        <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Ausgestellt für</p>
-        <h1 className="mt-1 font-sic-serif text-2xl font-bold text-sic-navy sm:text-[1.75rem]">
-          {holderName || 'Inhaber gemäss Nachweisen'}
-        </h1>
-        <div className="mt-2 flex justify-center">
-          <GuillocheRule width={160} />
+        <div className="mt-5 text-center">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Ausgestellt für</p>
+          <h1 className="mt-1 text-2xl font-bold text-sic-navy sm:text-[1.65rem]">
+            {holderName || 'Inhaber gemäss Nachweisen'}
+          </h1>
+          <div className="mt-2 flex justify-center">
+            <DocumentRule width={140} />
+          </div>
         </div>
-      </div>
 
-      <ul className="relative z-10 mt-6 divide-y divide-sic-hairline">
-        {modules.map(m => (
-          <li key={m.title} className="flex items-start gap-3 py-3.5">
-            <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-sic-gold bg-sic-paper-soft">
-              <ModuleGlyph moduleId={m.id} size={16} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-sic-navy">{m.title}</p>
-              <ul className="mt-1 space-y-0.5">
-                {m.lines.map(line => (
-                  <li key={line} className="flex items-start gap-2 text-[13px] leading-snug text-slate-600">
-                    <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-gold" />
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <span className="mt-0.5 flex-shrink-0 border border-sic-gold bg-sic-paper-soft px-1.5 py-0.5 text-[9px] font-bold tracking-[0.12em] text-sic-gold">
-              {SIC_MODULE_BADGE}
-            </span>
-          </li>
-        ))}
-      </ul>
+        <ul className="mt-5 divide-y divide-sic-hairline">
+          {modules.map(m => (
+            <li key={m.title} className="flex items-start gap-3 py-3.5">
+              <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-sic-navy bg-sic-paper-soft">
+                <ModuleGlyph moduleId={m.id} size={16} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-sic-navy">{m.title}</p>
+                <ul className="mt-1 space-y-0.5">
+                  {m.lines.map(line => (
+                    <li key={line} className="flex items-start gap-2 text-[13px] leading-snug text-slate-600">
+                      <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-navy" />
+                      {line}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <span className="mt-0.5 flex-shrink-0 text-[9px] font-bold tracking-[0.12em] text-sic-navy">
+                {SIC_MODULE_BADGE}
+              </span>
+            </li>
+          ))}
+        </ul>
 
-      <div className="mt-5 flex flex-wrap justify-between gap-4 border-t border-sic-hairline pt-4">
-        <div className="flex items-center gap-2.5">
-          <CalendarMark size={18} />
+        <div className="mt-5 flex flex-wrap justify-between gap-4 border-t border-sic-hairline pt-4">
           <div>
             <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Zertifikatsdatum</p>
             <p className="text-sm font-semibold text-sic-navy">{fmt(issuedAt)}</p>
           </div>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <CalendarMark size={18} />
           <div>
             <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Gültig bis</p>
             <p className="text-sm font-semibold text-sic-navy">{fmt(expiresAt)}</p>
           </div>
         </div>
-      </div>
 
-      <div className="mt-6 flex items-end justify-between gap-3">
-        <Seal size={58} />
-        <div className="mb-1 hidden flex-1 flex-col items-center sm:flex">
-          <p className="text-center text-[11px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
-          <p className="mt-0.5 text-center text-[10px] text-slate-500">{fmt(issuedAt)}</p>
+        <div className="mt-5">
+          <p className="text-[11px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
+          <p className="mt-0.5 text-[10px] text-slate-500">{fmt(issuedAt)}</p>
         </div>
-        <div className="mb-0.5 max-w-[5.5rem] text-center">
-          <p className="border border-sic-gold bg-sic-paper-soft px-1.5 py-2 text-[9px] font-bold uppercase leading-tight tracking-[0.08em] text-sic-gold-text">
-            Online bestätigt
-          </p>
-        </div>
-      </div>
 
-      <p className="mt-6 text-center text-[10px] leading-relaxed text-slate-400">
-        {SIC_SCOPE_NOTE} {SIC_PLAUSIBILITY_FOOTER}
-      </p>
+        <p className="mt-6 text-[11px] leading-relaxed text-slate-500">
+          {SIC_SCOPE_NOTE} {SIC_PLAUSIBILITY_FOOTER}
+        </p>
+      </div>
     </>
   )
 }
@@ -194,10 +168,6 @@ export function SicVerifyDocument(props: SicVerifyDocumentProps) {
   if (props.state === 'valid') {
     return (
       <Frame>
-        <div
-          className="pointer-events-none absolute inset-x-6 top-[42%] h-44 bg-[url('/sic/cert/backdrop-alps.png')] bg-contain bg-center bg-no-repeat opacity-[0.14]"
-          aria-hidden
-        />
         <ValidBody {...props} />
       </Frame>
     )

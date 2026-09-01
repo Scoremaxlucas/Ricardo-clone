@@ -9,9 +9,10 @@ import {
   SIC_VALIDITY_MONTHS,
   sicBundleSavingsChf,
 } from '@/lib/sic/modules'
-import { SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
+import { SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL, sicPaths } from '@/lib/sic/config'
 import { SIC_DOCS_RETENTION_DAYS, SIC_UNFINISHED_DOCS_RETENTION_MONTHS } from '@/lib/sic/validity'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,7 +30,11 @@ export default function SicAgbPage() {
         Allgemeine Geschäftsbedingungen
       </h1>
       <p className="mt-2 text-sm text-slate-500">
-        Swiss Immo Cert — Stand {new Date().getFullYear()}. Anbieterin: Score-Max GmbH.
+        Swiss Immo Cert — Stand {new Date().getFullYear()}. Anbieterin: siehe{' '}
+        <Link href={sicPaths.impressum} className="text-sic-action underline-offset-2 hover:underline">
+          Impressum
+        </Link>
+        .
       </p>
 
       <div className="mt-8 space-y-7 text-sm leading-relaxed text-slate-700">
@@ -159,13 +164,19 @@ export default function SicAgbPage() {
           <p className="mt-1.5">
             Wir haften für Vorsatz und grobe Fahrlässigkeit. Für entgangene Wohnungen, Folgeschäden oder
             Entscheide von Vermietern haften wir nicht. Es gilt Schweizer Recht; Gerichtsstand ist der Sitz der
-            Score-Max GmbH.
+            Anbieterin (siehe Impressum).
           </p>
         </section>
 
         <section>
           <h2 className="font-semibold text-sic-navy">12. Anbieterin</h2>
-          <p className="mt-1.5">Score-Max GmbH. Kontakt und Adresse im Impressum.</p>
+          <p className="mt-1.5">
+            Kontakt und Adresse im{' '}
+            <Link href={sicPaths.impressum} className="text-sic-action underline-offset-2 hover:underline">
+              Impressum
+            </Link>
+            .
+          </p>
         </section>
       </div>
     </div>

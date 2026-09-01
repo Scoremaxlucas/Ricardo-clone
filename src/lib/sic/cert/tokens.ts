@@ -1,4 +1,4 @@
-/** Design-Tokens für das SIC-Zertifikat-PDF (Urkundenoptik). */
+/** Design-Tokens für das SIC-Zertifikat-PDF. */
 
 export const CERT = {
   page: {

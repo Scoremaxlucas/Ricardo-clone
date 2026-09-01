@@ -36,6 +36,8 @@ describe('SicVerifyDocument', () => {
     expect(html).toContain(SIC_PLAUSIBILITY_FOOTER)
     expect(html).toContain(SIC_CERT_TAGLINE)
     expect(html).toContain(SIC_ISSUER_LINE)
+    expect(html).not.toContain('Score-Max')
+    expect(html).not.toContain('Online bestätigt')
     expect(html).toContain('01.08.2026')
     expect(html).not.toContain('Vertrauenswürdig')
     expect(html).toContain('Gültiges Zertifikat')

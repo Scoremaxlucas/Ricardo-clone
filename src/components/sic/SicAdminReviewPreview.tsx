@@ -39,7 +39,7 @@ export function SicAdminReviewPreview({
         Vorschau für den Vermieter — nach Freigabe dieser Angabe
       </p>
       <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
-        Dieselbe Urkunde wie auf der QR-Seite und im PDF. Andere noch offene Angaben stehen nicht
+        Dasselbe Dokument wie auf der QR-Seite und im PDF. Andere noch offene Angaben stehen nicht
         drauf.
       </p>
       {!holderName ?

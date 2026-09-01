@@ -1,14 +1,6 @@
-import {
-  CalendarMark,
-  CornerFlourish,
-  CrestWithLaurel,
-  GuillocheRule,
-  ModuleGlyph,
-  Seal,
-} from '@/lib/sic/cert/art'
+import { DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/art'
 import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
-import { SIC_CERT_BACKDROP_DATA_URL } from '@/lib/sic/cert/backdrop-asset'
 import { CERT } from '@/lib/sic/cert/tokens'
 import { SIC_MODULE_BADGE, SIC_PLAUSIBILITY_FOOTER, type SicModuleId } from '@/lib/sic/modules'
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
@@ -23,77 +15,61 @@ const s = StyleSheet.create({
     fontFamily: 'Helvetica',
     color: C.ink,
     fontSize: 10,
-    padding: CERT.page.padding,
+    padding: 28,
   },
-  frameOuter: {
+  frame: {
     flexGrow: 1,
-    borderWidth: CERT.frame.outer,
+    borderWidth: 1.2,
     borderColor: C.navy,
-    padding: CERT.frame.gap,
+    paddingTop: 0,
+    paddingBottom: 20,
+    paddingHorizontal: 0,
     position: 'relative',
-  },
-  frameInner: {
-    flexGrow: 1,
-    borderWidth: CERT.frame.inner,
-    borderColor: C.gold,
-    paddingTop: CERT.frame.padV,
-    paddingBottom: CERT.frame.padV + 8,
-    paddingHorizontal: CERT.frame.padH,
-    position: 'relative',
-  },
-  corner: { position: 'absolute', width: 28, height: 28 },
-  cornerTL: { top: 6, left: 6 },
-  cornerTR: { top: 6, right: 6 },
-  cornerBL: { bottom: 6, left: 6 },
-  cornerBR: { bottom: 6, right: 6 },
-
-  backdrop: {
-    position: 'absolute',
-    left: 24,
-    right: 24,
-    top: 250,
-    height: 180,
-    opacity: 0.18,
   },
 
   headerBand: {
     backgroundColor: C.navy,
-    marginHorizontal: -CERT.frame.padH + 4,
-    marginTop: -CERT.frame.padV + 8,
-    paddingTop: 14,
-    paddingBottom: 14,
-    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 16,
+    paddingHorizontal: 24,
     alignItems: 'center',
     position: 'relative',
   },
   code: {
     position: 'absolute',
-    top: 8,
-    right: 12,
+    top: 10,
+    right: 16,
     fontSize: T.code,
     color: C.goldPale,
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: 1.1,
+    letterSpacing: 1,
+  },
+  brandRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'baseline',
   },
   brand: {
-    marginTop: 6,
-    fontFamily: 'Times-Bold',
-    fontSize: T.brand,
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 16,
     color: C.white,
-    letterSpacing: 1.2,
-    textAlign: 'center',
+    letterSpacing: 0.4,
+  },
+  brandImmo: {
+    color: C.red,
   },
   brandRuleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 6,
+    marginTop: 8,
   },
-  brandRule: { height: 1, width: 40, backgroundColor: C.gold },
+  brandRule: { height: 0.7, width: 28, backgroundColor: C.gold },
   brandSub: {
-    fontSize: T.brandSub,
+    fontSize: 8,
     color: C.goldLight,
-    letterSpacing: 3.5,
+    letterSpacing: 2.4,
     marginHorizontal: 10,
     fontFamily: 'Helvetica-Bold',
   },
@@ -102,56 +78,52 @@ const s = StyleSheet.create({
     fontSize: T.tagline,
     color: C.goldPale,
     textAlign: 'center',
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
   },
 
-  completenessWrap: {
-    marginTop: 10,
-    alignSelf: 'center',
-    borderWidth: 0.8,
-    borderColor: C.goldLight,
-    backgroundColor: C.ivorySoft,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 2,
+  body: {
+    paddingHorizontal: 28,
+    paddingTop: 18,
   },
+
   completenessText: {
     fontSize: T.completeness,
-    color: C.goldText,
+    color: C.navy,
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
+    textAlign: 'center',
   },
 
-  holderWrap: { marginTop: 14, alignItems: 'center' },
+  holderWrap: { marginTop: 16, alignItems: 'center' },
   holderLabel: {
     fontSize: T.holderLabel,
     color: C.muted,
-    letterSpacing: 1.4,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
   holderName: {
     marginTop: 4,
-    fontFamily: 'Times-Bold',
-    fontSize: T.holderName,
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 15,
     color: C.navy,
   },
   holderRule: { marginTop: 8 },
 
-  rows: { marginTop: 16 },
+  rows: { marginTop: 14 },
   block: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingVertical: 9,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.6,
     borderBottomColor: C.faint,
   },
   glyphWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: C.gold,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 0.7,
+    borderColor: C.navy,
     backgroundColor: C.ivorySoft,
     alignItems: 'center',
     justifyContent: 'center',
@@ -164,37 +136,27 @@ const s = StyleSheet.create({
     color: C.navy,
   },
   lineRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 3 },
-  lineDot: { color: C.gold, fontSize: 8, marginRight: 5, marginTop: 1 },
+  lineDot: { color: C.navy, fontSize: 8, marginRight: 5, marginTop: 1 },
   lineText: { fontSize: T.moduleLine, color: '#334155', flex: 1, lineHeight: 1.35 },
   badge: {
-    borderWidth: 1,
-    borderColor: C.gold,
-    backgroundColor: C.ivorySoft,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 2,
     marginTop: 2,
   },
   badgeText: {
     fontSize: T.badge,
-    color: C.gold,
+    color: C.navy,
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
 
-  footer: { position: 'absolute', bottom: 28, left: CERT.frame.padH, right: CERT.frame.padH },
   validityRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    borderTopWidth: 1,
+    borderTopWidth: 0.6,
     borderTopColor: C.faint,
-    paddingTop: 12,
-    marginBottom: 14,
+    paddingTop: 14,
+    marginTop: 18,
   },
-  validCol: { flexDirection: 'row', alignItems: 'center' },
-  calIcon: {
-    marginRight: 8,
-  },
+  validCol: { flexDirection: 'column' },
   validLabel: {
     fontSize: T.dateLabel,
     color: C.muted,
@@ -205,31 +167,32 @@ const s = StyleSheet.create({
     fontSize: T.dateValue,
     fontFamily: 'Helvetica-Bold',
     color: C.navy,
-    marginTop: 1,
+    marginTop: 2,
   },
 
-  signRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
-  signCol: { alignItems: 'center', flex: 1, marginHorizontal: 12 },
+  signRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    marginTop: 18,
+  },
+  signCol: { flex: 1, paddingRight: 12 },
   signIssuer: {
-    fontSize: 8.5,
+    fontSize: 9,
     fontFamily: 'Helvetica-Bold',
     color: C.navy,
-    textAlign: 'center',
   },
-  signDate: { marginTop: 3, fontSize: 7.5, color: C.muted, textAlign: 'center' },
+  signDate: { marginTop: 3, fontSize: 8, color: C.muted },
   qrCol: { alignItems: 'center' },
   qr: { width: 58, height: 58 },
-  qrText: { fontSize: 6.2, color: C.muted, marginTop: 3, textAlign: 'center', maxWidth: 78 },
+  qrText: { fontSize: 6.5, color: C.muted, marginTop: 3, textAlign: 'center', maxWidth: 78 },
 
   legal: {
-    position: 'absolute',
-    bottom: 8,
-    left: CERT.frame.padH,
-    right: CERT.frame.padH,
-    fontSize: T.legal,
-    color: '#94a3b8',
-    textAlign: 'center',
-    lineHeight: 1.4,
+    marginTop: 16,
+    fontSize: 7.5,
+    color: C.muted,
+    textAlign: 'left',
+    lineHeight: 1.45,
   },
 })
 
@@ -273,44 +236,31 @@ export function SicCertificatePdfDocument(props: {
   return (
     <Document title={`${SIC_BRAND_NAME} ${certificateCode}`}>
       <Page size="A4" style={s.page}>
-        <View style={s.frameOuter}>
-          <View style={s.frameInner}>
-            <View style={[s.corner, s.cornerTL]}>
-              <CornerFlourish corner="tl" />
+        <View style={s.frame}>
+          <View style={s.headerBand}>
+            <Text style={s.code}>{certificateCode}</Text>
+            <HouseMark size={42} onDark />
+            <View style={s.brandRow}>
+              <Text style={s.brand}>Swiss </Text>
+              <Text style={[s.brand, s.brandImmo]}>Immo </Text>
+              <Text style={s.brand}>Cert</Text>
             </View>
-            <View style={[s.corner, s.cornerTR]}>
-              <CornerFlourish corner="tr" />
+            <View style={s.brandRuleRow}>
+              <View style={s.brandRule} />
+              <Text style={s.brandSub}>MIETER-ZERTIFIKAT</Text>
+              <View style={s.brandRule} />
             </View>
-            <View style={[s.corner, s.cornerBL]}>
-              <CornerFlourish corner="bl" />
-            </View>
-            <View style={[s.corner, s.cornerBR]}>
-              <CornerFlourish corner="br" />
-            </View>
+            <Text style={s.tagline}>{SIC_CERT_TAGLINE}</Text>
+          </View>
 
-            <Image src={SIC_CERT_BACKDROP_DATA_URL} style={s.backdrop} />
-
-            <View style={s.headerBand}>
-              <Text style={s.code}>{certificateCode}</Text>
-              <CrestWithLaurel size={72} />
-              <Text style={s.brand}>{SIC_BRAND_NAME}</Text>
-              <View style={s.brandRuleRow}>
-                <View style={s.brandRule} />
-                <Text style={s.brandSub}>MIETER-ZERTIFIKAT</Text>
-                <View style={s.brandRule} />
-              </View>
-              <Text style={s.tagline}>{SIC_CERT_TAGLINE}</Text>
-            </View>
-
-            <View style={s.completenessWrap}>
-              <Text style={s.completenessText}>{completenessLabel}</Text>
-            </View>
+          <View style={s.body}>
+            <Text style={s.completenessText}>{completenessLabel}</Text>
 
             <View style={s.holderWrap}>
               <Text style={s.holderLabel}>Ausgestellt für</Text>
               <Text style={s.holderName}>{holderName || 'Inhaber gemäss Nachweisen'}</Text>
               <View style={s.holderRule}>
-                <GuillocheRule width={160} />
+                <DocumentRule width={140} />
               </View>
             </View>
 
@@ -318,7 +268,7 @@ export function SicCertificatePdfDocument(props: {
               {verifiedModules.map((m, i) => (
                 <View key={i} style={s.block} wrap={false}>
                   <View style={s.glyphWrap}>
-                    <ModuleGlyph moduleId={m.id} size={16} />
+                    <ModuleGlyph moduleId={m.id} size={15} />
                   </View>
                   <View style={s.blockBody}>
                     <Text style={s.blockTitle}>{m.title}</Text>
@@ -336,40 +286,25 @@ export function SicCertificatePdfDocument(props: {
               ))}
             </View>
 
-            <View style={s.footer}>
-              <View style={s.validityRow}>
-                <View style={s.validCol}>
-                  <View style={s.calIcon}>
-                    <CalendarMark size={18} />
-                  </View>
-                  <View>
-                    <Text style={s.validLabel}>Zertifikatsdatum</Text>
-                    <Text style={s.validValue}>{fmt(issuedAt)}</Text>
-                  </View>
-                </View>
-                <View style={s.validCol}>
-                  <View style={s.calIcon}>
-                    <CalendarMark size={18} />
-                  </View>
-                  <View>
-                    <Text style={s.validLabel}>Gültig bis</Text>
-                    <Text style={s.validValue}>{fmt(expiresAt)}</Text>
-                  </View>
-                </View>
+            <View style={s.validityRow}>
+              <View style={s.validCol}>
+                <Text style={s.validLabel}>Zertifikatsdatum</Text>
+                <Text style={s.validValue}>{fmt(issuedAt)}</Text>
               </View>
+              <View style={s.validCol}>
+                <Text style={s.validLabel}>Gültig bis</Text>
+                <Text style={s.validValue}>{fmt(expiresAt)}</Text>
+              </View>
+            </View>
 
-              <View style={s.signRow}>
-                <Seal size={58} />
-
-                <View style={s.signCol}>
-                  <Text style={s.signIssuer}>{SIC_ISSUER_LINE}</Text>
-                  <Text style={s.signDate}>{fmt(issuedAt)}</Text>
-                </View>
-
-                <View style={s.qrCol}>
-                  {qrDataUrl ? <Image src={qrDataUrl} style={s.qr} /> : null}
-                  <Text style={s.qrText}>Prüfseite: QR-Code scannen</Text>
-                </View>
+            <View style={s.signRow}>
+              <View style={s.signCol}>
+                <Text style={s.signIssuer}>{SIC_ISSUER_LINE}</Text>
+                <Text style={s.signDate}>{fmt(issuedAt)}</Text>
+              </View>
+              <View style={s.qrCol}>
+                {qrDataUrl ? <Image src={qrDataUrl} style={s.qr} /> : null}
+                <Text style={s.qrText}>Prüfseite: QR-Code scannen</Text>
               </View>
             </View>
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { SIC_CERT_TAGLINE, SIC_COLORS, sicLogoMarkHouseStroke } from '@/lib/sic/brand'
-import { SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
+import { SIC_CERT_TAGLINE, SIC_COLORS, SIC_HOUSE_MARK, sicLogoMarkHouseStroke } from '@/lib/sic/brand'
+import { SIC_BRAND_NAME, SIC_ISSUER_LINE, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
 import { SIC_MODULE_BADGE } from '@/lib/sic/modules'
 
 describe('SIC_BRAND_NAME', () => {
@@ -8,6 +8,13 @@ describe('SIC_BRAND_NAME', () => {
     expect(SIC_BRAND_NAME).toBe('Swiss Immo Cert')
     expect(SIC_BRAND_NAME).not.toMatch(/SwissImmoCert/)
     expect(SIC_BRAND_NAME).not.toMatch(/SWISS IMMO CERT/)
+  })
+})
+
+describe('SIC_ISSUER_LINE', () => {
+  it('is the public brand, not the GmbH', () => {
+    expect(SIC_ISSUER_LINE).toBe('Swiss Immo Cert · Prüfung')
+    expect(SIC_ISSUER_LINE).not.toMatch(/Score-Max|GmbH/)
   })
 })
 
@@ -30,6 +37,13 @@ describe('sicLogoMarkHouseStroke', () => {
     expect(sicLogoMarkHouseStroke(true)).toBe(SIC_COLORS.paper)
     expect(sicLogoMarkHouseStroke(true)).not.toBe(SIC_COLORS.navy)
     expect(sicLogoMarkHouseStroke(true)).not.toBe(SIC_COLORS.navyDeep)
+  })
+})
+
+describe('SIC_HOUSE_MARK', () => {
+  it('is a house with a cross, not a federal coat of arms', () => {
+    expect(SIC_HOUSE_MARK.outline).toMatch(/24 8/)
+    expect(SIC_HOUSE_MARK.outline).not.toMatch(/L36 6/)
   })
 })
 
