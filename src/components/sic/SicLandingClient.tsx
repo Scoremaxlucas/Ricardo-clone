@@ -378,13 +378,12 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   Wenn du in der Schweiz eine Wohnung suchst
                 </span>
                 <h1 className="mt-6 font-sic-serif text-3xl font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
-                  Deine Bewerbung bleibt im Stapel.{' '}
-                  <span className="text-sic-gold-light">Damit sie gelesen wird.</span>
+                  Deine Bewerbung bleibt ungelesen.{' '}
+                  <span className="text-sic-gold-light">Ein Zertifikat, das er in Sekunden versteht.</span>
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-                  Lohn, Betreibung, Ausweis gehen raus — und oft kommt nichts zurück. Nicht weil du ungeeignet
-                  bist: weil dreissig dasselbe schicken und er drei Dossiers öffnet. Ein geprüftes PDF holt
-                  deine Bewerbung aus dem Stapel.
+                  Nicht weil du ungeeignet bist: weil dreissig dasselbe schicken und er drei Dossiers öffnet.
+                  Lohn, Betreibung, Ausweis — eine Seite statt fünf Anhänge, per QR prüfbar.
                 </p>
                 <form
                   id="anlegen"
