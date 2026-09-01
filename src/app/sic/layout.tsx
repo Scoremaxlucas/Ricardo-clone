@@ -20,7 +20,7 @@ const sicSerif = Source_Serif_4({
 // definieren, sonst wird die Marke im <title> doppelt angehängt.
 export const metadata: Metadata = {
   description:
-    'Geprüftes Schweizer Mieter-Zertifikat: Betreibungen, Lohn, Vermieter-Referenz und Ausweis — eine Seite, per QR prüfbar. Der Vermieter versteht es in Sekunden. Kein Abo.',
+    'Wohnungssuche Schweiz: Bewerbungen bleiben oft ungelesen. Swiss Immo Cert ist das geprüfte Mieter-Zertifikat — eine Seite, per QR prüfbar. Damit der Vermieter dich sieht. Kein Abo.',
   robots: { index: true, follow: true },
 }
 
@@ -51,8 +51,8 @@ export default async function SicLayout({ children }: { children: React.ReactNod
           <div>
             <SicLogo size={30} onDark />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
-              Das geprüfte Schweizer Mieter-Zertifikat. Sichtbar, lesbar und prüfbar — keine
-              Wohnungszusage, eine Bewerbung, die Vermieter nicht überblättern.
+              Das geprüfte Schweizer Mieter-Zertifikat. Damit deine Bewerbung gelesen wird — keine
+              Wohnungszusage, ein Blatt, das Vermieter nicht überblättern.
             </p>
           </div>
           <nav className="flex flex-col gap-2.5 text-sm">

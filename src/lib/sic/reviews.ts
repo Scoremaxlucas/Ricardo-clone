@@ -21,16 +21,16 @@ export type SicUseCase = {
 
 export const SIC_USE_CASES: readonly SicUseCase[] = [
   {
-    title: 'Ein PDF statt fünf Anhänge',
-    body: 'Du legst das Zertifikat bei. Der Vermieter scannt den QR und sieht, welche Angaben geprüft sind.',
+    title: 'Aus dem Stapel',
+    body: 'Du bewirbst dich wie alle anderen. Der Unterschied: er sieht ein geprüftes Blatt statt fünf Dateien, die er nicht öffnet.',
   },
   {
-    title: 'Was draufsteht, ist geprüft',
-    body: 'Betreibungsauszug und Lohnabrechnung musst du nicht mehr einzeln erklären. Auf dem Zertifikat steht, was geprüft wurde.',
+    title: 'Ohne dich erklären zu müssen',
+    body: 'Betreibung, Lohn, Ausweis und Referenz stehen auf einer Seite. Du hängst nicht hinterher, weil er erst nachfragen muss.',
   },
   {
-    title: 'Teil-Zertifikat, sobald etwas steht',
-    body: 'Die Referenz vom bisherigen Vermieter dauert oft zwei Wochen. Mit den schon geprüften Angaben kannst du das PDF trotzdem beilegen.',
+    title: 'Nicht warten auf die letzte Unterschrift',
+    body: 'Die Referenz vom bisherigen Vermieter dauert oft zwei Wochen. Du kannst das PDF trotzdem schon beilegen — mit dem, was schon geprüft ist.',
   },
 ]
 

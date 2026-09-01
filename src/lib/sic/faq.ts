@@ -24,7 +24,7 @@ const PRICE_ANSWER =
 export const SIC_FAQ: { q: string; a: string }[] = [
   {
     q: 'Bekomme ich damit eher die Wohnung?',
-    a: 'Das entscheidet der Vermieter. Wir versprechen keine Zusage. Deine Bewerbung ist aber vollständig und auf einen Blick lesbar — statt fünf Anhänge, die niemand öffnet.',
+    a: 'Das entscheidet der Vermieter — eine Zusage versprechen wir nicht. Was wir ändern: deine Bewerbung ist auf einen Blick lesbar, statt fünf Anhänge, die oft niemand öffnet. Genau daran scheitern die meisten, die eigentlich geeignet wären.',
   },
   {
     q: 'Was kostet es?',

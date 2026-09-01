@@ -76,14 +76,14 @@ const HOW_STEPS: { icon: LucideIcon; title: string; note: string }[] = [
   },
   {
     icon: QrCode,
-    title: 'PDF herunterladen und der Bewerbung beilegen',
-    note: 'Geht schon ab der ersten geprüften Angabe — auch wenn die Referenz vom Vermieter noch Wochen dauert.',
+    title: 'PDF der Bewerbung beilegen',
+    note: 'Damit die nächste Bewerbung nicht wieder im Stapel bleibt — schon ab der ersten geprüften Angabe.',
   },
 ]
 
 const TODAY_SCENES = [
-  'Für eine Wohnung kommen oft Dutzende Bewerbungen. Dreissig Leute an der Besichtigung sind keine Ausnahme.',
-  'Der Vermieter öffnet ein paar Dossiers. Der Rest — Lohn, Betreibung, Ausweis — bleibt ungelesen. Die Wohnung ist trotzdem weg.',
+  'Du hast alles geschickt. Tage später ist die Wohnung weg — oft ohne eine Antwort.',
+  'Nicht weil dein Dossier schlecht war. Weil dreissig dasselbe geschickt haben, und er drei Dossiers geöffnet hat.',
 ]
 
 /** Beispiel wie auf dem PDF — Zeilen aus denselben Bändern und der 3×-Regel. */
@@ -375,15 +375,16 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               <div>
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/80">
                   <ShieldCheck className="h-3.5 w-3.5 text-sic-gold-light" />
-                  Für Wohnungssuchende in der Schweiz
+                  Wenn du in der Schweiz eine Wohnung suchst
                 </span>
                 <h1 className="mt-6 font-sic-serif text-3xl font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
-                  Ein geprüftes Mieter-Zertifikat.{' '}
-                  <span className="text-sic-gold-light">Der Vermieter versteht es in Sekunden.</span>
+                  Deine Bewerbung bleibt im Stapel.{' '}
+                  <span className="text-sic-gold-light">Damit sie gelesen wird.</span>
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-                  Lohn, Betreibung, Ausweis und Referenz — eine Seite statt fünf Anhänge. Er scannt den QR
-                  und muss nichts nachfragen.
+                  Lohn, Betreibung, Ausweis gehen raus — und oft kommt nichts zurück. Nicht weil du ungeeignet
+                  bist: weil dreissig dasselbe schicken und er drei Dossiers öffnet. Ein geprüftes PDF holt
+                  deine Bewerbung aus dem Stapel.
                 </p>
                 <form
                   id="anlegen"
@@ -458,13 +459,13 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   </a>
                 </form>
                 <p className="mt-3 max-w-md text-xs leading-relaxed text-white/45">
-                  Kein Abo. Nach der Zahlung lädst du die Unterlagen hoch — das PDF legst du der Bewerbung bei.
+                  Kein Abo. Das PDF legst du der Bewerbung bei — damit er dich überhaupt sieht.
                 </p>
               </div>
               <div id="zertifikat">
                 <CertUrkundeCard />
                 <p className="mt-3 text-center text-xs leading-relaxed text-white/50">
-                  So sieht das PDF aus, das du der Bewerbung beilegst.
+                  Das Blatt, das deine Bewerbung aus dem Stapel holt.
                 </p>
               </div>
             </div>
@@ -477,7 +478,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           <section className="bg-sic-paper">
             <div className="mx-auto max-w-3xl px-5 py-14 sm:py-16">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sic-gold-text">
-                So ist es heute
+                Warum du oft leer ausgehst
               </p>
               <div className="mt-8">
                 {TODAY_SCENES.map((scene, i) => (
@@ -492,8 +493,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 ))}
               </div>
               <p className="mt-8 font-sic-serif text-lg font-semibold leading-snug text-sic-navy sm:text-xl">
-                Deshalb ein Dokument mit QR: er sieht die Angaben in einer Ansicht — du erklärst nicht fünf
-                Anhänge.
+                Deshalb ein geprüftes PDF mit QR: er sieht dich in einer Ansicht — du bleibst nicht fünf
+                ungelesene Anhänge.
               </p>
             </div>
           </section>
@@ -501,14 +502,14 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           <section className="bg-sic-paper-soft py-14 sm:py-16">
             <div className="mx-auto max-w-5xl px-5">
               <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-sic-gold-text">
-                Was der Vermieter öffnet
+                Was mit deiner Bewerbung passiert
               </p>
               <h2 className="mt-3 text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
-                Fünf Dateien, oder ein Dokument
+                Gelesen werden meist drei. Du bist Nummer dreissig.
               </h2>
               <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-                Er hat drei Minuten. Ein einheitliches PDF mit QR ist schneller zu prüfen als ein Stapel aus
-                Lohn, Betreibung, ID und Referenz.
+                Fünf Anhänge kosten ihn Zeit. Zeit hat er nicht — deshalb bleibt dein Dossier zu. Ein Zertifikat
+                öffnet er, weil er in Sekunden weiss, woran er ist.
               </p>
               <div className="mt-10 grid gap-5 md:grid-cols-2">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
@@ -531,7 +532,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                       </li>
                     ))}
                   </ul>
-                  <p className="mt-3 text-xs leading-relaxed text-slate-500">Oft ungelesen, weil der Stapel zu lang ist.</p>
+                  <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                    Dein Stapel bleibt zu. Die Wohnung geht an jemand anderen.
+                  </p>
                 </div>
                 <div className="rounded-2xl border border-sic-gold/40 bg-sic-paper p-5 ring-1 ring-sic-gold/20">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-sic-gold-text">Mit SIC</p>
@@ -546,8 +549,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     </div>
                   </div>
                   <p className="mt-3 text-xs leading-relaxed text-sic-navy/70">
-                    Wir haben die Unterlagen vorher angeschaut. Über den QR-Code sieht er denselben Stand
-                    wie auf dem PDF.
+                    Er öffnet ein geprüftes Blatt. Du musst nichts erklären — über den QR sieht er denselben
+                    Stand wie auf dem PDF.
                   </p>
                 </div>
               </div>
@@ -570,9 +573,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           <div className="mx-auto max-w-6xl px-5">
             <h2 className="text-center font-sic-serif text-3xl font-bold tracking-tight text-sic-navy">So läuft es ab</h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-              Nach der Zahlung sammelst du die Unterlagen in deinem Tempo — das PDF gibt es schon ab der
-              ersten geprüften Angabe. {PRICE_LABEL}, {SIC_VALIDITY_MONTHS} Monate gültig ab der ersten
-              Freigabe.
+              Du zahlst einmal, lädst die Unterlagen in deinem Tempo hoch — und kannst das PDF schon beilegen,
+              sobald die erste Angabe geprüft ist. {PRICE_LABEL}, {SIC_VALIDITY_MONTHS} Monate gültig ab der
+              ersten Freigabe.
             </p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_STEPS.map((step, i) => (
@@ -605,7 +608,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             <p className="mx-auto mt-2 max-w-xl text-slate-500">
               {isReturning ?
                 'Was du schon hast, ist markiert. Fehlendes kannst du ergänzen.'
-              : 'Vier Dinge will fast jeder Vermieter sehen. Alle vier sind vorausgewählt — hier kannst du etwas weglassen.'}
+              : 'Vier Angaben, ohne die er dich oft gar nicht anschaut. Alle vier sind vorausgewählt.'}
             </p>
           </div>
 
@@ -629,8 +632,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             </div>
             <p className="mt-2.5 text-xs leading-relaxed text-slate-500">
               {coveredCount === SIC_MODULES.length ?
-                'Vollständig — alle vier Angaben, die Vermieter meist sehen wollen. Dein Name und der Prüfcode sind immer dabei.'
-              : `Noch offen: ${missingTitles.join(', ')}. Danach fragt der Vermieter vermutlich selbst.`}
+                'Vollständig — so siehst du aus wie jemand, den man öffnet. Name und Prüfcode sind immer dabei.'
+              : `Noch offen: ${missingTitles.join(', ')}. Danach fragt er dich sonst selbst — und deine Bewerbung wartet.`}
             </p>
           </div>
 
@@ -913,7 +916,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   So läuft es
                 </p>
                 <h2 className="mt-3 text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
-                  Drei Wege, das Zertifikat zu nutzen
+                  Drei Wege, endlich gelesen zu werden
                 </h2>
                 <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-relaxed text-slate-500">
                   Keine Kundenbewertungen — das sind Abläufe, die das Produkt hergibt.
@@ -969,8 +972,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 'Dein Zertifikat ist vollständig.'
               : 'Fehlende Angabe ergänzen.'
             : IS_FREE ?
-              'Kostenlos anlegen. Unterlagen lädst du danach in deinem Tempo hoch.'
-            : `Anlegen für ${PRICE_LABEL}. Unterlagen lädst du danach in deinem Tempo hoch.`}
+              'Kostenlos anlegen. Damit die nächste Bewerbung gelesen wird.'
+            : `Anlegen für ${PRICE_LABEL}. Damit die nächste Bewerbung gelesen wird.`}
           </span>
           {isReturning && nothingToBuy ?
             <a
