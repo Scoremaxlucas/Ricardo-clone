@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function SicDatenschutzPage() {
   return (
-    <div className="mx-auto max-w-2xl px-5 py-16">
+    <div className="mx-auto max-w-2xl break-words px-5 py-10 sm:py-16">
       <h1 className="font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">Datenschutz</h1>
       <p className="mt-2 text-sm text-slate-500">
         Wie Swiss Immo Cert deine Daten verarbeitet — nach Schweizer Datenschutzgesetz (revDSG).

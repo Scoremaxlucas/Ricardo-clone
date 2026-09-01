@@ -25,7 +25,7 @@ export default function SicAgbPage() {
   const bundleSavings = sicBundleSavingsChf()
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-16">
+    <div className="mx-auto max-w-2xl break-words px-5 py-10 sm:py-16">
       <h1 className="font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
         Allgemeine Geschäftsbedingungen
       </h1>

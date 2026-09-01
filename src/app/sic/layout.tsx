@@ -30,11 +30,12 @@ export default async function SicLayout({ children }: { children: React.ReactNod
   const canAddModules = Boolean(account && account.ownedModules.length < SIC_MODULES.length)
 
   return (
-    <div className={`${sicSerif.variable} flex min-h-screen flex-col bg-sic-paper text-slate-900`}>
-      <header className="sticky top-0 z-40 border-b border-sic-hairline/80 bg-sic-paper/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-          <Link href={sicPaths.landing} aria-label={SIC_BRAND_NAME}>
-            <SicLogo size={32} />
+    <div className={`${sicSerif.variable} flex min-h-[100dvh] flex-col overflow-x-clip bg-sic-paper text-slate-900`}>
+      <header className="sticky top-0 z-40 border-b border-sic-hairline/80 bg-sic-paper/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:h-16 sm:gap-3 sm:pl-[max(1.25rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.25rem,env(safe-area-inset-right,0px))]">
+          <Link href={sicPaths.landing} aria-label={SIC_BRAND_NAME} className="min-w-0 shrink touch-target-exempt">
+            <SicLogo size={28} className="sm:hidden" />
+            <SicLogo size={32} className="hidden sm:inline-flex" />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <SicHeaderCta hasCertificate={hasCertificate} canAddModules={canAddModules} />
@@ -42,12 +43,12 @@ export default async function SicLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      <main id="main" className="flex-1">
+      <main id="main" className="flex-1 pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]">
         {children}
       </main>
 
       <footer className="mt-auto bg-sic-navy-deep text-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-10 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-[max(1.25rem,env(safe-area-inset-left,0px))] pr-[max(1.25rem,env(safe-area-inset-right,0px))] py-10 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <SicLogo size={30} onDark />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
@@ -87,7 +88,7 @@ export default async function SicLayout({ children }: { children: React.ReactNod
           </nav>
         </div>
         <div className="border-t border-white/10">
-          <div className="mx-auto max-w-6xl px-5 py-4 text-xs text-white/40">
+          <div className="mx-auto max-w-6xl px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] text-xs text-white/40">
             © {new Date().getFullYear()} {SIC_BRAND_NAME}
           </div>
         </div>

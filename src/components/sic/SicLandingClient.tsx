@@ -150,17 +150,23 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
   }, [])
 
   useEffect(() => {
-    const onScroll = () => {
+    const update = () => {
       const y = window.scrollY
       const nearBottom = window.innerHeight + y >= document.documentElement.scrollHeight - 200
-      setShowSticky(y > 640 && !nearBottom)
+      const vv = window.visualViewport
+      const keyboardOpen = Boolean(vv && window.innerHeight - vv.height > 80)
+      setShowSticky(y > 640 && !nearBottom && !keyboardOpen)
     }
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll)
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    window.visualViewport?.addEventListener('resize', update)
+    window.visualViewport?.addEventListener('scroll', update)
     return () => {
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
+      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+      window.visualViewport?.removeEventListener('resize', update)
+      window.visualViewport?.removeEventListener('scroll', update)
     }
   }, [])
 
@@ -284,7 +290,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       {loginInvalid ?
         <div className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-center text-sm text-amber-900">
           Anmeldelink ungültig oder abgelaufen — fordere unter{' '}
-          <a href={sicPaths.certificateWorkspace} className="font-semibold underline">
+          <a href={sicPaths.certificateWorkspace} className="touch-target-exempt font-semibold underline">
             Mein Zertifikat
           </a>{' '}
           einen neuen an.
@@ -296,7 +302,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           <div className="mx-auto max-w-6xl text-sm text-sic-navy">
             <span className="font-semibold">Dein Zertifikat ist {statusLabel}</span>
             <span className="mx-1.5 text-slate-400">·</span>
-            <span className="font-mono text-xs">{account.certificateCode}</span>
+            <span className="break-all font-mono text-xs">{account.certificateCode}</span>
             {owned.size > 0 ?
               <span className="mt-0.5 block text-xs text-slate-600 sm:mt-0 sm:inline sm:before:mx-1.5 sm:before:content-['·']">
                 {owned.size} von {SIC_MODULES.length} Angaben enthalten
@@ -321,10 +327,10 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               'linear-gradient(115deg, rgba(10,31,69,0.92) 0%, rgba(10,31,69,0.78) 45%, rgba(14,124,107,0.45) 100%), radial-gradient(70% 60% at 100% 0%, rgba(216,178,90,0.22) 0%, transparent 55%)',
           }}
         />
-        <div className="relative mx-auto max-w-6xl px-5 pb-16 pt-14 sm:pt-16 lg:pb-20 lg:pt-20">
+        <div className="relative mx-auto max-w-6xl px-5 pb-14 pt-10 sm:pt-16 lg:pb-20 lg:pt-20">
           {isReturning ?
             <div className="mx-auto max-w-3xl text-center">
-              <h1 className="font-sic-serif text-3xl font-bold leading-[1.1] tracking-tight text-white sm:text-4xl">
+              <h1 className="font-sic-serif text-[1.7rem] font-bold leading-[1.1] tracking-tight text-white sm:text-4xl">
                 Dein Mieter-Zertifikat
               </h1>
               <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/70">
@@ -334,50 +340,50 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   'Die Gültigkeit ist abgelaufen. Mit einem frischen Betreibungsauszug kannst du verlängern.'
                 : 'Stand und Nachweise findest du unter «Mein Zertifikat». Hier kannst du fehlende Angaben ergänzen.'}
               </p>
-              <div id="anlegen" className="mt-8 flex scroll-mt-24 flex-col items-center justify-center gap-3 sm:flex-row">
+              <div id="anlegen" className="mt-8 flex scroll-mt-[calc(4.5rem+env(safe-area-inset-top,0px))] flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
                 {account?.status === 'EXPIRED' ?
                   <a
                     href={sicPaths.renew}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-sic-action hover:bg-sic-action-deep px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
+                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 touch-manipulation transition-transform hover:bg-sic-action-deep sm:w-auto sm:hover:-translate-y-0.5"
                   >
                     Jetzt verlängern <ArrowRight className="h-4 w-4" />
                   </a>
                 : account?.status === 'REVOKED' ?
                   <a
                     href={sicPaths.certificateWorkspace}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-sic-action hover:bg-sic-action-deep px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
+                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 touch-manipulation transition-transform hover:bg-sic-action-deep sm:w-auto sm:hover:-translate-y-0.5"
                   >
                     Zum Zertifikat <ArrowRight className="h-4 w-4" />
                   </a>
                 : !nothingToBuy ?
                   <a
                     href="#module"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-sic-action hover:bg-sic-action-deep px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
+                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 touch-manipulation transition-transform hover:bg-sic-action-deep sm:w-auto sm:hover:-translate-y-0.5"
                   >
                     Angabe ergänzen <ArrowRight className="h-4 w-4" />
                   </a>
                 : <a
                     href={sicPaths.certificateWorkspace}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-sic-action hover:bg-sic-action-deep px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
+                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 touch-manipulation transition-transform hover:bg-sic-action-deep sm:w-auto sm:hover:-translate-y-0.5"
                   >
                     Zum Zertifikat <ArrowRight className="h-4 w-4" />
                   </a>
                 }
                 <a
                   href={sicPaths.certificateWorkspace}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-sm font-semibold text-white touch-manipulation transition-colors hover:bg-white/5 sm:w-auto"
                 >
                   Mein Zertifikat
                 </a>
               </div>
             </div>
-          : <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-              <div>
+          : <div className="grid min-w-0 items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+              <div className="min-w-0">
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/80">
                   <ShieldCheck className="h-3.5 w-3.5 text-sic-gold-light" />
                   Wenn du in der Schweiz eine Wohnung suchst
                 </span>
-                <h1 className="mt-6 font-sic-serif text-3xl font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
+                <h1 className="mt-6 font-sic-serif text-[1.7rem] font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
                   Deine Bewerbung wird oft nicht gelesen.{' '}
                   <span className="text-sic-gold-light">Ein Mieter-Zertifikat, das der Vermieter versteht.</span>
                 </h1>
@@ -387,7 +393,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 </p>
                 <form
                   id="anlegen"
-                  className="mt-8 max-w-md scroll-mt-24"
+                  className="mt-8 max-w-md scroll-mt-[calc(4.5rem+env(safe-area-inset-top,0px))]"
                   onSubmit={e => {
                     e.preventDefault()
                     void checkout()
@@ -406,7 +412,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                         onChange={e => setFirstName(e.target.value)}
                         placeholder="Vorname"
                         autoComplete="given-name"
-                        className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-sm text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
+                        className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-base text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
                       />
                     </div>
                     <div>
@@ -421,7 +427,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                         onChange={e => setLastName(e.target.value)}
                         placeholder="Nachname"
                         autoComplete="family-name"
-                        className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-sm text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
+                        className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-base text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
                       />
                     </div>
                   </div>
@@ -436,12 +442,12 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     onChange={e => setEmail(e.target.value)}
                     placeholder="name@beispiel.ch"
                     autoComplete="email"
-                    className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-sm text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
+                    className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-base text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
                   />
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5 hover:bg-sic-action-deep disabled:translate-y-0 disabled:opacity-60 sm:w-auto"
+                    className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 touch-manipulation transition-transform hover:bg-sic-action-deep disabled:translate-y-0 disabled:opacity-60 sm:w-auto sm:hover:-translate-y-0.5"
                   >
                     {submitting ? 'Wird erstellt …' : 'Zertifikat anlegen'}
                     {!submitting && <ArrowRight className="h-4 w-4" />}
@@ -452,7 +458,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   </p>
                   <a
                     href="#module"
-                    className="mt-3 inline-block text-sm font-semibold text-white/80 underline-offset-4 hover:text-white hover:underline"
+                    className="mt-3 inline-block touch-target-exempt text-sm font-semibold text-white/80 underline-offset-4 hover:text-white hover:underline"
                   >
                     Angaben anpassen
                   </a>
@@ -461,7 +467,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   Kein Abo. Das PDF legst du der Bewerbung bei — damit der Vermieter dich sieht.
                 </p>
               </div>
-              <div id="zertifikat">
+              <div id="zertifikat" className="min-w-0">
                 <CertUrkundeCard />
                 <p className="mt-3 text-center text-xs leading-relaxed text-white/50">
                   So sieht das PDF aus, das du der Bewerbung beilegst.
@@ -504,7 +510,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 Was mit deiner Bewerbung passiert
               </p>
               <h2 className="mt-3 text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
-                Gelesen werden meist drei. Du bist Nummer dreissig.
+                Gelesen werden meist drei.<span className="hidden sm:inline"> </span>
+                <span className="block sm:inline">Du bist Nummer dreissig.</span>
               </h2>
               <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
                 Fünf Anhänge kosten den Vermieter Zeit. Zeit hat er nicht — deshalb bleibt dein Dossier zu.
@@ -678,7 +685,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   aria-pressed={on}
                   aria-disabled={alreadyOwned}
                   aria-label={`${m.title} — beantwortet: ${m.landlordQuestion}`}
-                  className={`group relative flex flex-col rounded-2xl border bg-white p-6 text-left transition-all ${
+                  className={`group relative flex min-w-0 flex-col rounded-2xl border bg-white p-5 text-left transition-all sm:p-6 ${
                     alreadyOwned ?
                       'cursor-default border-sic-verified/25 bg-sic-verified/[0.04] opacity-90'
                     : on ?
@@ -687,7 +694,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   }`}
                 >
                   {alreadyOwned ?
-                    <span className="absolute right-3 top-3 rounded-full bg-sic-verified-text px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+                    <span className="absolute right-3 top-3 max-w-[9.5rem] rounded-full bg-sic-verified-text px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
                       Bereits enthalten
                     </span>
                   : null}
@@ -699,7 +706,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   >
                     <Icon className="h-6 w-6" />
                   </span>
-                  <p className="mt-4 text-lg font-bold leading-tight text-sic-navy">{m.title}</p>
+                  <p className={`mt-4 text-lg font-bold leading-tight text-sic-navy ${alreadyOwned ? 'pr-24' : ''}`}>
+                    {m.title}
+                  </p>
                   <p className="mt-1.5 flex-1 text-sm leading-relaxed text-slate-600">{m.youUpload}</p>
                   <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
                     {alreadyOwned ?
@@ -729,7 +738,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           {nothingToBuy ?
             <p className="mt-6 rounded-xl border border-sic-verified/20 bg-sic-verified/[0.06] px-4 py-3 text-center text-sm text-sic-verified-text">
               Alle vier Angaben sind bereits Teil deines Zertifikats. Nachweise und Status findest du unter{' '}
-              <a href={sicPaths.certificateWorkspace} className="font-semibold underline">
+              <a href={sicPaths.certificateWorkspace} className="touch-target-exempt font-semibold underline">
                 Mein Zertifikat
               </a>{' '}
               verwalten.
@@ -752,7 +761,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   placeholder="Vorname"
                   autoComplete="given-name"
                   readOnly={Boolean(account?.holderFirstName && account?.holderLastName)}
-                  className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-sic-navy/15 focus:border-sic-navy focus:ring-2 ${
+                  className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none ring-sic-navy/15 focus:border-sic-navy focus:ring-2 ${
                     account?.holderFirstName && account?.holderLastName ? 'cursor-default bg-slate-50 text-slate-600' : ''
                   }`}
                 />
@@ -770,7 +779,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   placeholder="Nachname"
                   autoComplete="family-name"
                   readOnly={Boolean(account?.holderFirstName && account?.holderLastName)}
-                  className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-sic-navy/15 focus:border-sic-navy focus:ring-2 ${
+                  className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none ring-sic-navy/15 focus:border-sic-navy focus:ring-2 ${
                     account?.holderFirstName && account?.holderLastName ? 'cursor-default bg-slate-50 text-slate-600' : ''
                   }`}
                 />
@@ -789,7 +798,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               placeholder="name@beispiel.ch"
               autoComplete="email"
               readOnly={isReturning}
-              className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-sic-navy/15 focus:border-sic-navy focus:ring-2 ${
+              className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none ring-sic-navy/15 focus:border-sic-navy focus:ring-2 ${
                 isReturning ? 'cursor-default bg-slate-50 text-slate-600' : ''
               }`}
             />
@@ -805,10 +814,10 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   {quote.lines.map((l, i) => (
                     <div
                       key={i}
-                      className={`flex justify-between ${l.kind === 'discount' ? 'text-sic-verified' : 'text-slate-600'}`}
+                      className={`flex justify-between gap-3 ${l.kind === 'discount' ? 'text-sic-verified' : 'text-slate-600'}`}
                     >
-                      <dt>{l.label}</dt>
-                      <dd className="tabular-nums">
+                      <dt className="min-w-0">{l.label}</dt>
+                      <dd className="flex-shrink-0 tabular-nums">
                         {l.amountChf < 0 ? `− ${formatSicChf(Math.abs(l.amountChf))}` : formatSicChf(l.amountChf)}
                       </dd>
                     </div>
@@ -856,7 +865,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 (isBaseOnly && !baseOnlyAck) ||
                 (isReturning && moduleIds.length === 0)
               }
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-sic-action hover:bg-sic-action-deep px-5 py-3.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+              className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white touch-manipulation transition-transform hover:bg-sic-action-deep disabled:translate-y-0 disabled:opacity-60 sm:hover:-translate-y-0.5"
             >
               {submitting ?
                 'Wird erstellt …'
@@ -935,7 +944,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       : null}
 
       {/* ── Inline-FAQ ───────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-3xl px-5 py-16 pb-24">
+      <section className="mx-auto max-w-3xl px-5 py-16 pb-[max(7.5rem,calc(6rem+env(safe-area-inset-bottom,0px)))]">
         <h2 className="text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy">Häufige Fragen</h2>
         <div className="mt-8 divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
           {SIC_FAQ.map((item, i) => {
@@ -946,12 +955,12 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   type="button"
                   onClick={() => setOpenFaq(open ? null : i)}
                   aria-expanded={open}
-                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+                  className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left min-[400px]:px-5"
                 >
-                  <span className="text-sm font-semibold text-sic-navy">{item.q}</span>
+                  <span className="min-w-0 text-sm font-semibold text-sic-navy">{item.q}</span>
                   <ChevronDown className={`h-4 w-4 flex-shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
                 </button>
-                {open && <p className="px-5 pb-4 text-sm leading-relaxed text-slate-600">{item.a}</p>}
+                {open && <p className="px-4 pb-4 text-sm leading-relaxed text-slate-600 min-[400px]:px-5">{item.a}</p>}
               </div>
             )
           })}
@@ -961,10 +970,11 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       {/* ── Sticky-CTA (deckende Bottom-Bar) ─────────────────────────────── */}
       <div
         className={`fixed inset-x-0 bottom-0 z-50 border-t border-sic-hairline bg-sic-paper/95 shadow-[0_-4px_20px_rgba(10,31,69,0.08)] backdrop-blur transition-transform duration-300 ${
-          showSticky ? 'translate-y-0' : 'translate-y-full'
+          showSticky ? 'translate-y-0' : 'pointer-events-none translate-y-full'
         }`}
+        aria-hidden={!showSticky}
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 py-3 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] sm:pl-[max(1.25rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.25rem,env(safe-area-inset-right,0px))]">
           <span className="hidden text-sm font-semibold text-sic-navy sm:block">
             {isReturning ?
               nothingToBuy ?
@@ -977,7 +987,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           {isReturning && nothingToBuy ?
             <a
               href={sicPaths.certificateWorkspace}
-              className="ml-auto inline-flex items-center gap-2 rounded-xl bg-sic-action px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-sic-action-deep"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-2.5 text-sm font-semibold text-white touch-manipulation transition-transform hover:bg-sic-action-deep sm:ml-auto sm:w-auto sm:hover:-translate-y-0.5"
             >
               Zum Zertifikat <ArrowRight className="h-4 w-4" />
             </a>
@@ -985,7 +995,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               type="button"
               onClick={() => void checkout()}
               disabled={submitting}
-              className="ml-auto inline-flex items-center gap-2 rounded-xl bg-sic-action px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-sic-action-deep disabled:translate-y-0 disabled:opacity-60"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-2.5 text-sm font-semibold text-white touch-manipulation transition-transform hover:bg-sic-action-deep disabled:translate-y-0 disabled:opacity-60 sm:ml-auto sm:w-auto sm:hover:-translate-y-0.5"
             >
               {submitting ?
                 'Wird erstellt …'
@@ -1003,13 +1013,13 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
 
 function CertUrkundeCard() {
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       <span className="absolute right-3 top-3 z-20 rounded-full bg-sic-navy-deep/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
         Beispiel
       </span>
       <article className="relative overflow-hidden border border-sic-navy bg-sic-paper shadow-xl shadow-black/25">
         <header className="relative flex flex-col items-center bg-sic-navy px-4 pb-3.5 pt-5">
-          <p className="absolute right-3 top-2 font-mono text-[9px] font-semibold tracking-[0.12em] text-sic-gold-light/90">
+          <p className="absolute right-3 top-2 hidden font-mono text-[9px] font-semibold tracking-[0.12em] text-sic-gold-light/90 sm:block">
             SIC-2026-BEISPIEL
           </p>
           <HouseMark size={36} onDark />
@@ -1056,7 +1066,7 @@ function CertUrkundeCard() {
                     ))}
                   </ul>
                 </div>
-                <span className="mt-0.5 flex-shrink-0 text-[8px] font-bold tracking-[0.1em] text-sic-navy">
+                <span className="mt-0.5 hidden flex-shrink-0 text-[8px] font-bold tracking-[0.1em] text-sic-navy min-[380px]:inline">
                   {SIC_MODULE_BADGE}
                 </span>
               </li>

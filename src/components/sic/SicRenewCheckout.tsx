@@ -43,7 +43,7 @@ export function SicRenewCheckout() {
         <p className="mt-3 text-slate-600">{error}</p>
         <Link
           href={sicPaths.certificateWorkspace}
-          className="mt-6 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep"
+          className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep"
         >
           Zu Mein Zertifikat
         </Link>

@@ -102,7 +102,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
           </p>
           <Link
             href={sicPaths.certificateWorkspace}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep"
+            className="mt-6 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep"
           >
             <FileCheck2 className="h-4 w-4" /> Unterlagen hochladen
           </Link>
@@ -123,7 +123,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
             <button
               type="button"
               onClick={() => void retryConfirm()}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep"
+              className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep sm:w-auto"
             >
               <RefreshCw className="h-4 w-4" /> Erneut prüfen
             </button>
@@ -140,13 +140,13 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
           <button
             type="button"
             onClick={() => void retryConfirm()}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep"
+            className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep sm:w-auto"
           >
             <RefreshCw className="h-4 w-4" /> Erneut prüfen
           </button>
           <Link
             href={sicPaths.landing}
-            className="mt-4 text-sm font-semibold text-sic-navy hover:underline"
+            className="mt-4 touch-target-exempt text-sm font-semibold text-sic-navy hover:underline"
           >
             Zurück zur Startseite
           </Link>

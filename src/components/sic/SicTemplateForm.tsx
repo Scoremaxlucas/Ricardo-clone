@@ -10,7 +10,7 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 
 const inputCls =
-  'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-sic-action focus:ring-1 focus:ring-sic-action/25'
+  'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base outline-none focus:border-sic-action focus:ring-1 focus:ring-sic-action/25'
 
 /**
  * SIC-Nachweisformular: optional Namen/eigene Angaben vorausfüllen,
@@ -87,11 +87,11 @@ export function SicTemplateForm({
             ))}
           </ol>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
           <button
             type="button"
             onClick={() => setOpen(o => !o)}
-            className="rounded-lg border border-sic-navy/20 px-3 py-1.5 text-xs font-semibold text-sic-navy hover:bg-white"
+            className="min-h-11 rounded-lg border border-sic-navy/20 px-3 py-1.5 text-xs font-semibold text-sic-navy hover:bg-white"
           >
             {open ? 'Schliessen' : 'Deinen Namen vorausfüllen'}
           </button>
@@ -99,7 +99,7 @@ export function SicTemplateForm({
             type="button"
             onClick={downloadPdf}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-sic-action px-3 py-1.5 text-xs font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-sic-action px-3 py-1.5 text-xs font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
           >
             <Download className="h-3.5 w-3.5" />
             {busy ? 'Wird erstellt …' : 'Vorlage herunterladen'}
@@ -148,7 +148,7 @@ export function SicTemplateForm({
             type="button"
             onClick={downloadPdf}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-lg bg-sic-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-sic-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60 sm:w-auto"
           >
             <Download className="h-4 w-4" />
             {busy ?

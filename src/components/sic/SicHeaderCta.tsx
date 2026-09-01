@@ -18,10 +18,10 @@ function isWorkspacePath(pathname: string): boolean {
 }
 
 const primaryClass =
-  'inline-flex items-center gap-1.5 rounded-lg bg-sic-action px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-sic-action-deep'
+  'inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-sic-action px-3 py-2 text-[13px] font-semibold text-white touch-manipulation transition-colors hover:bg-sic-action-deep sm:px-3.5 sm:text-sm'
 
 const secondaryClass =
-  'rounded-lg border border-sic-navy/15 px-3.5 py-2 text-sm font-semibold text-sic-navy transition-colors hover:bg-sic-navy/5'
+  'hidden min-h-11 shrink-0 items-center rounded-lg border border-sic-navy/15 px-3.5 py-2 text-sm font-semibold text-sic-navy transition-colors hover:bg-sic-navy/5 sm:inline-flex'
 
 /**
  * Primäre Kopfzeilen-Aktion:
@@ -70,7 +70,7 @@ export function SicHeaderCta({
         />
       ) : onWorkspace ? null : (
         <Link href={sicPaths.certificateWorkspace} className={primaryClass}>
-          Mein Zertifikat
+          <CompactLabel label="Mein Zertifikat" />
         </Link>
       )}
       {showWorkspaceLink ?
@@ -78,6 +78,20 @@ export function SicHeaderCta({
           Mein Zertifikat
         </Link>
       : null}
+    </>
+  )
+}
+
+function CompactLabel({ label }: { label: string }) {
+  const short =
+    label === 'Zertifikat anlegen' ? 'Anlegen'
+    : label === 'Angabe ergänzen' ? 'Ergänzen'
+    : label === 'Mein Zertifikat' ? 'Zertifikat'
+    : label
+  return (
+    <>
+      <span className="sm:hidden">{short}</span>
+      <span className="hidden sm:inline">{label}</span>
     </>
   )
 }
@@ -98,7 +112,7 @@ function CheckoutCta({
         className={primaryClass}
         onClick={() => document.getElementById('sic-checkout-submit')?.click()}
       >
-        {label}
+        <CompactLabel label={label} />
       </button>
     )
   }
@@ -115,14 +129,14 @@ function CheckoutCta({
           el.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }}
       >
-        {label}
+        <CompactLabel label={label} />
       </a>
     )
   }
 
   return (
     <Link href={`${sicPaths.landing}#anlegen`} className={primaryClass}>
-      {label} <ArrowRight className="h-3.5 w-3.5" />
+      <CompactLabel label={label} /> <ArrowRight className="hidden h-3.5 w-3.5 sm:inline" />
     </Link>
   )
 }

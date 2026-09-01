@@ -25,7 +25,7 @@ export type SicVerifyDocumentProps =
 
 function Frame({ children }: { children: ReactNode }) {
   return (
-    <article className="relative mx-auto max-w-[42rem] border border-sic-navy bg-sic-paper shadow-[0_18px_50px_-24px_rgba(15,43,94,0.35)]">
+    <article className="relative mx-auto w-full min-w-0 max-w-[42rem] overflow-x-clip border border-sic-navy bg-sic-paper shadow-[0_18px_50px_-24px_rgba(15,43,94,0.35)]">
       <div className="overflow-hidden">{children}</div>
     </article>
   )
@@ -53,7 +53,7 @@ function NavyBand({
       }`}
     >
       {code ?
-        <p className="absolute right-4 top-3 font-mono text-[10px] font-semibold tracking-[0.12em] text-sic-gold-light/90">
+        <p className="mb-2 font-mono text-[9px] font-semibold tracking-[0.08em] text-sic-gold-light/90 sm:absolute sm:right-4 sm:top-3 sm:mb-0 sm:text-[10px] sm:tracking-[0.12em]">
           {code}
         </p>
       : null}
@@ -82,7 +82,7 @@ function QuietBody({
   children: ReactNode
 }) {
   return (
-    <div className="px-6 pb-8 pt-10 text-center sm:px-8 sm:pt-12">
+    <div className="px-4 pb-8 pt-10 text-center sm:px-8 sm:pt-12">
       <h1 className="text-xl font-semibold text-sic-navy sm:text-2xl">{title}</h1>
       <div className="mt-3 flex justify-center">
         <DocumentRule width={120} />
@@ -101,14 +101,14 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
 
       <p className="sr-only">Gültiges Zertifikat {certificateCode}</p>
 
-      <div className="px-6 pb-8 pt-5 sm:px-8">
+      <div className="px-4 pb-8 pt-5 sm:px-8">
         <p className="text-center text-[11px] font-semibold uppercase tracking-[0.08em] text-sic-navy">
           {completenessLabel}
         </p>
 
         <div className="mt-5 text-center">
           <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Ausgestellt für</p>
-          <h1 className="mt-1 text-2xl font-bold text-sic-navy sm:text-[1.65rem]">
+          <h1 className="mt-1 break-words px-1 text-xl font-bold text-sic-navy sm:text-2xl">
             {holderName || 'Inhaber gemäss Nachweisen'}
           </h1>
           <div className="mt-2 flex justify-center">
@@ -133,7 +133,7 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
                   ))}
                 </ul>
               </div>
-              <span className="mt-0.5 flex-shrink-0 text-[9px] font-bold tracking-[0.12em] text-sic-navy">
+              <span className="mt-0.5 hidden flex-shrink-0 text-[9px] font-bold tracking-[0.12em] text-sic-navy min-[400px]:inline">
                 {SIC_MODULE_BADGE}
               </span>
             </li>

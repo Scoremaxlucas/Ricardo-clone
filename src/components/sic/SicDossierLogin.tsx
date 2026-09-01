@@ -65,19 +65,19 @@ export function SicDossierLogin({
             onChange={e => setEmail(e.target.value)}
             placeholder="name@beispiel.ch"
             autoComplete="email"
-            className="mt-1.5 w-full rounded-xl border border-sic-hairline bg-sic-paper px-4 py-3 text-sm outline-none ring-sic-action/20 focus:border-sic-action focus:ring-2"
+            className="mt-1.5 w-full rounded-xl border border-sic-hairline bg-sic-paper px-4 py-3 text-base outline-none ring-sic-action/20 focus:border-sic-action focus:ring-2"
           />
           <button
             type="button"
             onClick={request}
             disabled={busy}
-            className="mt-4 w-full rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
+            className="mt-4 min-h-11 w-full rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
           >
             {busy ? 'Wird gesendet …' : 'Anmeldelink senden'}
           </button>
           <p className="mt-3 text-center text-xs text-slate-400">
             Noch nichts angelegt?{' '}
-            <a href={sicPaths.landing} className="font-semibold text-sic-navy hover:underline">
+            <a href={sicPaths.landing} className="touch-target-exempt font-semibold text-sic-navy hover:underline">
               Zertifikat anlegen
             </a>
           </p>

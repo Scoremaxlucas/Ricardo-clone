@@ -26,7 +26,7 @@ function clientIp(): string {
 
 function VerifyShell({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-14">
       <p className="mb-6 text-center text-[11px] uppercase tracking-[0.22em] text-sic-navy/45">
         {SIC_BRAND_NAME} · Online-Verifikation
       </p>

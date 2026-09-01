@@ -67,7 +67,7 @@ export function SicCheckoutCancel({ retry }: { retry: SicCheckoutRetry | null })
           type="button"
           onClick={() => void resumeCheckout()}
           disabled={busy}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-sic-action-deep disabled:opacity-60"
+          className="mt-6 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
         >
           {busy ?
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -77,13 +77,13 @@ export function SicCheckoutCancel({ retry }: { retry: SicCheckoutRetry | null })
       : (
         <Link
           href={`${sicPaths.landing}#anlegen`}
-          className="mt-6 flex w-full items-center justify-center rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-sic-action-deep"
+          className="mt-6 flex min-h-11 w-full items-center justify-center rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep"
         >
           Weiter zur Zahlung
         </Link>
       )}
 
-      <Link href={backHref} className="mt-4 text-sm font-semibold text-sic-navy hover:underline">
+      <Link href={backHref} className="mt-4 touch-target-exempt text-sm font-semibold text-sic-navy hover:underline">
         Zurück
       </Link>
     </div>

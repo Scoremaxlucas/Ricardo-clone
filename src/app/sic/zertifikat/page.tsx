@@ -24,7 +24,7 @@ export default async function SicZertifikatPage() {
         </p>
         <Link
           href={sicPaths.landing}
-          className="mt-6 inline-block rounded-xl bg-sic-action hover:bg-sic-action-deep px-5 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
+          className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep sm:w-auto"
         >
           Zertifikat anlegen
         </Link>

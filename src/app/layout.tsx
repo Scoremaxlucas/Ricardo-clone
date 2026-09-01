@@ -96,6 +96,7 @@ export async function generateViewport(): Promise<Viewport> {
     width: 'device-width',
     initialScale: 1,
     maximumScale: 5,
+    viewportFit: 'cover',
     themeColor: sicHost ? '#0f2b5e' : '#0f766e',
   }
 }
@@ -190,7 +191,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <SkipLinks />
           <div className="flex flex-1 flex-col">{children}</div>
 
-          <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} toastOptions={toastOptions} />
+          <Toaster
+            position={isSic ? 'top-center' : 'top-right'}
+            containerStyle={
+              isSic ?
+                { zIndex: 99999, top: 'max(0.75rem, env(safe-area-inset-top, 0px))' }
+              : { zIndex: 99999 }
+            }
+            toastOptions={toastOptions}
+          />
 
           {!isSic && <AnalyticsTracker />}
 

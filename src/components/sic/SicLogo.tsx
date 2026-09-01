@@ -52,11 +52,11 @@ export function SicLogo({
 }) {
   const primary = onDark ? '#ffffff' : SIC_COLORS.navy
   return (
-    <span className={`inline-flex items-center gap-2.5 ${className ?? ''}`} aria-label={SIC_BRAND_NAME}>
+    <span className={`inline-flex min-w-0 items-center gap-2 sm:gap-2.5 ${className ?? ''}`} aria-label={SIC_BRAND_NAME}>
       <SicLogoMark size={size} onDark={onDark} />
       <span className="flex flex-col leading-none">
         <span
-          className="whitespace-nowrap text-[17px] font-bold tracking-tight sm:text-[19px]"
+          className="whitespace-nowrap text-[15px] font-bold tracking-tight sm:text-[19px]"
           style={{ color: primary }}
         >
           Swiss <span style={{ color: SIC_COLORS.red }}>Immo</span> Cert
