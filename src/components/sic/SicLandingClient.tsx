@@ -378,12 +378,12 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   Wenn du in der Schweiz eine Wohnung suchst
                 </span>
                 <h1 className="mt-6 font-sic-serif text-3xl font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
-                  Deine Bewerbung bleibt ungelesen.{' '}
-                  <span className="text-sic-gold-light">Ein Zertifikat, das er in Sekunden versteht.</span>
+                  Deine Bewerbung wird oft nicht gelesen.{' '}
+                  <span className="text-sic-gold-light">Ein Mieter-Zertifikat, das der Vermieter versteht.</span>
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-                  Nicht weil du ungeeignet bist: weil dreissig dasselbe schicken und er drei Dossiers öffnet.
-                  Lohn, Betreibung, Ausweis — eine Seite statt fünf Anhänge, per QR prüfbar.
+                  Dreissig Leute schicken Lohn, Betreibung und Ausweis. Der Vermieter öffnet drei Dossiers.
+                  Swiss Immo Cert ist die eine Seite mit QR — statt fünf Anhänge, die liegen bleiben.
                 </p>
                 <form
                   id="anlegen"
@@ -458,7 +458,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   </a>
                 </form>
                 <p className="mt-3 max-w-md text-xs leading-relaxed text-white/45">
-                  Kein Abo. Das PDF legst du der Bewerbung bei — damit er dich überhaupt sieht.
+                  Kein Abo. Das PDF legst du der Bewerbung bei — damit der Vermieter dich sieht.
                 </p>
               </div>
               <div id="zertifikat">
