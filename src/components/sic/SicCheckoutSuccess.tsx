@@ -97,6 +97,9 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
       {state.status === 'ok' && (
         <>
           <h1 className="font-sic-serif text-2xl font-bold tracking-tight text-sic-navy">Zahlung bestätigt</h1>
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-600">
+            Als Nächstes: Unterlagen hochladen, damit das PDF für die Bewerbung entstehen kann.
+          </p>
           <Link
             href={sicPaths.certificateWorkspace}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep"

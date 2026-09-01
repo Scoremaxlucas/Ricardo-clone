@@ -8,6 +8,8 @@ describe('SIC social proof', () => {
     const blob = SIC_USE_CASES.map(s => `${s.title} ${s.body}`).join(' ')
     expect(blob).not.toMatch(/Lara|Marco|Sofie/)
     expect(blob).not.toMatch(/Besichtigung|Wohnungszusage/)
+    expect(blob).not.toMatch(/Stapel/)
+    expect(blob).toMatch(/Vermieter/)
   })
 
   it('keeps use-cases as situations, not quotes from people', () => {

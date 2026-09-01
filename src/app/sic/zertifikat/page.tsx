@@ -19,7 +19,7 @@ export default async function SicZertifikatPage() {
       <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-5 py-16 text-center">
         <h1 className="font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">Noch kein Zertifikat</h1>
         <p className="mt-3 text-slate-600">
-          Zu dieser Anmeldung wurde noch kein Zertifikat gefunden. Stelle jetzt dein geprüftes
+          Zu dieser Anmeldung wurde noch kein Zertifikat gefunden. Stelle jetzt dein
           Mieter-Zertifikat zusammen — dieser Bereich öffnet sich, sobald das Zertifikat angelegt ist.
         </p>
         <Link

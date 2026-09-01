@@ -77,13 +77,13 @@ const HOW_STEPS: { icon: LucideIcon; title: string; note: string }[] = [
   {
     icon: QrCode,
     title: 'PDF der Bewerbung beilegen',
-    note: 'Damit die nächste Bewerbung nicht wieder im Stapel bleibt — schon ab der ersten geprüften Angabe.',
+    note: 'Schon ab der ersten geprüften Angabe: der Bewerbung beilegen, damit der Vermieter sie lesen kann.',
   },
 ]
 
 const TODAY_SCENES = [
   'Du hast alles geschickt. Tage später ist die Wohnung weg — oft ohne eine Antwort.',
-  'Nicht weil dein Dossier schlecht war. Weil dreissig dasselbe geschickt haben, und er drei Dossiers geöffnet hat.',
+  'Nicht weil dein Dossier schlecht war. Weil dreissig dasselbe geschickt haben, und der Vermieter drei Dossiers geöffnet hat.',
 ]
 
 /** Beispiel wie auf dem PDF — Zeilen aus denselben Bändern und der 3×-Regel. */
@@ -300,7 +300,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             {owned.size > 0 ?
               <span className="mt-0.5 block text-xs text-slate-600 sm:mt-0 sm:inline sm:before:mx-1.5 sm:before:content-['·']">
                 {owned.size} von {SIC_MODULES.length} Angaben enthalten
-                {availableModules.length > 0 ? ' — du kannst ergänzen' : ' — vollständig'}
+                {availableModules.length > 0 ? ' — du kannst ergänzen' : ''}
               </span>
             : null}
           </div>
@@ -464,7 +464,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               <div id="zertifikat">
                 <CertUrkundeCard />
                 <p className="mt-3 text-center text-xs leading-relaxed text-white/50">
-                  Das Blatt, das deine Bewerbung aus dem Stapel holt.
+                  So sieht das PDF aus, das du der Bewerbung beilegst.
                 </p>
               </div>
             </div>
@@ -492,8 +492,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 ))}
               </div>
               <p className="mt-8 font-sic-serif text-lg font-semibold leading-snug text-sic-navy sm:text-xl">
-                Deshalb ein geprüftes PDF mit QR: er sieht dich in einer Ansicht — du bleibst nicht fünf
-                ungelesene Anhänge.
+                Deshalb ein geprüftes PDF mit QR: der Vermieter sieht dich in einer Ansicht — du bleibst
+                nicht fünf ungelesene Anhänge.
               </p>
             </div>
           </section>
@@ -507,8 +507,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 Gelesen werden meist drei. Du bist Nummer dreissig.
               </h2>
               <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-                Fünf Anhänge kosten ihn Zeit. Zeit hat er nicht — deshalb bleibt dein Dossier zu. Ein Zertifikat
-                öffnet er, weil er in Sekunden weiss, woran er ist.
+                Fünf Anhänge kosten den Vermieter Zeit. Zeit hat er nicht — deshalb bleibt dein Dossier zu.
+                Ein Zertifikat öffnet er, weil er in Sekunden weiss, woran er ist.
               </p>
               <div className="mt-10 grid gap-5 md:grid-cols-2">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
@@ -532,7 +532,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     ))}
                   </ul>
                   <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                    Dein Stapel bleibt zu. Die Wohnung geht an jemand anderen.
+                    Deine Dateien bleiben ungelesen. Die Wohnung geht an jemand anderen.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-sic-gold/40 bg-sic-paper p-5 ring-1 ring-sic-gold/20">
@@ -548,8 +548,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     </div>
                   </div>
                   <p className="mt-3 text-xs leading-relaxed text-sic-navy/70">
-                    Er öffnet ein geprüftes Blatt. Du musst nichts erklären — über den QR sieht er denselben
-                    Stand wie auf dem PDF.
+                    Der Vermieter öffnet ein geprüftes Blatt. Du musst nichts erklären — über den QR sieht er
+                    denselben Stand wie auf dem PDF.
                   </p>
                 </div>
               </div>
@@ -607,7 +607,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             <p className="mx-auto mt-2 max-w-xl text-slate-500">
               {isReturning ?
                 'Was du schon hast, ist markiert. Fehlendes kannst du ergänzen.'
-              : 'Vier Angaben, ohne die er dich oft gar nicht anschaut. Alle vier sind vorausgewählt.'}
+              : 'Vier Angaben, ohne die der Vermieter dich oft gar nicht anschaut. Alle vier sind vorausgewählt.'}
             </p>
           </div>
 
@@ -631,8 +631,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             </div>
             <p className="mt-2.5 text-xs leading-relaxed text-slate-500">
               {coveredCount === SIC_MODULES.length ?
-                'Vollständig — so siehst du aus wie jemand, den man öffnet. Name und Prüfcode sind immer dabei.'
-              : `Noch offen: ${missingTitles.join(', ')}. Danach fragt er dich sonst selbst — und deine Bewerbung wartet.`}
+                'Alle vier gewählt — so sieht der Vermieter alles, wonach er sonst extra fragen würde. Name und Prüfcode sind immer dabei.'
+              : `Noch offen: ${missingTitles.join(', ')}. Danach fragt der Vermieter dich sonst selbst — und deine Bewerbung wartet.`}
             </p>
           </div>
 
@@ -776,7 +776,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 />
               </div>
             </div>
-            <p className="mt-1.5 text-xs text-slate-500">So steht er auf dem Zertifikat — Vor- und Nachname.</p>
+            <p className="mt-1.5 text-xs text-slate-500">So steht dein Name auf dem Zertifikat — Vor- und Nachname.</p>
 
             <label htmlFor="sic-email" className="mt-5 block text-sm font-semibold text-sic-navy">
               E-Mail-Adresse

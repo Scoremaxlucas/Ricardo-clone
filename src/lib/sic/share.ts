@@ -7,7 +7,7 @@ export function sicVerifyShareText(code: string): string {
 
 export function sicVerifyMailtoHref(code: string): string {
   const subject = `Mieter-Zertifikat ${code}`
-  const body = `Zur Prüfung:\n${sicVerifyUrl(code)}`
+  const body = `Mein Mieter-Zertifikat zur Prüfung:\n${sicVerifyUrl(code)}`
   return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 }
 

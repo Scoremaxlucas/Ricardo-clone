@@ -17,7 +17,7 @@ const PREVIEW_CEILING = PREVIEW_INCOME.find(l => l.startsWith('Tragbar')) ?? ''
 
 const PRICE_ANSWER =
   sicIsFree() ?
-    'Momentan nichts. Wir sind am Anfang und wollen, dass Vermieter das Zertifikat kennenlernen.'
+    'Momentan nichts. Du kannst das Zertifikat ohne Abo anlegen und der Bewerbung beilegen.'
   : `Das vollständige Zertifikat mit allen ${SIC_MODULES.length} Angaben kostet ${formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)}. Bezahlt wird einmalig beim Anlegen — nicht pro Bewerbung und nicht als Abo.`
 
 /** Shared FAQ for Landing + /sic/faq (single source of truth). Alltagssprache, kurze Antworten. */
@@ -32,7 +32,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: `Warum genau diese ${SIC_MODULES.length} Angaben?`,
-    a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob dein Ausweis gültig ist. Sind alle drin, muss er nicht nachfragen.',
+    a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob dein Ausweis gültig ist. Sind alle drin, muss der Vermieter nicht nachfragen.',
   },
   {
     q: 'Was muss ich selbst besorgen?',

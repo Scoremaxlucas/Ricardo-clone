@@ -284,8 +284,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           <p className="mt-1 text-sm text-slate-500">{dossier.email}</p>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
             {verifiedCount > 0 ?
-              'Dein Zertifikat ist da und weist aus, was bereits geprüft ist. Jede weitere Angabe kommt automatisch dazu und verlängert die Gültigkeit.'
-            : `Sobald die erste Angabe geprüft ist, kannst du dein Zertifikat herunterladen — und erst dann starten die ${dossier.validityMonths} Monate Gültigkeit. Wartezeit kostet dich keinen Tag.`
+              'Dein Zertifikat ist da. Leg das PDF der nächsten Bewerbung bei — der Vermieter sieht auf einen Blick, was geprüft ist. Jede weitere Angabe kommt automatisch dazu und verlängert die Gültigkeit.'
+            : `Sobald die erste Angabe geprüft ist, kannst du das PDF herunterladen und der Bewerbung beilegen — und erst dann starten die ${dossier.validityMonths} Monate Gültigkeit. Wartezeit kostet dich keinen Tag.`
             }
           </p>
         </div>
@@ -300,9 +300,9 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         <div className="mt-6 rounded-2xl border border-sic-danger/30 bg-sic-danger-bg p-5">
           <h2 className="text-sm font-bold text-sic-danger-text">Gültigkeit abgelaufen</h2>
           <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
-            Vermieter sehen beim Prüfen kein gültiges Zertifikat mehr. Für die Verlängerung brauchst du
-            einen frischen Auszug vom Betreibungsamt — dessen Alter ist der Grund für die
-            Gültigkeitsdauer.
+            Ein Scan zeigt das Zertifikat als abgelaufen. Für die nächste Bewerbung brauchst du eine
+            Verlängerung — mit einem frischen Auszug vom Betreibungsamt. Dessen Alter ist der Grund für
+            die Gültigkeitsdauer.
             {dossier.renewal.refreshes.length > 0 ?
               ` Neu einzureichen: ${dossier.renewal.refreshes.map(r => r.title).join(', ')}.`
             : ''}

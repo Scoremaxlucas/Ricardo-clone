@@ -21,12 +21,12 @@ export type SicUseCase = {
 
 export const SIC_USE_CASES: readonly SicUseCase[] = [
   {
-    title: 'Aus dem Stapel',
-    body: 'Du bewirbst dich wie alle anderen. Der Unterschied: er sieht ein geprüftes Blatt statt fünf Dateien, die er nicht öffnet.',
+    title: 'Gelesen statt überblättert',
+    body: 'Du bewirbst dich wie alle anderen. Der Unterschied: der Vermieter sieht ein geprüftes Blatt statt fünf Dateien, die er nicht öffnet.',
   },
   {
     title: 'Ohne dich erklären zu müssen',
-    body: 'Betreibung, Lohn, Ausweis und Referenz stehen auf einer Seite. Du hängst nicht hinterher, weil er erst nachfragen muss.',
+    body: 'Betreibung, Lohn, Ausweis und Referenz stehen auf einer Seite. Du hängst nicht hinterher, weil der Vermieter erst nachfragen muss.',
   },
   {
     title: 'Nicht warten auf die letzte Unterschrift',

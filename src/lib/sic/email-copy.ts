@@ -20,7 +20,7 @@ export function sicCertificateReadyCopy(opts: {
     const paragraphs = [
       `Das PDF ist bereit. ${onDoc}.`,
       `Geprüft ist «${title}». Gültig bis ${opts.validUntil}.`,
-      'Lade das PDF herunter und leg es der Bewerbung bei. Nicht geprüfte Angaben stehen nicht auf dem Dokument. Eine Zusage versprechen wir nicht.',
+      'Lade das PDF herunter und leg es der nächsten Bewerbung bei — damit der Vermieter sie in Sekunden lesen kann. Nicht geprüfte Angaben stehen nicht auf dem Dokument. Eine Zusage versprechen wir nicht.',
     ]
     if (moreOpen) {
       paragraphs.push(
@@ -52,7 +52,9 @@ export function sicCertificateReadyCopy(opts: {
     `Aktueller Stand: ${onDoc}. Gültig bis ${opts.validUntil}.`,
   ]
   if (opts.pdfReady) {
-    paragraphs.push('Lade das aktuelle PDF herunter. Nicht geprüfte Angaben stehen nicht auf dem Dokument.')
+    paragraphs.push(
+      'Lade das aktuelle PDF herunter und leg es der Bewerbung bei. Nicht geprüfte Angaben stehen nicht auf dem Dokument.'
+    )
   } else {
     paragraphs.push('Für das PDF fehlt noch dein Name auf dem Zertifikat — das ist in einer Minute erledigt.')
   }

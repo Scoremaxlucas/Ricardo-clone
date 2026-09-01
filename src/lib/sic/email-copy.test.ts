@@ -43,6 +43,7 @@ describe('first verification copy', () => {
     expect(copy.paragraphs[0]).toBe(`Das PDF ist bereit. ${sicStandsOnDocLine(1)}.`)
     expect(copy.paragraphs[0]).toContain('1 von 4 steht drauf')
     expect(copy.paragraphs.join(' ')).toMatch(/Zusage/)
+    expect(copy.paragraphs.join(' ')).toMatch(/Vermieter/)
     expect(copy.subject).not.toMatch(/bewerben/)
     expect(copy.subject).not.toMatch(/Helvenda/)
   })

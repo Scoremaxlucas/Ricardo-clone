@@ -247,7 +247,7 @@ export async function sendSicExpiryReminderEmail(opts: {
   const html = sicEmailShell({
     preheader: `Dein Zertifikat läuft in ${opts.daysLeft} Tagen ab`,
     heading: `Gültigkeit endet in ${opts.daysLeft} Tagen`,
-    bodyHtml: `<p style="margin:0 0 12px;">Dein ${SIC_BRAND_NAME}-Zertifikat läuft am <strong>${dateStr}</strong> ab.</p>
+    bodyHtml: `<p style="margin:0 0 12px;">Dein ${SIC_BRAND_NAME}-Zertifikat läuft am <strong>${dateStr}</strong> ab. Danach kannst du es der Bewerbung nicht mehr als gültigen Nachweis beilegen.</p>
       <p style="margin:0 0 12px;">Für die Verlängerung brauchst du einen frischen Auszug vom Betreibungsamt. Lohn und Arbeitsstelle nur, wenn die Prüfung älter als zwölf Monate ist; den Ausweis nur, wenn er abgelaufen ist. Die Referenz des bisherigen Vermieters bleibt stehen.</p>
       <p style="margin:0;">Bist du angemeldet, geht es mit einem Klick zur Zahlung. Sonst zuerst der Anmeldelink auf der Seite — danach dieselbe Verlängerung.</p>`,
     buttonText: 'Jetzt verlängern',
@@ -257,7 +257,7 @@ export async function sendSicExpiryReminderEmail(opts: {
     to: opts.email,
     subject: `${SIC_BRAND_NAME}: Zertifikat läuft in ${opts.daysLeft} Tagen ab`,
     html,
-    text: `Dein Zertifikat läuft am ${dateStr} ab (${opts.daysLeft} Tage).\n\nJetzt verlängern: ${buttonUrl}`,
+    text: `Dein Zertifikat läuft am ${dateStr} ab (${opts.daysLeft} Tage). Danach kannst du es der Bewerbung nicht mehr als gültigen Nachweis beilegen.\n\nJetzt verlängern: ${buttonUrl}`,
   })
 }
 
