@@ -386,9 +386,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   <span className="text-sic-gold-light">Nicht nur zur Kenntnis nimmt.</span>
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-                  Herkömmliche Bewerbungen sind Selbstauskunft — für den Vermieter Risiko. Swiss Immo Cert
-                  prüft Betreibung, Lohn, Referenz und Ausweis. Er kann sich darauf stützen. Das Zertifikat
-                  haben nur Bewerber, die den Aufwand auf sich nehmen.
+                  Ohne Prüfung bleibt jede Bewerbung Selbstauskunft. Swiss Immo Cert bestätigt die Angaben,
+                  auf die sich der Vermieter bei der Auswahl stützt — nachvollziehbar, und nur für Bewerber,
+                  die sich ausweisen können.
                 </p>
                 <form
                   id="anlegen"
