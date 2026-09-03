@@ -881,7 +881,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             {isReturning ?
               nothingToBuy ?
                 'Dein Zertifikat ist vollständig.'
-              : 'Fehlende Angabe ergänzen.'
+              : 'Fehlende Angaben ergänzen.'
             : IS_FREE ?
               'Zertifikat anlegen — für die nächste Bewerbung.'
             : `Anlegen für ${PRICE_LABEL}. Für die nächste Bewerbung.`}
@@ -898,7 +898,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               href={`${sicPaths.certificateWorkspace}#erganzen`}
               className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-2.5 text-sm font-semibold text-white touch-manipulation transition-transform hover:bg-sic-action-deep sm:ml-auto sm:w-auto sm:hover:-translate-y-0.5"
             >
-              Angabe ergänzen <ArrowRight className="h-4 w-4" />
+              Angaben ergänzen <ArrowRight className="h-4 w-4" />
             </a>
           : <button
               type="button"
