@@ -4,12 +4,14 @@ import { SicTemplateForm } from '@/components/sic/SicTemplateForm'
 import { SIC_REVIEW_SLA, sicPaths, sicVerifyUrl } from '@/lib/sic/config'
 import type { SicDossierView, SicUploadedDocMeta } from '@/lib/sic/dossier'
 import { templatePrefillNamesForModule } from '@/lib/sic/dossier'
-import { formatSicChf, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
+import { formatSicChf, SIC_MODULES, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
+import { sicNextStep } from '@/lib/sic/next-step'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { sicVerifyMailtoHref, sicVerifyWhatsAppHref } from '@/lib/sic/share'
 import { templatesForModule } from '@/lib/sic/templates'
 import {
   AlertCircle,
+  ArrowRight,
   CheckCircle2,
   Clock,
   Download,
@@ -37,6 +39,13 @@ const STATUS_META: Record<ModuleStatus, { label: string; className: string; Icon
   REJECTED: { label: 'Bitte nachreichen', className: 'bg-sic-danger-bg text-sic-danger-text', Icon: AlertCircle },
 }
 
+const PROGRESS_SHORT: Record<SicModuleId, string> = {
+  BONITAET: 'Betreibung',
+  AUFENTHALT: 'Ausweis',
+  ARBEIT_EINKOMMEN: 'Lohn',
+  ZUVERLAESSIGKEIT: 'Referenz',
+}
+
 const VERIFY_DEFINITION = `Wir prüfen jede Angabe einzeln auf Vollständigkeit und Plausibilität — ${SIC_REVIEW_SLA}. PDF oder Foto, mehrere Dateien möglich.`
 
 function formatDate(iso: string): string {
@@ -58,6 +67,71 @@ function progressSummary(p: SicDossierView['progress']): string {
   return parts.join(' · ')
 }
 
+function ModuleProgressStrip({ dossier }: { dossier: SicDossierView }) {
+  const byKind = new Map(dossier.purchasedModules.map(m => [m.moduleKind, m]))
+  return (
+    <div className="mt-4 rounded-2xl border border-sic-navy/15 bg-sic-navy/[0.03] px-4 py-4">
+      <ol className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-2">
+        {SIC_MODULES.map((mod, index) => {
+          const purchased = byKind.get(mod.id)
+          const status = purchased?.status
+          const meta = status ? STATUS_META[status] : null
+          const short = PROGRESS_SHORT[mod.id]
+          const href = purchased ? `#modul-${mod.id}` : dossier.availableModules.some(a => a.moduleKind === mod.id) ? '#erganzen' : undefined
+          const inner = (
+            <>
+              <span
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
+                  status === 'VERIFIED'
+                    ? 'bg-sic-verified text-white'
+                  : status === 'IN_REVIEW'
+                    ? 'bg-sic-review-text text-white'
+                  : status === 'REJECTED'
+                    ? 'bg-sic-danger-text text-white'
+                  : status === 'PENDING_DOCS'
+                    ? 'bg-sic-navy text-white'
+                  : 'bg-white text-slate-400 ring-1 ring-sic-hairline'
+                }`}
+              >
+                {status === 'VERIFIED' ?
+                  <CheckCircle2 className="h-4 w-4" />
+                : status === 'IN_REVIEW' ?
+                  <Clock className="h-4 w-4" />
+                : status === 'REJECTED' ?
+                  <AlertCircle className="h-4 w-4" />
+                : index + 1}
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold text-sic-navy">{short}</span>
+                <span className="block truncate text-[11px] text-slate-500">
+                  {meta?.label ?? (purchased ? '—' : 'Noch nicht enthalten')}
+                </span>
+              </span>
+            </>
+          )
+          return (
+            <li key={mod.id}>
+              {href ?
+                <a
+                  href={href}
+                  className="flex items-center gap-2.5 rounded-xl px-1 py-1 transition-colors hover:bg-white/70"
+                  title={mod.title}
+                >
+                  {inner}
+                </a>
+              : <div className="flex items-center gap-2.5 px-1 py-1" title={mod.title}>
+                  {inner}
+                </div>
+              }
+            </li>
+          )
+        })}
+      </ol>
+      <p className="mt-3 text-xs leading-relaxed text-sic-navy/80">{progressSummary(dossier.progress)}</p>
+    </div>
+  )
+}
+
 function certificateStatusMeta(dossier: SicDossierView): { label: string; className: string } {
   if (dossier.status === 'REVOKED') {
     return { label: 'Widerrufen', className: 'bg-sic-danger-bg text-sic-danger-text' }
@@ -65,12 +139,15 @@ function certificateStatusMeta(dossier: SicDossierView): { label: string; classN
   if (dossier.expired) {
     return { label: 'Abgelaufen', className: 'bg-sic-danger-bg text-sic-danger-text' }
   }
-  const { verifiedCount, catalogModules } = dossier.progress
-  if (catalogModules > 0 && verifiedCount >= catalogModules) {
-    return { label: 'Vollständig', className: 'bg-sic-verified-bg text-sic-verified-text' }
+  if (dossier.certificateSealReady) {
+    const { verifiedCount, catalogModules } = dossier.progress
+    if (catalogModules > 0 && verifiedCount >= catalogModules) {
+      return { label: 'Mieter-Zertifikat · vollständig', className: 'bg-sic-verified-bg text-sic-verified-text' }
+    }
+    return { label: 'Mieter-Zertifikat', className: 'bg-sic-verified-bg text-sic-verified-text' }
   }
-  if (verifiedCount > 0) {
-    return { label: 'Gültig, noch nicht vollständig', className: 'bg-sic-action-bg text-sic-action-deep' }
+  if (dossier.progress.verifiedCount > 0) {
+    return { label: 'Prüfstand · noch kein Siegel', className: 'bg-sic-action-bg text-sic-action-deep' }
   }
   return { label: 'In Arbeit', className: 'bg-slate-100 text-slate-700' }
 }
@@ -145,6 +222,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
   const pdfReady = dossier.landlordPdfReady
   const sealReady = dossier.certificateSealReady
   const { verifiedCount } = dossier.progress
+  const nextStep = sicNextStep(dossier)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -450,8 +528,35 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         </a>
       </div>
 
+      {nextStep ?
+        <div
+          className={`mt-6 rounded-2xl border px-4 py-4 sm:px-5 ${
+            nextStep.kind === 'wait'
+              ? 'border-sic-review-text/20 bg-sic-review-bg'
+              : nextStep.kind === 'done'
+                ? 'border-sic-verified/25 bg-sic-verified-bg'
+                : 'border-sic-action/25 bg-sic-action-bg'
+          }`}
+        >
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            Nächster Schritt
+          </p>
+          <p className="mt-1 font-semibold text-sic-navy">{nextStep.title}</p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">{nextStep.detail}</p>
+          {nextStep.anchor ?
+            <a
+              href={nextStep.anchor}
+              className="mt-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-sic-action hover:underline"
+            >
+              {nextStep.kind === 'wait' ? 'Zur Angabe' : 'Jetzt erledigen'}
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          : null}
+        </div>
+      : null}
+
       {dossier.expired && dossier.renewal.available ?
-        <div className="mt-6 rounded-2xl border border-sic-danger/30 bg-sic-danger-bg p-5">
+        <div id="verlaengern" className="mt-6 scroll-mt-24 rounded-2xl border border-sic-danger/30 bg-sic-danger-bg p-5">
           <h2 className="text-sm font-bold text-sic-danger-text">Gültigkeit abgelaufen</h2>
           <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
             Ein Scan zeigt das Zertifikat als abgelaufen. Für die nächste Bewerbung brauchst du eine
@@ -473,20 +578,23 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         </div>
       : null}
 
-      <div className="mt-4 rounded-xl border border-sic-navy/15 bg-sic-navy/[0.03] px-4 py-3 text-sm text-sic-navy">
-        {progressSummary(dossier.progress)}
-      </div>
+      <ModuleProgressStrip dossier={dossier} />
 
       {/* Certificate summary */}
       <div className="mt-6 rounded-2xl border border-sic-hairline bg-sic-paper-soft p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-sic-navy" />
-            <span className="break-all font-mono text-sm font-semibold tracking-wide text-slate-900">
-              {dossier.certificateCode}
-            </span>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              {sealReady ? 'Mieter-Zertifikat' : 'Stand der Prüfung'}
+            </p>
+            <div className="mt-1 flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 flex-shrink-0 text-sic-navy" />
+              <span className="break-all font-mono text-sm font-semibold tracking-wide text-slate-900">
+                {dossier.certificateCode}
+              </span>
+            </div>
           </div>
-          <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${certStatus.className}`}>
+          <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${certStatus.className}`}>
             {certStatus.label}
           </span>
         </div>
@@ -516,7 +624,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         : null}
 
         {!dossier.holderName ?
-          <div className="mt-5 rounded-xl bg-sic-paper-soft p-4">
+          <div id="sic-name" className="mt-5 scroll-mt-24 rounded-xl bg-sic-paper-soft p-4">
             <p className="text-sm font-medium text-slate-700">Name auf dem Zertifikat</p>
             <p className="mt-0.5 text-xs text-slate-500">
               {dossier.couple ?
@@ -568,46 +676,45 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             </button>
           </div>
         : pdfReady ?
-          <div className="mt-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <a
-                href={`/api/sic/certificate/${encodeURIComponent(dossier.certificateCode)}/pdf`}
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-sic-action-deep sm:w-auto"
-              >
-                <Download className="h-4 w-4" /> {sealReady ? 'Zertifikat als PDF' : 'Stand als PDF'}
-              </a>
+          <div id="sic-pdf" className="mt-5 scroll-mt-24">
+            <a
+              href={`/api/sic/certificate/${encodeURIComponent(dossier.certificateCode)}/pdf`}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep sm:w-auto sm:min-w-[14rem]"
+            >
+              <Download className="h-4 w-4" /> {sealReady ? 'Zertifikat als PDF' : 'Stand als PDF'}
+            </a>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
               <button
                 type="button"
                 onClick={() => void copyVerifyLink()}
                 className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-sic-hairline bg-sic-paper px-4 py-2.5 text-sm font-semibold text-sic-navy hover:bg-white sm:w-auto"
               >
-                <Link2 className="h-4 w-4" /> Link kopieren
+                <Link2 className="h-4 w-4" /> Prüf-Link kopieren
               </button>
-              <button
-                type="button"
-                onClick={regenerateCode}
-                disabled={recoding}
-                className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-sic-hairline px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-white disabled:opacity-60 sm:w-auto"
-              >
-                <KeyRound className="h-3.5 w-3.5" /> Neuen Code erzeugen
-              </button>
-            </div>
-            <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
               <a
                 href={sicVerifyMailtoHref(dossier.certificateCode, sealReady)}
-                className="inline-flex items-center gap-1.5 font-semibold text-sic-navy hover:underline"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 px-1 text-sm font-medium text-sic-navy/80 hover:text-sic-navy hover:underline sm:justify-start"
               >
-                <Mail className="h-3.5 w-3.5" /> Per E-Mail senden
+                <Mail className="h-3.5 w-3.5" /> E-Mail
               </a>
               <a
                 href={sicVerifyWhatsAppHref(dossier.certificateCode)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-semibold text-sic-navy hover:underline"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 px-1 text-sm font-medium text-sic-navy/80 hover:text-sic-navy hover:underline sm:justify-start"
               >
-                <MessageCircle className="h-3.5 w-3.5" /> Per WhatsApp senden
+                <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
               </a>
-            </p>
+            </div>
+            <button
+              type="button"
+              onClick={regenerateCode}
+              disabled={recoding}
+              className="mt-3 inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 disabled:opacity-60"
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              {recoding ? 'Code wird erzeugt …' : 'Neuen Code erzeugen (alter Link wird ersetzt)'}
+            </button>
           </div>
         : <div className="mt-5">
             <span
@@ -648,7 +755,11 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           // Formular-Zeilen stehen schon im Vorlagen-Block darunter — hier nur echte Uploads.
           const uploadItems = m.checklist.filter(item => item.kind !== 'template')
           return (
-            <li key={m.moduleKind} className="rounded-2xl border border-sic-hairline bg-sic-paper-soft p-5">
+            <li
+              key={m.moduleKind}
+              id={`modul-${m.moduleKind}`}
+              className="scroll-mt-24 rounded-2xl border border-sic-hairline bg-sic-paper-soft p-5"
+            >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <span className="font-semibold text-slate-900">{m.title}</span>
                 <span
@@ -712,6 +823,11 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                     <FileUp className="h-4 w-4" />
                     {uploading === m.moduleKind ? 'Wird hochgeladen …' : 'Datei hochladen'}
                   </button>
+                  {m.status === 'PENDING_DOCS' || m.status === 'REJECTED' ?
+                    <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                      Nach Eingang prüfen wir {SIC_REVIEW_SLA}.
+                    </p>
+                  : null}
                 </div>
               : null}
 
@@ -758,19 +874,21 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
 
       {/* Add more modules */}
       {dossier.availableModules.length > 0 ?
-        <div id="erganzen" className="mt-8 scroll-mt-20 rounded-2xl border border-dashed border-slate-300 p-6">
-          <h3 className="text-sm font-semibold text-slate-900">Angaben ergänzen</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Beim Anlegen gehören alle vier dazu. Was noch fehlt, kannst du hier nachkaufen — einzeln
-            oder alle offenen.
+        <div id="erganzen" className="mt-10 scroll-mt-20 border-t border-sic-hairline pt-8">
+          <h3 className="font-sic-serif text-lg font-semibold tracking-tight text-sic-navy">
+            Noch fehlende Angaben
+          </h3>
+          <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-slate-500">
+            Beim Anlegen gehören alle vier dazu. Was noch fehlt, kannst du hier ergänzen — einzeln oder
+            alle offenen auf einmal.
           </p>
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-5 divide-y divide-sic-hairline border-y border-sic-hairline">
             {dossier.availableModules.map(a => {
               const on = addonSelected.has(a.moduleKind)
               return (
                 <li key={a.moduleKind}>
-                  <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl px-1 py-1.5 hover:bg-slate-50">
-                    <span className="flex min-w-0 items-start gap-2.5">
+                  <label className="flex cursor-pointer items-start justify-between gap-3 py-3.5">
+                    <span className="flex min-w-0 items-start gap-3">
                       <input
                         type="checkbox"
                         checked={on}
@@ -782,32 +900,45 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                             return next
                           })
                         }}
-                        className="mt-1"
+                        className="mt-1 accent-sic-action"
                       />
                       <span>
-                        <span className="block font-medium text-slate-700">{a.title}</span>
-                        <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">{a.landlordSees}</span>
+                        <span className="block font-medium text-slate-800">{a.title}</span>
+                        <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">
+                          {a.landlordSees}
+                        </span>
                       </span>
                     </span>
-                    <span className="flex-shrink-0 text-sm text-slate-500">{formatSicChf(a.priceChf)}</span>
+                    <span className="flex-shrink-0 text-sm tabular-nums text-slate-500">
+                      {formatSicChf(a.priceChf)}
+                    </span>
                   </label>
                 </li>
               )
             })}
           </ul>
-          {addonSelected.size > 0 ?
-            <p className="mt-3 text-sm font-semibold tabular-nums text-sic-navy">
-              Total {formatSicChf(quoteSicOrder({ includeBaseFee: false, moduleIds: Array.from(addonSelected) }).totalChf)}
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm tabular-nums text-sic-navy">
+              {addonSelected.size > 0 ?
+                <>
+                  Total{' '}
+                  <span className="font-semibold">
+                    {formatSicChf(
+                      quoteSicOrder({ includeBaseFee: false, moduleIds: Array.from(addonSelected) }).totalChf
+                    )}
+                  </span>
+                </>
+              : <span className="text-slate-400">Keine Angabe gewählt</span>}
             </p>
-          : null}
-          <button
-            type="button"
-            onClick={() => void startAddons()}
-            disabled={adding || addonSelected.size === 0}
-            className="mt-4 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-sic-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
-          >
-            <Plus className="h-4 w-4" /> {adding ? 'Wird vorbereitet …' : 'Ausgewählte Angaben kaufen'}
-          </button>
+            <button
+              type="button"
+              onClick={() => void startAddons()}
+              disabled={adding || addonSelected.size === 0}
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-sic-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
+            >
+              <Plus className="h-4 w-4" /> {adding ? 'Wird vorbereitet …' : 'Ausgewählte ergänzen'}
+            </button>
+          </div>
         </div>
       : null}
     </div>

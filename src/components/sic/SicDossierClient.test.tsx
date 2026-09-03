@@ -105,4 +105,24 @@ describe('SicDossierClient — lean layout', () => {
     expect(html).toContain('Sobald die erste Angabe geprüft ist, gibt es das PDF.')
     expect(html).toContain('Betreibungsauszug und Ausweis')
   })
+
+  it('surfaces the review SLA before and while documents are pending', () => {
+    expect(html).toContain('in der Regel innerhalb eines Werktags nach Eingang')
+    expect(html).toContain('Nach Eingang prüfen wir')
+    expect(html).toContain('Eingereichte Unterlagen prüfen wir')
+  })
+
+  it('shows a next-step banner toward the first upload', () => {
+    expect(html).toContain('Nächster Schritt')
+    expect(html).toContain('Betreibungsauszug')
+    expect(html).toContain('Jetzt erledigen')
+    expect(html).toContain('href="#modul-BONITAET"')
+  })
+
+  it('renders a visual four-module progress strip', () => {
+    expect(html).toContain('Betreibung')
+    expect(html).toContain('Ausweis')
+    expect(html).toContain('Lohn')
+    expect(html).toContain('Referenz')
+  })
 })

@@ -14,7 +14,10 @@ export default function SicRenewPage() {
       <SicDossierLogin
         nextPath={sicPaths.renew}
         title="Verlängerung"
-        intro="Melde dich an — danach geht es direkt zur Zahlung. Der Anmeldelink ist 30 Minuten gültig; die Verlängerungsseite selbst bleibt."
+        intro="Melde dich an — danach geht es direkt zur Zahlung der Verlängerung. Kein Passwort, nur ein Anmeldelink an deine E-Mail."
+        linkHint="Der Link ist 30 Minuten gültig; die Verlängerungsseite selbst bleibt."
+        showReviewSla={false}
+        showBrandCue={false}
       />
     )
   }
