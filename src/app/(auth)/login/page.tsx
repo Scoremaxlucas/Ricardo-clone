@@ -188,9 +188,11 @@ function LoginPageContent() {
               <span className={isSic ? 'text-sm text-slate-500' : 'text-sm text-gray-600'}>Angemeldet bleiben</span>
             </label>
 
-            <Link href="/forgot-password" className={authLinkAccentClass(isSic, 'medium')}>
-              Passwort vergessen?
-            </Link>
+            {!isSic && (
+              <Link href="/forgot-password" className={authLinkAccentClass(isSic, 'medium')}>
+                Passwort vergessen?
+              </Link>
+            )}
           </div>
 
           {/* Submit Button */}

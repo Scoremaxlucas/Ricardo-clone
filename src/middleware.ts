@@ -2,6 +2,7 @@ import { ADMIN_FORBIDDEN_HTML } from '@/lib/auth/admin-forbidden-html'
 import { getToken } from 'next-auth/jwt'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { isSicAdminEmail } from '@/lib/sic/admin-access'
 import {
   isSicProductionHostname,
   sicApiBlockedOffHost,
@@ -41,15 +42,7 @@ function isAllowedOnSicHost(pathname: string): boolean {
   if (pathname.startsWith('/api/stripe')) return true
   if (pathname.startsWith('/api/cron')) return true
   if (pathname === '/robots.txt' || pathname === '/sitemap.xml') return true
-  if (
-    pathname === '/login' ||
-    pathname === '/forgot-password' ||
-    pathname === '/reset-password' ||
-    pathname === '/verify-email' ||
-    pathname === '/verify-email-notice'
-  ) {
-    return true
-  }
+  if (pathname === '/login') return true
   return false
 }
 
@@ -136,14 +129,8 @@ export async function middleware(request: NextRequest) {
       return withSicHostHeaders(request, rewrite)
     }
 
-    if (
-      pathname.startsWith('/admin/wohnen') ||
-      pathname.startsWith('/admin/listings') ||
-      pathname.startsWith('/admin/matching') ||
-      pathname.startsWith('/admin/applications') ||
-      pathname === '/admin/dashboard'
-    ) {
-      return NextResponse.redirect(new URL('/sic/admin', request.url))
+    if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
+      return redirectToSicHome(request)
     }
 
     if (!isAllowedOnSicHost(pathname)) {
@@ -160,7 +147,7 @@ export async function middleware(request: NextRequest) {
       const token = (await getToken({ req: request, secret })) as {
         id?: string
         sub?: string
-        isAdmin?: boolean
+        email?: string
       } | null
       const userId = token?.id || token?.sub
       if (!userId) {
@@ -171,7 +158,7 @@ export async function middleware(request: NextRequest) {
         login.searchParams.set('callbackUrl', pathname + search)
         return NextResponse.redirect(login)
       }
-      if (!token?.isAdmin) {
+      if (!isSicAdminEmail(token?.email)) {
         if (pathname.startsWith('/api/')) {
           return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
         }

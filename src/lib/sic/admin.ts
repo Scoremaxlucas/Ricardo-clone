@@ -1,11 +1,12 @@
 import { authOptions } from '@/lib/auth'
-import { isAdmin } from '@/lib/auth/isAdmin'
+import { isSicAdminEmail } from '@/lib/sic/admin-access'
 import { getServerSession } from 'next-auth/next'
 
-/** Prüft Admin-Zugang für SIC-Backoffice-Routen. Gibt die User-ID zurück oder null. */
+/** SIC-Backoffice: Allowlist, nicht Helvenda-`isAdmin`. */
 export async function requireSicAdmin(): Promise<{ userId: string } | null> {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return null
-  if (!(await isAdmin(session))) return null
-  return { userId: session.user.id }
+  const userId = session?.user?.id
+  const email = session?.user?.email
+  if (!userId || !isSicAdminEmail(email)) return null
+  return { userId }
 }

@@ -1,5 +1,6 @@
 import { isDebug } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
+import { isSicAdminEmail } from '@/lib/sic/admin-access'
 import { isSicProductionHostname, SIC_SITE_ORIGIN } from '@/lib/sic/config'
 import bcrypt from 'bcryptjs'
 import CredentialsProvider from 'next-auth/providers/credentials'
@@ -47,17 +48,35 @@ function isSicAuthHost(host?: string | null): boolean {
   return !!h && isSicProductionHostname(h)
 }
 
-/** SIC: kein neues Konto per Google — nur bestehende Admins. */
+/** SIC: nur Allowlist, unabhängig von Helvenda-`isAdmin`. */
 async function signInGoogleOnSic(user: { email?: string | null; id?: string }): Promise<boolean> {
   const email = user.email?.toLowerCase().trim()
-  if (!email) return false
-  const dbUser = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true, isBlocked: true, isAdmin: true },
-  })
-  if (!dbUser || dbUser.isBlocked || !dbUser.isAdmin) {
-    console.log('[AUTH] SIC Google denied (no admin account):', email)
+  if (!email || !isSicAdminEmail(email)) {
+    console.log('[AUTH] SIC Google denied (not on SIC_ADMIN_EMAILS):', email)
     return false
+  }
+  let dbUser = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, isBlocked: true },
+  })
+  if (dbUser?.isBlocked) {
+    console.log('[AUTH] SIC Google denied (blocked):', email)
+    return false
+  }
+  if (!dbUser) {
+    dbUser = await prisma.user.create({
+      data: {
+        email,
+        name: email.split('@')[0],
+        firstName: '',
+        lastName: '',
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
+        password: '',
+        isAdmin: false,
+      },
+      select: { id: true, isBlocked: true },
+    })
   }
   user.id = dbUser.id
   return true
@@ -71,8 +90,15 @@ export function getAuthOptionsForHost(host?: string | null) {
     callbacks: {
       ...authOptionsBase.callbacks,
       async signIn(params: any) {
-        if (params.account?.provider === 'google' && sicHost) {
-          return signInGoogleOnSic(params.user)
+        if (sicHost) {
+          if (params.account?.provider === 'google') {
+            return signInGoogleOnSic(params.user)
+          }
+          if (!isSicAdminEmail(params.user?.email)) {
+            console.log('[AUTH] SIC credentials denied (not on SIC_ADMIN_EMAILS)')
+            return false
+          }
+          return true
         }
         return authOptionsBase.callbacks.signIn(params)
       },

@@ -17,7 +17,7 @@ describe('SIC Google OAuth callback', () => {
   it('uses the SIC callback on www and apex, marketplace stays on NEXTAUTH_URL', () => {
     expect(googleOAuthCallbackUrlForHost('swissimmocert.ch')).toBe(sicGoogleOAuthCallbackUrl())
     expect(googleOAuthCallbackUrlForHost('www.swissimmocert.ch')).toBe(sicGoogleOAuthCallbackUrl())
-    expect(googleOAuthCallbackUrlForHost('www.helvenda.ch')).not.toBe(sicGoogleOAuthCallbackUrl())
+    expect(googleOAuthCallbackUrlForHost('www.helvenda.ch')).not.toContain('swissimmocert')
     expect(googleOAuthCallbackUrlForHost('www.helvenda.ch')).toMatch(/\/api\/auth\/callback\/google$/)
   })
 
