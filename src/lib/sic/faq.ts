@@ -36,6 +36,10 @@ export const SIC_FAQ: { q: string; a: string }[] = [
     a: PRICE_ANSWER,
   },
   {
+    q: 'Kann ich nur einzelne Angaben kaufen?',
+    a: 'Beim Anlegen gehören alle vier dazu. Fehlt später etwas, ergänzt du es unter «Mein Zertifikat» — nicht als Baukasten auf der Startseite.',
+  },
+  {
     q: `Warum genau diese ${SIC_MODULES.length} Angaben?`,
     a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob der Ausweis gültig ist. Sind alle vier geprüft, hat er eine vollständige Grundlage. Was fehlt, ist nicht ausgewiesen.',
   },

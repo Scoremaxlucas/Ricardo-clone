@@ -48,8 +48,8 @@ export function SicCheckoutCancel({ retry }: { retry: SicCheckoutRetry | null })
       <p className="mt-3 text-slate-600">
         Es wurde nichts belastet.
         {canResume ?
-          ' Deine Auswahl ist gespeichert — du kannst direkt weiter zur Zahlung.'
-        : ' Du kannst dein Zertifikat jederzeit erneut zusammenstellen.'}
+          ' Deine Angaben sind gespeichert — du kannst direkt weiter zur Zahlung.'
+        : ' Du kannst das Zertifikat jederzeit erneut anlegen.'}
       </p>
       {retry?.renewal ?
         <p className="mt-2 text-sm text-slate-500">Verlängerung — ein Klick, und du bist wieder bei Stripe.</p>

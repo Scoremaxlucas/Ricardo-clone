@@ -14,6 +14,8 @@ import {
   SIC_MODULE_FEE_CHF,
   SIC_MODULES,
   isSicCertificateSealReady,
+  resolveSicCheckoutModuleIds,
+  sicAllModuleIds,
   sicBundleSavingsChf,
 } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
@@ -218,6 +220,35 @@ describe('validity', () => {
   })
 })
 
+describe('checkout modules', () => {
+  it('forces the full catalog on first purchase even if nothing was requested', () => {
+    expect(
+      resolveSicCheckoutModuleIds({ includeBaseFee: true, requested: [] })
+    ).toEqual(sicAllModuleIds())
+    expect(
+      resolveSicCheckoutModuleIds({ includeBaseFee: true, requested: ['BONITAET'] })
+    ).toEqual(sicAllModuleIds())
+  })
+  it('keeps add-on purchases selective', () => {
+    expect(
+      resolveSicCheckoutModuleIds({
+        includeBaseFee: false,
+        requested: ['BONITAET', 'AUFENTHALT', 'BONITAET'],
+        alreadyPaid: ['BONITAET'],
+      })
+    ).toEqual(['AUFENTHALT'])
+  })
+  it('buys no Angabe on renewal', () => {
+    expect(
+      resolveSicCheckoutModuleIds({
+        includeBaseFee: false,
+        isRenewal: true,
+        requested: ['BONITAET'],
+      })
+    ).toEqual([])
+  })
+})
+
 describe('module wording', () => {
   it('keeps titles free of product jargon', () => {
     const titles = SIC_MODULES.map(m => m.title).join(' · ')
@@ -388,6 +419,18 @@ describe('checkout retry', () => {
       firstName: 'Anna Maria',
       lastName: 'de la Cruz',
     })
+  })
+
+  it('expands a first-purchase retry to the full catalog', () => {
+    const retry = sicCheckoutRetryFromPayment({
+      email: 'a@b.ch',
+      moduleKinds: ['BONITAET'],
+      holderName: encodePaymentHolderName('Anna', 'Muster'),
+      isRenewal: false,
+      includeBaseFee: true,
+      status: 'PENDING',
+    })
+    expect(retry?.moduleIds).toEqual(sicAllModuleIds())
   })
 
   it('does not retry a paid or refunded payment', () => {

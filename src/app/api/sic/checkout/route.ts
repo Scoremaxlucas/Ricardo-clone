@@ -3,7 +3,7 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { sicPaths, sicUrl, SIC_BRAND_NAME } from '@/lib/sic/config'
 import { encodePaymentHolderName } from '@/lib/sic/dossier'
 import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
-import { normalizeSicModuleIds, type SicModuleId } from '@/lib/sic/modules'
+import { normalizeSicModuleIds, resolveSicCheckoutModuleIds, type SicModuleId } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import {
   normalizeEmail,
@@ -98,8 +98,13 @@ export async function POST(req: NextRequest) {
     select: { certifiedAt: true, status: true, modules: { select: { moduleKind: true } } },
   })
   const includeBaseFee = !existing
-  const alreadyPaid = new Set<string>((existing?.modules ?? []).map(m => m.moduleKind))
-  const candidate = requested.filter(id => !alreadyPaid.has(id))
+  const alreadyPaid = (existing?.modules ?? []).map(m => m.moduleKind)
+  const candidate = resolveSicCheckoutModuleIds({
+    includeBaseFee,
+    isRenewal: wantsRenewal && !!existing,
+    requested,
+    alreadyPaid,
+  })
 
   const isRenewal = wantsRenewal && !!existing && !!existing.certifiedAt && existing.status !== 'REVOKED'
   if (wantsRenewal && !isRenewal) {

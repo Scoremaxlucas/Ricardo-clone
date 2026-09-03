@@ -57,6 +57,8 @@ export type SicDossierView = {
   expired: boolean
   validityMonths: number
   holderName: string | null
+  holderFirstName: string | null
+  holderLastName: string | null
   hasVerifiedModule: boolean
   /** Vermieter-PDF/QR sobald mindestens ein Modul geprüft ist und der Name steht. */
   landlordPdfReady: boolean
@@ -287,7 +289,9 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     priceChf: def.priceChf,
   }))
 
-  const holderName = joinHolderName(cert.holderFirstName, cert.holderLastName)
+  const holderFirstName = cert.holderFirstName?.trim() || null
+  const holderLastName = cert.holderLastName?.trim() || null
+  const holderName = joinHolderName(holderFirstName, holderLastName)
 
   let verifiedCount = 0
   let pendingDocsCount = 0
@@ -322,6 +326,8 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     expired,
     validityMonths: SIC_VALIDITY_MONTHS,
     holderName,
+    holderFirstName,
+    holderLastName,
     hasVerifiedModule: verifiedCount > 0,
     landlordPdfReady: isSicLandlordPdfReady({
       holderName,

@@ -1,9 +1,9 @@
 /**
  * Swiss Immo Cert (SIC) — Produktdefinition.
  *
- * Modulares Mieter-Zertifikat: Basisgebühr erstellt das Zertifikat, jedes Modul
- * beantwortet eine konkrete Frage des Vermieters. Nur bezahlte + freigegebene
- * Module erscheinen als «GEPRÜFT».
+ * Verkauf: Erstkauf ist immer das Komplett-Paket (Basis + alle Angaben).
+ * Nachkauf einzelner Angaben nur im Workspace, nicht als Baukasten.
+ * Auf dem Dokument erscheinen nur bezahlte + freigegebene Angaben als «GEPRÜFT».
  *
  * Diese Datei ist die Single Source of Truth für Preise und Modulinhalte.
  */
@@ -174,6 +174,26 @@ export function normalizeSicModuleIds(raw: unknown): SicModuleId[] {
     if (isSicModuleId(v)) seen.add(v)
   }
   return SIC_MODULES.filter(m => seen.has(m.id)).map(m => m.id)
+}
+
+export function sicAllModuleIds(): SicModuleId[] {
+  return SIC_MODULES.map(m => m.id)
+}
+
+/**
+ * Erstkauf immer der ganze Katalog. Nachkauf: nur gewählte, noch nicht bezahlte
+ * Angaben. Verlängerung kauft keine Angabe.
+ */
+export function resolveSicCheckoutModuleIds(opts: {
+  includeBaseFee: boolean
+  isRenewal?: boolean
+  requested: unknown
+  alreadyPaid?: readonly string[]
+}): SicModuleId[] {
+  if (opts.isRenewal) return []
+  if (opts.includeBaseFee) return sicAllModuleIds()
+  const paid = new Set(opts.alreadyPaid ?? [])
+  return normalizeSicModuleIds(opts.requested).filter(id => !paid.has(id))
 }
 
 /** Katalogpreis einzeln: Basis + jedes Modul zum Einzelpreis. */

@@ -21,6 +21,7 @@ export default async function SicCheckoutCancelPage({
       moduleKinds: true,
       holderName: true,
       isRenewal: true,
+      includeBaseFee: true,
       status: true,
     },
   })

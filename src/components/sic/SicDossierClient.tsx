@@ -1,9 +1,10 @@
 'use client'
 
 import { SicTemplateForm } from '@/components/sic/SicTemplateForm'
-import { sicPaths, SIC_REVIEW_SLA, sicVerifyUrl } from '@/lib/sic/config'
+import { SIC_REVIEW_SLA, sicVerifyUrl } from '@/lib/sic/config'
 import type { SicDossierView, SicUploadedDocMeta } from '@/lib/sic/dossier'
 import { formatSicChf, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
+import { quoteSicOrder } from '@/lib/sic/pricing'
 import { sicVerifyMailtoHref, sicVerifyWhatsAppHref } from '@/lib/sic/share'
 import { templatesForModule } from '@/lib/sic/templates'
 import {
@@ -22,7 +23,6 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -50,7 +50,7 @@ function formatBytes(n: number): string {
 }
 
 function progressSummary(p: SicDossierView['progress']): string {
-  if (p.totalModules === 0) return 'Noch keine Angaben gewählt.'
+  if (p.totalModules === 0) return 'Noch keine Angaben enthalten.'
   const parts: string[] = [`${p.verifiedCount} von ${p.catalogModules} Angaben geprüft`]
   if (p.pendingDocsCount > 0) parts.push(`${p.pendingDocsCount} wartet auf Unterlagen`)
   if (p.inReviewCount > 0) parts.push(`${p.inReviewCount} bei uns in Prüfung`)
@@ -131,6 +131,10 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
   const [savingName, setSavingName] = useState(false)
   const [renewing, setRenewing] = useState(false)
   const [recoding, setRecoding] = useState(false)
+  const [addonSelected, setAddonSelected] = useState<Set<SicModuleId>>(
+    () => new Set(dossier.availableModules.map(a => a.moduleKind))
+  )
+  const [adding, setAdding] = useState(false)
 
   const certStatus = certificateStatusMeta(dossier)
   const pdfReady = dossier.landlordPdfReady
@@ -160,6 +164,44 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       toast.error('Netzwerkfehler.')
     } finally {
       setSavingName(false)
+    }
+  }
+
+  async function startAddons() {
+    if (addonSelected.size === 0) {
+      toast.error('Bitte mindestens eine Angabe wählen.')
+      return
+    }
+    const given = (dossier.holderFirstName ?? firstName).trim()
+    const family = (dossier.holderLastName ?? lastName).trim()
+    if (!given || !family) {
+      toast.error('Bitte zuerst Vor- und Nachname speichern.')
+      document.getElementById('sic-first')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    setAdding(true)
+    try {
+      const res = await fetch('/api/sic/checkout', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          email: dossier.email,
+          moduleIds: Array.from(addonSelected),
+          firstName: given,
+          lastName: family,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.url) {
+        toast.error(data?.message || 'Ergänzung konnte nicht gestartet werden.')
+        return
+      }
+      window.location.href = data.url as string
+    } catch {
+      toast.error('Netzwerkfehler.')
+    } finally {
+      setAdding(false)
     }
   }
 
@@ -371,6 +413,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             </p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <input
+                id="sic-first"
                 value={firstName}
                 onChange={e => setFirstName(e.target.value)}
                 placeholder="Vorname"
@@ -591,29 +634,56 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
 
       {/* Add more modules */}
       {dossier.availableModules.length > 0 ?
-        <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-6">
-          <h3 className="text-sm font-semibold text-slate-900">Später ergänzen</h3>
+        <div id="erganzen" className="mt-8 scroll-mt-20 rounded-2xl border border-dashed border-slate-300 p-6">
+          <h3 className="text-sm font-semibold text-slate-900">Angaben ergänzen</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Für dein aktuelles Zertifikat brauchst du das nicht. Zusätzliche Angaben erscheinen auf dem
-            Dokument, verlängern die Gültigkeit aber nicht:
+            Beim Anlegen gehören alle vier dazu. Was noch fehlt, kannst du hier nachkaufen — einzeln
+            oder alle offenen.
           </p>
           <ul className="mt-3 space-y-2">
-            {dossier.availableModules.map(a => (
-              <li key={a.moduleKind} className="text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium text-slate-700">{a.title}</span>
-                  <span className="flex-shrink-0 text-slate-500">{formatSicChf(a.priceChf)}</span>
-                </div>
-                <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{a.landlordSees}</p>
-              </li>
-            ))}
+            {dossier.availableModules.map(a => {
+              const on = addonSelected.has(a.moduleKind)
+              return (
+                <li key={a.moduleKind}>
+                  <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl px-1 py-1.5 hover:bg-slate-50">
+                    <span className="flex min-w-0 items-start gap-2.5">
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        onChange={() => {
+                          setAddonSelected(prev => {
+                            const next = new Set(prev)
+                            if (next.has(a.moduleKind)) next.delete(a.moduleKind)
+                            else next.add(a.moduleKind)
+                            return next
+                          })
+                        }}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="block font-medium text-slate-700">{a.title}</span>
+                        <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">{a.landlordSees}</span>
+                      </span>
+                    </span>
+                    <span className="flex-shrink-0 text-sm text-slate-500">{formatSicChf(a.priceChf)}</span>
+                  </label>
+                </li>
+              )
+            })}
           </ul>
-          <Link
-            href={sicPaths.landing}
-            className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-sic-action hover:underline"
+          {addonSelected.size > 0 ?
+            <p className="mt-3 text-sm font-semibold tabular-nums text-sic-navy">
+              Total {formatSicChf(quoteSicOrder({ includeBaseFee: false, moduleIds: Array.from(addonSelected) }).totalChf)}
+            </p>
+          : null}
+          <button
+            type="button"
+            onClick={() => void startAddons()}
+            disabled={adding || addonSelected.size === 0}
+            className="mt-4 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-sic-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
           >
-            <Plus className="h-4 w-4" /> Auf der Startseite ergänzen
-          </Link>
+            <Plus className="h-4 w-4" /> {adding ? 'Wird vorbereitet …' : 'Ausgewählte Angaben kaufen'}
+          </button>
         </div>
       : null}
     </div>

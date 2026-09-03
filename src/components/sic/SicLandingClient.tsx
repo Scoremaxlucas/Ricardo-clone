@@ -17,7 +17,6 @@ import {
   type SicModuleId,
 } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
-import { SIC_DOCS_RETENTION_DAYS } from '@/lib/sic/validity'
 import type { SicLandingAccount } from '@/lib/sic/landing-account'
 import { sicPaths, SIC_ISSUER_LINE, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
 import { DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/art-web'
@@ -26,10 +25,8 @@ import {
   Briefcase,
   Check,
   ChevronDown,
-  Clock,
   Globe,
   ListChecks,
-  Lock,
   Mail,
   QrCode,
   ShieldCheck,
@@ -46,9 +43,6 @@ const PRICE_LABEL = IS_FREE ? 'Kostenlos' : formatSicChf(SIC_BUNDLE_ALL_MODULES_
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-/** Neukunden: Komplett-Paket vorausgewählt (stärkster Auftritt, eine Entscheidung). */
-const RECOMMENDED: SicModuleId[] = SIC_MODULES.map(m => m.id)
-
 const MODULE_ICON: Record<SicModuleId, LucideIcon> = {
   BONITAET: ShieldCheck,
   ARBEIT_EINKOMMEN: Briefcase,
@@ -60,7 +54,7 @@ const HOW_STEPS: { icon: LucideIcon; title: string; note: string }[] = [
   {
     icon: Mail,
     title: 'Zertifikat anlegen',
-    note: 'Name und E-Mail, dann die Zahlung. Kein Passwort — danach ein Anmeldelink.',
+    note: 'Name und E-Mail, dann die Zahlung. Alle vier Angaben gehören dazu — kein Baukasten. Kein Passwort, danach ein Anmeldelink.',
   },
   {
     icon: Upload,
@@ -92,14 +86,6 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
   const isReturning = Boolean(account)
   const availableModules = useMemo(() => SIC_MODULES.filter(m => !owned.has(m.id)), [owned])
 
-  const initialSelected = useMemo(() => {
-    if (!isReturning) return new Set<SicModuleId>(RECOMMENDED)
-    // Bereits gekaufte Module nicht vorauswählen; empfohlen nur unter den verfügbaren
-    const next = RECOMMENDED.filter(id => !owned.has(id))
-    return new Set<SicModuleId>(next.length > 0 ? next : [])
-  }, [isReturning, owned])
-
-  const [selected, setSelected] = useState<Set<SicModuleId>>(initialSelected)
   const [firstName, setFirstName] = useState(account?.holderFirstName ?? '')
   const [lastName, setLastName] = useState(account?.holderLastName ?? '')
   const [email, setEmail] = useState(account?.email ?? '')
@@ -107,25 +93,14 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
   const [openFaq, setOpenFaq] = useState<number | null>(0)
   const [showSticky, setShowSticky] = useState(false)
   const [loginInvalid, setLoginInvalid] = useState(false)
-  const [baseOnlyAck, setBaseOnlyAck] = useState(false)
   const [serverQuote, setServerQuote] = useState<ReturnType<typeof quoteSicOrder> | null>(null)
-  const [quoteNote, setQuoteNote] = useState<string | null>(null)
 
-  const moduleIds = useMemo(
-    () => SIC_MODULES.filter(m => selected.has(m.id) && !owned.has(m.id)).map(m => m.id),
-    [selected, owned]
-  )
-  const includeBaseFee = !isReturning
+  const moduleIds = useMemo(() => SIC_MODULES.map(m => m.id), [])
   const localQuote = useMemo(
-    () => quoteSicOrder({ includeBaseFee, moduleIds }),
-    [includeBaseFee, moduleIds]
+    () => quoteSicOrder({ includeBaseFee: true, moduleIds }),
+    [moduleIds]
   )
   const quote = serverQuote ?? localQuote
-  const allAvailableSelected =
-    availableModules.length > 0 && availableModules.every(m => selected.has(m.id))
-  const coveredCount = SIC_MODULES.filter(m => owned.has(m.id) || selected.has(m.id)).length
-  const missingTitles = SIC_MODULES.filter(m => !owned.has(m.id) && !selected.has(m.id)).map(m => m.title)
-  const isBaseOnly = !isReturning && moduleIds.length === 0
   const nothingToBuy = isReturning && availableModules.length === 0
   const verifiedCount = account?.verifiedModules.length ?? 0
   const statusLabel =
@@ -169,12 +144,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
   }, [])
 
   useEffect(() => {
-    // Quote nur wenn E-Mail gültig; Returning nutzt Session-Mail
+    if (isReturning) return
     if (!EMAIL_RE.test(email.trim())) {
-      if (!isReturning) {
-        setServerQuote(null)
-        setQuoteNote(null)
-      }
+      setServerQuote(null)
       return
     }
     const controller = new AbortController()
@@ -189,7 +161,6 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
         const data = await res.json().catch(() => ({}))
         if (!res.ok || !data?.ok || !data?.quote) return
         setServerQuote(data.quote)
-        setQuoteNote(typeof data.note === 'string' ? data.note : null)
       } catch {
         // ignore abort / network — keep local quote
       }
@@ -200,62 +171,24 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
     }
   }, [email, moduleIds, isReturning])
 
-  useEffect(() => {
-    if (!isBaseOnly) setBaseOnlyAck(false)
-  }, [isBaseOnly])
-
-  function toggle(id: SicModuleId) {
-    if (owned.has(id)) return
-    setSelected(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  function toggleBundle() {
-    if (availableModules.length === 0) return
-    setSelected(prev => {
-      if (availableModules.every(m => prev.has(m.id))) {
-        // Nur verfügbare abwählen; owned bleiben irrelevant
-        return new Set()
-      }
-      return new Set(availableModules.map(m => m.id))
-    })
-  }
-
   async function checkout() {
-    if (nothingToBuy) {
-      toast.error('Alles ist bereits Teil deines Zertifikats.')
+    if (isReturning) {
+      window.location.href = `${sicPaths.certificateWorkspace}#erganzen`
       return
     }
     if (!firstName.trim() || !lastName.trim()) {
       toast.error('Bitte Vor- und Nachname angeben.')
       const missingFirst = !firstName.trim()
-      const field = document.getElementById(
-        isReturning ? (missingFirst ? 'sic-first' : 'sic-last') : missingFirst ? 'sic-hero-first' : 'sic-hero-last'
-      )
-      const anchor = document.getElementById('anlegen') || document.getElementById('module')
-      anchor?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      const field = document.getElementById(missingFirst ? 'sic-hero-first' : 'sic-hero-last')
+      document.getElementById('anlegen')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       if (field instanceof HTMLInputElement) field.focus()
       return
     }
     if (!EMAIL_RE.test(email.trim())) {
       toast.error('Bitte gib eine gültige E-Mail-Adresse an.')
-      const field = document.getElementById(isReturning ? 'sic-email' : 'sic-hero-email')
-      const anchor = document.getElementById('anlegen') || document.getElementById('module')
-      anchor?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      const field = document.getElementById('sic-hero-email')
+      document.getElementById('anlegen')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       if (field instanceof HTMLInputElement) field.focus()
-      return
-    }
-    if (isBaseOnly && !baseOnlyAck) {
-      toast.error('Bitte bestätige, dass du das Zertifikat ohne Angaben anlegen möchtest.')
-      document.getElementById('module')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      return
-    }
-    if (isReturning && moduleIds.length === 0) {
-      toast.error('Bitte wähle mindestens eine neue Angabe.')
       return
     }
     setSubmitting(true)
@@ -304,7 +237,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             {owned.size > 0 ?
               <span className="mt-0.5 block text-xs text-slate-600 sm:mt-0 sm:inline sm:before:mx-1.5 sm:before:content-['·']">
                 {owned.size} von {SIC_MODULES.length} Angaben enthalten
-                {availableModules.length > 0 ? ' — du kannst ergänzen' : ''}
+                {availableModules.length > 0 ? ' — fehlende Angaben ergänzt du unter Mein Zertifikat' : ''}
               </span>
             : null}
           </div>
@@ -336,7 +269,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   'Dieses Zertifikat ist widerrufen. Die Prüfseite weist es als ungültig aus.'
                 : account?.status === 'EXPIRED' ?
                   'Die Gültigkeit ist abgelaufen. Mit einem frischen Betreibungsauszug kannst du verlängern.'
-                : 'Stand und Nachweise findest du unter «Mein Zertifikat». Hier kannst du fehlende Angaben ergänzen.'}
+                : 'Stand und Nachweise findest du unter «Mein Zertifikat». Fehlende Angaben ergänzt du dort.'}
               </p>
               <div id="anlegen" className="mt-8 flex scroll-mt-[calc(4.5rem+env(safe-area-inset-top,0px))] flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
                 {account?.status === 'EXPIRED' ?
@@ -355,7 +288,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   </a>
                 : !nothingToBuy ?
                   <a
-                    href="#module"
+                    href={`${sicPaths.certificateWorkspace}#erganzen`}
                     className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 touch-manipulation transition-transform hover:bg-sic-action-deep sm:w-auto sm:hover:-translate-y-0.5"
                   >
                     Angabe ergänzen <ArrowRight className="h-4 w-4" />
@@ -452,15 +385,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     {!submitting && <ArrowRight className="h-4 w-4" />}
                   </button>
                   <p className="mt-2.5 text-xs leading-relaxed text-white/50">
-                    {coveredCount} von {SIC_MODULES.length} Angaben ·{' '}
+                    Alle {SIC_MODULES.length} Angaben ·{' '}
                     {quote.totalChf > 0 ? formatSicChf(quote.totalChf) : 'Kostenlos'}. Unterlagen danach.
                   </p>
-                  <a
-                    href="#module"
-                    className="mt-3 inline-block touch-target-exempt text-sm font-semibold text-white/80 underline-offset-4 hover:text-white hover:underline"
-                  >
-                    Angaben anpassen
-                  </a>
                 </form>
                 <p className="mt-3 max-w-md text-xs leading-relaxed text-white/45">
                   Kein Abo. Einmal anlegen, jeder Bewerbung beilegen.
@@ -604,7 +531,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       </section>
       : null}
 
-      {/* ── Module (Builder + Live-Vorschau) ─────────────────────────────── */}
+      {/* ── Angaben im Paket (kein Shop) ──────────────────────────────── */}
       <section id="module" className="bg-sic-paper py-16">
         <div className="mx-auto max-w-6xl px-5">
           <div className="text-center">
@@ -616,283 +543,85 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             </h2>
             <p className="mx-auto mt-2 max-w-xl text-slate-500">
               {isReturning ?
-                'Was du schon hast, ist markiert. Fehlendes kannst du ergänzen.'
-              : 'Vier Angaben, die Vermieter für die Auswahl brauchen. Alle vier sind vorausgewählt.'}
+                nothingToBuy ?
+                  'Alle vier Angaben sind bereits Teil deines Zertifikats.'
+                : 'Fehlende Angaben ergänzt du unter Mein Zertifikat — nicht hier als Baukasten.'
+              : 'Vier Angaben, die Vermieter für die Auswahl brauchen. Du legst sie zusammen an.'}
             </p>
           </div>
 
-          <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-sic-navy/10 bg-sic-navy/[0.03] px-5 py-4">
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="text-sm font-semibold text-sic-navy">Dein Zertifikat</p>
-              <p className="text-sm tabular-nums text-slate-600">
-                {coveredCount} von {SIC_MODULES.length}
-              </p>
-            </div>
-            <div className="mt-2.5 flex gap-1.5" aria-hidden>
-              {SIC_MODULES.map(m => (
-                <span
-                  key={m.id}
-                  title={m.title}
-                  className={`h-2 flex-1 rounded-full ${
-                    owned.has(m.id) || selected.has(m.id) ? 'bg-sic-navy' : 'bg-slate-200'
-                  }`}
-                />
-              ))}
-            </div>
-            <p className="mt-2.5 text-xs leading-relaxed text-slate-500">
-              {coveredCount === SIC_MODULES.length ?
-                'Alle vier gewählt. Name und Prüfcode sind immer dabei.'
-              : `Noch offen: ${missingTitles.join(', ')}. Was fehlt, erscheint nicht auf dem Zertifikat.`}
-            </p>
-          </div>
-
-          {/* Alle auswählen — eine Entscheidung, kein Preisblock */}
-          {!isReturning || availableModules.length > 1 ?
-            <button
-              type="button"
-              onClick={toggleBundle}
-              aria-pressed={allAvailableSelected}
-              disabled={availableModules.length === 0}
-              className={`mt-6 flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition-all ${
-                allAvailableSelected ?
-                  'border-sic-navy bg-sic-navy/[0.04]'
-                : 'border-slate-200 hover:border-sic-navy/40'
-              } disabled:opacity-50`}
-            >
-              <span
-                className={`grid h-6 w-6 flex-shrink-0 place-items-center rounded-md border ${
-                  allAvailableSelected ? 'border-sic-navy bg-sic-navy text-white' : 'border-slate-300 bg-white'
-                }`}
-              >
-                {allAvailableSelected && <Check className="h-4 w-4" />}
-              </span>
-              <span className="text-sm font-semibold text-sic-navy">
-                {isReturning ? `Alle ${availableModules.length} offenen ergänzen` : 'Alle vier — empfohlen'}
-              </span>
-            </button>
-          : null}
-
-          {/* Modul-Kacheln */}
-          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {SIC_MODULES.map(m => {
               const alreadyOwned = owned.has(m.id)
-              const on = selected.has(m.id) && !alreadyOwned
               const accent = SIC_MODULE_ACCENT[m.id]
               const Icon = MODULE_ICON[m.id]
               return (
-                <button
+                <div
                   key={m.id}
-                  type="button"
-                  onClick={() => toggle(m.id)}
-                  disabled={alreadyOwned}
-                  aria-pressed={on}
-                  aria-disabled={alreadyOwned}
-                  aria-label={`${m.title} — beantwortet: ${m.landlordQuestion}`}
-                  className={`group relative flex min-w-0 flex-col rounded-2xl border bg-white p-5 text-left transition-all sm:p-6 ${
+                  className={`relative flex min-w-0 flex-col rounded-2xl border bg-white p-5 text-left sm:p-6 ${
                     alreadyOwned ?
-                      'cursor-default border-sic-verified/25 bg-sic-verified/[0.04] opacity-90'
-                    : on ?
-                      `border-transparent shadow-md ring-2 ${accent.ring}`
-                    : 'border-slate-200 hover:border-slate-300'
+                      'border-sic-verified/25 bg-sic-verified/[0.04]'
+                    : 'border-slate-200'
                   }`}
                 >
                   {alreadyOwned ?
                     <span className="absolute right-3 top-3 max-w-[9.5rem] rounded-full bg-sic-verified-text px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
-                      Bereits enthalten
+                      Enthalten
+                    </span>
+                  : isReturning ?
+                    <span className="absolute right-3 top-3 max-w-[9.5rem] rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-600">
+                      Offen
                     </span>
                   : null}
                   <span
-                    className={`grid h-12 w-12 place-items-center rounded-full text-white transition-opacity ${
-                      alreadyOwned || on ? '' : 'opacity-40'
-                    }`}
+                    className="grid h-12 w-12 place-items-center rounded-full text-white"
                     style={{ backgroundColor: alreadyOwned ? '#2f9e44' : accent.hex }}
                   >
                     <Icon className="h-6 w-6" />
                   </span>
-                  <p className={`mt-4 text-lg font-bold leading-tight text-sic-navy ${alreadyOwned ? 'pr-24' : ''}`}>
+                  <p className={`mt-4 text-lg font-bold leading-tight text-sic-navy ${alreadyOwned || isReturning ? 'pr-20' : ''}`}>
                     {m.title}
                   </p>
                   <p className="mt-1.5 flex-1 text-sm leading-relaxed text-slate-600">{m.youUpload}</p>
-                  <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
-                    {alreadyOwned ?
-                      <span className="text-xs font-bold uppercase tracking-wide text-sic-verified-text">Enthalten</span>
-                    : <span
-                        className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${
-                          on ? '' : 'text-slate-400'
-                        }`}
-                        style={on ? { color: accent.hex } : undefined}
-                      >
-                        {on ?
-                          <>
-                            <Check className="h-3.5 w-3.5" /> Ausgewählt
-                          </>
-                        : 'Hinzufügen'}
-                      </span>
-                    }
-                    {!alreadyOwned && m.priceChf > 0 ?
-                      <span className="text-xs font-semibold text-slate-500">{formatSicChf(m.priceChf)}</span>
-                    : null}
-                  </div>
-                </button>
+                  {!isReturning ?
+                    <p className="mt-4 flex items-center gap-1 border-t border-slate-100 pt-3 text-xs font-bold uppercase tracking-wide text-sic-navy">
+                      <Check className="h-3.5 w-3.5" /> Im Paket
+                    </p>
+                  : null}
+                </div>
               )
             })}
           </div>
 
-          {nothingToBuy ?
-            <p className="mt-6 rounded-xl border border-sic-verified/20 bg-sic-verified/[0.06] px-4 py-3 text-center text-sm text-sic-verified-text">
-              Alle vier Angaben sind bereits Teil deines Zertifikats. Nachweise und Status findest du unter{' '}
-              <a href={sicPaths.certificateWorkspace} className="touch-target-exempt font-semibold underline">
-                Mein Zertifikat
-              </a>{' '}
-              verwalten.
-            </p>
-          : null}
-
-          {/* Ein Formular, eine Spalte — die Auswahl steht bereits oben */}
-          <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-sic-navy/10 bg-sic-navy/[0.03] p-6 sm:p-7">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label htmlFor="sic-first" className="block text-sm font-semibold text-sic-navy">
-                  Vorname
-                </label>
-                <input
-                  id="sic-first"
-                  type="text"
-                  required
-                  value={firstName}
-                  onChange={e => setFirstName(e.target.value)}
-                  placeholder="Vorname"
-                  autoComplete="given-name"
-                  readOnly={Boolean(account?.holderFirstName && account?.holderLastName)}
-                  className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none ring-sic-navy/15 focus:border-sic-navy focus:ring-2 ${
-                    account?.holderFirstName && account?.holderLastName ? 'cursor-default bg-slate-50 text-slate-600' : ''
-                  }`}
-                />
-              </div>
-              <div>
-                <label htmlFor="sic-last" className="block text-sm font-semibold text-sic-navy">
-                  Nachname
-                </label>
-                <input
-                  id="sic-last"
-                  type="text"
-                  required
-                  value={lastName}
-                  onChange={e => setLastName(e.target.value)}
-                  placeholder="Nachname"
-                  autoComplete="family-name"
-                  readOnly={Boolean(account?.holderFirstName && account?.holderLastName)}
-                  className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none ring-sic-navy/15 focus:border-sic-navy focus:ring-2 ${
-                    account?.holderFirstName && account?.holderLastName ? 'cursor-default bg-slate-50 text-slate-600' : ''
-                  }`}
-                />
-              </div>
-            </div>
-            <p className="mt-1.5 text-xs text-slate-500">So steht dein Name auf dem Zertifikat — Vor- und Nachname.</p>
-
-            <label htmlFor="sic-email" className="mt-5 block text-sm font-semibold text-sic-navy">
-              E-Mail-Adresse
-            </label>
-            <input
-              id="sic-email"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="name@beispiel.ch"
-              autoComplete="email"
-              readOnly={isReturning}
-              className={`mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none ring-sic-navy/15 focus:border-sic-navy focus:ring-2 ${
-                isReturning ? 'cursor-default bg-slate-50 text-slate-600' : ''
-              }`}
-            />
-            <p className="mt-1.5 text-xs text-slate-500">
-              {isReturning ?
-                'Angemeldet — die neue Angabe kommt auf dein Zertifikat.'
-              : 'Damit meldest du dich an, ohne Passwort. Unterlagen lädst du danach hoch — auch über mehrere Tage.'}
-            </p>
-
-            {quote.totalChf > 0 ?
-              <div className="mt-5 border-t border-slate-200 pt-4">
-                <dl className="space-y-2.5 text-sm">
-                  {quote.lines.map((l, i) => (
-                    <div
-                      key={i}
-                      className={`flex justify-between gap-3 ${l.kind === 'discount' ? 'text-sic-verified' : 'text-slate-600'}`}
-                    >
-                      <dt className="min-w-0">{l.label}</dt>
-                      <dd className="flex-shrink-0 tabular-nums">
-                        {l.amountChf < 0 ? `− ${formatSicChf(Math.abs(l.amountChf))}` : formatSicChf(l.amountChf)}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-                <div className="mt-3 flex items-baseline justify-between border-t border-slate-200 pt-3">
-                  <span className="text-sm font-medium text-slate-500">Total</span>
-                  <span className="text-xl font-bold tabular-nums text-sic-navy">
-                    {formatSicChf(quote.totalChf)}
-                  </span>
-                </div>
-              </div>
-            : <p className="mt-5 border-t border-slate-200 pt-4 text-sm font-semibold text-sic-navy">
-                Kostenlos — {SIC_VALIDITY_MONTHS} Monate gültig.
-              </p>
-            }
-            {quoteNote ?
-              <p className="mt-2 text-xs font-medium text-sic-verified-text">{quoteNote}</p>
-            : null}
-
-            {isBaseOnly ?
-              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                <p className="text-xs leading-relaxed">
-                  Ohne Angaben sieht der Vermieter nur deinen Namen und den Prüfcode. Du kannst später ergänzen.
-                </p>
-                <label className="mt-2.5 flex items-start gap-2 text-xs font-medium">
-                  <input
-                    type="checkbox"
-                    checked={baseOnlyAck}
-                    onChange={e => setBaseOnlyAck(e.target.checked)}
-                    className="mt-0.5"
-                  />
-                  <span>Ist mir klar — trotzdem anlegen.</span>
-                </label>
-              </div>
-            : null}
-
-            <button
-              id="sic-checkout-submit"
-              type="button"
-              onClick={checkout}
-              disabled={
-                submitting ||
-                nothingToBuy ||
-                (isBaseOnly && !baseOnlyAck) ||
-                (isReturning && moduleIds.length === 0)
+          {isReturning ?
+            <p className="mt-8 text-center">
+              {nothingToBuy ?
+                <a
+                  href={sicPaths.certificateWorkspace}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep"
+                >
+                  Zum Zertifikat <ArrowRight className="h-4 w-4" />
+                </a>
+              : <a
+                  href={`${sicPaths.certificateWorkspace}#erganzen`}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep"
+                >
+                  Offene Angaben ergänzen <ArrowRight className="h-4 w-4" />
+                </a>
               }
-              className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white touch-manipulation transition-transform hover:bg-sic-action-deep disabled:translate-y-0 disabled:opacity-60 sm:hover:-translate-y-0.5"
-            >
-              {submitting ?
-                'Wird erstellt …'
-              : nothingToBuy ?
-                'Alles bereits enthalten'
-              : isReturning ?
-                'Hinzufügen'
-              : 'Zertifikat anlegen'}
-              {!submitting && !nothingToBuy && <ArrowRight className="h-4 w-4" />}
-            </button>
-
-            <ul className="mt-4 space-y-1.5 border-t border-slate-200 pt-3">
-              <li className="flex items-center gap-2 text-xs text-slate-500">
-                <ShieldCheck className="h-3.5 w-3.5 text-sic-navy" /> Schweizer Datenschutz (revDSG)
-              </li>
-              <li className="flex items-center gap-2 text-xs text-slate-500">
-                <Lock className="h-3.5 w-3.5 text-sic-navy" /> Verschlüsselt gespeichert
-              </li>
-              <li className="flex items-center gap-2 text-xs text-slate-500">
-                <Clock className="h-3.5 w-3.5 text-sic-navy" /> Unterlagen {SIC_DOCS_RETENTION_DAYS} Tage nach
-                Ablauf gelöscht
-              </li>
-            </ul>
-          </div>
+            </p>
+          : <p className="mt-8 text-center">
+              <a
+                href="#anlegen"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep"
+              >
+                Zertifikat anlegen <ArrowRight className="h-4 w-4" />
+              </a>
+              <span className="mt-2 block text-xs text-slate-500">
+                {quote.totalChf > 0 ? PRICE_LABEL : 'Kostenlos'} · alle {SIC_MODULES.length} Angaben.
+              </span>
+            </p>
+          }
         </div>
       </section>
 
@@ -987,12 +716,19 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               'Zertifikat anlegen — für die nächste Bewerbung.'
             : `Anlegen für ${PRICE_LABEL}. Für die nächste Bewerbung.`}
           </span>
-          {isReturning && nothingToBuy ?
+          {isReturning ?
+            nothingToBuy ?
             <a
               href={sicPaths.certificateWorkspace}
               className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-2.5 text-sm font-semibold text-white touch-manipulation transition-transform hover:bg-sic-action-deep sm:ml-auto sm:w-auto sm:hover:-translate-y-0.5"
             >
               Zum Zertifikat <ArrowRight className="h-4 w-4" />
+            </a>
+            : <a
+              href={`${sicPaths.certificateWorkspace}#erganzen`}
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-2.5 text-sm font-semibold text-white touch-manipulation transition-transform hover:bg-sic-action-deep sm:ml-auto sm:w-auto sm:hover:-translate-y-0.5"
+            >
+              Angabe ergänzen <ArrowRight className="h-4 w-4" />
             </a>
           : <button
               type="button"
@@ -1000,11 +736,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               disabled={submitting}
               className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-2.5 text-sm font-semibold text-white touch-manipulation transition-transform hover:bg-sic-action-deep disabled:translate-y-0 disabled:opacity-60 sm:ml-auto sm:w-auto sm:hover:-translate-y-0.5"
             >
-              {submitting ?
-                'Wird erstellt …'
-              : isReturning ?
-                'Angabe ergänzen'
-              : 'Zertifikat anlegen'}{' '}
+              {submitting ? 'Wird erstellt …' : 'Zertifikat anlegen'}{' '}
               {!submitting && <ArrowRight className="h-4 w-4" />}
             </button>
           }

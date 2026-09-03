@@ -1,6 +1,5 @@
 import {
   formatSicChf,
-  SIC_BASE_FEE_CHF,
   SIC_BUNDLE_ALL_MODULES_CHF,
   SIC_MIN_CHARGE_CHF,
   SIC_MODULE_FEE_CHF,
@@ -56,11 +55,11 @@ export default function SicAgbPage() {
         <section>
           <h2 className="font-semibold text-sic-navy">2. Preise &amp; Zahlung</h2>
           <p className="mt-1.5">
-            Basisgebühr für das Zertifikat {formatSicChf(SIC_BASE_FEE_CHF)}, je Angabe{' '}
-            {formatSicChf(SIC_MODULE_FEE_CHF)}. Komplett-Paket (Basis und alle {SIC_MODULES.length} Angaben){' '}
-            {formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)}
-            {bundleSavings > 0 ? ` — ${formatSicChf(bundleSavings)} günstiger als einzeln` : ''}. Die Zahlung
-            erfolgt vorab über Stripe.
+            Beim erstmaligen Anlegen kaufst du das Komplett-Paket: Basis und alle {SIC_MODULES.length}{' '}
+            Angaben für {formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)}
+            {bundleSavings > 0 ? ` — ${formatSicChf(bundleSavings)} günstiger als die Summe der Einzelpreise` : ''}.
+            Einzelne Angaben kannst du später nachkaufen, falls sie noch nicht enthalten sind (je{' '}
+            {formatSicChf(SIC_MODULE_FEE_CHF)}). Die Zahlung erfolgt vorab über Stripe.
           </p>
           <p className="mt-1.5">
             Liegt die Summe unter dem von Stripe verrechenbaren Mindestbetrag von{' '}

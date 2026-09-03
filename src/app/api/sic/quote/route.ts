@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { normalizeSicModuleIds, type SicModuleId } from '@/lib/sic/modules'
+import { normalizeSicModuleIds, resolveSicCheckoutModuleIds, type SicModuleId } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { normalizeEmail } from '@/lib/sic/session'
 import { getSicSession } from '@/lib/sic/session-cookie'
@@ -45,14 +45,18 @@ export async function POST(req: NextRequest) {
       })
     : null
   const includeBaseFee = !existing
-  const alreadyPaid = new Set<string>((existing?.modules ?? []).map(m => m.moduleKind))
-  const candidate = requested.filter(id => !alreadyPaid.has(id))
+  const alreadyPaid = (existing?.modules ?? []).map(m => m.moduleKind)
+  const candidate = resolveSicCheckoutModuleIds({
+    includeBaseFee,
+    requested,
+    alreadyPaid,
+  })
   const quote = quoteSicOrder({ includeBaseFee, moduleIds: candidate })
 
   return NextResponse.json({
     ok: true,
     includeBaseFee,
-    alreadyOwned: knownSelf ? Array.from(alreadyPaid) : [],
+    alreadyOwned: knownSelf ? alreadyPaid : [],
     candidate,
     quote,
     note:

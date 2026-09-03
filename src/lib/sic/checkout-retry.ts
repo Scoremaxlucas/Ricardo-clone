@@ -1,5 +1,5 @@
 import { decodePaymentHolderName } from '@/lib/sic/dossier'
-import { normalizeSicModuleIds, type SicModuleId } from '@/lib/sic/modules'
+import { resolveSicCheckoutModuleIds, type SicModuleId } from '@/lib/sic/modules'
 import { normalizeEmail } from '@/lib/sic/session'
 
 export type SicCheckoutRetry = {
@@ -19,13 +19,18 @@ export function sicCheckoutRetryFromPayment(input: {
   moduleKinds: unknown
   holderName?: string | null
   isRenewal: boolean
+  includeBaseFee?: boolean
   status: string
 }): SicCheckoutRetry | null {
   if (input.status === 'PAID' || input.status === 'REFUNDED') return null
   const names = decodePaymentHolderName(input.holderName)
   return {
     email: normalizeEmail(input.email),
-    moduleIds: normalizeSicModuleIds(input.moduleKinds),
+    moduleIds: resolveSicCheckoutModuleIds({
+      includeBaseFee: input.includeBaseFee === true,
+      isRenewal: input.isRenewal,
+      requested: input.moduleKinds,
+    }),
     firstName: names?.firstName ?? '',
     lastName: names?.lastName ?? '',
     renewal: input.isRenewal,
