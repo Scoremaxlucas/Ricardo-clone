@@ -95,12 +95,16 @@ export async function sendSicMagicLinkEmail(
     footnoteHtml: copy.footnote,
   })
 
-  return sicMail({
+  const result = await sicMail({
     to: email,
     subject: copy.subject,
     html,
     text: `${copy.heading}\n\n${copy.paragraphs.join('\n\n')}\n\n${url}\n\n${copy.footnote}`,
   })
+  if (!result.success) {
+    throw new Error(result.error || 'SIC magic-link mail failed')
+  }
+  return result
 }
 
 const MAGIC_LINK_FOOTNOTE =

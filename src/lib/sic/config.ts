@@ -51,6 +51,10 @@ export function sicOperatorAddressBlock(): string {
 /**
  * Absender-Postfach — nicht `noreply@` (Spamfilter). Reply-To bleibt Support.
  * Override: `SIC_FROM_EMAIL` (nackte Adresse oder `Name <addr>`).
+ *
+ * Wichtig: Der Host in der From-Adresse muss bei Resend verifiziert sein.
+ * Solange `swissimmocert.ch` dort fehlt, in Vercel setzen:
+ * `SIC_FROM_EMAIL="Swiss Immo Cert <support@helvenda.ch>"`.
  */
 export const SIC_FROM_MAILBOX = 'hello@swissimmocert.ch'
 
