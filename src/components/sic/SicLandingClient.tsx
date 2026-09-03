@@ -829,7 +829,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   Was sich für den Vermieter ändert
                 </h2>
                 <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-relaxed text-slate-500">
-                  Noch ohne Kundenstimmen. Drei Eigenschaften, die das Produkt hergibt.
+                  Drei Eigenschaften, die der Vermieter sofort erkennt: geprüft, nachvollziehbar und bereits nutzbar — auch wenn Unterlagen noch nachkommen.
                 </p>
                 <div className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
                   {SIC_USE_CASES.map(item => (

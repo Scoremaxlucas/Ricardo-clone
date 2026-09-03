@@ -22,15 +22,15 @@ export type SicUseCase = {
 export const SIC_USE_CASES: readonly SicUseCase[] = [
   {
     title: 'Geprüft statt Selbstauskunft',
-    body: 'Der Vermieter sieht plausibel geprüfte Angaben in einheitlicher Form, nicht ungeprüfte Unterlagen. Nachvollziehbar per QR — keine behördliche Auskunft.',
+    body: 'Der Vermieter sieht geprüfte Angaben in einheitlicher Form — nicht ungeprüfte Unterlagen. Nachvollziehbar per QR. Keine behördliche Auskunft.',
   },
   {
     title: 'Nicht jeder legt das vor',
-    body: 'Nicht jeder kann Betreibung, Lohn, Ausweis und Referenz als geprüft vorlegen. Genau deshalb unterscheidet das Zertifikat.',
+    body: 'Nicht alle Bewerber reichen Betreibung, Lohn, Ausweis und Referenz als «GEPRÜFT» ein. Das Zertifikat macht den Unterschied sofort sichtbar.',
   },
   {
     title: 'Nutzbar, bevor alles vorliegt',
-    body: 'Die Referenz des bisherigen Vermieters braucht oft zwei Wochen. Das PDF kannst du trotzdem beilegen — mit dem Stand, der bereits geprüft ist.',
+    body: 'Auch wenn die Vermieter-Referenz länger dauert: Das PDF ist mit dem bereits geprüften Stand verfügbar. So kann der Vermieter nicht unnötig warten.',
   },
 ]
 

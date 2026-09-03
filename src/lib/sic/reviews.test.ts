@@ -24,8 +24,8 @@ describe('SIC social proof', () => {
   it('positions checked facts and exclusivity, not merely being read', () => {
     const blob = SIC_USE_CASES.map(i => `${i.title} ${i.body}`).join(' ')
     expect(blob).toMatch(/Selbstauskunft/)
-    expect(blob).toMatch(/unterscheidet/)
-    expect(blob).toMatch(/plausibel/)
+    expect(blob).toMatch(/Unterschied/i)
+    expect(blob).toMatch(/nachvollziehbar/i)
     expect(blob).not.toMatch(/stützen|Grundlage für die Auswahl/)
     expect(blob).not.toMatch(/überblättert|ungelesen|fünf Dateien|Wette|Aufwand/)
   })
