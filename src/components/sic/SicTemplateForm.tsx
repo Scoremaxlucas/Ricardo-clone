@@ -20,13 +20,32 @@ const inputCls =
 export function SicTemplateForm({
   template,
   holderName,
+  holderName2,
 }: {
   template: SicTemplateDefinition
   holderName: string | null
+  holderName2?: string | null
 }) {
+  const splitPeople = Boolean(holderName2)
+  const [person, setPerson] = useState<1 | 2>(1)
   const [open, setOpen] = useState(false)
   const [values, setValues] = useState<SicTemplateValues>(() => emptyTemplateValues(template, holderName))
   const [busy, setBusy] = useState(false)
+
+  function applyHolder(name: string | null) {
+    setValues(prev => {
+      const next = { ...prev }
+      for (const f of template.fields) {
+        if (f.prefillFromHolder) next[f.key] = name ?? ''
+      }
+      return next
+    })
+  }
+
+  function selectPerson(next: 1 | 2) {
+    setPerson(next)
+    applyHolder(next === 2 ? holderName2 ?? null : holderName)
+  }
 
   function set(key: string, value: string) {
     setValues(prev => ({ ...prev, [key]: value }))
@@ -56,7 +75,7 @@ export function SicTemplateForm({
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `SIC-${template.id}.pdf`
+      a.download = splitPeople ? `SIC-${template.id}-person${person}.pdf` : `SIC-${template.id}.pdf`
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -85,6 +104,9 @@ export function SicTemplateForm({
             {template.howTo.map(step => (
               <li key={step}>{step}</li>
             ))}
+            {splitPeople ?
+              <li>Für jede Person ein eigenes Formular — zuerst Person 1, dann Person 2.</li>
+            : null}
           </ol>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
@@ -97,7 +119,7 @@ export function SicTemplateForm({
           </button>
           <button
             type="button"
-            onClick={downloadPdf}
+            onClick={() => void downloadPdf()}
             disabled={busy}
             className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-sic-action px-3 py-1.5 text-xs font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60"
           >
@@ -113,6 +135,32 @@ export function SicTemplateForm({
             Optional: Deinen Namen vorausfüllen, dann Vorlage herunterladen. Die Felder für den{' '}
             {template.thirdPartyLabel} bleiben in der Vorlage leer zum Ausfüllen — digital oder ausgedruckt.
           </p>
+          {splitPeople ?
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => selectPerson(1)}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
+                  person === 1 ?
+                    'border-sic-navy bg-sic-navy/5 text-sic-navy'
+                  : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                }`}
+              >
+                {holderName || 'Person 1'}
+              </button>
+              <button
+                type="button"
+                onClick={() => selectPerson(2)}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
+                  person === 2 ?
+                    'border-sic-navy bg-sic-navy/5 text-sic-navy'
+                  : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                }`}
+              >
+                {holderName2 || 'Person 2'}
+              </button>
+            </div>
+          : null}
           <div className="grid gap-3 sm:grid-cols-2">
             {tenantFields.map(f => (
               <label key={f.key} className="block text-xs font-medium text-slate-600">
@@ -146,7 +194,7 @@ export function SicTemplateForm({
           </div>
           <button
             type="button"
-            onClick={downloadPdf}
+            onClick={() => void downloadPdf()}
             disabled={busy}
             className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-sic-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60 sm:w-auto"
           >

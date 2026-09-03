@@ -24,7 +24,7 @@ import {
   sicCheckoutRetryFromPayment,
   sicCheckoutRetryRequestBody,
 } from '@/lib/sic/checkout-retry'
-import { isSicLandlordPdfReady, joinHolderName, joinHouseholdHolderName, encodePaymentHolderName, decodePaymentHolderName, previewSicVerifiedModules } from '@/lib/sic/dossier'
+import { isSicLandlordPdfReady, joinHolderName, joinHouseholdHolderName, encodePaymentHolderName, decodePaymentHolderName, previewSicVerifiedModules, templatePrefillNamesForModule } from '@/lib/sic/dossier'
 import { addCalendarMonths, isSicExpired, parseSicCalendarDate, sicExpiresAtAfterApproval, sicValidityExpiresAt } from '@/lib/sic/validity'
 
 describe('certificate code', () => {
@@ -393,6 +393,32 @@ describe('holder name', () => {
     expect(joinHolderName('Lara', '')).toBeNull()
     expect(joinHolderName('Lara', null)).toBeNull()
     expect(joinHolderName(null, 'Muster')).toBeNull()
+  })
+
+  it('prefills employer forms per person and the landlord form as household', () => {
+    const couple = {
+      holderName: 'Anna Muster und Luca Bianchi',
+      holderFirstName: 'Anna',
+      holderLastName: 'Muster',
+      holder2FirstName: 'Luca',
+      holder2LastName: 'Bianchi',
+      couple: true as const,
+    }
+    expect(templatePrefillNamesForModule('ARBEIT_EINKOMMEN', couple)).toEqual({
+      primary: 'Anna Muster',
+      secondary: 'Luca Bianchi',
+    })
+    expect(templatePrefillNamesForModule('ZUVERLAESSIGKEIT', couple)).toEqual({
+      primary: 'Anna Muster und Luca Bianchi',
+      secondary: null,
+    })
+    expect(
+      templatePrefillNamesForModule('ARBEIT_EINKOMMEN', {
+        ...couple,
+        couple: false,
+        holderName: 'Anna Muster',
+      })
+    ).toEqual({ primary: 'Anna Muster', secondary: null })
   })
 
   it('joins a couple with und', () => {
