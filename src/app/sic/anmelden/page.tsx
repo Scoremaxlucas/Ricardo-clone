@@ -1,4 +1,5 @@
 import { SicDossierLogin } from '@/components/sic/SicDossierLogin'
+import { SicMagicLoginButton } from '@/components/sic/SicMagicLoginButton'
 import { sicPaths } from '@/lib/sic/config'
 import { peekSicMagicLink, safeSicNextPath } from '@/lib/sic/magic-link'
 import type { Metadata } from 'next'
@@ -38,16 +39,7 @@ export default async function SicLoginConfirmPage({
         Tippe auf «Anmelden», um dein Zertifikat zu öffnen. Erst dieser Klick löst den Link ein — nicht das
         Öffnen der Seite.
       </p>
-      <form action={sicPaths.authCallback} method="post" className="mt-6">
-        <input type="hidden" name="token" value={token} />
-        <input type="hidden" name="next" value={next} />
-        <button
-          type="submit"
-          className="min-h-11 w-full rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep"
-        >
-          Anmelden
-        </button>
-      </form>
+      <SicMagicLoginButton token={token} next={next} />
       <p className="mt-4 text-center text-xs text-slate-400">
         Der Link ist 30 Minuten gültig und nur einmal verwendbar.
       </p>

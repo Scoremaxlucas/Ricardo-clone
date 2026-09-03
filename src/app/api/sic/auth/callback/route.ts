@@ -1,28 +1,32 @@
-import { sicPaths, sicUrl } from '@/lib/sic/config'
+import { sicPaths } from '@/lib/sic/config'
 import { consumeSicMagicLink, safeSicNextPath } from '@/lib/sic/magic-link'
 import { SIC_SESSION_COOKIE, sicSessionCookieOptions, signSicSessionToken } from '@/lib/sic/session'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-function confirmRedirect(token: string, next: string | null): NextResponse {
-  const dest = new URL(sicUrl(sicPaths.loginConfirm))
+function confirmRedirect(req: NextRequest, token: string, next: string | null): NextResponse {
+  const dest = new URL(sicPaths.loginConfirm, req.url)
   if (token) dest.searchParams.set('token', token)
   const safe = safeSicNextPath(next)
   if (safe !== sicPaths.certificateWorkspace) dest.searchParams.set('next', safe)
-  return NextResponse.redirect(dest)
+  return NextResponse.redirect(dest, 303)
 }
 
-function invalidLoginRedirect(): NextResponse {
-  const failed = new URL(sicUrl(sicPaths.landing))
+function invalidLoginRedirect(req: NextRequest): NextResponse {
+  const failed = new URL(sicPaths.landing, req.url)
   failed.searchParams.set('login', 'invalid')
-  return NextResponse.redirect(failed)
+  return NextResponse.redirect(failed, 303)
 }
 
-async function sessionRedirect(email: string, next: string | null): Promise<NextResponse> {
-  const dest = new URL(sicUrl(safeSicNextPath(next)))
-  const res = NextResponse.redirect(dest)
+function sessionRedirect(req: NextRequest, email: string, next: string | null): NextResponse {
+  // Gleicher Host wie der Klick (www oder Apex) — sonst geht das Session-Cookie verloren.
+  // 303 nach POST: Browser muss GET machen. Default 307 würde POST auf /sic/zertifikat
+  // wiederholen → oft «keine Reaktion».
+  const dest = new URL(safeSicNextPath(next), req.url)
+  const res = NextResponse.redirect(dest, 303)
   res.cookies.set(SIC_SESSION_COOKIE, signSicSessionToken(email), sicSessionCookieOptions())
+  res.headers.set('Cache-Control', 'no-store')
   return res
 }
 
@@ -51,13 +55,13 @@ async function readTokenAndNext(req: NextRequest): Promise<{ token: string; next
  */
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token') || ''
-  return confirmRedirect(token, req.nextUrl.searchParams.get('next'))
+  return confirmRedirect(req, token, req.nextUrl.searchParams.get('next'))
 }
 
 /** Erst der bewusste POST (Knopf «Anmelden») löst den Token ein. */
 export async function POST(req: NextRequest) {
   const { token, next } = await readTokenAndNext(req)
   const result = await consumeSicMagicLink(token)
-  if (!result) return invalidLoginRedirect()
-  return sessionRedirect(result.email, next)
+  if (!result) return invalidLoginRedirect(req)
+  return sessionRedirect(req, result.email, next)
 }
