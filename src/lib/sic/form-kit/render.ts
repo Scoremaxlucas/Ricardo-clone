@@ -10,6 +10,7 @@ import {
   type RGB,
 } from 'pdf-lib'
 import type { SicTemplateId, SicTemplateValues } from '@/lib/sic/templates'
+import { SIC_HOUSE_MARK } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME } from '@/lib/sic/config'
 import { A4, COLORS, COL, LAYOUT, MARGIN, TYPE } from './tokens'
 
@@ -80,43 +81,50 @@ function drawRect(
   })
 }
 
-/** Swiss cross mark in red square. */
+/** Hausmarke mit Schweizerkreuz — dieselbe Geometrie wie Web und Zertifikat. */
 function drawLogo(ctx: Ctx, x: number, yBottom: number, size: number) {
-  drawRect(ctx, x, yBottom, size, size, c(COLORS.red), c(COLORS.red))
-  const pad = size * 0.28
-  const bar = size * 0.18
-  // Vertical bar
-  ctx.page.drawRectangle({
-    x: x + size / 2 - bar / 2,
-    y: yBottom + pad,
-    width: bar,
-    height: size - pad * 2,
-    color: rgb(1, 1, 1),
-    borderWidth: 0,
+  const M = SIC_HOUSE_MARK
+  const viewBox = Number(M.viewBox.split(/\s+/)[2])
+  const k = size / viewBox
+  // SVG zählt von oben, pdf-lib von unten.
+  const yTop = yBottom + size
+
+  ctx.page.drawSvgPath(M.outline, {
+    x,
+    y: yTop,
+    scale: k,
+    borderColor: c(COLORS.navy),
+    borderWidth: M.outlineStrokeWidth,
   })
-  // Horizontal bar
-  ctx.page.drawRectangle({
-    x: x + pad,
-    y: yBottom + size / 2 - bar / 2,
-    width: size - pad * 2,
-    height: bar,
-    color: rgb(1, 1, 1),
-    borderWidth: 0,
-  })
+
+  for (const [part, color] of [
+    [M.square, c(COLORS.red)],
+    [M.crossV, rgb(1, 1, 1)],
+    [M.crossH, rgb(1, 1, 1)],
+  ] as const) {
+    ctx.page.drawRectangle({
+      x: x + part.x * k,
+      y: yTop - (part.y + part.height) * k,
+      width: part.width * k,
+      height: part.height * k,
+      color,
+      borderWidth: 0,
+    })
+  }
 }
 
 function drawHeader(ctx: Ctx) {
   const top = A4.height - MARGIN.top
-  const logoSize = 16
+  const logoSize = 19
   const logoY = top - logoSize
   drawLogo(ctx, MARGIN.x, logoY, logoSize)
 
-  drawText(ctx, SIC_BRAND_NAME, MARGIN.x + logoSize + 8, logoY + 8, TYPE.brand, c(COLORS.navy), true)
+  drawText(ctx, SIC_BRAND_NAME, MARGIN.x + logoSize + 8, logoY + 9.5, TYPE.brand, c(COLORS.navy), true)
   drawText(
     ctx,
     'MIETER-ZERTIFIKAT',
     MARGIN.x + logoSize + 8,
-    logoY + 1,
+    logoY + 1.5,
     TYPE.brandSub,
     c(COLORS.gold),
     true
@@ -124,7 +132,7 @@ function drawHeader(ctx: Ctx) {
 
   const right = 'Nachweisformular · zum Ausfüllen und Unterzeichnen'
   const rightW = ctx.font.widthOfTextAtSize(right, TYPE.docMeta)
-  drawText(ctx, right, A4.width - MARGIN.x - rightW, logoY + 5, TYPE.docMeta, c(COLORS.muted))
+  drawText(ctx, right, A4.width - MARGIN.x - rightW, logoY + 6, TYPE.docMeta, c(COLORS.muted))
 
   const ruleY = logoY - 8
   drawLine(ctx, MARGIN.x, ruleY, A4.width - MARGIN.x, ruleY, c(COLORS.navy), 1.25)
