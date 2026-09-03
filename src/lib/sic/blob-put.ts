@@ -11,14 +11,13 @@ import { sicLog } from '@/lib/sic/log'
  * Pfad, also ohne den Schlüssel nicht lesbar.
  */
 export async function putSicDocumentBytes(pathname: string, ciphertext: Buffer): Promise<string> {
-  const body = new Uint8Array(ciphertext)
   const options = {
     addRandomSuffix: true,
     contentType: 'application/octet-stream',
   } as const
 
   try {
-    const blob = await put(pathname, body, { ...options, access: 'private' })
+    const blob = await put(pathname, ciphertext, { ...options, access: 'private' })
     return blob.url
   } catch (err) {
     sicLog('sic.upload.private_put_failed', {
@@ -26,7 +25,7 @@ export async function putSicDocumentBytes(pathname: string, ciphertext: Buffer):
     })
   }
 
-  const blob = await put(pathname, body, { ...options, access: 'public' })
+  const blob = await put(pathname, ciphertext, { ...options, access: 'public' })
   sicLog('sic.upload.public_encrypted_put', { pathname })
   return blob.url
 }
