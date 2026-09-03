@@ -6,7 +6,9 @@ import {
   sicFactLines,
   sicRentCeilingChf,
   sicRentCeilingFromIncomes,
+  remapSicPrefillToPerson,
   isSicIdDocumentExpired,
+  sicModuleHasCouplePersonFacts,
 } from '@/lib/sic/facts'
 import { describe, expect, it } from 'vitest'
 
@@ -178,5 +180,37 @@ describe('couple fact lines', () => {
     )
     expect(income.join(' ')).toMatch(/beide Einkommen/)
     expect(sicRentCeilingFromIncomes('80_100k', '40_60k')).toBe(3300)
+  })
+})
+
+describe('couple prefill mapping', () => {
+  it('remaps person-1 keys to person-2 keys for the second document', () => {
+    const remapped = remapSicPrefillToPerson(
+      'BONITAET',
+      { extractDate: '2026-06-12', office: 'Betreibungsamt Zürich' },
+      2
+    )
+    expect(remapped).toEqual({ extractDate2: '2026-06-12', office2: 'Betreibungsamt Zürich' })
+  })
+
+  it('strips person-2 keys so person-1 facts cannot overwrite person-2 facts', () => {
+    const remapped = remapSicPrefillToPerson(
+      'BONITAET',
+      {
+        extractDate: '2026-06-12',
+        office: 'Betreibungsamt Zürich',
+        extractDate2: '2026-05-20',
+        office2: 'Betreibungsamt Bern',
+      },
+      1
+    )
+    expect(remapped).toEqual({ extractDate: '2026-06-12', office: 'Betreibungsamt Zürich' })
+  })
+
+  it('detects which modules require couple person facts', () => {
+    expect(sicModuleHasCouplePersonFacts('ZUVERLAESSIGKEIT')).toBe(false)
+    expect(sicModuleHasCouplePersonFacts('BONITAET')).toBe(true)
+    expect(sicModuleHasCouplePersonFacts('ARBEIT_EINKOMMEN')).toBe(true)
+    expect(sicModuleHasCouplePersonFacts('AUFENTHALT')).toBe(true)
   })
 })

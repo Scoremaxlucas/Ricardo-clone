@@ -3,7 +3,13 @@
 import { SicAdminFunnel } from '@/components/sic/SicAdminFunnel'
 import { SicAdminReviewPreview } from '@/components/sic/SicAdminReviewPreview'
 import { parseSicAdminSearchQuery } from '@/lib/sic/admin-queue'
-import { sicFactFields, type SicFactField, type SicFacts } from '@/lib/sic/facts'
+import {
+  remapSicPrefillToPerson,
+  sicFactFields,
+  sicModuleHasCouplePersonFacts,
+  type SicFactField,
+  type SicFacts,
+} from '@/lib/sic/facts'
 import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
 import { SIC_REJECTION_REASONS } from '@/lib/sic/review'
 import { SIC_REVOKE_REASONS } from '@/lib/sic/revoke'
@@ -370,7 +376,12 @@ export function SicAdminReview() {
     setFacts(prev => ({ ...prev, [key]: { ...(prev[key] ?? {}), [field]: value } }))
   }
 
-  async function prefill(certificateId: string, moduleKind: string, documentId: string) {
+  async function prefill(
+    certificateId: string,
+    moduleKind: string,
+    documentId: string,
+    person?: 1 | 2
+  ) {
     const key = `${certificateId}:${moduleKind}`
     setBusy(`${key}:prefill`)
     try {
@@ -384,7 +395,12 @@ export function SicAdminReview() {
         toast.error(data?.message || 'Auslesen fehlgeschlagen.')
         return
       }
-      setFacts(prev => ({ ...prev, [key]: { ...(prev[key] ?? {}), ...(data.facts as SicFacts) } }))
+      const rawFacts = data.facts as SicFacts
+      const remappedFacts =
+        person && sicModuleHasCouplePersonFacts(moduleKind as SicModuleId) ?
+          remapSicPrefillToPerson(moduleKind as SicModuleId, rawFacts, person) :
+          rawFacts
+      setFacts(prev => ({ ...prev, [key]: { ...(prev[key] ?? {}), ...remappedFacts } }))
       setWarnings(prev => ({ ...prev, [key]: (data.warnings as string[]) ?? [] }))
       toast.success('Werte vorbefüllt — bitte gegen das Dokument prüfen.')
     } catch {
@@ -723,7 +739,7 @@ export function SicAdminReview() {
 
                       {m.documents.length > 0 ?
                         <ul className="mt-2 space-y-1">
-                          {m.documents.map(d => (
+                          {m.documents.map((d, idx) => (
                             <li key={d.id} className="flex flex-wrap items-center gap-2">
                               <a
                                 href={`/api/sic/admin/document/${d.id}`}
@@ -737,7 +753,16 @@ export function SicAdminReview() {
                                 <button
                                   type="button"
                                   disabled={busy === `${key}:prefill`}
-                                  onClick={() => prefill(item.id, m.moduleKind, d.id)}
+                                  onClick={() =>
+                                    void prefill(
+                                      item.id,
+                                      m.moduleKind,
+                                      d.id,
+                                      item.householdKind === 'COUPLE' && sicModuleHasCouplePersonFacts(m.moduleKind as SicModuleId) ?
+                                        (idx === 0 ? 1 : 2) :
+                                        undefined
+                                    )
+                                  }
                                   className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-white disabled:opacity-50"
                                 >
                                   {busy === `${key}:prefill` ?

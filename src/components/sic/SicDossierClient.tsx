@@ -3,6 +3,7 @@
 import { SicTemplateForm } from '@/components/sic/SicTemplateForm'
 import { SIC_REVIEW_SLA, sicVerifyUrl } from '@/lib/sic/config'
 import type { SicDossierView, SicUploadedDocMeta } from '@/lib/sic/dossier'
+import { templateHolderNameForModule } from '@/lib/sic/dossier'
 import { formatSicChf, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { sicVerifyMailtoHref, sicVerifyWhatsAppHref } from '@/lib/sic/share'
@@ -686,7 +687,11 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                   </ul>
 
                   {templatesForModule(m.moduleKind).map(t => (
-                    <SicTemplateForm key={t.id} template={t} holderName={dossier.holderName} />
+                    <SicTemplateForm
+                      key={t.id}
+                      template={t}
+                      holderName={templateHolderNameForModule(m.moduleKind, dossier)}
+                    />
                   ))}
 
                   <input

@@ -175,6 +175,19 @@ export function joinHouseholdHolderName(opts: {
   return `${first} und ${second}`
 }
 
+/**
+ * Name für den Template-Prefill je Modul.
+ * Arbeitgeberbestätigung: Einzelname der jeweiligen Person (Couple: Person 1).
+ * Vermieter-Referenz: Haushaltsname «A und B» (eine Referenz reicht).
+ */
+export function templateHolderNameForModule(
+  moduleKind: SicModuleId,
+  dossier: Pick<SicDossierView, 'holderName' | 'holderFirstName' | 'holderLastName' | 'couple'>
+): string | null {
+  if (moduleKind === 'ZUVERLAESSIGKEIT') return dossier.holderName
+  return joinHolderName(dossier.holderFirstName, dossier.holderLastName)
+}
+
 export function sicFactLineOptsFromHolders(opts: {
   couple: boolean
   firstName: string | null
