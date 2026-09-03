@@ -23,7 +23,6 @@ import { DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/art-web'
 import {
   ArrowRight,
   Briefcase,
-  Check,
   ChevronDown,
   Globe,
   ListChecks,
@@ -83,6 +82,7 @@ const CERT_PREVIEW = sicCatalogPreviewRows()
 
 export function SicLandingClient({ account }: { account?: SicLandingAccount | null }) {
   const owned = useMemo(() => new Set<SicModuleId>(account?.ownedModules ?? []), [account])
+  const verifiedModules = useMemo(() => new Set<SicModuleId>(account?.verifiedModules ?? []), [account])
   const isReturning = Boolean(account)
   const availableModules = useMemo(() => SIC_MODULES.filter(m => !owned.has(m.id)), [owned])
 
@@ -658,41 +658,93 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 </div>
               </div>
             :
-              SIC_MODULES.map(m => {
-                const alreadyOwned = owned.has(m.id)
-                const accent = SIC_MODULE_ACCENT[m.id]
-                const Icon = MODULE_ICON[m.id]
-                return (
-                  <div
-                    key={m.id}
-                    className={`relative flex min-w-0 flex-col rounded-2xl border bg-white p-5 text-left sm:p-6 ${
-                      alreadyOwned ?
-                        'border-sic-verified/25 bg-sic-verified/[0.04]'
-                      : 'border-slate-200'
-                    }`}
-                  >
-                    {alreadyOwned ?
-                      <span className="absolute right-3 top-3 max-w-[9.5rem] rounded-full bg-sic-verified-text px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
-                        Enthalten
-                      </span>
-                    : isReturning ?
-                      <span className="absolute right-3 top-3 max-w-[9.5rem] rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-600">
-                        Offen
-                      </span>
-                    : null}
-                    <span
-                      className="grid h-12 w-12 place-items-center rounded-full text-white"
-                      style={{ backgroundColor: alreadyOwned ? '#2f9e44' : accent.hex }}
-                    >
-                      <Icon className="h-6 w-6" />
-                    </span>
-                    <p className={`mt-4 text-lg font-bold leading-tight text-sic-navy ${alreadyOwned || isReturning ? 'pr-20' : ''}`}>
-                      {m.title}
-                    </p>
-                    <p className="mt-1.5 flex-1 text-sm leading-relaxed text-slate-600">{m.youUpload}</p>
-                  </div>
-                )
-              })
+              <div className="col-span-full rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+                {verifiedModules.size > 0 ? (
+                  <>
+                    <p className="text-sm font-semibold text-sic-navy">Auf deinem Zertifikat</p>
+                    <div className="mt-4 space-y-2">
+                      {SIC_MODULES.filter(m => verifiedModules.has(m.id)).map(m => {
+                        const Icon = MODULE_ICON[m.id]
+                        return (
+                          <div key={m.id} className="flex items-start gap-3 rounded-2xl px-3 py-3">
+                            <span
+                              className="mt-0.5 grid h-11 w-11 flex-shrink-0 place-items-center rounded-full text-white"
+                              style={{ backgroundColor: '#2f9e44' }}
+                            >
+                              <Icon className="h-5 w-5" />
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-sic-navy">{m.title}</p>
+                              <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{m.landlordSees}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                ) : null}
+
+                {SIC_MODULES.filter(m => owned.has(m.id) && !verifiedModules.has(m.id)).length > 0 ? (
+                  <>
+                    <div className="mt-6 border-t border-slate-200 pt-6">
+                      <p className="text-sm font-semibold text-sic-navy">Gekauft, noch nicht geprüft</p>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      {SIC_MODULES.filter(m => owned.has(m.id) && !verifiedModules.has(m.id)).map(m => {
+                        const accent = SIC_MODULE_ACCENT[m.id]
+                        const Icon = MODULE_ICON[m.id]
+                        return (
+                          <div key={m.id} className="flex items-start gap-3 rounded-2xl px-3 py-3 bg-slate-50">
+                            <span
+                              className="mt-0.5 grid h-11 w-11 flex-shrink-0 place-items-center rounded-full text-white"
+                              style={{ backgroundColor: accent.hex }}
+                            >
+                              <Icon className="h-5 w-5" />
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-sic-navy">{m.title}</p>
+                              <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{m.youUpload}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                ) : null}
+
+                {availableModules.length ? (
+                  <>
+                    <div className="mt-6 border-t border-slate-200 pt-6">
+                      <p className="text-sm font-semibold text-sic-navy">Noch offen</p>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      {availableModules.map(m => {
+                        const accent = SIC_MODULE_ACCENT[m.id]
+                        const Icon = MODULE_ICON[m.id]
+                        return (
+                          <div key={m.id} className="flex items-start gap-3 rounded-2xl px-3 py-3">
+                            <span
+                              className="mt-0.5 grid h-11 w-11 flex-shrink-0 place-items-center rounded-full text-white"
+                              style={{ backgroundColor: accent.hex }}
+                            >
+                              <Icon className="h-5 w-5" />
+                            </span>
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="text-sm font-bold text-sic-navy">{m.title}</p>
+                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                                  Offen
+                                </span>
+                              </div>
+                              <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{m.youUpload}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                ) : null}
+              </div>
             }
           </div>
 
