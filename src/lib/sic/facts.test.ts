@@ -5,6 +5,7 @@ import {
   sicFactFields,
   sicFactLines,
   sicRentCeilingChf,
+  sicRentCeilingFromIncomes,
   isSicIdDocumentExpired,
 } from '@/lib/sic/facts'
 import { describe, expect, it } from 'vitest'
@@ -133,5 +134,49 @@ describe('Feldkatalog', () => {
     for (const id of ['BONITAET', 'ARBEIT_EINKOMMEN', 'ZUVERLAESSIGKEIT', 'AUFENTHALT'] as const) {
       expect(sicFactFields(id).some(f => f.required)).toBe(true)
     }
+  })
+
+  it('requires a second extract and ID on a couple certificate', () => {
+    expect(sicFactFields('BONITAET', { couple: true }).some(f => f.key === 'extractDate2')).toBe(true)
+    expect(sicFactFields('AUFENTHALT', { couple: true }).some(f => f.key === 'documentType2')).toBe(true)
+    const parsed = normalizeSicFacts(
+      'BONITAET',
+      { extractDate: '2026-06-12', office: 'Zürich' },
+      { couple: true }
+    )
+    expect(parsed.ok).toBe(false)
+  })
+})
+
+describe('couple fact lines', () => {
+  it('prints both extracts and a 3× ceiling from the summed lower bands', () => {
+    const bonitaet = sicFactLines(
+      'BONITAET',
+      {
+        extractDate: '2026-06-12',
+        office: 'Betreibungsamt Zürich',
+        extractDate2: '2026-05-20',
+        office2: 'Betreibungsamt Bern',
+      },
+      { couple: true, person1Label: 'Anna Muster', person2Label: 'Luca Bianchi' }
+    )
+    expect(bonitaet[0]).toBe('Keine offenen Betreibungen')
+    expect(bonitaet.join(' ')).toMatch(/Anna Muster/)
+    expect(bonitaet.join(' ')).toMatch(/Luca Bianchi/)
+
+    const income = sicFactLines(
+      'ARBEIT_EINKOMMEN',
+      {
+        incomeBand: '80_100k',
+        employmentType: 'unbefristet',
+        employedSince: '2020-03-01',
+        incomeBand2: '40_60k',
+        employmentType2: 'unbefristet',
+        employedSince2: '2021-01-01',
+      },
+      { couple: true, person1Label: 'Anna Muster', person2Label: 'Luca Bianchi' }
+    )
+    expect(income.join(' ')).toMatch(/beide Einkommen/)
+    expect(sicRentCeilingFromIncomes('80_100k', '40_60k')).toBe(3300)
   })
 })

@@ -30,6 +30,7 @@ type Item = {
   email: string
   certificateCode: string
   holderName: string | null
+  householdKind?: 'SINGLE' | 'COUPLE'
   status: string
   certifiedAt: string | null
   expiresAt: string | null
@@ -64,15 +65,17 @@ function FactForm({
   moduleId,
   values,
   onChange,
+  couple,
 }: {
   moduleId: SicModuleId
   values: SicFacts
   onChange: (key: string, value: string) => void
+  couple?: boolean
 }) {
   return (
     <div className="mt-3 grid gap-3 sm:grid-cols-2">
-      {sicFactFields(moduleId).map((field: SicFactField) => (
-        <label key={field.key} className="block text-xs">
+      {sicFactFields(moduleId, { couple }).map((field: SicFactField) => (
+        <label key={field.key} className={`block text-xs ${field.group === 'person2' ? 'sm:col-span-1' : ''}`}>
           <span className="font-semibold text-sic-navy">
             {field.label}
             {field.required ? '' : ' (optional)'}
@@ -775,6 +778,7 @@ export function SicAdminReview() {
                           <FactForm
                             moduleId={moduleId}
                             values={facts[key] ?? {}}
+                            couple={item.householdKind === 'COUPLE'}
                             onChange={(field, value) => setFact(key, field, value)}
                           />
                           <SicAdminReviewPreview
@@ -785,6 +789,7 @@ export function SicAdminReview() {
                             modules={item.modules}
                             draftModuleId={moduleId}
                             draftFacts={facts[key] ?? {}}
+                            couple={item.householdKind === 'COUPLE'}
                           />
                           <div className="mt-3 flex flex-wrap gap-2">
                             <button

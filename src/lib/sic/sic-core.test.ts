@@ -24,7 +24,7 @@ import {
   sicCheckoutRetryFromPayment,
   sicCheckoutRetryRequestBody,
 } from '@/lib/sic/checkout-retry'
-import { isSicLandlordPdfReady, joinHolderName, encodePaymentHolderName, decodePaymentHolderName, previewSicVerifiedModules } from '@/lib/sic/dossier'
+import { isSicLandlordPdfReady, joinHolderName, joinHouseholdHolderName, encodePaymentHolderName, decodePaymentHolderName, previewSicVerifiedModules } from '@/lib/sic/dossier'
 import { addCalendarMonths, isSicExpired, parseSicCalendarDate, sicExpiresAtAfterApproval, sicValidityExpiresAt } from '@/lib/sic/validity'
 
 describe('certificate code', () => {
@@ -199,6 +199,16 @@ describe('validity', () => {
       approvedAt,
     })
     expect(next.toISOString().slice(0, 10)).toBe('2026-09-01')
+  })
+  it('uses the older of two Betreibungsauszüge on a couple certificate', () => {
+    const next = sicExpiresAtAfterApproval({
+      moduleKind: 'BONITAET',
+      extractDate: '2026-06-20',
+      extractDate2: '2026-05-10',
+      currentExpiresAt: null,
+      approvedAt: new Date(Date.UTC(2026, 7, 1)),
+    })
+    expect(next.toISOString().slice(0, 10)).toBe('2026-08-10')
   })
   it('rejects impossible calendar dates', () => {
     expect(parseSicCalendarDate('2026-02-31')).toBeNull()
@@ -385,14 +395,55 @@ describe('holder name', () => {
     expect(joinHolderName(null, 'Muster')).toBeNull()
   })
 
+  it('joins a couple with und', () => {
+    expect(
+      joinHouseholdHolderName({
+        firstName: 'Anna',
+        lastName: 'Muster',
+        firstName2: 'Luca',
+        lastName2: 'Bianchi',
+        couple: true,
+      })
+    ).toBe('Anna Muster und Luca Bianchi')
+    expect(
+      joinHouseholdHolderName({
+        firstName: 'Anna',
+        lastName: 'Muster',
+        firstName2: 'Luca',
+        lastName2: '',
+        couple: true,
+      })
+    ).toBeNull()
+  })
+
+  it('round-trips a second holder on the payment name', () => {
+    const stored = encodePaymentHolderName('Anna', 'Muster', 'Luca', 'Bianchi')
+    expect(decodePaymentHolderName(stored)).toEqual({
+      firstName: 'Anna',
+      lastName: 'Muster',
+      firstName2: 'Luca',
+      lastName2: 'Bianchi',
+    })
+  })
+
   it('round-trips compound first names without splitting on space', () => {
     const stored = encodePaymentHolderName('Anna Maria', 'de la Cruz')
-    expect(decodePaymentHolderName(stored)).toEqual({ firstName: 'Anna Maria', lastName: 'de la Cruz' })
+    expect(decodePaymentHolderName(stored)).toEqual({
+      firstName: 'Anna Maria',
+      lastName: 'de la Cruz',
+      firstName2: null,
+      lastName2: null,
+    })
   })
 
   it('still reads legacy space-separated checkout names', () => {
-    expect(decodePaymentHolderName('Anna Muster')).toEqual({ firstName: 'Anna', lastName: 'Muster' })
-    expect(decodePaymentHolderName('Lara')).toEqual({ firstName: 'Lara', lastName: '' })
+    expect(decodePaymentHolderName('Anna Muster')).toEqual({
+      firstName: 'Anna',
+      lastName: 'Muster',
+      firstName2: null,
+      lastName2: null,
+    })
+    expect(decodePaymentHolderName('Lara')).toEqual({ firstName: 'Lara', lastName: '', firstName2: null, lastName2: null })
   })
 })
 
@@ -410,6 +461,9 @@ describe('checkout retry', () => {
       moduleIds: ['BONITAET', 'AUFENTHALT'],
       firstName: 'Anna Maria',
       lastName: 'de la Cruz',
+      firstName2: '',
+      lastName2: '',
+      householdKind: 'SINGLE',
       renewal: false,
     })
     expect(canResumeSicCheckout(retry!)).toBe(true)

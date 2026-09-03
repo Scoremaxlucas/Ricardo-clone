@@ -254,6 +254,29 @@ export const SIC_WORKING_PLAUSIBILITY_FOOTER =
 /** Badge auf Urkunde und Prüfseite — «geprüft», nicht «verifiziert» im Sinne einer Auskunftei. */
 export const SIC_MODULE_BADGE = 'GEPRÜFT'
 
+/** Nachweise je Angabe — beim Paar-Zertifikat zwei Auszüge, zwei Ausweise, zwei Löhne; eine Referenz. */
+export function sicRequiredDocuments(id: SicModuleId, couple: boolean): string[] {
+  if (!couple) return getSicModule(id).requiredDocuments
+  if (id === 'BONITAET') {
+    return [
+      'Betreibungsauszug Person 1 (max. 3 Monate alt)',
+      'Betreibungsauszug Person 2 (max. 3 Monate alt)',
+    ]
+  }
+  if (id === 'AUFENTHALT') {
+    return ['Ausweis Person 1 (Pass, ID oder Bewilligung)', 'Ausweis Person 2 (Pass, ID oder Bewilligung)']
+  }
+  if (id === 'ARBEIT_EINKOMMEN') {
+    return [
+      'Lohnabrechnung oder Lohnausweis Person 1',
+      'Arbeitgeberbestätigung Person 1 — SIC-Formular',
+      'Lohnabrechnung oder Lohnausweis Person 2',
+      'Arbeitgeberbestätigung Person 2 — SIC-Formular',
+    ]
+  }
+  return getSicModule(id).requiredDocuments
+}
+
 /** «2 von 4 Angaben geprüft» — Bezugsgrösse ist immer der ganze Katalog. */
 export function sicCompletenessLabel(verifiedCount: number): string {
   return `${verifiedCount} von ${SIC_MODULES.length} Angaben geprüft`

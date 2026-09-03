@@ -1,12 +1,14 @@
 import { prisma } from '@/lib/prisma'
 import { canChangeSicEmail, sicPendingEmailChangeStatus } from '@/lib/sic/email-change'
-import { readSicFacts, sicFactLines, type SicFacts } from '@/lib/sic/facts'
+import { readSicFacts, sicFactLines, type SicFactLineOpts, type SicFacts } from '@/lib/sic/facts'
+import { isSicCouple, type SicHouseholdKind } from '@/lib/sic/household'
 import {
   getSicModule,
   isSicCertificateSealReady,
   SIC_MODULES,
   SIC_RENEWAL_FEE_CHF,
   SIC_VALIDITY_MONTHS,
+  sicRequiredDocuments,
   type SicModuleId,
 } from '@/lib/sic/modules'
 import { modulesResetByRenewal } from '@/lib/sic/renewal'
@@ -64,6 +66,10 @@ export type SicDossierView = {
   holderName: string | null
   holderFirstName: string | null
   holderLastName: string | null
+  holder2FirstName: string | null
+  holder2LastName: string | null
+  householdKind: SicHouseholdKind
+  couple: boolean
   hasVerifiedModule: boolean
   /** Vermieter-PDF/QR sobald mindestens ein Modul geprüft ist und der Name steht. */
   landlordPdfReady: boolean
@@ -103,14 +109,15 @@ export type SicVerifiedModuleView = { id: SicModuleId; title: string; lines: str
  * ohne Werte fallen auf die generischen Zeilen aus `modules.ts` zurück.
  */
 export function verifiedModuleLineItems(
-  modules: { moduleKind: string; status: SicModuleStatus; verifiedFacts?: unknown }[]
+  modules: { moduleKind: string; status: SicModuleStatus; verifiedFacts?: unknown }[],
+  lineOpts?: SicFactLineOpts
 ): SicVerifiedModuleView[] {
   const verified = new Map(
     modules.filter(m => m.status === 'VERIFIED').map(m => [m.moduleKind, m.verifiedFacts])
   )
   return SIC_MODULES.filter(def => verified.has(def.id)).map(def => {
     const facts = readSicFacts(def.id, verified.get(def.id))
-    const lines = sicFactLines(def.id, facts)
+    const lines = sicFactLines(def.id, facts, lineOpts)
     return {
       id: def.id,
       title: def.title,
@@ -125,7 +132,8 @@ export function verifiedModuleLineItems(
  */
 export function previewSicVerifiedModules(
   modules: { moduleKind: string; status: string; verifiedFacts?: unknown }[],
-  draft: { moduleKind: SicModuleId; facts: SicFacts }
+  draft: { moduleKind: SicModuleId; facts: SicFacts },
+  lineOpts?: SicFactLineOpts
 ): SicVerifiedModuleView[] {
   const merged = modules.map(m =>
     m.moduleKind === draft.moduleKind ?
@@ -139,7 +147,10 @@ export function previewSicVerifiedModules(
       verifiedFacts: draft.facts,
     })
   }
-  return verifiedModuleLineItems(merged as { moduleKind: string; status: SicModuleStatus; verifiedFacts?: unknown }[])
+  return verifiedModuleLineItems(
+    merged as { moduleKind: string; status: SicModuleStatus; verifiedFacts?: unknown }[],
+    lineOpts
+  )
 }
 
 
@@ -150,30 +161,81 @@ export function joinHolderName(first: string | null, last: string | null): strin
   return `${f} ${l}`
 }
 
+export function joinHouseholdHolderName(opts: {
+  firstName: string | null
+  lastName: string | null
+  firstName2?: string | null
+  lastName2?: string | null
+  couple?: boolean
+}): string | null {
+  const first = joinHolderName(opts.firstName, opts.lastName)
+  if (!opts.couple) return first
+  const second = joinHolderName(opts.firstName2 ?? null, opts.lastName2 ?? null)
+  if (!first || !second) return null
+  return `${first} und ${second}`
+}
+
+export function sicFactLineOptsFromHolders(opts: {
+  couple: boolean
+  firstName: string | null
+  lastName: string | null
+  firstName2?: string | null
+  lastName2?: string | null
+}): SicFactLineOpts {
+  return {
+    couple: opts.couple,
+    person1Label: joinHolderName(opts.firstName, opts.lastName),
+    person2Label: opts.couple ? joinHolderName(opts.firstName2 ?? null, opts.lastName2 ?? null) : null,
+  }
+}
+
 const HOLDER_NAME_SEP = '\t'
 
 /** Speichert Vor- und Nachname verlustfrei auf der Zahlung (nicht am Leerzeichen trennen). */
-export function encodePaymentHolderName(first: string, last: string): string {
-  return `${first.trim()}${HOLDER_NAME_SEP}${last.trim()}`
+export function encodePaymentHolderName(
+  first: string,
+  last: string,
+  first2?: string | null,
+  last2?: string | null
+): string {
+  const base = `${first.trim()}${HOLDER_NAME_SEP}${last.trim()}`
+  const a = (first2 ?? '').trim()
+  const b = (last2 ?? '').trim()
+  if (a && b) return `${base}${HOLDER_NAME_SEP}${a}${HOLDER_NAME_SEP}${b}`
+  return base
+}
+
+export type SicPaymentHolderName = {
+  firstName: string
+  lastName: string
+  firstName2: string | null
+  lastName2: string | null
 }
 
 /**
- * Liest den Checkout-Namen. Neue Zahlungen: Tab-getrennt.
+ * Liest den Checkout-Namen. Neue Zahlungen: Tab-getrennt (zwei oder vier Teile).
  * Alte Einträge: erstes Wort = Vorname, Rest = Nachname.
  */
-export function decodePaymentHolderName(raw?: string | null): { firstName: string; lastName: string } | null {
+export function decodePaymentHolderName(raw?: string | null): SicPaymentHolderName | null {
   const cleaned = (raw ?? '').trim()
   if (!cleaned) return null
   if (cleaned.includes(HOLDER_NAME_SEP)) {
-    const idx = cleaned.indexOf(HOLDER_NAME_SEP)
-    const firstName = cleaned.slice(0, idx).trim()
-    const lastName = cleaned.slice(idx + 1).trim()
+    const parts = cleaned.split(HOLDER_NAME_SEP).map(p => p.trim())
+    const firstName = parts[0] ?? ''
+    const lastName = parts[1] ?? ''
     if (!firstName || !lastName) return null
-    return { firstName, lastName }
+    const firstName2 = parts[2] || null
+    const lastName2 = parts[3] || null
+    return {
+      firstName,
+      lastName,
+      firstName2: firstName2 && lastName2 ? firstName2 : null,
+      lastName2: firstName2 && lastName2 ? lastName2 : null,
+    }
   }
   const parts = cleaned.replace(/\s+/g, ' ').split(' ')
-  if (parts.length === 1) return { firstName: parts[0], lastName: '' }
-  return { firstName: parts[0], lastName: parts.slice(1).join(' ') }
+  if (parts.length === 1) return { firstName: parts[0], lastName: '', firstName2: null, lastName2: null }
+  return { firstName: parts[0], lastName: parts.slice(1).join(' '), firstName2: null, lastName2: null }
 }
 
 /**
@@ -264,20 +326,41 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
 
   const purchasedKinds = new Set(cert.modules.map(m => m.moduleKind))
 
+  const couple = isSicCouple(cert.householdKind)
+  const holderFirstName = cert.holderFirstName?.trim() || null
+  const holderLastName = cert.holderLastName?.trim() || null
+  const holder2FirstName = cert.holder2FirstName?.trim() || null
+  const holder2LastName = cert.holder2LastName?.trim() || null
+  const lineOpts = sicFactLineOptsFromHolders({
+    couple,
+    firstName: holderFirstName,
+    lastName: holderLastName,
+    firstName2: holder2FirstName,
+    lastName2: holder2LastName,
+  })
+  const holderName = joinHouseholdHolderName({
+    firstName: holderFirstName,
+    lastName: holderLastName,
+    firstName2: holder2FirstName,
+    lastName2: holder2LastName,
+    couple,
+  })
+
   const certificateLinesByKind = new Map(
-    verifiedModuleLineItems(cert.modules).map(m => [m.id as string, m.lines])
+    verifiedModuleLineItems(cert.modules, lineOpts).map(m => [m.id as string, m.lines])
   )
 
   const purchasedModules: SicDossierModuleView[] = SIC_MODULES.filter(def => purchasedKinds.has(def.id)).map(def => {
     const row = cert.modules.find(m => m.moduleKind === def.id)!
     const documents = docsByKind.get(def.id) ?? []
+    const requiredDocuments = sicRequiredDocuments(def.id, couple)
     return {
       moduleKind: def.id,
       title: def.title,
       summary: def.summary,
       landlordSees: def.landlordSees,
-      requiredDocuments: def.requiredDocuments,
-      checklist: buildChecklist(def.id, def.requiredDocuments),
+      requiredDocuments,
+      checklist: buildChecklist(def.id, requiredDocuments),
       status: row.status,
       documentCount: documents.length,
       documents,
@@ -293,10 +376,6 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     landlordSees: def.landlordSees,
     priceChf: def.priceChf,
   }))
-
-  const holderFirstName = cert.holderFirstName?.trim() || null
-  const holderLastName = cert.holderLastName?.trim() || null
-  const holderName = joinHolderName(holderFirstName, holderLastName)
 
   let verifiedCount = 0
   let pendingDocsCount = 0
@@ -342,6 +421,10 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     holderName,
     holderFirstName,
     holderLastName,
+    holder2FirstName,
+    holder2LastName,
+    householdKind: couple ? 'COUPLE' : 'SINGLE',
+    couple,
     hasVerifiedModule: verifiedCount > 0,
     landlordPdfReady: isSicLandlordPdfReady({
       holderName,

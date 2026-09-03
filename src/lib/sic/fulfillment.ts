@@ -213,20 +213,40 @@ export async function fulfillSicPaidCheckout(input: {
   const code = existing ? existing.certificateCode : await ensureUniqueCode()
   const decoded = decodePaymentHolderName(payment.holderName)
   const prefillName =
-    decoded?.firstName && decoded.lastName ? { firstName: decoded.firstName, lastName: decoded.lastName } : null
+    decoded?.firstName && decoded.lastName ?
+      {
+        firstName: decoded.firstName,
+        lastName: decoded.lastName,
+        firstName2: decoded.firstName2,
+        lastName2: decoded.lastName2,
+        couple: !!(decoded.firstName2 && decoded.lastName2),
+      }
+    : null
   const isFirstCertificate = !existing
 
   let cert
   try {
     cert = await prisma.$transaction(async tx => {
+      const nameData =
+        prefillName ?
+          {
+            holderFirstName: prefillName.firstName,
+            holderLastName: prefillName.lastName,
+            ...(prefillName.couple ?
+              {
+                holder2FirstName: prefillName.firstName2,
+                holder2LastName: prefillName.lastName2,
+                householdKind: 'COUPLE' as const,
+              }
+            : {}),
+          }
+        : {}
       const c =
         existing ?
           await tx.sicCertificate.update({
             where: { id: existing!.id },
             data: {
-              ...(prefillName && !existing!.holderFirstName && !existing!.holderLastName ?
-                { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName }
-              : {}),
+              ...(prefillName && !existing!.holderFirstName && !existing!.holderLastName ? nameData : {}),
             },
           })
         : await tx.sicCertificate.create({
@@ -236,9 +256,7 @@ export async function fulfillSicPaidCheckout(input: {
               status: 'ACTIVE',
               issuedAt: now,
               expiresAt: null,
-              ...(prefillName ?
-                { holderFirstName: prefillName.firstName, holderLastName: prefillName.lastName }
-              : {}),
+              ...nameData,
             },
           })
 

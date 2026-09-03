@@ -3,6 +3,7 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { sicPaths, sicUrl, SIC_BRAND_NAME } from '@/lib/sic/config'
 import { encodePaymentHolderName } from '@/lib/sic/dossier'
 import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
+import { parseSicHouseholdKind } from '@/lib/sic/household'
 import { normalizeSicModuleIds, resolveSicCheckoutModuleIds, type SicModuleId } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import {
@@ -67,8 +68,19 @@ export async function POST(req: NextRequest) {
     wantsRenewal = body?.renewal === true
     const firstName = typeof body?.firstName === 'string' ? body.firstName.trim().replace(/\s+/g, ' ').slice(0, 80) : ''
     const lastName = typeof body?.lastName === 'string' ? body.lastName.trim().replace(/\s+/g, ' ').slice(0, 80) : ''
+    const firstName2 =
+      typeof body?.firstName2 === 'string' ? body.firstName2.trim().replace(/\s+/g, ' ').slice(0, 80) : ''
+    const lastName2 =
+      typeof body?.lastName2 === 'string' ? body.lastName2.trim().replace(/\s+/g, ' ').slice(0, 80) : ''
+    const couple = parseSicHouseholdKind(body?.householdKind) === 'COUPLE' || (!!firstName2 && !!lastName2)
     if (firstName && lastName) {
-      holderName = encodePaymentHolderName(firstName, lastName)
+      if (couple && (!firstName2 || !lastName2)) {
+        return NextResponse.json(
+          { ok: false, message: 'Bitte Vor- und Nachname der zweiten Person angeben.' },
+          { status: 400 }
+        )
+      }
+      holderName = encodePaymentHolderName(firstName, lastName, couple ? firstName2 : null, couple ? lastName2 : null)
     } else if (!wantsRenewal) {
       return NextResponse.json({ ok: false, message: 'Bitte Vor- und Nachname angeben.' }, { status: 400 })
     }

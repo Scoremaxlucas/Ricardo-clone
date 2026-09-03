@@ -2779,6 +2779,11 @@ enum SicPaymentStatus {
   REFUNDED
 }
 
+enum SicHouseholdKind {
+  SINGLE
+  COUPLE
+}
+
 model SicCertificate {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -2792,6 +2797,13 @@ model SicCertificate {
 
   holderFirstName String?
   holderLastName  String?
+  /**
+   * Zweite erwachsene Person auf demselben Dokument. Null = Einzelzertifikat.
+   * Konto bleibt eine E-Mail.
+   */
+  holder2FirstName String?
+  holder2LastName  String?
+  householdKind    SicHouseholdKind @default(SINGLE)
 
   status   SicCertificateStatus @default(ACTIVE)
   /**

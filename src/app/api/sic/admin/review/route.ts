@@ -11,7 +11,9 @@ import {
 } from '@/lib/sic/admin-queue'
 import { normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
 import { sendSicCertificateReadyEmail, sendSicModuleRejectedEmail } from '@/lib/sic/email'
+import { joinHouseholdHolderName } from '@/lib/sic/dossier'
 import { normalizeSicFacts, readSicFacts } from '@/lib/sic/facts'
+import { isSicCouple } from '@/lib/sic/household'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { getSicModule, isSicCertificateSealReady, isSicModuleId } from '@/lib/sic/modules'
@@ -38,7 +40,14 @@ function mapCertToReviewItem(c: CertWithReview) {
     id: c.id,
     email: c.email,
     certificateCode: c.certificateCode,
-    holderName: `${c.holderFirstName ?? ''} ${c.holderLastName ?? ''}`.trim() || null,
+    holderName: joinHouseholdHolderName({
+      firstName: c.holderFirstName,
+      lastName: c.holderLastName,
+      firstName2: c.holder2FirstName,
+      lastName2: c.holder2LastName,
+      couple: isSicCouple(c.householdKind),
+    }),
+    householdKind: c.householdKind,
     status: c.status,
     certifiedAt: c.certifiedAt ? c.certifiedAt.toISOString() : null,
     expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
@@ -237,7 +246,7 @@ export async function POST(req: NextRequest) {
 
   const cert = await prisma.sicCertificate.findUnique({
     where: { id: certificateId },
-    select: { id: true, email: true },
+    select: { id: true, email: true, householdKind: true },
   })
   if (!cert) {
     return NextResponse.json({ ok: false, message: 'Zertifikat nicht gefunden.' }, { status: 404 })
@@ -267,7 +276,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Ohne geprüfte Werte entstünde wieder ein inhaltsleeres Zertifikat.
-  const parsed = normalizeSicFacts(moduleKind, body.facts)
+  const parsed = normalizeSicFacts(moduleKind, body.facts, { couple: isSicCouple(cert.householdKind) })
   if (!parsed.ok) {
     const problems = [
       ...parsed.missing.map(l => `${l} fehlt`),

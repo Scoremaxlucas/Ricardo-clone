@@ -2,7 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { certificateVerifyQrDataUrl } from '@/lib/certificate/qrDataUrl'
 import { SicCertificatePdfDocument } from '@/lib/sic/CertificatePdf'
 import { SIC_BRAND_NAME, sicVerifyUrl } from '@/lib/sic/config'
-import { isSicLandlordPdfReady, joinHolderName, verifiedModuleLineItems } from '@/lib/sic/dossier'
+import { isSicLandlordPdfReady, joinHouseholdHolderName, sicFactLineOptsFromHolders, verifiedModuleLineItems } from '@/lib/sic/dossier'
+import { isSicCouple } from '@/lib/sic/household'
 import { recordSicEventOnce } from '@/lib/sic/events'
 import {
   isSicCertificateSealReady,
@@ -32,14 +33,30 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
     return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 })
   }
 
-  const holderName = joinHolderName(cert.holderFirstName, cert.holderLastName)
+  const couple = isSicCouple(cert.householdKind)
+  const holderName = joinHouseholdHolderName({
+    firstName: cert.holderFirstName,
+    lastName: cert.holderLastName,
+    firstName2: cert.holder2FirstName,
+    lastName2: cert.holder2LastName,
+    couple,
+  })
   const landlordPdfReady = isSicLandlordPdfReady({
     holderName,
     status: cert.status,
     expiresAt: cert.expiresAt,
     modules: cert.modules,
   })
-  const verifiedModules = verifiedModuleLineItems(cert.modules)
+  const verifiedModules = verifiedModuleLineItems(
+    cert.modules,
+    sicFactLineOptsFromHolders({
+      couple,
+      firstName: cert.holderFirstName,
+      lastName: cert.holderLastName,
+      firstName2: cert.holder2FirstName,
+      lastName2: cert.holder2LastName,
+    })
+  )
   if (!landlordPdfReady || !cert.expiresAt || verifiedModules.length === 0) {
     return NextResponse.json(
       {

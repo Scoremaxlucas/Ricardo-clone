@@ -39,20 +39,27 @@ export function parseSicCalendarDate(value: string | null | undefined): Date | n
 /**
  * «Gültig bis» nach einer Freigabe.
  *
- * Hängt am Betreibungsauszug: Auszugsdatum + drei Monate. Andere Angaben
- * verlängern das Siegel nicht. Fehlt die Betreibung noch, läuft eine
- * vorläufige Frist ab dem Freigabetag — bis der Auszug geprüft ist.
- * Ein später geprüfter Auszug setzt die Uhr neu, auch wenn sie kürzer wird.
+ * Hängt am Betreibungsauszug: Auszugsdatum + drei Monate. Bei zwei Auszügen
+ * am älteren der beiden. Andere Angaben verlängern das Siegel nicht. Fehlt die
+ * Betreibung noch, läuft eine vorläufige Frist ab dem Freigabetag — bis der
+ * Auszug geprüft ist. Ein später geprüfter Auszug setzt die Uhr neu, auch wenn
+ * sie kürzer wird.
  */
 export function sicExpiresAtAfterApproval(opts: {
   moduleKind: SicModuleId
   extractDate?: string | null
+  /** Zweiter Auszug auf einem Paar-Zertifikat — die Uhr hängt am älteren Datum. */
+  extractDate2?: string | null
   currentExpiresAt: Date | null
   approvedAt?: Date
 }): Date {
   const approvedAt = opts.approvedAt ?? new Date()
   if (opts.moduleKind === 'BONITAET') {
-    const extract = parseSicCalendarDate(opts.extractDate)
+    const dates = [parseSicCalendarDate(opts.extractDate), parseSicCalendarDate(opts.extractDate2)].filter(
+      (d): d is Date => !!d
+    )
+    const extract =
+      dates.length === 0 ? null : dates.reduce((earliest, d) => (d.getTime() < earliest.getTime() ? d : earliest))
     return sicValidityExpiresAt(extract ?? approvedAt)
   }
   if (opts.currentExpiresAt) return opts.currentExpiresAt

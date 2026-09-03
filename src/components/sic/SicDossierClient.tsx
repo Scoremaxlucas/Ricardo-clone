@@ -128,6 +128,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
   const inputs = useRef<Record<string, HTMLInputElement | null>>({})
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [firstName2, setFirstName2] = useState('')
+  const [lastName2, setLastName2] = useState('')
   const [savingName, setSavingName] = useState(false)
   const [renewing, setRenewing] = useState(false)
   const [recoding, setRecoding] = useState(false)
@@ -186,12 +188,22 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       toast.error('Bitte Vor- und Nachname angeben.')
       return
     }
+    if (dossier.couple && (!firstName2.trim() || !lastName2.trim())) {
+      toast.error('Bitte Vor- und Nachname der zweiten Person angeben.')
+      return
+    }
     setSavingName(true)
     try {
       const res = await fetch('/api/sic/profile', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim() }),
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          ...(dossier.couple ?
+            { householdKind: 'COUPLE', firstName2: firstName2.trim(), lastName2: lastName2.trim() }
+          : {}),
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -416,8 +428,14 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
             {verifiedCount > 0 ?
               sealReady ?
-                'Dein Mieter-Zertifikat ist da. Leg das PDF der nächsten Bewerbung bei. Jede weitere Angabe kommt automatisch dazu. Die Gültigkeit hängt am Betreibungsauszug.'
+                dossier.couple ?
+                  'Das Mieter-Zertifikat für beide ist da. Legt das PDF der nächsten Bewerbung bei. Die Gültigkeit hängt am älteren der beiden Betreibungsauszüge.'
+                : 'Dein Mieter-Zertifikat ist da. Leg das PDF der nächsten Bewerbung bei. Jede weitere Angabe kommt automatisch dazu. Die Gültigkeit hängt am Betreibungsauszug.'
+              : dossier.couple ?
+                'Der Stand der Prüfung ist als PDF bereit — noch kein Mieter-Zertifikat. Dafür müssen beide Betreibungsauszüge und beide Ausweise geprüft sein.'
               : 'Der Stand der Prüfung ist als PDF bereit — noch kein Mieter-Zertifikat. Dafür müssen Betreibungsauszug und Ausweis geprüft sein. Du kannst den Stand trotzdem beilegen.'
+            : dossier.couple ?
+              'Sobald die erste Angabe geprüft ist, kannst du den Stand als PDF herunterladen. Das Mieter-Zertifikat gibt es, sobald beide Betreibungsauszüge und beide Ausweise geprüft sind.'
             : `Sobald die erste Angabe geprüft ist, kannst du den Stand als PDF herunterladen. Das Mieter-Zertifikat gibt es, sobald Betreibungsauszug und Ausweis geprüft sind.`}
           </p>
         </div>
@@ -433,8 +451,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           <h2 className="text-sm font-bold text-sic-danger-text">Gültigkeit abgelaufen</h2>
           <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
             Ein Scan zeigt das Zertifikat als abgelaufen. Für die nächste Bewerbung brauchst du eine
-            Verlängerung — mit einem frischen Auszug vom Betreibungsamt. Dessen Alter ist der Grund für
-            die Gültigkeitsdauer.
+            Verlängerung — mit {dossier.couple ? 'frischen Auszügen vom Betreibungsamt' : 'einem frischen Auszug vom Betreibungsamt'}.
+            Dessen Alter ist der Grund für die Gültigkeitsdauer.
             {dossier.renewal.refreshes.length > 0 ?
               ` Neu einzureichen: ${dossier.renewal.refreshes.map(r => r.title).join(', ')}.`
             : ''}
@@ -481,7 +499,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             <dd className="font-medium text-slate-800">
               {dossier.expiresAt ?
                 formatDate(dossier.expiresAt)
-              : `${dossier.validityMonths} Monate ab dem Betreibungsauszug`}
+              : `${dossier.validityMonths} Monate ab ${dossier.couple ? 'dem älteren Betreibungsauszug' : 'dem Betreibungsauszug'}`}
             </dd>
           </div>
         </div>
@@ -497,33 +515,53 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           <div className="mt-5 rounded-xl bg-sic-paper-soft p-4">
             <p className="text-sm font-medium text-slate-700">Name auf dem Zertifikat</p>
             <p className="mt-0.5 text-xs text-slate-500">
-              Gib deinen Namen an, damit wir das Zertifikat erstellen können.
+              {dossier.couple ?
+                'Beide Namen erscheinen auf dem Dokument.'
+              : 'Gib deinen Namen an, damit wir das Zertifikat erstellen können.'}
             </p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <input
                 id="sic-first"
                 value={firstName}
                 onChange={e => setFirstName(e.target.value)}
-                placeholder="Vorname"
+                placeholder={dossier.couple ? 'Vorname Person 1' : 'Vorname'}
                 autoComplete="given-name"
                 className="min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-base outline-none focus:border-sic-action"
               />
               <input
                 value={lastName}
                 onChange={e => setLastName(e.target.value)}
-                placeholder="Nachname"
+                placeholder={dossier.couple ? 'Nachname Person 1' : 'Nachname'}
                 autoComplete="family-name"
                 className="min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-base outline-none focus:border-sic-action"
               />
-              <button
-                type="button"
-                onClick={saveName}
-                disabled={savingName}
-                className="min-h-11 w-full rounded-lg bg-sic-action px-4 py-2 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60 sm:w-auto"
-              >
-                {savingName ? '…' : 'Speichern'}
-              </button>
             </div>
+            {dossier.couple ?
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <input
+                  value={firstName2}
+                  onChange={e => setFirstName2(e.target.value)}
+                  placeholder="Vorname Person 2"
+                  autoComplete="off"
+                  className="min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-base outline-none focus:border-sic-action"
+                />
+                <input
+                  value={lastName2}
+                  onChange={e => setLastName2(e.target.value)}
+                  placeholder="Nachname Person 2"
+                  autoComplete="off"
+                  className="min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-base outline-none focus:border-sic-action"
+                />
+              </div>
+            : null}
+            <button
+              type="button"
+              onClick={saveName}
+              disabled={savingName}
+              className="mt-2 min-h-11 w-full rounded-lg bg-sic-action px-4 py-2 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60 sm:w-auto"
+            >
+              {savingName ? '…' : 'Speichern'}
+            </button>
           </div>
         : pdfReady ?
           <div className="mt-5">

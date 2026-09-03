@@ -88,6 +88,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
 
   const [firstName, setFirstName] = useState(account?.holderFirstName ?? '')
   const [lastName, setLastName] = useState(account?.holderLastName ?? '')
+  const [firstName2, setFirstName2] = useState('')
+  const [lastName2, setLastName2] = useState('')
+  const [couple, setCouple] = useState(false)
   const [email, setEmail] = useState(account?.email ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
@@ -184,6 +187,13 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       if (field instanceof HTMLInputElement) field.focus()
       return
     }
+    if (couple && (!firstName2.trim() || !lastName2.trim())) {
+      toast.error('Bitte Vor- und Nachname der zweiten Person angeben.')
+      const field = document.getElementById(!firstName2.trim() ? 'sic-hero-first-2' : 'sic-hero-last-2')
+      document.getElementById('anlegen')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (field instanceof HTMLInputElement) field.focus()
+      return
+    }
     if (!EMAIL_RE.test(email.trim())) {
       toast.error('Bitte gib eine gültige E-Mail-Adresse an.')
       const field = document.getElementById('sic-hero-email')
@@ -201,6 +211,13 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           moduleIds,
           firstName: firstName.trim(),
           lastName: lastName.trim(),
+          ...(couple ?
+            {
+              householdKind: 'COUPLE',
+              firstName2: firstName2.trim(),
+              lastName2: lastName2.trim(),
+            }
+          : { householdKind: 'SINGLE' }),
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -331,7 +348,35 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     void checkout()
                   }}
                 >
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="flex rounded-xl border border-white/15 bg-white/5 p-1">
+                    <button
+                      type="button"
+                      aria-pressed={!couple}
+                      onClick={() => setCouple(false)}
+                      className={`min-h-10 flex-1 rounded-lg px-3 text-sm font-semibold ${
+                        couple ? 'text-white/70 hover:text-white' : 'bg-white text-sic-navy'
+                      }`}
+                    >
+                      Eine Person
+                    </button>
+                    <button
+                      type="button"
+                      aria-pressed={couple}
+                      onClick={() => setCouple(true)}
+                      className={`min-h-10 flex-1 rounded-lg px-3 text-sm font-semibold ${
+                        couple ? 'bg-white text-sic-navy' : 'text-white/70 hover:text-white'
+                      }`}
+                    >
+                      Zwei Personen
+                    </button>
+                  </div>
+                  {couple ?
+                    <p className="mt-2.5 text-xs leading-relaxed text-white/55">
+                      Ein Dokument, zwei Namen. Zwei Betreibungsauszüge und zwei Ausweise, Einkommen
+                      zusammengezählt, eine Vermieter-Referenz.
+                    </p>
+                  : null}
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <div>
                       <label htmlFor="sic-hero-first" className="block text-xs font-semibold text-white/75">
                         Vorname
@@ -363,6 +408,40 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                       />
                     </div>
                   </div>
+                  {couple ?
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label htmlFor="sic-hero-first-2" className="block text-xs font-semibold text-white/75">
+                          Vorname zweite Person
+                        </label>
+                        <input
+                          id="sic-hero-first-2"
+                          type="text"
+                          required={couple}
+                          value={firstName2}
+                          onChange={e => setFirstName2(e.target.value)}
+                          placeholder="Vorname"
+                          autoComplete="off"
+                          className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-base text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="sic-hero-last-2" className="block text-xs font-semibold text-white/75">
+                          Nachname zweite Person
+                        </label>
+                        <input
+                          id="sic-hero-last-2"
+                          type="text"
+                          required={couple}
+                          value={lastName2}
+                          onChange={e => setLastName2(e.target.value)}
+                          placeholder="Nachname"
+                          autoComplete="off"
+                          className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-base text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
+                        />
+                      </div>
+                    </div>
+                  : null}
                   <label htmlFor="sic-hero-email" className="mt-3.5 block text-xs font-semibold text-white/75">
                     E-Mail-Adresse
                   </label>

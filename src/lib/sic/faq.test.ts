@@ -22,5 +22,7 @@ describe('SIC FAQ copy', () => {
     expect(blob).toMatch(/E-Mail falsch geschrieben/)
     expect(blob).toMatch(/einmal ändern/)
     expect(blob).toMatch(/sieben Tage/)
+    expect(blob).toMatch(/zu zweit/)
+    expect(blob).toMatch(/ältere der beiden/)
   })
 })

@@ -137,6 +137,7 @@ const s = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     fontSize: 15,
     color: C.navy,
+    textAlign: 'center',
   },
   holderRule: { marginTop: 8 },
 

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
-import { joinHolderName } from '@/lib/sic/dossier'
+import { joinHouseholdHolderName } from '@/lib/sic/dossier'
+import { isSicCouple } from '@/lib/sic/household'
 import { recordSicEvent } from '@/lib/sic/events'
 import type { SicFacts } from '@/lib/sic/facts'
 import type { SicModuleId } from '@/lib/sic/modules'
@@ -43,6 +44,9 @@ export async function approveSicModule(opts: {
       status: true,
       holderFirstName: true,
       holderLastName: true,
+      holder2FirstName: true,
+      holder2LastName: true,
+      householdKind: true,
       certifiedAt: true,
       expiresAt: true,
     },
@@ -55,6 +59,7 @@ export async function approveSicModule(opts: {
   const nextExpiresAt = sicExpiresAtAfterApproval({
     moduleKind: opts.moduleKind,
     extractDate: opts.facts.extractDate,
+    extractDate2: opts.facts.extractDate2,
     currentExpiresAt: cert.expiresAt,
     approvedAt: now,
   })
@@ -107,7 +112,13 @@ export async function approveSicModule(opts: {
     meta: { firstVerification, verifiedCount: result.verifiedCount },
   })
 
-  const holderName = joinHolderName(cert.holderFirstName, cert.holderLastName)
+  const holderName = joinHouseholdHolderName({
+    firstName: cert.holderFirstName,
+    lastName: cert.holderLastName,
+    firstName2: cert.holder2FirstName,
+    lastName2: cert.holder2LastName,
+    couple: isSicCouple(cert.householdKind),
+  })
 
   return {
     certificateId: cert.id,

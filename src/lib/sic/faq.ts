@@ -44,6 +44,10 @@ export const SIC_FAQ: { q: string; a: string }[] = [
     a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob der Ausweis gültig ist. Sind alle vier geprüft, steht das in einheitlicher Form da. Was fehlt, ist nicht ausgewiesen.',
   },
   {
+    q: 'Geht das auch zu zweit?',
+    a: 'Ja. Dann stehen beide Namen auf dem Dokument. Jede Person reicht den eigenen Betreibungsauszug und Ausweis ein. Das Einkommen zählt zusammen für die 3×-Regel. Eine Vermieter-Referenz reicht in der Regel.',
+  },
+  {
     q: 'Was muss ich selbst besorgen?',
     a: 'Den Auszug vom Betreibungsamt, deinen Ausweis und deine Lohnabrechnung hast du selbst. Für Arbeitgeber und bisherigen Vermieter gibt es bei uns ein kurzes Formular zum Unterschreiben. Du kannst alles in deinem Tempo nachliefern.',
   },
@@ -73,7 +77,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Wie lange ist das Zertifikat gültig?',
-    a: `${SIC_VALIDITY_MONTHS} Monate — gerechnet ab dem Datum des Betreibungsauszugs, nicht ab der Zahlung. Andere geprüfte Angaben verlängern die Frist nicht. Fehlt der Auszug noch, gilt eine vorläufige Frist ab der ersten Freigabe, bis der Auszug geprüft ist.`,
+    a: `${SIC_VALIDITY_MONTHS} Monate — gerechnet ab dem Datum des Betreibungsauszugs, nicht ab der Zahlung. Bei zwei Personen gilt der ältere der beiden Auszüge. Andere geprüfte Angaben verlängern die Frist nicht. Fehlt der Auszug noch, gilt eine vorläufige Frist ab der ersten Freigabe, bis der Auszug geprüft ist.`,
   },
   {
     q: 'Und wenn es abgelaufen ist?',

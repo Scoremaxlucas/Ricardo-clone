@@ -120,6 +120,11 @@ export default function SicAgbPage() {
             {SIC_MODULES.length} Angaben geprüft»). Nicht aufgeführte Angaben gelten als nicht geprüft und nicht
             als negativ.
           </p>
+          <p className="mt-1.5">
+            Ein Zertifikat für zwei Personen nennt beide Erwachsenen. Jede Person braucht einen eigenen
+            Betreibungsauszug und Ausweis; das Einkommen zählt zusammen. Eine Vermieter-Referenz reicht in der
+            Regel. Die Gültigkeit hängt am älteren der beiden Auszüge.
+          </p>
         </section>
 
         <section>

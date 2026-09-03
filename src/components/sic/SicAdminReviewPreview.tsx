@@ -14,6 +14,7 @@ export function SicAdminReviewPreview({
   modules,
   draftModuleId,
   draftFacts,
+  couple,
 }: {
   certificateCode: string
   holderName: string | null
@@ -22,19 +23,26 @@ export function SicAdminReviewPreview({
   modules: { moduleKind: string; status: string; verifiedFacts: SicFacts | null }[]
   draftModuleId: SicModuleId
   draftFacts: SicFacts
+  couple?: boolean
 }) {
-  const previewModules = previewSicVerifiedModules(modules, {
-    moduleKind: draftModuleId,
-    facts: draftFacts,
-  })
+  const lineOpts = { couple: couple === true }
+  const previewModules = previewSicVerifiedModules(
+    modules,
+    {
+      moduleKind: draftModuleId,
+      facts: draftFacts,
+    },
+    lineOpts
+  )
   const issuedAt = certifiedAt ? new Date(certifiedAt) : new Date()
   const validUntil = sicExpiresAtAfterApproval({
     moduleKind: draftModuleId,
     extractDate: draftFacts.extractDate,
+    extractDate2: draftFacts.extractDate2,
     currentExpiresAt: expiresAt ? new Date(expiresAt) : null,
     approvedAt: new Date(),
   })
-  const parsed = normalizeSicFacts(draftModuleId, draftFacts)
+  const parsed = normalizeSicFacts(draftModuleId, draftFacts, { couple })
   const gaps =
     parsed.ok ? [] : [...parsed.missing.map(l => `${l} fehlt`), ...parsed.invalid.map(l => `${l} ist ungültig`)]
 

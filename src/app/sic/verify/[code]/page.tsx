@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isValidSicCertificateCode, normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
 import { SIC_BRAND_NAME } from '@/lib/sic/config'
-import { isSicLandlordPdfReady, joinHolderName, verifiedModuleLineItems } from '@/lib/sic/dossier'
+import { isSicLandlordPdfReady, joinHouseholdHolderName, sicFactLineOptsFromHolders, verifiedModuleLineItems } from '@/lib/sic/dossier'
+import { isSicCouple } from '@/lib/sic/household'
 import { recordSicVerifyScan } from '@/lib/sic/events'
 import { sicCompletenessLabel } from '@/lib/sic/modules'
 import { getSicSession } from '@/lib/sic/session-cookie'
@@ -57,7 +58,15 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
       })
     : null
 
-  const holderName = cert ? joinHolderName(cert.holderFirstName, cert.holderLastName) : null
+  const holderName = cert
+    ? joinHouseholdHolderName({
+        firstName: cert.holderFirstName,
+        lastName: cert.holderLastName,
+        firstName2: cert.holder2FirstName,
+        lastName2: cert.holder2LastName,
+        couple: isSicCouple(cert.householdKind),
+      })
+    : null
   const landlordReady =
     !!cert &&
     isSicLandlordPdfReady({
@@ -66,7 +75,19 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
       expiresAt: cert.expiresAt,
       modules: cert.modules,
     })
-  const verifiedModules = cert && landlordReady ? verifiedModuleLineItems(cert.modules) : []
+  const verifiedModules =
+    cert && landlordReady ?
+      verifiedModuleLineItems(
+        cert.modules,
+        sicFactLineOptsFromHolders({
+          couple: isSicCouple(cert.householdKind),
+          firstName: cert.holderFirstName,
+          lastName: cert.holderLastName,
+          firstName2: cert.holder2FirstName,
+          lastName2: cert.holder2LastName,
+        })
+      )
+    : []
 
   if (cert && landlordReady) {
     const session = getSicSession()

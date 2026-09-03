@@ -24,9 +24,17 @@ export type SicFactField = {
   placeholder?: string
   /** Woher der Prüfer den Wert nimmt. */
   hint?: string
+  /** Paar-Zertifikat: Person 1 oder 2 — steuert die Admin-Abschnitte. */
+  group?: 'person1' | 'person2'
 }
 
 export type SicFacts = Record<string, string>
+
+export type SicFactLineOpts = {
+  couple?: boolean
+  person1Label?: string | null
+  person2Label?: string | null
+}
 
 /** Bruttojahreslohn als Band. `lowerChf` trägt die Mietplafond-Berechnung. */
 export const SIC_INCOME_BANDS: readonly { value: string; label: string; lowerChf: number | null }[] = [
@@ -147,8 +155,105 @@ const FIELDS: Record<SicModuleId, SicFactField[]> = {
   ],
 }
 
-export function sicFactFields(moduleId: SicModuleId): SicFactField[] {
-  return FIELDS[moduleId]
+function extraCoupleFields(moduleId: SicModuleId): SicFactField[] {
+  if (moduleId === 'BONITAET') {
+    return [
+      {
+        key: 'extractDate2',
+        label: 'Person 2 — Datum des Auszugs',
+        kind: 'date',
+        required: true,
+        hint: 'Ausstellungsdatum auf dem zweiten Auszug',
+        group: 'person2',
+      },
+      {
+        key: 'office2',
+        label: 'Person 2 — Ausstellendes Betreibungsamt',
+        kind: 'text',
+        required: true,
+        placeholder: 'Betreibungsamt Bern',
+        group: 'person2',
+      },
+    ]
+  }
+  if (moduleId === 'ARBEIT_EINKOMMEN') {
+    return [
+      {
+        key: 'incomeBand2',
+        label: 'Person 2 — Bruttojahreslohn (Band)',
+        kind: 'select',
+        required: true,
+        options: SIC_INCOME_BANDS.map(b => ({ value: b.value, label: b.label })),
+        group: 'person2',
+      },
+      {
+        key: 'employmentType2',
+        label: 'Person 2 — Anstellungsart',
+        kind: 'select',
+        required: true,
+        options: [...EMPLOYMENT_TYPES],
+        group: 'person2',
+      },
+      {
+        key: 'employedSince2',
+        label: 'Person 2 — Anstellung seit',
+        kind: 'date',
+        required: true,
+        group: 'person2',
+      },
+      {
+        key: 'employerName2',
+        label: 'Person 2 — Arbeitgeber',
+        kind: 'text',
+        required: false,
+        placeholder: 'Muster AG',
+        group: 'person2',
+      },
+    ]
+  }
+  if (moduleId === 'AUFENTHALT') {
+    return [
+      {
+        key: 'documentType2',
+        label: 'Person 2 — Ausweisart',
+        kind: 'select',
+        required: true,
+        options: [...ID_DOCUMENT_TYPES],
+        group: 'person2',
+      },
+      {
+        key: 'validUntil2',
+        label: 'Person 2 — Gültig bis',
+        kind: 'date',
+        required: false,
+        hint: 'Leer lassen, wenn der Ausweis kein Ablaufdatum trägt',
+        group: 'person2',
+      },
+    ]
+  }
+  return []
+}
+
+function knownFactFields(moduleId: SicModuleId): SicFactField[] {
+  const byKey = new Map<string, SicFactField>()
+  for (const field of [...FIELDS[moduleId], ...extraCoupleFields(moduleId)]) {
+    byKey.set(field.key, field)
+  }
+  return [...byKey.values()]
+}
+
+export function sicFactFields(moduleId: SicModuleId, opts?: { couple?: boolean }): SicFactField[] {
+  if (!opts?.couple) return FIELDS[moduleId]
+  const extras = extraCoupleFields(moduleId)
+  if (extras.length === 0) return FIELDS[moduleId]
+  return [
+    ...FIELDS[moduleId].map(field => ({
+      ...field,
+      label: `Person 1 — ${field.label}`,
+      group: 'person1' as const,
+    })),
+    ...extras,
+  ]
 }
 
 function optionLabel(field: SicFactField, value: string): string {
@@ -161,14 +266,15 @@ function optionLabel(field: SicFactField, value: string): string {
  */
 export function normalizeSicFacts(
   moduleId: SicModuleId,
-  raw: unknown
+  raw: unknown,
+  opts?: { couple?: boolean }
 ): { ok: true; facts: SicFacts } | { ok: false; missing: string[]; invalid: string[] } {
   const input = (raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}) as Record<string, unknown>
   const facts: SicFacts = {}
   const missing: string[] = []
   const invalid: string[] = []
 
-  for (const field of sicFactFields(moduleId)) {
+  for (const field of sicFactFields(moduleId, opts)) {
     const value = typeof input[field.key] === 'string' ? (input[field.key] as string).trim() : ''
     if (!value) {
       if (field.required) missing.push(field.label)
@@ -194,7 +300,7 @@ export function readSicFacts(moduleId: SicModuleId, stored: unknown): SicFacts |
   if (!stored || typeof stored !== 'object') return null
   const input = stored as Record<string, unknown>
   const facts: SicFacts = {}
-  for (const field of sicFactFields(moduleId)) {
+  for (const field of knownFactFields(moduleId)) {
     const v = input[field.key]
     if (typeof v === 'string' && v.trim()) facts[field.key] = v.trim()
   }
@@ -211,9 +317,22 @@ export function formatSicAmountChf(amount: number): string {
  * Abgerundet auf 50 Franken.
  */
 export function sicRentCeilingChf(incomeBand: string | undefined): number | null {
-  const band = SIC_INCOME_BANDS.find(b => b.value === incomeBand)
-  if (!band?.lowerChf) return null
-  const monthly = band.lowerChf / 12 / 3
+  return sicRentCeilingFromIncomes(incomeBand)
+}
+
+/**
+ * 3×-Regel für eine oder zwei Personen: Summe der unteren Bandränder,
+ * nie optimistischer als die Nachweise. Abgerundet auf 50 Franken.
+ */
+export function sicRentCeilingFromIncomes(
+  band: string | undefined,
+  band2?: string | undefined
+): number | null {
+  const lowers = [band, band2]
+    .map(value => SIC_INCOME_BANDS.find(b => b.value === value)?.lowerChf)
+    .filter((n): n is number => typeof n === 'number')
+  if (lowers.length === 0) return null
+  const monthly = lowers.reduce((sum, n) => sum + n, 0) / 12 / 3
   return Math.floor(monthly / 50) * 50
 }
 
@@ -248,7 +367,40 @@ function tenancyDuration(from: string | undefined, to: string | undefined): stri
 }
 
 function fieldFor(moduleId: SicModuleId, key: string): SicFactField | undefined {
-  return sicFactFields(moduleId).find(f => f.key === key)
+  return knownFactFields(moduleId).find(f => f.key === key)
+}
+
+function withPerson(label: string | null | undefined, line: string): string {
+  const name = (label ?? '').trim()
+  return name ? `${name}: ${line}` : line
+}
+
+function employmentLines(
+  moduleId: SicModuleId,
+  facts: SicFacts,
+  keys: { band: string; type: string; since: string; employer: string },
+  personLabel?: string | null
+): string[] {
+  const lines: string[] = []
+  const bandField = fieldFor(moduleId, keys.band)
+  if (bandField && facts[keys.band]) {
+    lines.push(withPerson(personLabel, `Bruttojahreslohn ${optionLabel(bandField, facts[keys.band])}`))
+  }
+  const typeField = fieldFor(moduleId, keys.type)
+  const since = fmtMonthYear(facts[keys.since])
+  if (typeField && facts[keys.type]) {
+    const typeLabel = optionLabel(typeField, facts[keys.type])
+    lines.push(
+      withPerson(
+        personLabel,
+        since ? `${typeLabel} angestellt seit ${since}, ungekündigt` : `${typeLabel} angestellt, ungekündigt`
+      )
+    )
+  } else if (since) {
+    lines.push(withPerson(personLabel, `Angestellt seit ${since}, ungekündigt`))
+  }
+  if (facts[keys.employer]) lines.push(withPerson(personLabel, `Arbeitgeber: ${facts[keys.employer]}`))
+  return lines
 }
 
 /**
@@ -256,36 +408,72 @@ function fieldFor(moduleId: SicModuleId, key: string): SicFactField | undefined 
  * Leeres Ergebnis heisst: keine brauchbaren Werte erfasst — Aufrufer fällt
  * dann auf die generischen Zeilen aus `modules.ts` zurück.
  */
-export function sicFactLines(moduleId: SicModuleId, facts: SicFacts | null): string[] {
+export function sicFactLines(
+  moduleId: SicModuleId,
+  facts: SicFacts | null,
+  opts?: SicFactLineOpts
+): string[] {
   if (!facts) return []
   const lines: string[] = []
+  const couple = opts?.couple === true
+  const p1 = opts?.person1Label?.trim() || null
+  const p2 = opts?.person2Label?.trim() || null
 
   if (moduleId === 'BONITAET') {
     lines.push('Keine offenen Betreibungen')
     const date = fmtDate(facts.extractDate)
     const office = facts.office
-    if (date && office) lines.push(`Auszug vom ${date}, ${office}`)
-    else if (date) lines.push(`Auszug vom ${date}`)
-    else if (office) lines.push(`Auszug vom ${office}`)
+    let first = ''
+    if (date && office) first = `Auszug vom ${date}, ${office}`
+    else if (date) first = `Auszug vom ${date}`
+    else if (office) first = `Auszug vom ${office}`
+    if (first) lines.push(couple ? withPerson(p1, first) : first)
+    if (couple) {
+      const date2 = fmtDate(facts.extractDate2)
+      const office2 = facts.office2
+      let second = ''
+      if (date2 && office2) second = `Auszug vom ${date2}, ${office2}`
+      else if (date2) second = `Auszug vom ${date2}`
+      else if (office2) second = `Auszug vom ${office2}`
+      if (second) lines.push(withPerson(p2, second))
+    }
   }
 
   if (moduleId === 'ARBEIT_EINKOMMEN') {
-    const bandField = fieldFor(moduleId, 'incomeBand')
-    if (bandField && facts.incomeBand) {
-      lines.push(`Bruttojahreslohn ${optionLabel(bandField, facts.incomeBand)}`)
-    }
-    const typeField = fieldFor(moduleId, 'employmentType')
-    const since = fmtMonthYear(facts.employedSince)
-    if (typeField && facts.employmentType) {
-      const typeLabel = optionLabel(typeField, facts.employmentType)
-      lines.push(since ? `${typeLabel} angestellt seit ${since}, ungekündigt` : `${typeLabel} angestellt, ungekündigt`)
-    } else if (since) {
-      lines.push(`Angestellt seit ${since}, ungekündigt`)
-    }
-    if (facts.employerName) lines.push(`Arbeitgeber: ${facts.employerName}`)
-    const ceiling = sicRentCeilingChf(facts.incomeBand)
-    if (ceiling) {
-      lines.push(`Tragbar bis ${formatSicAmountChf(ceiling)} Monatsmiete (3×-Regel)`)
+    if (couple) {
+      lines.push(
+        ...employmentLines(
+          moduleId,
+          facts,
+          { band: 'incomeBand', type: 'employmentType', since: 'employedSince', employer: 'employerName' },
+          p1
+        )
+      )
+      lines.push(
+        ...employmentLines(
+          moduleId,
+          facts,
+          { band: 'incomeBand2', type: 'employmentType2', since: 'employedSince2', employer: 'employerName2' },
+          p2
+        )
+      )
+      const ceiling = sicRentCeilingFromIncomes(facts.incomeBand, facts.incomeBand2)
+      if (ceiling) {
+        lines.push(`Tragbar bis ${formatSicAmountChf(ceiling)} Monatsmiete (3×-Regel, beide Einkommen)`)
+      }
+    } else {
+      lines.push(
+        ...employmentLines(moduleId, facts, {
+          band: 'incomeBand',
+          type: 'employmentType',
+          since: 'employedSince',
+          employer: 'employerName',
+        })
+      )
+      const ceiling = sicRentCeilingChf(facts.incomeBand)
+      if (ceiling) {
+        lines.push(`Tragbar bis ${formatSicAmountChf(ceiling)} Monatsmiete (3×-Regel)`)
+      }
     }
   }
 
@@ -301,7 +489,9 @@ export function sicFactLines(moduleId: SicModuleId, facts: SicFacts | null): str
     if (behaviourField && facts.paymentBehaviour) {
       lines.push(`Miete ${optionLabel(behaviourField, facts.paymentBehaviour).toLowerCase()} bezahlt`)
     }
-    lines.push('Referenz des bisherigen Vermieters liegt vor')
+    lines.push(
+      couple ? 'Referenz des bisherigen Vermieters liegt vor (Haushalt)' : 'Referenz des bisherigen Vermieters liegt vor'
+    )
   }
 
   if (moduleId === 'AUFENTHALT') {
@@ -309,9 +499,21 @@ export function sicFactLines(moduleId: SicModuleId, facts: SicFacts | null): str
     const until = fmtMonthYear(facts.validUntil)
     if (typeField && facts.documentType) {
       const label = optionLabel(typeField, facts.documentType)
-      lines.push(until ? `${label}, gültig bis ${until}` : label)
+      const line = until ? `${label}, gültig bis ${until}` : label
+      lines.push(couple ? withPerson(p1, line) : line)
     } else if (until) {
-      lines.push(`Amtlicher Ausweis, gültig bis ${until}`)
+      lines.push(couple ? withPerson(p1, `Amtlicher Ausweis, gültig bis ${until}`) : `Amtlicher Ausweis, gültig bis ${until}`)
+    }
+    if (couple) {
+      const typeField2 = fieldFor(moduleId, 'documentType2')
+      const until2 = fmtMonthYear(facts.validUntil2)
+      if (typeField2 && facts.documentType2) {
+        const label = optionLabel(typeField2, facts.documentType2)
+        const line = until2 ? `${label}, gültig bis ${until2}` : label
+        lines.push(withPerson(p2, line))
+      } else if (until2) {
+        lines.push(withPerson(p2, `Amtlicher Ausweis, gültig bis ${until2}`))
+      }
     }
   }
 
@@ -320,10 +522,15 @@ export function sicFactLines(moduleId: SicModuleId, facts: SicFacts | null): str
 
 /** Ist der Ausweis abgelaufen? Steuert, ob eine Verlängerung ihn zurücksetzt. */
 export function isSicIdDocumentExpired(facts: SicFacts | null, now = new Date()): boolean {
-  if (!facts?.validUntil) return false
-  const d = new Date(facts.validUntil)
-  if (Number.isNaN(d.getTime())) return false
-  return d.getTime() <= now.getTime()
+  if (!facts) return false
+  for (const key of ['validUntil', 'validUntil2'] as const) {
+    const raw = facts[key]
+    if (!raw) continue
+    const d = new Date(raw)
+    if (Number.isNaN(d.getTime())) continue
+    if (d.getTime() <= now.getTime()) return true
+  }
+  return false
 }
 
 /** Kurzform für die Prüfoberfläche: «Betreibungsauszug — 2 Werte erfasst». */
