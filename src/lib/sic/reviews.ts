@@ -22,7 +22,7 @@ export type SicUseCase = {
 export const SIC_USE_CASES: readonly SicUseCase[] = [
   {
     title: 'Geprüft statt Selbstauskunft',
-    body: 'Der Vermieter sieht bestätigte Angaben, nicht ungeprüfte Unterlagen. Das ist eine Grundlage für die Auswahl — nicht nur ein weiterer Anhang.',
+    body: 'Der Vermieter sieht plausibel geprüfte Angaben in einheitlicher Form, nicht ungeprüfte Unterlagen. Nachvollziehbar per QR — keine behördliche Auskunft.',
   },
   {
     title: 'Nicht jeder legt das vor',

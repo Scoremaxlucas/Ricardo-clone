@@ -65,7 +65,7 @@ export const SIC_CERT_TAGLINE = 'Geprüft. Standardisiert. Prüfbar.'
  * Zertifikat-PDF darf «Vertrauenswürdig» nicht tragen (AGB: keine Empfehlung).
  */
 export const SIC_META_DESCRIPTION =
-  'Swiss Immo Cert — das geprüfte Schweizer Mieter-Zertifikat. Angaben, auf die sich der Vermieter bei der Auswahl stützen kann. Kein Abo.'
+  'Swiss Immo Cert — das geprüfte Schweizer Mieter-Zertifikat. Angaben, plausibel geprüft, standardisiert und per QR nachvollziehbar. Keine behördliche Auskunft. Kein Abo.'
 
 /**
  * Hero-Hintergrund. Bis ein eigenes Wohnungsfoto liegt, nutzen wir die

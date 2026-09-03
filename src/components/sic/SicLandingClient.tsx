@@ -74,7 +74,7 @@ const HOW_STEPS: { icon: LucideIcon; title: string; note: string }[] = [
 ]
 
 const TODAY_SCENES = [
-  'Eignung allein reicht nicht. Ungeprüfte Angaben geben dem Vermieter keine Grundlage, dich vorzuziehen.',
+  'Eignung allein reicht nicht. Ungeprüfte Angaben bleiben Selbstauskunft.',
   'Lohn, Betreibung und Referenz sind bei den meisten Bewerbern Selbstauskunft. Ohne Prüfung bleibt die Unsicherheit bei ihm.',
 ]
 
@@ -319,9 +319,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   <span className="text-sic-gold-light">Nicht nur zur Kenntnis nimmt.</span>
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-                  Ohne Prüfung bleibt jede Bewerbung Selbstauskunft. Swiss Immo Cert bestätigt die Angaben,
-                  auf die sich der Vermieter bei der Auswahl stützt — nachvollziehbar, und nur für Bewerber,
-                  die sich ausweisen können.
+                  Ohne Prüfung bleibt jede Bewerbung Selbstauskunft. Swiss Immo Cert prüft Angaben auf
+                  Vollständigkeit und Plausibilität — standardisiert und per QR nachvollziehbar. Keine
+                  behördliche Auskunft.
                 </p>
                 <form
                   id="anlegen"
@@ -436,7 +436,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 Herkömmliche Bewerbung und SIC
               </p>
               <h2 className="mt-3 text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
-                Der Vermieter braucht eine Grundlage — nicht weitere Anhänge.
+                Geprüft und einheitlich — nicht weitere Anhänge.
               </h2>
               <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
                 Bei einer herkömmlichen Bewerbung muss er den Angaben Glauben schenken. Ein Zertifikat weist
@@ -463,7 +463,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     ))}
                   </ul>
                   <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                    Selbstauskunft. Keine geprüfte Grundlage für die Auswahl.
+                    Selbstauskunft. Ungeprüft und nicht standardisiert.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-sic-gold/40 bg-sic-paper p-5 ring-1 ring-sic-gold/20">

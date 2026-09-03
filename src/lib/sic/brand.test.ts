@@ -28,7 +28,9 @@ describe('SIC_CERT_TAGLINE', () => {
 describe('SIC_META_DESCRIPTION', () => {
   it('names the certificate and the landlord decision, not unread applications', () => {
     expect(SIC_META_DESCRIPTION).toMatch(/Mieter-Zertifikat/)
-    expect(SIC_META_DESCRIPTION).toMatch(/stützen/)
+    expect(SIC_META_DESCRIPTION).toMatch(/plausibel geprüft/)
+    expect(SIC_META_DESCRIPTION).toMatch(/keine behördliche Auskunft/i)
+    expect(SIC_META_DESCRIPTION).not.toMatch(/stützen/)
     expect(SIC_META_DESCRIPTION).not.toMatch(/ungelesen|gelesen|Risiko/)
   })
 })

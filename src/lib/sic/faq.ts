@@ -29,7 +29,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Haben das nicht alle Bewerber?',
-    a: 'Nein. Nicht jeder legt geprüfte Angaben vor. Das Zertifikat weist aus, was bestätigt ist — und bleibt damit ein Unterscheidungsmerkmal.',
+    a: 'Nein. Nicht jeder legt geprüfte Angaben vor. Das Zertifikat weist aus, was geprüft ist — und bleibt damit ein Unterscheidungsmerkmal.',
   },
   {
     q: 'Was kostet es?',
@@ -41,7 +41,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: `Warum genau diese ${SIC_MODULES.length} Angaben?`,
-    a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob der Ausweis gültig ist. Sind alle vier geprüft, hat er eine vollständige Grundlage. Was fehlt, ist nicht ausgewiesen.',
+    a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob der Ausweis gültig ist. Sind alle vier geprüft, steht das in einheitlicher Form da. Was fehlt, ist nicht ausgewiesen.',
   },
   {
     q: 'Was muss ich selbst besorgen?',
@@ -57,7 +57,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was heisst «geprüft»?',
-    a: 'Wir schauen deine Unterlagen an: sind sie echt aussehend, vollständig, aktuell und plausibel? Danach übertragen wir die Angaben in standardisierter Form auf das Zertifikat. Der Vermieter kann sich auf das stützen, was als geprüft ausgewiesen ist. Wir rufen niemanden an — weder deinen Arbeitgeber noch deinen Vermieter.',
+    a: 'Wir schauen deine Unterlagen an: sind sie echt aussehend, vollständig, aktuell und plausibel? Danach stehen die Angaben in einheitlicher Form auf dem Zertifikat. Das ist keine behördliche Auskunft und keine Bonitätsbewertung. Wir rufen niemanden an — weder deinen Arbeitgeber noch deinen Vermieter.',
   },
   {
     q: 'Was, wenn eine Angabe nicht passt?',
