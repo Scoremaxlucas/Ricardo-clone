@@ -20,4 +20,12 @@ describe('SIC social proof', () => {
       expect(s.title.length).toBeGreaterThan(8)
     }
   })
+
+  it('positions seriousness and exclusivity, not merely being read', () => {
+    const blob = SIC_USE_CASES.map(i => `${i.title} ${i.body}`).join(' ')
+    expect(blob).toMatch(/Ernst genommen/)
+    expect(blob).toMatch(/stützen/)
+    expect(blob).toMatch(/seriösen Bewerber/)
+    expect(blob).not.toMatch(/überblättert|ungelesen|fünf Dateien/)
+  })
 })

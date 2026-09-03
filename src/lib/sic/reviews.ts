@@ -21,12 +21,12 @@ export type SicUseCase = {
 
 export const SIC_USE_CASES: readonly SicUseCase[] = [
   {
-    title: 'Gelesen statt überblättert',
-    body: 'Du bewirbst dich wie alle anderen. Der Unterschied: der Vermieter sieht ein geprüftes Blatt statt fünf Dateien, die er nicht öffnet.',
+    title: 'Ernst genommen statt übergangen',
+    body: 'Der Vermieter kann sich auf geprüfte Angaben stützen — nicht auf Selbstauskunft. Du bist nicht mehr dieselbe Wette wie jeder andere Ordner.',
   },
   {
-    title: 'Ohne dich erklären zu müssen',
-    body: 'Betreibung, Lohn, Ausweis und Referenz stehen auf einer Seite. Du hängst nicht hinterher, weil der Vermieter erst nachfragen muss.',
+    title: 'Nur wer sich prüfen lässt',
+    body: 'Betreibung, Lohn, Ausweis, Referenz: den Aufwand nimmt nicht jeder auf sich. Das Zertifikat haben die seriösen Bewerber. Genau deshalb zählt es.',
   },
   {
     title: 'Nicht warten auf die letzte Unterschrift',

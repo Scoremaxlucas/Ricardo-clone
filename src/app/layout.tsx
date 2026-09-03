@@ -4,6 +4,7 @@ import { DeferredComponents } from '@/components/DeferredComponents'
 import { SkipLinks } from '@/components/accessibility/SkipLinks'
 import { Providers } from '@/components/providers'
 import { isSicSiteHostFromHeaders } from '@/lib/tenant-host'
+import { SIC_META_DESCRIPTION } from '@/lib/sic/brand'
 import { SIC_SITE_ORIGIN } from '@/lib/sic/config'
 import { BASE_URL } from '@/lib/seo'
 import { headers } from 'next/headers'
@@ -49,8 +50,7 @@ export async function generateMetadata(): Promise<Metadata> {
         default: 'Swiss Immo Cert — Das geprüfte Schweizer Mieter-Zertifikat',
         template: '%s | Swiss Immo Cert',
       },
-      description:
-        'Wohnungssuche Schweiz: Bewerbungen bleiben oft ungelesen. Swiss Immo Cert ist das geprüfte Mieter-Zertifikat — eine Seite, per QR prüfbar. Damit der Vermieter dich sieht. Kein Abo.',
+      description: SIC_META_DESCRIPTION,
       keywords: [
         'Mieter-Zertifikat Schweiz',
         'Betreibungsauszug Mieter',

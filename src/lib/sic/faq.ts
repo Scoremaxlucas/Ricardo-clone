@@ -24,7 +24,11 @@ const PRICE_ANSWER =
 export const SIC_FAQ: { q: string; a: string }[] = [
   {
     q: 'Bekomme ich damit eher die Wohnung?',
-    a: 'Das entscheidet der Vermieter — eine Zusage versprechen wir nicht. Was wir ändern: deine Bewerbung ist auf einen Blick lesbar, statt fünf Anhänge, die oft niemand öffnet. Genau daran scheitern die meisten, die eigentlich geeignet wären.',
+    a: 'Das entscheidet der Vermieter — eine Zusage versprechen wir nicht. Was wir ändern: er sieht geprüfte Angaben, auf die er sich stützen kann, statt Selbstauskunft wie bei den anderen. Wer den Prüfaufwand auf sich nimmt, sticht heraus. Genau daran scheitern die meisten, die eigentlich geeignet wären.',
+  },
+  {
+    q: 'Haben das nicht alle Bewerber?',
+    a: 'Nein. Die Prüfung kostet Zeit und Unterlagen — den Aufwand nimmt nicht jeder auf sich. Genau deshalb ist das Zertifikat ein Signal: du gehörst zu denen, die sich ernsthaft ausweisen. Für den Vermieter sinkt das Risiko; für dich steigt die Chance, ernst genommen zu werden.',
   },
   {
     q: 'Was kostet es?',
@@ -32,7 +36,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: `Warum genau diese ${SIC_MODULES.length} Angaben?`,
-    a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob dein Ausweis gültig ist. Sind alle drin, muss der Vermieter nicht nachfragen.',
+    a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob dein Ausweis gültig ist. Ungeprüft bleibt das Risiko bei ihm. Sind alle vier geprüft, hat er eine Grundlage für die Entscheidung.',
   },
   {
     q: 'Was muss ich selbst besorgen?',
@@ -48,7 +52,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was heisst «geprüft»?',
-    a: 'Wir schauen deine Unterlagen an: sind sie echt aussehend, vollständig, aktuell und plausibel? Danach übertragen wir die Angaben in standardisierter Form auf das Zertifikat. Wir rufen niemanden an — weder deinen Arbeitgeber noch deinen Vermieter.',
+    a: 'Wir schauen deine Unterlagen an: sind sie echt aussehend, vollständig, aktuell und plausibel? Danach übertragen wir die Angaben in standardisierter Form auf das Zertifikat. Der Vermieter kann sich auf das stützen, was als geprüft ausgewiesen ist. Wir rufen niemanden an — weder deinen Arbeitgeber noch deinen Vermieter.',
   },
   {
     q: 'Was, wenn eine Angabe nicht passt?',

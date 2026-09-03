@@ -1,5 +1,6 @@
 import { SicHeaderCta } from '@/components/sic/SicHeaderCta'
 import { SicLogo } from '@/components/sic/SicLogo'
+import { SIC_META_DESCRIPTION, SIC_TAGLINE } from '@/lib/sic/brand'
 import { SIC_BASE_PATH, SIC_BRAND_NAME, sicPaths } from '@/lib/sic/config'
 import { getSicLandingAccount } from '@/lib/sic/landing-account'
 import { SIC_MODULES } from '@/lib/sic/modules'
@@ -19,8 +20,7 @@ const sicSerif = Source_Serif_4({
 // Titel/Marke werden im Root-Layout (host-abhängig) gesetzt; hier NICHT erneut
 // definieren, sonst wird die Marke im <title> doppelt angehängt.
 export const metadata: Metadata = {
-  description:
-    'Wohnungssuche Schweiz: Bewerbungen bleiben oft ungelesen. Swiss Immo Cert ist das geprüfte Mieter-Zertifikat — eine Seite, per QR prüfbar. Damit der Vermieter dich sieht. Kein Abo.',
+  description: SIC_META_DESCRIPTION,
   robots: { index: true, follow: true },
 }
 
@@ -52,8 +52,8 @@ export default async function SicLayout({ children }: { children: React.ReactNod
           <div>
             <SicLogo size={30} onDark />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
-              Das geprüfte Schweizer Mieter-Zertifikat. Damit deine Bewerbung gelesen wird. Keine
-              Wohnungszusage — ein Blatt, das der Vermieter nicht überblättert.
+              {SIC_TAGLINE}. Angaben, auf die sich der Vermieter stützen kann. Keine
+              Wohnungszusage — ein Nachweis, den nur seriöse Bewerber haben.
             </p>
           </div>
           <nav className="flex flex-col gap-2.5 text-sm">

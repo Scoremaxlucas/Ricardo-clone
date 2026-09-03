@@ -61,6 +61,13 @@ export const SIC_TAGLINE = 'Das geprüfte Schweizer Mieter-Zertifikat'
 export const SIC_CERT_TAGLINE = 'Geprüft. Standardisiert. Prüfbar.'
 
 /**
+ * SEO/Meta — Vertrauen und Ernsthaftigkeit, nicht «gelesen werden».
+ * Zertifikat-PDF darf «Vertrauenswürdig» nicht tragen (AGB: keine Empfehlung).
+ */
+export const SIC_META_DESCRIPTION =
+  'Wohnungssuche Schweiz: Ungeprüfte Bewerber bleiben Risiko. Swiss Immo Cert prüft deine Angaben — der Vermieter kann sich darauf stützen. Nur seriöse Bewerber. Kein Abo.'
+
+/**
  * Hero-Hintergrund. Bis ein eigenes Wohnungsfoto liegt, nutzen wir die
  * vorhandene Alpen-Aufnahme — warm und schweizerisch, ohne Stock-Handschlag.
  * Eigenes Motiv: `public/sic/hero-wohnung.jpg` und diesen Pfad umstellen.

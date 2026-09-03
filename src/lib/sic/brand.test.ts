@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SIC_CERT_TAGLINE, SIC_COLORS, SIC_HOUSE_MARK, sicLogoMarkHouseStroke } from '@/lib/sic/brand'
+import { SIC_CERT_TAGLINE, SIC_COLORS, SIC_HOUSE_MARK, SIC_META_DESCRIPTION, sicLogoMarkHouseStroke } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_ISSUER_LINE, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
 import { SIC_MODULE_BADGE } from '@/lib/sic/modules'
 
@@ -22,6 +22,14 @@ describe('SIC_CERT_TAGLINE', () => {
   it('stays within what the AGB can defend', () => {
     expect(SIC_CERT_TAGLINE).toBe('Geprüft. Standardisiert. Prüfbar.')
     expect(SIC_CERT_TAGLINE).not.toMatch(/Vertrauenswürdig/)
+  })
+})
+
+describe('SIC_META_DESCRIPTION', () => {
+  it('positions trust and seriousness, not unread applications', () => {
+    expect(SIC_META_DESCRIPTION).toMatch(/Risiko/)
+    expect(SIC_META_DESCRIPTION).toMatch(/stützen/)
+    expect(SIC_META_DESCRIPTION).not.toMatch(/ungelesen|gelesen/)
   })
 })
 

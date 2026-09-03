@@ -284,7 +284,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           <p className="mt-1 break-all text-sm text-slate-500">{dossier.email}</p>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
             {verifiedCount > 0 ?
-              'Dein Zertifikat ist da. Leg das PDF der nächsten Bewerbung bei — der Vermieter sieht auf einen Blick, was geprüft ist. Jede weitere Angabe kommt automatisch dazu und verlängert die Gültigkeit.'
+              'Dein Zertifikat ist da. Leg das PDF der nächsten Bewerbung bei — der Vermieter sieht geprüfte Angaben, auf die er sich stützen kann. Jede weitere Angabe kommt automatisch dazu und verlängert die Gültigkeit.'
             : `Sobald die erste Angabe geprüft ist, kannst du das PDF herunterladen und der Bewerbung beilegen — und erst dann starten die ${dossier.validityMonths} Monate Gültigkeit. Wartezeit kostet dich keinen Tag.`
             }
           </p>
