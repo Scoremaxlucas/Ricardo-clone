@@ -619,13 +619,13 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               <SicLogoMark size={26} />
             </div>
             <h2 className="mt-3 font-sic-serif text-3xl font-bold tracking-tight text-sic-navy sm:text-4xl">
-              {isReturning ? 'Zertifikat erweitern' : 'Das kommt aufs Zertifikat'}
+              {isReturning ? 'Angaben ergänzen' : 'Das kommt aufs Zertifikat'}
             </h2>
             <p className="mx-auto mt-2 max-w-xl text-slate-500">
               {isReturning ?
                 nothingToBuy ?
                   'Alle vier Angaben sind bereits Teil deines Zertifikats.'
-                : 'Fehlende Angaben ergänzt du unter Mein Zertifikat — nicht hier als Baukasten.'
+                : 'Fehlende Angaben ergänzt du unter Mein Zertifikat.'
               : 'Vier Angaben, die Vermieter für die Auswahl brauchen. Du legst sie zusammen an.'}
             </p>
           </div>
@@ -693,7 +693,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 {SIC_MODULES.filter(m => owned.has(m.id) && !verifiedModules.has(m.id)).length > 0 ? (
                   <>
                     <div className="mt-5 border-t border-slate-200 pt-5 sm:mt-6 sm:pt-6">
-                      <p className="text-[13px] font-semibold text-sic-navy sm:text-sm">Gekauft, noch nicht geprüft</p>
+                      <p className="text-[13px] font-semibold text-sic-navy sm:text-sm">
+                        Bereits gekauft — noch nicht „GEPRÜFT“
+                      </p>
                     </div>
                     <div className="mt-4 space-y-2">
                       {SIC_MODULES.filter(m => owned.has(m.id) && !verifiedModules.has(m.id)).map(m => {
