@@ -14,6 +14,7 @@ import {
   SIC_VALIDITY_MONTHS,
   sicCompletenessLabel,
   sicIsFree,
+  sicSealRequirementLabel,
   type SicModuleId,
 } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
@@ -656,6 +657,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     )
                   })}
                 </div>
+                <p className="mt-4 text-xs leading-relaxed text-slate-500">
+                  Das Siegel gibt es, sobald {sicSealRequirementLabel()} geprüft sind.
+                </p>
               </div>
             :
               <div className="col-span-full rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
@@ -744,6 +748,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     </div>
                   </>
                 ) : null}
+                <p className="mt-5 text-xs leading-relaxed text-slate-500">
+                  Für das Mieter-Zertifikat ist das Siegel entscheidend — es gibt es, sobald {sicSealRequirementLabel()} geprüft sind.
+                </p>
               </div>
             }
           </div>
