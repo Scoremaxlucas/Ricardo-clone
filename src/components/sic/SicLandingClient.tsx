@@ -640,7 +640,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     const accent = SIC_MODULE_ACCENT[m.id]
                     const Icon = MODULE_ICON[m.id]
                     return (
-                      <div key={m.id} className="flex items-start gap-3 rounded-2xl px-3 py-3 hover:bg-slate-50">
+                      <div key={m.id} className="flex items-start gap-3 rounded-2xl px-3 py-3 sm:hover:bg-slate-50">
                         <span
                           className="mt-0.5 grid h-11 w-11 flex-shrink-0 place-items-center rounded-full text-white"
                           style={{ backgroundColor: accent.hex }}
@@ -690,7 +690,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
 
                 {SIC_MODULES.filter(m => owned.has(m.id) && !verifiedModules.has(m.id)).length > 0 ? (
                   <>
-                    <div className="mt-6 border-t border-slate-200 pt-6">
+                    <div className="mt-5 border-t border-slate-200 pt-5 sm:mt-6 sm:pt-6">
                       <p className="text-sm font-semibold text-sic-navy">Gekauft, noch nicht geprüft</p>
                     </div>
                     <div className="mt-4 space-y-2">
@@ -698,7 +698,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                         const accent = SIC_MODULE_ACCENT[m.id]
                         const Icon = MODULE_ICON[m.id]
                         return (
-                          <div key={m.id} className="flex items-start gap-3 rounded-2xl px-3 py-3 bg-slate-50">
+                          <div key={m.id} className="flex items-start gap-3 rounded-2xl px-3 py-3 bg-slate-50/70">
                             <span
                               className="mt-0.5 grid h-11 w-11 flex-shrink-0 place-items-center rounded-full text-white"
                               style={{ backgroundColor: accent.hex }}
@@ -718,7 +718,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
 
                 {availableModules.length ? (
                   <>
-                    <div className="mt-6 border-t border-slate-200 pt-6">
+                    <div className="mt-5 border-t border-slate-200 pt-5 sm:mt-6 sm:pt-6">
                       <p className="text-sm font-semibold text-sic-navy">Noch offen</p>
                     </div>
                     <div className="mt-4 space-y-2">
@@ -748,7 +748,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     </div>
                   </>
                 ) : null}
-                <p className="mt-5 text-xs leading-relaxed text-slate-500">
+                <p className="mt-4 text-xs leading-relaxed text-slate-500 sm:mt-5">
                   Für das Mieter-Zertifikat ist das Siegel entscheidend — es gibt es, sobald {sicSealRequirementLabel()} geprüft sind.
                 </p>
               </div>
