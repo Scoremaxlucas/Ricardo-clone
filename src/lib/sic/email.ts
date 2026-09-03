@@ -3,6 +3,8 @@ import { SIC_COLORS } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL, sicFromAddress, sicPaths, sicUrl } from '@/lib/sic/config'
 import {
   sicCertificateReadyCopy,
+  sicEmailChangeConfirmCopy,
+  sicEmailChangeNoticeCopy,
   sicMagicLinkEmailCopy,
   sicUploadReminderCopy,
   type SicMagicLinkMailSource,
@@ -88,7 +90,7 @@ export async function sendSicMagicLinkEmail(
     bodyHtml: copy.paragraphs
       .map((p, i) => `<p style="margin:${i === 0 ? '0 0 12px' : '0'};">${p}</p>`)
       .join(''),
-    buttonText: 'Anmeldeseite öffnen',
+    buttonText: copy.buttonText,
     buttonUrl: url,
     footnoteHtml: copy.footnote,
   })
@@ -290,6 +292,44 @@ export async function sendSicUploadReminderEmail(opts: {
       buttonUrl,
     }),
     text: `${copy.paragraphs.join('\n\n')}\n\n${buttonUrl}`,
+  })
+}
+
+export async function sendSicEmailChangeConfirmEmail(email: string, url: string) {
+  const copy = sicEmailChangeConfirmCopy()
+  const html = sicEmailShell({
+    preheader: copy.preheader,
+    heading: copy.heading,
+    bodyHtml: copy.paragraphs
+      .map((p, i) => `<p style="margin:${i === 0 ? '0 0 12px' : '0'};">${p}</p>`)
+      .join(''),
+    buttonText: copy.buttonText,
+    buttonUrl: url,
+    footnoteHtml: copy.footnote,
+  })
+  return sicMail({
+    to: email,
+    subject: copy.subject,
+    html,
+    text: `${copy.heading}\n\n${copy.paragraphs.join('\n\n')}\n\n${url}\n\n${copy.footnote}`,
+  })
+}
+
+export async function sendSicEmailChangeNoticeEmail(oldEmail: string, newEmail: string) {
+  const copy = sicEmailChangeNoticeCopy(newEmail)
+  const html = sicEmailShell({
+    preheader: copy.preheader,
+    heading: copy.heading,
+    bodyHtml: copy.paragraphs
+      .map((p, i) => `<p style="margin:${i === 0 ? '0 0 12px' : '0'};">${escapeHtml(p)}</p>`)
+      .join(''),
+    footnoteHtml: copy.footnote,
+  })
+  return sicMail({
+    to: oldEmail,
+    subject: copy.subject,
+    html,
+    text: `${copy.heading}\n\n${copy.paragraphs.join('\n\n')}\n\n${copy.footnote}`,
   })
 }
 

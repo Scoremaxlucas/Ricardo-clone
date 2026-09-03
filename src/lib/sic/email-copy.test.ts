@@ -1,4 +1,4 @@
-import { sicCertificateReadyCopy, sicMagicLinkEmailCopy, sicStandsOnDocLine, sicUploadReminderCopy } from '@/lib/sic/email-copy'
+import { sicCertificateReadyCopy, sicEmailChangeConfirmCopy, sicEmailChangeNoticeCopy, sicMagicLinkEmailCopy, sicStandsOnDocLine, sicUploadReminderCopy } from '@/lib/sic/email-copy'
 import { SIC_MODULES } from '@/lib/sic/modules'
 import {
   SIC_UPLOAD_NUDGE_SELF_DAYS,
@@ -112,5 +112,36 @@ describe('magic link copy', () => {
     expect(copy.heading).toBe('Dein Anmeldelink')
     expect(copy.paragraphs.join(' ')).toMatch(/Zertifikat/)
     expect(copy.footnote).not.toMatch(/nicht angefordert/)
+    expect(copy.buttonText).toBe('Anmeldeseite öffnen')
+  })
+
+  it('tells a paying customer the link opens the certificate', () => {
+    const copy = sicMagicLinkEmailCopy('checkout')
+    expect(copy.subject).toBe('Dieser Link öffnet dein Zertifikat')
+    expect(copy.paragraphs[0]).toMatch(/^Dieser Link öffnet dein Zertifikat/)
+    expect(copy.paragraphs.join(' ')).toMatch(/sieben Tage/)
+    expect(copy.paragraphs.join(' ')).toMatch(/Anmelden/)
+    expect(copy.buttonText).toBe('Zertifikat öffnen')
+    expect(`${copy.subject} ${copy.paragraphs.join(' ')}`).not.toMatch(/stützen/)
+  })
+})
+
+describe('email change copy', () => {
+  it('asks the new inbox to confirm with a button, not a GET consume', () => {
+    const copy = sicEmailChangeConfirmCopy()
+    expect(copy.paragraphs.join(' ')).toMatch(/Bestätigen/)
+    expect(copy.paragraphs.join(' ')).toMatch(/30 Minuten/)
+    expect(copy.paragraphs.join(' ')).toMatch(/Mailprogramm/)
+    expect(copy.footnote).toMatch(/Bestätigen/)
+    expect(copy.buttonText).toMatch(/Bestätigung/)
+    expect(`${copy.subject} ${copy.paragraphs.join(' ')}`).not.toMatch(/stützen/)
+  })
+
+  it('notifies the old address without a confirm link', () => {
+    const copy = sicEmailChangeNoticeCopy('neu@example.ch')
+    expect(copy.paragraphs.join(' ')).toContain('neu@example.ch')
+    expect(copy.paragraphs.join(' ')).toMatch(/erst, wenn diese Adresse bestätigt/i)
+    expect(copy.subject).toMatch(/angefordert/)
+    expect(`${copy.subject} ${copy.paragraphs.join(' ')}`).not.toMatch(/stützen/)
   })
 })

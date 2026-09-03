@@ -89,6 +89,10 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Brauche ich ein Passwort?',
-    a: 'Nein. Du gibst deine E-Mail an und bekommst einen Anmeldelink. Auf der Seite tippst du auf «Anmelden» — erst dann wirst du eingeloggt. Wenn der Link abgelaufen ist, forderst du einfach einen neuen an.',
+    a: 'Nein. Du gibst deine E-Mail an und bekommst einen Anmeldelink. Auf der Seite tippst du auf «Anmelden» — erst dann wirst du eingeloggt. Nach der Zahlung bleibst du auf dem Gerät sieben Tage angemeldet. Wenn der Link abgelaufen ist, forderst du einfach einen neuen an.',
+  },
+  {
+    q: 'Was, wenn ich die E-Mail falsch geschrieben habe?',
+    a: 'Unter «Mein Zertifikat» kannst du sie einmal ändern. Wir schreiben an die neue Adresse — dort tippst du auf «Bestätigen». An die bisherige Adresse geht eine Mitteilung. Danach bleibt die neue Adresse dein Zugang.',
   },
 ]

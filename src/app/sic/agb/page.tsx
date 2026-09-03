@@ -139,6 +139,11 @@ export default function SicAgbPage() {
             Unterlagen widerrufen wir das Zertifikat ohne Rückerstattung; die QR-Prüfseite weist es danach als
             widerrufen aus. Für die Richtigkeit der Angaben in deinen Unterlagen bist du verantwortlich.
           </p>
+          <p className="mt-1.5">
+            Die E-Mail-Adresse ist dein Zugang. Ein Tippfehler lässt sich einmal unter «Mein Zertifikat»
+            korrigieren; die neue Adresse musst du in dem Postfach bestätigen. Danach ist eine weitere Änderung
+            nicht vorgesehen.
+          </p>
         </section>
 
         <section>

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { canChangeSicEmail, sicPendingEmailChangeStatus } from '@/lib/sic/email-change'
 import { readSicFacts, sicFactLines, type SicFacts } from '@/lib/sic/facts'
 import {
   getSicModule,
@@ -46,6 +47,10 @@ export type SicDossierModuleView = {
 
 export type SicDossierView = {
   email: string
+  /** Einmalige Korrektur nach dem Kauf, solange noch nicht bestätigt. */
+  canChangeEmail: boolean
+  /** Neue Adresse, solange die Bestätigung nicht abgelaufen ist. */
+  pendingEmail: string | null
   certificateCode: string
   status: string
   /** Kaufdatum. */
@@ -318,6 +323,15 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
 
   return {
     email,
+    canChangeEmail: canChangeSicEmail(cert.emailChangedAt),
+    pendingEmail:
+      sicPendingEmailChangeStatus({
+        pendingEmail: cert.pendingEmail,
+        pendingEmailToken: cert.pendingEmailToken,
+        pendingEmailExpiresAt: cert.pendingEmailExpiresAt,
+      }) === 'valid' ?
+        cert.pendingEmail
+      : null,
     certificateCode: cert.certificateCode,
     status: cert.status,
     issuedAt: cert.issuedAt.toISOString(),

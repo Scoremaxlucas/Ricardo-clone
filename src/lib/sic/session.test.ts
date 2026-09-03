@@ -35,8 +35,8 @@ describe('sic session token', () => {
 })
 
 describe('post-checkout session', () => {
-  it('lasts a working day, not one hour', () => {
-    expect(SIC_POST_CHECKOUT_TTL_SECONDS).toBe(24 * 60 * 60)
+  it('lasts a week, so a Friday payment still covers the weekend', () => {
+    expect(SIC_POST_CHECKOUT_TTL_SECONDS).toBe(7 * 24 * 60 * 60)
   })
 
   it('grants the cookie only for a few minutes after payment', () => {

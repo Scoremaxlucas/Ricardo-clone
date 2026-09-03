@@ -136,6 +136,9 @@ export const sicPaths = {
   /** Seite mit Knopf — der Token wird erst per POST verbraucht. */
   loginConfirm: `${SIC_BASE_PATH}/anmelden`,
   authCallback: '/api/sic/auth/callback',
+  /** Seite mit Knopf — die neue E-Mail wird erst per POST übernommen. */
+  emailConfirm: `${SIC_BASE_PATH}/email-bestaetigen`,
+  emailConfirmApi: '/api/sic/email/confirm',
 } as const
 
 export function sicUrl(path: string): string {

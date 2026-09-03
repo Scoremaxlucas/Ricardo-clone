@@ -301,7 +301,7 @@ export async function fulfillSicPaidCheckout(input: {
 
   try {
     const { url } = await createSicMagicLink(email)
-    await sendSicMagicLinkEmail(email, url)
+    await sendSicMagicLinkEmail(email, url, 'checkout')
   } catch (err) {
     console.error('[sic/fulfillment] magic link email failed', err)
   }

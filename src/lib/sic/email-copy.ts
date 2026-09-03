@@ -107,15 +107,16 @@ export function sicUploadReminderCopy(moduleKind: SicModuleId): {
   }
 }
 
-export type SicMagicLinkMailSource = 'self' | 'support'
+export type SicMagicLinkMailSource = 'self' | 'support' | 'checkout'
 
-/** Anmeldelink: selbst angefordert oder vom Support nachgeschickt. */
+/** Anmeldelink: selbst angefordert, vom Support nachgeschickt, oder direkt nach der Zahlung. */
 export function sicMagicLinkEmailCopy(source: SicMagicLinkMailSource): {
   subject: string
   heading: string
   preheader: string
   paragraphs: string[]
   footnote: string
+  buttonText: string
 } {
   if (source === 'support') {
     return {
@@ -127,6 +128,20 @@ export function sicMagicLinkEmailCopy(source: SicMagicLinkMailSource): {
         'Ist er abgelaufen, forderst du unter «Mein Zertifikat» jederzeit einen neuen an.',
       ],
       footnote: 'Falls du uns nicht geschrieben hast, kannst du diese E-Mail ignorieren.',
+      buttonText: 'Anmeldeseite öffnen',
+    }
+  }
+  if (source === 'checkout') {
+    return {
+      subject: 'Dieser Link öffnet dein Zertifikat',
+      heading: 'Dein Zertifikat',
+      preheader: 'Dieser Link öffnet dein Zertifikat',
+      paragraphs: [
+        'Dieser Link öffnet dein Zertifikat. Tippe auf der Seite auf «Anmelden» — erst dann wirst du eingeloggt. So bleibt der Link gültig, wenn dein Mailprogramm ihn vorsorglich öffnet.',
+        'Der Link ist 30 Minuten gültig. Auf dem Gerät, mit dem du bezahlt hast, bleibst du sieben Tage angemeldet. Ist der Link abgelaufen, forderst du unter «Mein Zertifikat» jederzeit einen neuen an.',
+      ],
+      footnote: 'Falls du nicht bei uns bezahlt hast, kannst du diese E-Mail ignorieren.',
+      buttonText: 'Zertifikat öffnen',
     }
   }
   return {
@@ -139,5 +154,49 @@ export function sicMagicLinkEmailCopy(source: SicMagicLinkMailSource): {
     ],
     footnote:
       'Falls du diese Anmeldung nicht angefordert hast, kannst du diese E-Mail ignorieren. Es wird kein Zugriff gewährt, solange du nicht auf «Anmelden» tippst.',
+    buttonText: 'Anmeldeseite öffnen',
+  }
+}
+
+/** Neue Adresse: Bestätigungsknopf, nicht GET-Verbrauch. */
+export function sicEmailChangeConfirmCopy(): {
+  subject: string
+  heading: string
+  preheader: string
+  paragraphs: string[]
+  footnote: string
+  buttonText: string
+} {
+  return {
+    subject: 'Neue E-Mail für dein Zertifikat bestätigen',
+    heading: 'E-Mail-Adresse bestätigen',
+    preheader: 'Tippe auf Bestätigen, damit die neue Adresse gilt',
+    paragraphs: [
+      'Du möchtest dein Zertifikat auf diese E-Mail-Adresse umstellen. Öffne den Link und tippe auf «Bestätigen». Erst dieser Klick ändert die Adresse — so bleibt die Anfrage gültig, wenn dein Mailprogramm die Seite vorsorglich öffnet.',
+      'Der Link ist 30 Minuten gültig. Danach kannst du die Änderung unter «Mein Zertifikat» erneut anfordern — solange du noch angemeldet bist.',
+    ],
+    footnote:
+      'Falls du diese Änderung nicht angefordert hast, kannst du diese E-Mail ignorieren. Die Adresse ändert sich erst, wenn du auf «Bestätigen» tippst.',
+    buttonText: 'Bestätigungsseite öffnen',
+  }
+}
+
+/** Bisherige Adresse: Mitteilung, kein Bestätigungslink. */
+export function sicEmailChangeNoticeCopy(newEmail: string): {
+  subject: string
+  heading: string
+  preheader: string
+  paragraphs: string[]
+  footnote: string
+} {
+  return {
+    subject: 'E-Mail-Änderung für dein Zertifikat angefordert',
+    heading: 'Änderung der E-Mail-Adresse',
+    preheader: 'Die neue Adresse gilt erst nach der Bestätigung',
+    paragraphs: [
+      `Für dein Zertifikat wurde eine neue E-Mail angegeben: ${newEmail}. Die Änderung gilt erst, wenn diese Adresse bestätigt wird.`,
+      'Warst du das nicht, schreib uns. Die bisherige Adresse bleibt gültig, bis die neue bestätigt ist.',
+    ],
+    footnote: 'Diese Nachricht geht an die bisherige Adresse, damit eine Änderung nicht unbemerkt bleibt.',
   }
 }

@@ -2820,6 +2820,16 @@ model SicCertificate {
    */
   docsPurgeWarningSentAt  DateTime?
 
+  /**
+   * Einmalige Korrektur der Konto-E-Mail (Tippfehler nach dem Kauf).
+   * Gesetzt, sobald die neue Adresse bestätigt wurde — danach keine weitere Änderung.
+   */
+  emailChangedAt DateTime?
+  /** Neue Adresse, solange die Bestätigung aussteht. */
+  pendingEmail            String?
+  pendingEmailToken       String?   @unique
+  pendingEmailExpiresAt   DateTime?
+
   modules   SicCertificateModule[]
   documents SicDocument[]
   payments  SicPayment[]

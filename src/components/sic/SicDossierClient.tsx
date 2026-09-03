@@ -24,7 +24,7 @@ import {
   X,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 
 type ModuleStatus = SicDossierView['purchasedModules'][number]['status']
@@ -135,11 +135,51 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
     () => new Set(dossier.availableModules.map(a => a.moduleKind))
   )
   const [adding, setAdding] = useState(false)
+  const [emailOpen, setEmailOpen] = useState(!!dossier.pendingEmail)
+  const [nextEmail, setNextEmail] = useState(dossier.pendingEmail ?? '')
+  const [savingEmail, setSavingEmail] = useState(false)
 
   const certStatus = certificateStatusMeta(dossier)
   const pdfReady = dossier.landlordPdfReady
   const sealReady = dossier.certificateSealReady
   const { verifiedCount } = dossier.progress
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('email') !== 'changed') return
+    toast.success('E-Mail-Adresse bestätigt. Das ist ab jetzt dein Zugang.')
+    url.searchParams.delete('email')
+    const qs = url.searchParams.toString()
+    window.history.replaceState({}, '', `${url.pathname}${qs ? `?${qs}` : ''}`)
+  }, [])
+
+  async function requestEmailChange() {
+    const email = nextEmail.trim()
+    if (!email) {
+      toast.error('Bitte eine E-Mail-Adresse angeben.')
+      return
+    }
+    setSavingEmail(true)
+    try {
+      const res = await fetch('/api/sic/email/change', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data?.message || 'Änderung fehlgeschlagen.')
+        return
+      }
+      toast.success(data?.message || 'Bestätigung gesendet.')
+      router.refresh()
+    } catch {
+      toast.error('Netzwerkfehler.')
+    } finally {
+      setSavingEmail(false)
+    }
+  }
 
   async function saveName() {
     if (!firstName.trim() || !lastName.trim()) {
@@ -325,6 +365,54 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             Mein Zertifikat
           </h1>
           <p className="mt-1 break-all text-sm text-slate-500">{dossier.email}</p>
+          {dossier.pendingEmail ?
+            <p className="mt-1.5 max-w-xl text-xs leading-relaxed text-slate-500">
+              Bestätigung ausstehend an {dossier.pendingEmail}. Öffne die Mail und tippe auf «Bestätigen».
+              Erst dieser Klick ändert die Adresse.
+            </p>
+          : null}
+          {dossier.canChangeEmail ?
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={() => setEmailOpen(open => !open)}
+                className="text-xs font-semibold text-sic-navy hover:underline"
+              >
+                {dossier.pendingEmail ? 'Andere Adresse angeben' : 'E-Mail falsch geschrieben?'}
+              </button>
+              {emailOpen ?
+                <form
+                  className="mt-2 flex max-w-md flex-col gap-2 sm:flex-row"
+                  onSubmit={e => {
+                    e.preventDefault()
+                    void requestEmailChange()
+                  }}
+                >
+                  <input
+                    type="email"
+                    value={nextEmail}
+                    onChange={e => setNextEmail(e.target.value)}
+                    placeholder="neue@adresse.ch"
+                    autoComplete="email"
+                    className="min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-base outline-none focus:border-sic-action"
+                  />
+                  <button
+                    type="submit"
+                    disabled={savingEmail}
+                    className="min-h-11 w-full rounded-lg bg-sic-action px-4 py-2 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60 sm:w-auto"
+                  >
+                    {savingEmail ? '…' : 'Bestätigung senden'}
+                  </button>
+                </form>
+              : null}
+              {emailOpen ?
+                <p className="mt-1.5 max-w-xl text-xs leading-relaxed text-slate-400">
+                  Einmalig änderbar. Wir schreiben an die neue Adresse — dort tippst du auf «Bestätigen».
+                  An die bisherige Adresse geht eine Mitteilung.
+                </p>
+              : null}
+            </div>
+          : null}
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
             {verifiedCount > 0 ?
               sealReady ?

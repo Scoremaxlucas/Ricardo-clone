@@ -19,5 +19,8 @@ describe('SIC FAQ copy', () => {
     expect(blob).not.toMatch(/Prüfaufwand|sticht heraus|Chance, ernst/)
     expect(blob).toMatch(/Betreibungsauszugs/)
     expect(blob).not.toMatch(/verlängert sich die Gültigkeit erneut/)
+    expect(blob).toMatch(/E-Mail falsch geschrieben/)
+    expect(blob).toMatch(/einmal ändern/)
+    expect(blob).toMatch(/sieben Tage/)
   })
 })

@@ -9,11 +9,13 @@ export const SIC_SESSION_COOKIE = 'sic_session'
 export const SIC_SESSION_TTL_DAYS = 30
 
 /**
- * Sitzung direkt nach der Zahlung. 24 Stunden: lang genug für Uploads am selben
- * und nächsten Tag, kurz genug, weil die Checkout-Session-ID in der History steht.
+ * Sitzung direkt nach der Zahlung. Sieben Tage: Freitagabend bezahlt, am Wochenende
+ * hochgeladen — ohne neuen Anmeldelink. Die Checkout-Session-ID in der History
+ * stellt die Sitzung trotzdem nur kurz aus (`SIC_CHECKOUT_COOKIE_GRANT_SECONDS`).
  * Dauerhafter Zugang bleibt der Magic-Link.
  */
-export const SIC_POST_CHECKOUT_TTL_SECONDS = 24 * 60 * 60
+export const SIC_POST_CHECKOUT_TTL_DAYS = 7
+export const SIC_POST_CHECKOUT_TTL_SECONDS = SIC_POST_CHECKOUT_TTL_DAYS * 24 * 60 * 60
 
 /**
  * Das Stripe-`session_id` in der Erfolgs-URL darf nur kurz eine Sitzung ausstellen.
