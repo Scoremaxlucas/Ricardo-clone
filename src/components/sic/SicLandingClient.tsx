@@ -634,7 +634,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             {!isReturning ?
               // Erstkauf: nicht als „Shop-Karten“ zeigen, sondern als Inhalt des Zertifikats.
               <div className="col-span-full rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
-                <p className="text-sm font-semibold text-sic-navy">Für den Vermieter geprüfte Angaben</p>
+                <p className="text-[13px] font-semibold text-sic-navy sm:text-sm">Für den Vermieter geprüfte Angaben</p>
                 <div className="mt-4 space-y-2">
                   {SIC_MODULES.map(m => {
                     const accent = SIC_MODULE_ACCENT[m.id]
@@ -648,8 +648,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                           <Icon className="h-5 w-5" />
                         </span>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-sic-navy">{m.title}</p>
-                          <p className="mt-0.5 text-sm leading-relaxed text-slate-600">
+                          <p className="text-[15px] font-bold text-sic-navy sm:text-sm">{m.title}</p>
+                          <p className="mt-0.5 text-[13px] leading-relaxed text-slate-600 sm:text-sm">
                             {m.landlordSees}
                           </p>
                         </div>
@@ -665,7 +665,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               <div className="col-span-full rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
                 {verifiedModules.size > 0 ? (
                   <>
-                    <p className="text-sm font-semibold text-sic-navy">Auf deinem Zertifikat</p>
+                    <p className="text-[13px] font-semibold text-sic-navy sm:text-sm">Auf deinem Zertifikat</p>
                     <div className="mt-4 space-y-2">
                       {SIC_MODULES.filter(m => verifiedModules.has(m.id)).map(m => {
                         const Icon = MODULE_ICON[m.id]
@@ -678,8 +678,10 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                               <Icon className="h-5 w-5" />
                             </span>
                             <div className="min-w-0">
-                              <p className="text-sm font-bold text-sic-navy">{m.title}</p>
-                              <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{m.landlordSees}</p>
+                              <p className="text-[15px] font-bold text-sic-navy sm:text-sm">{m.title}</p>
+                              <p className="mt-0.5 text-[13px] leading-relaxed text-slate-600 sm:text-sm">
+                                {m.landlordSees}
+                              </p>
                             </div>
                           </div>
                         )
@@ -691,7 +693,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 {SIC_MODULES.filter(m => owned.has(m.id) && !verifiedModules.has(m.id)).length > 0 ? (
                   <>
                     <div className="mt-5 border-t border-slate-200 pt-5 sm:mt-6 sm:pt-6">
-                      <p className="text-sm font-semibold text-sic-navy">Gekauft, noch nicht geprüft</p>
+                      <p className="text-[13px] font-semibold text-sic-navy sm:text-sm">Gekauft, noch nicht geprüft</p>
                     </div>
                     <div className="mt-4 space-y-2">
                       {SIC_MODULES.filter(m => owned.has(m.id) && !verifiedModules.has(m.id)).map(m => {
@@ -706,8 +708,10 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                               <Icon className="h-5 w-5" />
                             </span>
                             <div className="min-w-0">
-                              <p className="text-sm font-bold text-sic-navy">{m.title}</p>
-                              <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{m.youUpload}</p>
+                              <p className="text-[15px] font-bold text-sic-navy sm:text-sm">{m.title}</p>
+                              <p className="mt-0.5 text-[13px] leading-relaxed text-slate-600 sm:text-sm">
+                                {m.youUpload}
+                              </p>
                             </div>
                           </div>
                         )
@@ -719,7 +723,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 {availableModules.length ? (
                   <>
                     <div className="mt-5 border-t border-slate-200 pt-5 sm:mt-6 sm:pt-6">
-                      <p className="text-sm font-semibold text-sic-navy">Noch offen</p>
+                      <p className="text-[13px] font-semibold text-sic-navy sm:text-sm">Noch offen</p>
                     </div>
                     <div className="mt-4 space-y-2">
                       {availableModules.map(m => {
@@ -735,12 +739,14 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                             </span>
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
-                                <p className="text-sm font-bold text-sic-navy">{m.title}</p>
+                                <p className="text-[15px] font-bold text-sic-navy sm:text-sm">{m.title}</p>
                                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
                                   Offen
                                 </span>
                               </div>
-                              <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{m.youUpload}</p>
+                              <p className="mt-0.5 text-[13px] leading-relaxed text-slate-600 sm:text-sm">
+                                {m.youUpload}
+                              </p>
                             </div>
                           </div>
                         )
