@@ -2,7 +2,7 @@ import { DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/art'
 import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
 import { CERT } from '@/lib/sic/cert/tokens'
-import { SIC_MODULE_BADGE, SIC_PLAUSIBILITY_FOOTER, type SicModuleId } from '@/lib/sic/modules'
+import { SIC_MODULE_BADGE, SIC_PLAUSIBILITY_FOOTER, SIC_WORKING_PLAUSIBILITY_FOOTER, SIC_WORKING_DOC_TAGLINE, SIC_WORKING_DOC_TITLE, SIC_CERT_DOCUMENT_TITLE, SIC_WORKING_NOTICE, type SicDocumentPresentation, type SicModuleId } from '@/lib/sic/modules'
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import React from 'react'
 
@@ -79,6 +79,36 @@ const s = StyleSheet.create({
     color: C.goldPale,
     textAlign: 'center',
     letterSpacing: 0.3,
+  },
+  taglineWorking: {
+    marginTop: 6,
+    fontSize: T.tagline,
+    color: 'rgba(255,255,255,0.72)',
+    textAlign: 'center',
+    letterSpacing: 0.2,
+  },
+  brandRuleWorking: { height: 0.7, width: 28, backgroundColor: 'rgba(255,255,255,0.35)' },
+  brandSubWorking: {
+    fontSize: 8,
+    color: 'rgba(255,255,255,0.82)',
+    letterSpacing: 1.6,
+    marginHorizontal: 10,
+    fontFamily: 'Helvetica-Bold',
+  },
+  notice: {
+    marginTop: 12,
+    marginBottom: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: C.ivorySoft,
+    borderWidth: 0.6,
+    borderColor: C.faint,
+  },
+  noticeText: {
+    fontSize: 8,
+    color: C.ink,
+    textAlign: 'center',
+    lineHeight: 1.4,
   },
 
   body: {
@@ -214,12 +244,14 @@ export function SicCertificatePdfDocument(props: {
   issuedAt: Date
   expiresAt: Date
   verifiedModules: SicPdfModule[]
-  /** «2 von 4 Angaben geprüft» — macht ein Teil-Zertifikat ehrlich. */
+  /** «2 von 4 Angaben geprüft» — macht den Umfang ehrlich. */
   completenessLabel: string
   /** Umfangssatz: nicht aufgeführte Angaben wurden nicht geprüft. */
   scopeNote: string
   verifyUrl: string
   qrDataUrl: string
+  /** Urkunde erst ab Betreibung + Ausweis; darunter Stand der Prüfung. */
+  presentation?: SicDocumentPresentation
 }) {
   const {
     certificateCode,
@@ -231,7 +263,9 @@ export function SicCertificatePdfDocument(props: {
     scopeNote,
     verifyUrl,
     qrDataUrl,
+    presentation = 'certificate',
   } = props
+  const isCertificate = presentation === 'certificate'
 
   return (
     <Document title={`${SIC_BRAND_NAME} ${certificateCode}`}>
@@ -246,14 +280,23 @@ export function SicCertificatePdfDocument(props: {
               <Text style={s.brand}>Cert</Text>
             </View>
             <View style={s.brandRuleRow}>
-              <View style={s.brandRule} />
-              <Text style={s.brandSub}>MIETER-ZERTIFIKAT</Text>
-              <View style={s.brandRule} />
+              <View style={isCertificate ? s.brandRule : s.brandRuleWorking} />
+              <Text style={isCertificate ? s.brandSub : s.brandSubWorking}>
+                {isCertificate ? SIC_CERT_DOCUMENT_TITLE : SIC_WORKING_DOC_TITLE}
+              </Text>
+              <View style={isCertificate ? s.brandRule : s.brandRuleWorking} />
             </View>
-            <Text style={s.tagline}>{SIC_CERT_TAGLINE}</Text>
+            <Text style={isCertificate ? s.tagline : s.taglineWorking}>
+              {isCertificate ? SIC_CERT_TAGLINE : SIC_WORKING_DOC_TAGLINE}
+            </Text>
           </View>
 
           <View style={s.body}>
+            {isCertificate ? null : (
+              <View style={s.notice}>
+                <Text style={s.noticeText}>{SIC_WORKING_NOTICE}</Text>
+              </View>
+            )}
             <Text style={s.completenessText}>{completenessLabel}</Text>
 
             <View style={s.holderWrap}>
@@ -288,7 +331,7 @@ export function SicCertificatePdfDocument(props: {
 
             <View style={s.validityRow}>
               <View style={s.validCol}>
-                <Text style={s.validLabel}>Zertifikatsdatum</Text>
+                <Text style={s.validLabel}>{isCertificate ? 'Zertifikatsdatum' : 'Prüfdatum'}</Text>
                 <Text style={s.validValue}>{fmt(issuedAt)}</Text>
               </View>
               <View style={s.validCol}>
@@ -309,7 +352,7 @@ export function SicCertificatePdfDocument(props: {
             </View>
 
             <Text style={s.legal}>
-              {scopeNote} {SIC_PLAUSIBILITY_FOOTER} Online-Verifikation: {verifyUrl}
+              {scopeNote} {isCertificate ? SIC_PLAUSIBILITY_FOOTER : SIC_WORKING_PLAUSIBILITY_FOOTER} Online-Verifikation: {verifyUrl}
             </Text>
           </View>
         </View>

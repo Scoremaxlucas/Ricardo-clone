@@ -75,7 +75,7 @@ const HOW_STEPS: { icon: LucideIcon; title: string; note: string }[] = [
   {
     icon: QrCode,
     title: 'Der Bewerbung beilegen',
-    note: 'Bereits mit der ersten geprüften Angabe. Der Vermieter sieht, was bestätigt ist — nicht die Unterlagen selbst.',
+    note: 'Ein PDF gibt es ab der ersten geprüften Angabe. Als Mieter-Zertifikat gilt es erst mit Betreibungsauszug und Ausweis.',
   },
 ]
 
@@ -582,8 +582,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           <div className="mx-auto max-w-6xl px-5">
             <h2 className="text-center font-sic-serif text-3xl font-bold tracking-tight text-sic-navy">So läuft es ab</h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-              Einmal anlegen, Unterlagen nachliefern. Das PDF steht bereit, sobald die erste Angabe geprüft
-              ist. {PRICE_LABEL}, {SIC_VALIDITY_MONTHS} Monate gültig — gerechnet ab dem Betreibungsauszug.
+              Einmal anlegen, Unterlagen nachliefern. Ein PDF gibt es ab der ersten geprüften Angabe; als
+              Mieter-Zertifikat gilt es erst mit Betreibungsauszug und Ausweis. {PRICE_LABEL},{' '}
+              {SIC_VALIDITY_MONTHS} Monate gültig — gerechnet ab dem Betreibungsauszug.
             </p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_STEPS.map((step, i) => (

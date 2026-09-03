@@ -31,7 +31,7 @@ describe('upload nudge windows', () => {
 })
 
 describe('first verification copy', () => {
-  it('says the PDF is ready, with the count on the document, not a Zusage', () => {
+  it('calls a single-module PDF the stand of the check, not a certificate', () => {
     const copy = sicCertificateReadyCopy({
       moduleKind: 'BONITAET',
       verifiedCount: 1,
@@ -39,14 +39,29 @@ describe('first verification copy', () => {
       pdfReady: true,
       validUntil: '28.11.2026',
     })
-    expect(copy.heading).toBe('Dein PDF ist bereit')
-    expect(copy.paragraphs[0]).toBe(`Das PDF ist bereit. ${sicStandsOnDocLine(1)}.`)
+    expect(copy.heading).toBe('Der Stand der Prüfung ist bereit')
+    expect(copy.paragraphs[0]).toBe(`Der Stand der Prüfung ist als PDF bereit. ${sicStandsOnDocLine(1)}.`)
     expect(copy.paragraphs[0]).toContain('1 von 4 steht drauf')
+    expect(copy.paragraphs.join(' ')).toMatch(/noch kein Mieter-Zertifikat/i)
     expect(copy.paragraphs.join(' ')).toMatch(/Zusage/)
-    expect(copy.paragraphs.join(' ')).toMatch(/stützen/)
     expect(copy.paragraphs.join(' ')).not.toMatch(/Sekunden lesen/)
     expect(copy.subject).not.toMatch(/bewerben/)
     expect(copy.subject).not.toMatch(/Helvenda/)
+    expect(copy.subject).not.toMatch(/Mieter-Zertifikat/)
+  })
+
+  it('calls it a certificate once Betreibung and Ausweis are both on the document', () => {
+    const copy = sicCertificateReadyCopy({
+      moduleKind: 'AUFENTHALT',
+      verifiedCount: 2,
+      firstVerification: false,
+      pdfReady: true,
+      sealReady: true,
+      validUntil: '28.11.2026',
+    })
+    expect(copy.heading).toBe('Dein Zertifikat wurde aktualisiert')
+    expect(copy.paragraphs.join(' ')).toMatch(/Zertifikat/)
+    expect(copy.paragraphs.join(' ')).not.toMatch(/Stand der Prüfung/)
   })
 
   it('does not promise applying before the PDF exists', () => {

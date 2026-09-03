@@ -2,7 +2,19 @@ import { DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/art-web'
 import { SIC_CERT_TAGLINE, SIC_COLORS } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
 import type { SicVerifiedModuleView } from '@/lib/sic/dossier'
-import { SIC_MODULE_BADGE, SIC_PLAUSIBILITY_FOOTER, SIC_SCOPE_NOTE } from '@/lib/sic/modules'
+import {
+  isSicCertificateSealReady,
+  SIC_CERT_DOCUMENT_TITLE,
+  SIC_MODULE_BADGE,
+  SIC_PLAUSIBILITY_FOOTER,
+  SIC_SCOPE_NOTE,
+  SIC_WORKING_DOC_TAGLINE,
+  SIC_WORKING_DOC_TITLE,
+  SIC_WORKING_NOTICE,
+  SIC_WORKING_PLAUSIBILITY_FOOTER,
+  SIC_WORKING_SCOPE_NOTE,
+  type SicDocumentPresentation,
+} from '@/lib/sic/modules'
 import type { ReactNode } from 'react'
 
 function fmt(d: Date): string {
@@ -21,6 +33,7 @@ export type SicVerifyDocumentProps =
       expiresAt: Date
       completenessLabel: string
       modules: SicVerifiedModuleView[]
+      presentation?: SicDocumentPresentation
     }
 
 function Frame({ children }: { children: ReactNode }) {
@@ -42,10 +55,13 @@ function Wordmark({ className }: { className?: string }) {
 function NavyBand({
   code,
   quiet,
+  presentation = 'certificate',
 }: {
   code?: string
   quiet?: boolean
+  presentation?: SicDocumentPresentation
 }) {
+  const isCertificate = presentation === 'certificate'
   return (
     <header
       className={`relative flex flex-col items-center bg-sic-navy px-5 pb-5 pt-6 sm:px-8 ${
@@ -53,7 +69,11 @@ function NavyBand({
       }`}
     >
       {code ?
-        <p className="mb-2 font-mono text-[9px] font-semibold tracking-[0.08em] text-sic-gold-light/90 sm:absolute sm:right-4 sm:top-3 sm:mb-0 sm:text-[10px] sm:tracking-[0.12em]">
+        <p
+          className={`mb-2 font-mono text-[9px] font-semibold tracking-[0.08em] sm:absolute sm:right-4 sm:top-3 sm:mb-0 sm:text-[10px] sm:tracking-[0.12em] ${
+            isCertificate ? 'text-sic-gold-light/90' : 'text-white/55'
+          }`}
+        >
           {code}
         </p>
       : null}
@@ -61,14 +81,24 @@ function NavyBand({
       <span className="sr-only">{SIC_BRAND_NAME}</span>
       <Wordmark className="mt-2 text-base font-bold tracking-tight text-white sm:text-lg" />
       <div className="mt-2.5 flex items-center gap-2.5">
-        <span className="h-px w-7 bg-sic-gold" />
-        <span className="text-[10px] font-semibold tracking-[0.24em] text-sic-gold-light">
-          MIETER-ZERTIFIKAT
+        <span className={`h-px w-7 ${isCertificate ? 'bg-sic-gold' : 'bg-white/35'}`} />
+        <span
+          className={`text-[10px] font-semibold tracking-[0.24em] ${
+            isCertificate ? 'text-sic-gold-light' : 'text-white/80'
+          }`}
+        >
+          {isCertificate ? SIC_CERT_DOCUMENT_TITLE : SIC_WORKING_DOC_TITLE}
         </span>
-        <span className="h-px w-7 bg-sic-gold" />
+        <span className={`h-px w-7 ${isCertificate ? 'bg-sic-gold' : 'bg-white/35'}`} />
       </div>
       {!quiet ?
-        <p className="mt-2 text-[11px] tracking-wide text-[#e8d5a3]">{SIC_CERT_TAGLINE}</p>
+        <p
+          className={`mt-2 text-[11px] tracking-wide ${
+            isCertificate ? 'text-[#e8d5a3]' : 'text-white/70'
+          }`}
+        >
+          {isCertificate ? SIC_CERT_TAGLINE : SIC_WORKING_DOC_TAGLINE}
+        </p>
       : null}
     </header>
   )
@@ -94,14 +124,26 @@ function QuietBody({
 
 function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
   const { certificateCode, holderName, issuedAt, expiresAt, completenessLabel, modules } = props
+  const presentation =
+    props.presentation ??
+    (isSicCertificateSealReady(modules.map(m => m.id)) ? 'certificate' : 'working')
+  const isCertificate = presentation === 'certificate'
+  const scopeNote = isCertificate ? SIC_SCOPE_NOTE : SIC_WORKING_SCOPE_NOTE
 
   return (
     <>
-      <NavyBand code={certificateCode} />
+      <NavyBand code={certificateCode} presentation={presentation} />
 
-      <p className="sr-only">Gültiges Zertifikat {certificateCode}</p>
+      <p className="sr-only">
+        {isCertificate ? `Gültiges Zertifikat ${certificateCode}` : `Stand der Prüfung ${certificateCode}`}
+      </p>
 
       <div className="px-4 pb-8 pt-5 sm:px-8">
+        {isCertificate ? null : (
+          <p className="mb-4 rounded-lg border border-sic-hairline bg-sic-paper-soft px-3 py-2.5 text-center text-[11px] leading-relaxed text-sic-navy">
+            {SIC_WORKING_NOTICE}
+          </p>
+        )}
         <p className="text-center text-[11px] font-semibold uppercase tracking-[0.08em] text-sic-navy">
           {completenessLabel}
         </p>
@@ -142,7 +184,9 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
 
         <div className="mt-5 flex flex-wrap justify-between gap-4 border-t border-sic-hairline pt-4">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Zertifikatsdatum</p>
+            <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">
+              {isCertificate ? 'Zertifikatsdatum' : 'Prüfdatum'}
+            </p>
             <p className="text-sm font-semibold text-sic-navy">{fmt(issuedAt)}</p>
           </div>
           <div>
@@ -157,7 +201,7 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
         </div>
 
         <p className="mt-6 text-[11px] leading-relaxed text-slate-500">
-          {SIC_SCOPE_NOTE} {SIC_PLAUSIBILITY_FOOTER}
+          {scopeNote} {isCertificate ? SIC_PLAUSIBILITY_FOOTER : SIC_WORKING_PLAUSIBILITY_FOOTER}
         </p>
       </div>
     </>

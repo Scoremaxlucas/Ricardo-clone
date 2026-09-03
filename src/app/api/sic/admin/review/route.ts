@@ -14,7 +14,7 @@ import { sendSicCertificateReadyEmail, sendSicModuleRejectedEmail } from '@/lib/
 import { normalizeSicFacts, readSicFacts } from '@/lib/sic/facts'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
-import { getSicModule, isSicModuleId } from '@/lib/sic/modules'
+import { getSicModule, isSicCertificateSealReady, isSicModuleId } from '@/lib/sic/modules'
 import { approveSicModule, rejectSicModule } from '@/lib/sic/review'
 import { sicReviewSlaOverdue } from '@/lib/sic/review-sla'
 import { normalizeEmail } from '@/lib/sic/session'
@@ -301,6 +301,7 @@ export async function POST(req: NextRequest) {
       expiresAt: approved.expiresAt,
       firstVerification: approved.firstVerification,
       pdfReady: !!approved.holderName,
+      sealReady: isSicCertificateSealReady(approved.verifiedModuleIds),
       magicLinkUrl,
     })
   } catch (err) {

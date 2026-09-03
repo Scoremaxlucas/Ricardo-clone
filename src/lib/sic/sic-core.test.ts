@@ -13,6 +13,7 @@ import {
   SIC_MIN_CHARGE_CHF,
   SIC_MODULE_FEE_CHF,
   SIC_MODULES,
+  isSicCertificateSealReady,
   sicBundleSavingsChf,
 } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
@@ -229,9 +230,19 @@ describe('module wording', () => {
   })
 })
 
+describe('certificate seal', () => {
+  it('needs Betreibungsauszug and Ausweis before the document is a certificate', () => {
+    expect(isSicCertificateSealReady(['BONITAET'])).toBe(false)
+    expect(isSicCertificateSealReady(['AUFENTHALT'])).toBe(false)
+    expect(isSicCertificateSealReady(['BONITAET', 'ARBEIT_EINKOMMEN'])).toBe(false)
+    expect(isSicCertificateSealReady(['BONITAET', 'AUFENTHALT'])).toBe(true)
+    expect(isSicCertificateSealReady(['AUFENTHALT', 'BONITAET', 'ARBEIT_EINKOMMEN'])).toBe(true)
+  })
+})
+
 describe('landlord PDF gate', () => {
   const future = new Date(Date.now() + 86_400_000)
-  it('gibt das Teil-Zertifikat ab der ersten Freigabe frei', () => {
+  it('gibt das PDF ab der ersten Freigabe frei', () => {
     expect(
       isSicLandlordPdfReady({
         holderName: 'Anna Muster',

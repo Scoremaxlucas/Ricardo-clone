@@ -134,6 +134,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
 
   const certStatus = certificateStatusMeta(dossier)
   const pdfReady = dossier.landlordPdfReady
+  const sealReady = dossier.certificateSealReady
   const { verifiedCount } = dossier.progress
 
   async function saveName() {
@@ -284,9 +285,10 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           <p className="mt-1 break-all text-sm text-slate-500">{dossier.email}</p>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
             {verifiedCount > 0 ?
-              'Dein Zertifikat ist da. Leg das PDF der nächsten Bewerbung bei — der Vermieter sieht geprüfte Angaben, auf die er sich stützen kann. Jede weitere Angabe kommt automatisch dazu. Die Gültigkeit hängt am Betreibungsauszug.'
-            : `Sobald die erste Angabe geprüft ist, kannst du das PDF herunterladen und der Bewerbung beilegen — und erst dann starten die ${dossier.validityMonths} Monate Gültigkeit. Wartezeit kostet dich keinen Tag.`
-            }
+              sealReady ?
+                'Dein Mieter-Zertifikat ist da. Leg das PDF der nächsten Bewerbung bei. Jede weitere Angabe kommt automatisch dazu. Die Gültigkeit hängt am Betreibungsauszug.'
+              : 'Der Stand der Prüfung ist als PDF bereit — noch kein Mieter-Zertifikat. Dafür müssen Betreibungsauszug und Ausweis geprüft sein. Du kannst den Stand trotzdem beilegen.'
+            : `Sobald die erste Angabe geprüft ist, kannst du den Stand als PDF herunterladen. Das Mieter-Zertifikat gibt es, sobald Betreibungsauszug und Ausweis geprüft sind.`}
           </p>
         </div>
         <form action="/api/sic/logout" method="post">
@@ -399,7 +401,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                 href={`/api/sic/certificate/${encodeURIComponent(dossier.certificateCode)}/pdf`}
                 className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-sic-action-deep sm:w-auto"
               >
-                <Download className="h-4 w-4" /> Zertifikat als PDF
+                <Download className="h-4 w-4" /> {sealReady ? 'Zertifikat als PDF' : 'Stand als PDF'}
               </a>
               <button
                 type="button"
@@ -419,7 +421,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             </div>
             <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
               <a
-                href={sicVerifyMailtoHref(dossier.certificateCode)}
+                href={sicVerifyMailtoHref(dossier.certificateCode, sealReady)}
                 className="inline-flex items-center gap-1.5 font-semibold text-sic-navy hover:underline"
               >
                 <Mail className="h-3.5 w-3.5" /> Per E-Mail senden
@@ -439,12 +441,12 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
               aria-disabled="true"
               className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500"
             >
-              <Download className="h-4 w-4" /> Zertifikat als PDF
+              <Download className="h-4 w-4" /> {sealReady ? 'Zertifikat als PDF' : 'Stand als PDF'}
             </span>
             <p className="mt-2 text-xs text-slate-500">
               {dossier.expired ?
                 'Die Gültigkeit ist abgelaufen — verlängere, um das PDF wieder abzurufen.'
-              : 'Kommt, sobald die erste Angabe geprüft ist.'}
+              : 'Kommt, sobald die erste Angabe geprüft ist. Als Zertifikat gilt es erst mit Betreibungsauszug und Ausweis.'}
             </p>
           </div>
         }

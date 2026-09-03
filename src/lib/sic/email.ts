@@ -117,6 +117,8 @@ export async function sendSicCertificateReadyEmail(opts: {
   firstVerification: boolean
   /** Ohne Namen auf dem Zertifikat gibt es noch kein PDF. */
   pdfReady: boolean
+  /** Betreibung + Ausweis geprüft — sonst ist das PDF der Stand der Prüfung. */
+  sealReady?: boolean
   magicLinkUrl?: string
 }) {
   const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
@@ -130,6 +132,7 @@ export async function sendSicCertificateReadyEmail(opts: {
     verifiedCount: opts.verifiedCount,
     firstVerification: opts.firstVerification,
     pdfReady: opts.pdfReady,
+    sealReady: opts.sealReady === true,
     validUntil,
   })
   const bodyHtml = copy.paragraphs

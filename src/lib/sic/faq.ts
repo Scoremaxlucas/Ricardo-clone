@@ -5,6 +5,7 @@ import {
   SIC_RENEWAL_FEE_CHF,
   SIC_VALIDITY_MONTHS,
   sicIsFree,
+  sicSealRequirementLabel,
 } from '@/lib/sic/modules'
 import { SIC_REVIEW_SLA } from '@/lib/sic/config'
 import { SIC_CERT_PREVIEW_FACTS, sicFactLines } from '@/lib/sic/facts'
@@ -64,7 +65,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Wann bekomme ich das PDF?',
-    a: 'Sobald die erste Angabe geprüft ist und dein Name erfasst ist. Auf dem Dokument steht offen, wie viele Angaben geprüft sind — der Vermieter weiss also genau, was er in der Hand hat, und du musst nicht wochenlang warten.',
+    a: `Ein PDF mit dem Stand der Prüfung, sobald die erste Angabe geprüft ist und dein Name erfasst ist. Das Mieter-Zertifikat — mit Siegel — gibt es, sobald ${sicSealRequirementLabel()} geprüft sind.`,
   },
   {
     q: 'Wie lange ist das Zertifikat gültig?',

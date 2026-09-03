@@ -4,7 +4,12 @@ import { SicCertificatePdfDocument } from '@/lib/sic/CertificatePdf'
 import { SIC_BRAND_NAME, sicVerifyUrl } from '@/lib/sic/config'
 import { isSicLandlordPdfReady, joinHolderName, verifiedModuleLineItems } from '@/lib/sic/dossier'
 import { recordSicEventOnce } from '@/lib/sic/events'
-import { SIC_SCOPE_NOTE, sicCompletenessLabel } from '@/lib/sic/modules'
+import {
+  isSicCertificateSealReady,
+  SIC_SCOPE_NOTE,
+  SIC_WORKING_SCOPE_NOTE,
+  sicCompletenessLabel,
+} from '@/lib/sic/modules'
 import { normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
 import { getSicSession } from '@/lib/sic/session-cookie'
 import { renderToBuffer } from '@react-pdf/renderer'
@@ -39,7 +44,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
     return NextResponse.json(
       {
         message:
-          'Das PDF gibt es, sobald mindestens eine Angabe geprüft ist und dein Name auf dem Zertifikat steht.',
+          'Das PDF gibt es, sobald mindestens eine Angabe geprüft ist und dein Name auf dem Dokument steht.',
       },
       { status: 403 }
     )
@@ -58,6 +63,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
     )
   }
 
+  const sealReady = isSicCertificateSealReady(verifiedModules.map(m => m.id))
   const doc = (
     <SicCertificatePdfDocument
       certificateCode={cert.certificateCode}
@@ -67,15 +73,16 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       expiresAt={cert.expiresAt}
       verifiedModules={verifiedModules}
       completenessLabel={sicCompletenessLabel(verifiedModules.length)}
-      scopeNote={SIC_SCOPE_NOTE}
+      scopeNote={sealReady ? SIC_SCOPE_NOTE : SIC_WORKING_SCOPE_NOTE}
       verifyUrl={verifyUrl}
       qrDataUrl={qrDataUrl}
+      presentation={sealReady ? 'certificate' : 'working'}
     />
   )
 
   try {
     const buffer = await renderToBuffer(doc)
-    const filename = `${SIC_BRAND_NAME.replace(/ /g, '-')}-${cert.certificateCode}.pdf`
+    const filename = `${SIC_BRAND_NAME.replace(/ /g, '-')}-${cert.certificateCode}${sealReady ? '' : '-Stand'}.pdf`
     await recordSicEventOnce({
       kind: 'PDF_DOWNLOADED',
       certificateId: cert.id,

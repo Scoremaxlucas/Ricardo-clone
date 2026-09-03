@@ -1,4 +1,4 @@
-import { getSicModule, SIC_MODULES, type SicModuleId } from '@/lib/sic/modules'
+import { getSicModule, SIC_MODULES, sicSealRequirementLabel, type SicModuleId } from '@/lib/sic/modules'
 
 /** «1 von 4 steht drauf» — die Zeile, die nach der ersten Freigabe zählt. */
 export function sicStandsOnDocLine(verifiedCount: number): string {
@@ -10,26 +10,36 @@ export function sicCertificateReadyCopy(opts: {
   verifiedCount: number
   firstVerification: boolean
   pdfReady: boolean
+  /** Betreibung + Ausweis: Urkunde. Sonst Stand der Prüfung. */
+  sealReady?: boolean
   validUntil: string
 }): { subject: string; heading: string; preheader: string; paragraphs: string[] } {
   const title = getSicModule(opts.moduleKind).title
   const onDoc = sicStandsOnDocLine(opts.verifiedCount)
   const moreOpen = opts.verifiedCount < SIC_MODULES.length
+  const sealReady = opts.sealReady === true
+  const sealNeed = sicSealRequirementLabel()
 
   if (opts.firstVerification && opts.pdfReady) {
-    const paragraphs = [
-      `Das PDF ist bereit. ${onDoc}.`,
-      `Geprüft ist «${title}». Gültig bis ${opts.validUntil}.`,
-      'Lade das PDF herunter und leg es der nächsten Bewerbung bei — damit der Vermieter geprüfte Angaben in der Hand hat, auf die er sich stützen kann. Nicht geprüfte Angaben stehen nicht auf dem Dokument. Eine Zusage versprechen wir nicht.',
-    ]
+    const paragraphs = sealReady ?
+      [
+        `Das Mieter-Zertifikat ist bereit. ${onDoc}.`,
+        `Geprüft ist «${title}». Gültig bis ${opts.validUntil}.`,
+        'Lade das PDF herunter und leg es der nächsten Bewerbung bei. Nicht geprüfte Angaben stehen nicht auf dem Dokument. Eine Zusage versprechen wir nicht.',
+      ]
+    : [
+        `Der Stand der Prüfung ist als PDF bereit. ${onDoc}.`,
+        `Geprüft ist «${title}». Gültig bis ${opts.validUntil}.`,
+        `Das ist noch kein Mieter-Zertifikat. Dafür müssen ${sealNeed} geprüft sein. Du kannst den Stand trotzdem beilegen — der Vermieter sieht den Umfang auf dem Dokument. Eine Zusage versprechen wir nicht.`,
+      ]
     if (moreOpen) {
       paragraphs.push(
-        'Angaben mit Unterschrift Dritter — etwa die Referenz vom Vermieter — dürfen länger dauern. Du kannst das PDF trotzdem schon beilegen.'
+        'Angaben mit Unterschrift Dritter — etwa die Referenz vom Vermieter — dürfen länger dauern.'
       )
     }
     return {
-      subject: 'Dein PDF ist bereit',
-      heading: 'Dein PDF ist bereit',
+      subject: sealReady ? 'Dein Mieter-Zertifikat ist bereit' : 'Dein Stand der Prüfung ist bereit',
+      heading: sealReady ? 'Dein Mieter-Zertifikat ist bereit' : 'Der Stand der Prüfung ist bereit',
       preheader: onDoc,
       paragraphs,
     }
@@ -48,20 +58,24 @@ export function sicCertificateReadyCopy(opts: {
   }
 
   const paragraphs = [
-    `Die Angabe «${title}» ist geprüft und steht auf deinem Zertifikat.`,
+    sealReady ?
+      `Die Angabe «${title}» ist geprüft und steht auf deinem Zertifikat.`
+    : `Die Angabe «${title}» ist geprüft und steht auf dem Stand der Prüfung.`,
     `Aktueller Stand: ${onDoc}. Gültig bis ${opts.validUntil}.`,
   ]
   if (opts.pdfReady) {
     paragraphs.push(
-      'Lade das aktuelle PDF herunter und leg es der Bewerbung bei. Der Vermieter sieht, was geprüft ist — und kann sich darauf stützen. Nicht geprüfte Angaben stehen nicht auf dem Dokument.'
+      sealReady ?
+        'Lade das aktuelle PDF herunter und leg es der Bewerbung bei. Nicht geprüfte Angaben stehen nicht auf dem Dokument.'
+      : `Lade den Stand der Prüfung herunter. Das Mieter-Zertifikat gibt es, sobald ${sealNeed} geprüft sind.`
     )
   } else {
-    paragraphs.push('Für das PDF fehlt noch dein Name auf dem Zertifikat — das ist in einer Minute erledigt.')
+    paragraphs.push('Für das PDF fehlt noch dein Name auf dem Dokument — das ist in einer Minute erledigt.')
   }
 
   return {
-    subject: `«${title}» geprüft — Zertifikat aktualisiert`,
-    heading: 'Dein Zertifikat wurde aktualisiert',
+    subject: sealReady ? `«${title}» geprüft — Zertifikat aktualisiert` : `«${title}» geprüft — Stand aktualisiert`,
+    heading: sealReady ? 'Dein Zertifikat wurde aktualisiert' : 'Der Stand der Prüfung wurde aktualisiert',
     preheader: `${title} geprüft — ${onDoc}`,
     paragraphs,
   }

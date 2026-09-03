@@ -13,6 +13,9 @@ describe('sic verify share', () => {
   it('puts the verify URL in copy text, mail and WhatsApp', () => {
     expect(sicVerifyShareText(code)).toBe(`${SIC_BRAND_NAME} ${code}\n${url}`)
     expect(sicVerifyMailtoHref(code)).toContain('mailto:?')
+    expect(sicVerifyMailtoHref(code)).toContain(encodeURIComponent('Mieter-Zertifikat'))
+    expect(sicVerifyMailtoHref(code, false)).toContain(encodeURIComponent('Stand der Prüfung'))
+    expect(sicVerifyMailtoHref(code, false)).not.toContain(encodeURIComponent('Mieter-Zertifikat'))
     expect(sicVerifyMailtoHref(code)).toContain(encodeURIComponent(url))
     expect(sicVerifyWhatsAppHref(code)).toContain('https://wa.me/?text=')
     expect(sicVerifyWhatsAppHref(code)).toContain(encodeURIComponent(url))

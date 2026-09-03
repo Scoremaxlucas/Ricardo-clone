@@ -113,11 +113,13 @@ export default function SicAgbPage() {
         </section>
 
         <section>
-          <h2 className="font-semibold text-sic-navy">6. Teil-Zertifikat</h2>
+          <h2 className="font-semibold text-sic-navy">6. Stand der Prüfung und Zertifikat</h2>
           <p className="mt-1.5">
-            Sobald mindestens eine Angabe freigegeben ist und dein Name erfasst wurde, kannst du das Zertifikat
-            als PDF herunterladen. Es weist offen aus, wie viele der {SIC_MODULES.length} Angaben geprüft sind.
-            Nicht aufgeführte Angaben gelten als nicht geprüft und nicht als negativ.
+            Sobald mindestens eine Angabe freigegeben ist und dein Name erfasst wurde, kannst du ein PDF
+            herunterladen. Es ist ein Mieter-Zertifikat, sobald Betreibungsauszug und Ausweis geprüft sind;
+            vorher weist es den Stand der Prüfung aus — ohne Siegel, mit offenem Umfang («x von{' '}
+            {SIC_MODULES.length} Angaben geprüft»). Nicht aufgeführte Angaben gelten als nicht geprüft und nicht
+            als negativ.
           </p>
         </section>
 

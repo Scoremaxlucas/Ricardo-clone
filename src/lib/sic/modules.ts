@@ -182,6 +182,31 @@ export function sicCatalogListTotalChf(): number {
 }
 
 /**
+ * Ohne diese Angaben ist das Dokument kein Mieter-Zertifikat — nur der Stand
+ * der Prüfung. Beide sind selbst beschaffbar, damit das Siegel nicht an einer
+ * fremden Unterschrift hängt.
+ */
+export const SIC_SEAL_MODULE_IDS: readonly SicModuleId[] = ['BONITAET', 'AUFENTHALT']
+
+export type SicDocumentPresentation = 'certificate' | 'working'
+
+export function isSicCertificateSealReady(verifiedKinds: Iterable<string>): boolean {
+  const set = new Set(verifiedKinds)
+  return SIC_SEAL_MODULE_IDS.every(id => set.has(id))
+}
+
+export function sicSealRequirementLabel(): string {
+  const titles = SIC_SEAL_MODULE_IDS.map(id => getSicModule(id).title)
+  if (titles.length === 2) return `${titles[0]} und ${titles[1]}`
+  return titles.join(', ')
+}
+
+export const SIC_WORKING_DOC_TITLE = 'STAND DER PRÜFUNG'
+export const SIC_CERT_DOCUMENT_TITLE = 'MIETER-ZERTIFIKAT'
+export const SIC_WORKING_DOC_TAGLINE = 'Noch kein Mieter-Zertifikat — nur geprüfte Angaben.'
+export const SIC_WORKING_NOTICE = `Dies ist der Stand der Prüfung, kein Mieter-Zertifikat. Das Siegel gibt es, sobald ${sicSealRequirementLabel()} geprüft sind.`
+
+/**
  * Ersparnis Komplett-Paket gegenüber einzeln.
  * 0 solange Bundle = Summe der Einzelpreise — UI darf dann keinen Rabatt vortäuschen.
  */
@@ -196,9 +221,15 @@ export function sicBundleSavingsChf(): number {
 export const SIC_SCOPE_NOTE =
   'Dieses Zertifikat weist die aufgeführten Angaben aus. Nicht aufgeführte Angaben wurden nicht geprüft.'
 
+export const SIC_WORKING_SCOPE_NOTE =
+  'Dieses Dokument weist die aufgeführten Angaben aus. Es ist kein Mieter-Zertifikat. Nicht aufgeführte Angaben wurden nicht geprüft.'
+
 /** Footer auf PDF und Prüfseite — derselbe Satz wie AGB §1, kein Gütesiegel. */
 export const SIC_PLAUSIBILITY_FOOTER =
   'Die Prüfung ist eine Kontrolle auf Vollständigkeit und Plausibilität. Das Zertifikat ist keine Bonitätsbewertung, keine behördliche Auskunft und keine Empfehlung.'
+
+export const SIC_WORKING_PLAUSIBILITY_FOOTER =
+  'Die Prüfung ist eine Kontrolle auf Vollständigkeit und Plausibilität. Dieses Dokument ist keine Bonitätsbewertung, keine behördliche Auskunft und keine Empfehlung.'
 
 /** Badge auf Urkunde und Prüfseite — «geprüft», nicht «verifiziert» im Sinne einer Auskunftei. */
 export const SIC_MODULE_BADGE = 'GEPRÜFT'

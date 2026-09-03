@@ -11,9 +11,10 @@ export type ApproveResult = {
   certificateCode: string
   email: string
   holderName: string | null
-  /** Erste Freigabe überhaupt — ab hier existiert ein abrufbares Zertifikat. */
+  /** Erste Freigabe überhaupt — ab hier existiert ein abrufbares Dokument. */
   firstVerification: boolean
   verifiedCount: number
+  verifiedModuleIds: SicModuleId[]
   expiresAt: Date
 }
 
@@ -85,11 +86,15 @@ export async function approveSicModule(opts: {
       },
     })
 
-    const verifiedCount = await tx.sicCertificateModule.count({
+    const verified = await tx.sicCertificateModule.findMany({
       where: { certificateId: opts.certificateId, status: 'VERIFIED' },
+      select: { moduleKind: true },
     })
 
-    return { verifiedCount }
+    return {
+      verifiedCount: verified.length,
+      verifiedModuleIds: verified.map(m => m.moduleKind as SicModuleId),
+    }
   })
 
   if (!result) return null
@@ -111,6 +116,7 @@ export async function approveSicModule(opts: {
     holderName,
     firstVerification,
     verifiedCount: result.verifiedCount,
+    verifiedModuleIds: result.verifiedModuleIds,
     expiresAt: nextExpiresAt,
   }
 }

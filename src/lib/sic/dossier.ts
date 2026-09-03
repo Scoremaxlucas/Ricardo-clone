@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { readSicFacts, sicFactLines, type SicFacts } from '@/lib/sic/facts'
 import {
   getSicModule,
+  isSicCertificateSealReady,
   SIC_MODULES,
   SIC_RENEWAL_FEE_CHF,
   SIC_VALIDITY_MONTHS,
@@ -59,6 +60,8 @@ export type SicDossierView = {
   hasVerifiedModule: boolean
   /** Vermieter-PDF/QR sobald mindestens ein Modul geprüft ist und der Name steht. */
   landlordPdfReady: boolean
+  /** Urkunden-Optik: Betreibungsauszug und Ausweis geprüft. */
+  certificateSealReady: boolean
   progress: {
     totalModules: number
     /** Alle vier Angaben des Katalogs — Bezugsgrösse für «X von 4 geprüft». */
@@ -167,9 +170,9 @@ export function decodePaymentHolderName(raw?: string | null): { firstName: strin
 }
 
 /**
- * Abrufbares Zertifikat: mindestens eine geprüfte Angabe, Name gesetzt,
- * nicht widerrufen und nicht abgelaufen. Ein Teil-Zertifikat ist gültig —
- * der Umfang steht im Dokument.
+ * Abrufbares PDF: mindestens eine geprüfte Angabe, Name gesetzt,
+ * nicht widerrufen und nicht abgelaufen. Unter dem Siegel-Minimum ist das
+ * ein Stand der Prüfung, kein Mieter-Zertifikat.
  */
 export function isSicLandlordPdfReady(opts: {
   holderName: string | null
@@ -326,6 +329,9 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
       expiresAt: cert.expiresAt,
       modules: purchasedModules,
     }),
+    certificateSealReady: isSicCertificateSealReady(
+      purchasedModules.filter(m => m.status === 'VERIFIED').map(m => m.moduleKind)
+    ),
     progress: {
       totalModules: purchasedModules.length,
       catalogModules: SIC_MODULES.length,
