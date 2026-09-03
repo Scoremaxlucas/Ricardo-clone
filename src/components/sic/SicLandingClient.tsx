@@ -661,10 +661,12 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   <p className={`mt-4 text-lg font-bold leading-tight text-sic-navy ${alreadyOwned || isReturning ? 'pr-20' : ''}`}>
                     {m.title}
                   </p>
-                  <p className="mt-1.5 flex-1 text-sm leading-relaxed text-slate-600">{m.youUpload}</p>
+                  <p className="mt-1.5 flex-1 text-sm leading-relaxed text-slate-600">
+                    {isReturning ? m.youUpload : m.landlordSees}
+                  </p>
                   {!isReturning ?
-                    <p className="mt-4 flex items-center gap-1 border-t border-slate-100 pt-3 text-xs font-bold uppercase tracking-wide text-sic-navy">
-                      <Check className="h-3.5 w-3.5" /> Im Paket
+                    <p className="mt-4 border-t border-slate-100 pt-3 text-xs font-bold uppercase tracking-wide text-sic-navy">
+                      Für den Vermieter
                     </p>
                   : null}
                 </div>
