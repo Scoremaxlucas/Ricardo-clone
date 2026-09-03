@@ -239,7 +239,8 @@ function knownFactFields(moduleId: SicModuleId): SicFactField[] {
   for (const field of [...FIELDS[moduleId], ...extraCoupleFields(moduleId)]) {
     byKey.set(field.key, field)
   }
-  return [...byKey.values()]
+  // Avoid spreading MapIterator in older TS build targets (downlevelIteration).
+  return Array.from(byKey.values())
 }
 
 export function sicFactFields(moduleId: SicModuleId, opts?: { couple?: boolean }): SicFactField[] {
@@ -254,6 +255,34 @@ export function sicFactFields(moduleId: SicModuleId, opts?: { couple?: boolean }
     })),
     ...extras,
   ]
+}
+
+/** Module mit getrennten Person-1/2-Feldern — nicht die Haushalts-Referenz. */
+export function sicModuleHasCouplePersonFacts(moduleId: SicModuleId): boolean {
+  return extraCoupleFields(moduleId).length > 0
+}
+
+/**
+ * Der Parser liefert immer Person-1-Schlüssel. Beim Paar muss das zweite
+ * Dokument auf *2 gelegt werden, sonst überschreibt Auslesen Person 1.
+ */
+export function remapSicPrefillToPerson(moduleId: SicModuleId, facts: SicFacts, person: 1 | 2): SicFacts {
+  const extras = extraCoupleFields(moduleId)
+  if (person === 1) {
+    const person2Keys = new Set(extras.map(f => f.key))
+    const out: SicFacts = {}
+    for (const [key, value] of Object.entries(facts)) {
+      if (!person2Keys.has(key)) out[key] = value
+    }
+    return out
+  }
+  const out: SicFacts = {}
+  for (const field of extras) {
+    const sourceKey = field.key.endsWith('2') ? field.key.slice(0, -1) : field.key
+    const value = facts[sourceKey]
+    if (value !== undefined) out[field.key] = value
+  }
+  return out
 }
 
 function optionLabel(field: SicFactField, value: string): string {
