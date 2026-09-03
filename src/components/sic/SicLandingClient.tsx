@@ -117,13 +117,20 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
+    let dirty = false
     if (params.get('login') === 'invalid') {
       setLoginInvalid(true)
       params.delete('login')
-      const qs = params.toString()
-      const next = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`
-      window.history.replaceState({}, '', next)
+      dirty = true
     }
+    if (params.has('loggedOut')) {
+      params.delete('loggedOut')
+      dirty = true
+    }
+    if (!dirty) return
+    const qs = params.toString()
+    const next = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`
+    window.history.replaceState({}, '', next)
   }, [])
 
   useEffect(() => {

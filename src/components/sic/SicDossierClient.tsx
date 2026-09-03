@@ -1,7 +1,7 @@
 'use client'
 
 import { SicTemplateForm } from '@/components/sic/SicTemplateForm'
-import { SIC_REVIEW_SLA, sicVerifyUrl } from '@/lib/sic/config'
+import { SIC_REVIEW_SLA, sicPaths, sicVerifyUrl } from '@/lib/sic/config'
 import type { SicDossierView, SicUploadedDocMeta } from '@/lib/sic/dossier'
 import { templatePrefillNamesForModule } from '@/lib/sic/dossier'
 import { formatSicChf, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
@@ -37,8 +37,7 @@ const STATUS_META: Record<ModuleStatus, { label: string; className: string; Icon
   REJECTED: { label: 'Bitte nachreichen', className: 'bg-sic-danger-bg text-sic-danger-text', Icon: AlertCircle },
 }
 
-const VERIFY_DEFINITION =
-  'Wir prüfen jede Angabe einzeln auf Vollständigkeit und Plausibilität. PDF oder Foto, mehrere Dateien möglich.'
+const VERIFY_DEFINITION = `Wir prüfen jede Angabe einzeln auf Vollständigkeit und Plausibilität — ${SIC_REVIEW_SLA}. PDF oder Foto, mehrere Dateien möglich.`
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -438,13 +437,17 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             : dossier.couple ?
               'Sobald die erste Angabe geprüft ist, gibt es das PDF. Als Mieter-Zertifikat gilt es mit beiden Betreibungsauszügen und beiden Ausweisen.'
             : 'Sobald die erste Angabe geprüft ist, gibt es das PDF. Als Mieter-Zertifikat gilt es mit Betreibungsauszug und Ausweis.'}
+            {!sealReady && (dossier.progress.pendingDocsCount > 0 || dossier.progress.inReviewCount > 0) ?
+              ` Eingereichte Unterlagen prüfen wir ${SIC_REVIEW_SLA}.`
+            : null}
           </p>
         </div>
-        <form action="/api/sic/logout" method="post">
-          <button className="min-h-11 rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-800">
-            Abmelden
-          </button>
-        </form>
+        <a
+          href={sicPaths.logout}
+          className="inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+        >
+          Abmelden
+        </a>
       </div>
 
       {dossier.expired && dossier.renewal.available ?

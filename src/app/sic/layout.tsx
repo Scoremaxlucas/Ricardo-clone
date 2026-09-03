@@ -1,10 +1,13 @@
 import { SicHeaderCta } from '@/components/sic/SicHeaderCta'
 import { SicLogo } from '@/components/sic/SicLogo'
+import { authOptions } from '@/lib/auth'
 import { SIC_META_DESCRIPTION, SIC_TAGLINE } from '@/lib/sic/brand'
+import { isSicAdminEmail } from '@/lib/sic/admin-access'
 import { SIC_BASE_PATH, SIC_BRAND_NAME, sicPaths } from '@/lib/sic/config'
 import { getSicLandingAccount } from '@/lib/sic/landing-account'
 import { SIC_MODULES } from '@/lib/sic/modules'
 import type { Metadata } from 'next'
+import { getServerSession } from 'next-auth/next'
 import { Source_Serif_4 } from 'next/font/google'
 import Link from 'next/link'
 
@@ -25,9 +28,11 @@ export const metadata: Metadata = {
 }
 
 export default async function SicLayout({ children }: { children: React.ReactNode }) {
-  const account = await getSicLandingAccount()
+  const [account, session] = await Promise.all([getSicLandingAccount(), getServerSession(authOptions)])
   const hasCertificate = Boolean(account)
   const canAddModules = Boolean(account && account.ownedModules.length < SIC_MODULES.length)
+  // Nur Allowlist — Kunden sehen diesen Link nie.
+  const showReviewEntry = isSicAdminEmail(session?.user?.email)
 
   return (
     <div className={`${sicSerif.variable} flex min-h-[100dvh] flex-col overflow-x-clip bg-sic-paper text-slate-900`}>
@@ -38,6 +43,14 @@ export default async function SicLayout({ children }: { children: React.ReactNod
             <SicLogo size={32} className="hidden sm:inline-flex" />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
+            {showReviewEntry ?
+              <Link
+                href={sicPaths.admin}
+                className="hidden text-xs font-medium text-slate-400 transition-colors hover:text-sic-navy sm:inline"
+              >
+                Prüfung
+              </Link>
+            : null}
             <SicHeaderCta hasCertificate={hasCertificate} canAddModules={canAddModules} />
           </div>
         </div>
@@ -64,21 +77,21 @@ export default async function SicLayout({ children }: { children: React.ReactNod
               Häufige Fragen
             </Link>
             <Link
-              href={`${SIC_BASE_PATH}/datenschutz`}
+              href={sicPaths.datenschutz}
               className="text-white/80 transition-colors hover:text-white"
               style={{ color: 'rgba(255,255,255,0.8)' }}
             >
               Datenschutz
             </Link>
             <Link
-              href={`${SIC_BASE_PATH}/agb`}
+              href={sicPaths.agb}
               className="text-white/80 transition-colors hover:text-white"
               style={{ color: 'rgba(255,255,255,0.8)' }}
             >
               AGB
             </Link>
             <Link
-              href={`${SIC_BASE_PATH}/impressum`}
+              href={sicPaths.impressum}
               className="text-white/80 transition-colors hover:text-white"
               style={{ color: 'rgba(255,255,255,0.8)' }}
             >

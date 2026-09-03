@@ -6,16 +6,16 @@ export const dynamic = 'force-dynamic'
 
 function logoutRedirect(req: NextRequest) {
   // Relativ zum aktuellen Host — nicht hart auf Apex umbiegen.
-  // Sonst bleibt das Cookie auf www (oder Apex) stehen und «Abmelden» wirkt nicht.
-  const res = NextResponse.redirect(new URL(sicPaths.landing, req.url), 303)
+  const dest = new URL(sicPaths.landing, req.url)
+  dest.searchParams.set('loggedOut', '1')
+  const res = NextResponse.redirect(dest, 303)
   clearSicSessionCookie(res)
-  // Extra: Next.js-Delete für denselben Host
   res.cookies.delete(SIC_SESSION_COOKIE)
-  res.headers.set('Cache-Control', 'no-store')
+  res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
   return res
 }
 
-/** Form-POST von «Abmelden» — Redirect, sonst sieht man Roh-JSON. */
+/** Form-POST oder Link-GET von «Abmelden» — immer harter Redirect auf die Landing. */
 export async function POST(req: NextRequest) {
   return logoutRedirect(req)
 }

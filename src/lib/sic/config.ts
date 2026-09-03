@@ -135,12 +135,16 @@ export const sicPaths = {
   agb: `${SIC_BASE_PATH}/agb`,
   datenschutz: `${SIC_BASE_PATH}/datenschutz`,
   impressum: `${SIC_BASE_PATH}/impressum`,
+  /** Backoffice — nicht in der Kunden-Navigation. */
+  admin: `${SIC_BASE_PATH}/admin`,
   /** Seite mit Knopf — der Token wird erst per POST verbraucht. */
   loginConfirm: `${SIC_BASE_PATH}/anmelden`,
   authCallback: '/api/sic/auth/callback',
   /** Seite mit Knopf — die neue E-Mail wird erst per POST übernommen. */
   emailConfirm: `${SIC_BASE_PATH}/email-bestaetigen`,
   emailConfirmApi: '/api/sic/email/confirm',
+  /** Kunden-Abmelden — GET für harte Navigation (kein steckenbleibendes Dossier). */
+  logout: '/api/sic/logout',
 } as const
 
 export function sicUrl(path: string): string {

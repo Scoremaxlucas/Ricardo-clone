@@ -1,4 +1,4 @@
-import { SIC_OPERATOR, SIC_SUPPORT_EMAIL, sicOperatorAddressBlock } from '@/lib/sic/config'
+import { SIC_OPERATOR, SIC_SUPPORT_EMAIL, sicOperatorAddressBlock, sicPaths } from '@/lib/sic/config'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -62,14 +62,24 @@ export default function SicImpressumPage() {
       <p className="mt-10 text-xs leading-relaxed text-slate-400">
         Swiss Immo Cert ist ein Angebot der {SIC_OPERATOR.legalName} und keine amtliche Stelle. Für die Nutzung
         gelten die{' '}
-        <Link href="/sic/agb" className="underline-offset-2 hover:underline">
+        <Link href={sicPaths.agb} className="underline-offset-2 hover:underline">
           AGB
         </Link>{' '}
         und die{' '}
-        <Link href="/sic/datenschutz" className="underline-offset-2 hover:underline">
+        <Link href={sicPaths.datenschutz} className="underline-offset-2 hover:underline">
           Datenschutzerklärung
         </Link>
         .
+      </p>
+
+      {/*
+        Kein Header-/Hero-Link: Kunden sollen die Journey nicht sehen.
+        Impressum ist der diskrete Einstieg fürs Team; danach «Prüfung» im Header.
+      */}
+      <p className="mt-8 text-[11px] leading-relaxed text-slate-300">
+        <Link href={sicPaths.admin} className="underline-offset-2 hover:text-slate-500 hover:underline">
+          Interner Zugang
+        </Link>
       </p>
     </div>
   )
