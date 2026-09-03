@@ -65,7 +65,7 @@ export const SIC_CERT_TAGLINE = 'Geprüft. Standardisiert. Prüfbar.'
  * Zertifikat-PDF darf «Vertrauenswürdig» nicht tragen (AGB: keine Empfehlung).
  */
 export const SIC_META_DESCRIPTION =
-  'Wohnungssuche Schweiz: Ungeprüfte Bewerber bleiben Risiko. Swiss Immo Cert prüft deine Angaben — der Vermieter kann sich darauf stützen. Nur seriöse Bewerber. Kein Abo.'
+  'Swiss Immo Cert — das geprüfte Schweizer Mieter-Zertifikat. Angaben, auf die sich der Vermieter bei der Auswahl stützen kann. Kein Abo.'
 
 /**
  * Hero-Hintergrund. Bis ein eigenes Wohnungsfoto liegt, nutzen wir die

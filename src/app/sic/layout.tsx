@@ -52,8 +52,7 @@ export default async function SicLayout({ children }: { children: React.ReactNod
           <div>
             <SicLogo size={30} onDark />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
-              {SIC_TAGLINE}. Angaben, auf die sich der Vermieter stützen kann. Keine
-              Wohnungszusage — ein Nachweis, den nur seriöse Bewerber haben.
+              {SIC_TAGLINE}. Geprüfte Angaben für die Auswahl. Keine Wohnungszusage.
             </p>
           </div>
           <nav className="flex flex-col gap-2.5 text-sm">

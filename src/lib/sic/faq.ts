@@ -24,11 +24,11 @@ const PRICE_ANSWER =
 export const SIC_FAQ: { q: string; a: string }[] = [
   {
     q: 'Bekomme ich damit eher die Wohnung?',
-    a: 'Das entscheidet der Vermieter — eine Zusage versprechen wir nicht. Was wir ändern: er sieht geprüfte Angaben, auf die er sich stützen kann, statt Selbstauskunft wie bei den anderen. Wer den Prüfaufwand auf sich nimmt, sticht heraus. Genau daran scheitern die meisten, die eigentlich geeignet wären.',
+    a: 'Das entscheidet der Vermieter — eine Zusage versprechen wir nicht. Was wir ändern: er sieht geprüfte Angaben statt Selbstauskunft. Ob er dich berücksichtigt, bleibt seine Entscheidung.',
   },
   {
     q: 'Haben das nicht alle Bewerber?',
-    a: 'Nein. Die Prüfung kostet Zeit und Unterlagen — den Aufwand nimmt nicht jeder auf sich. Genau deshalb ist das Zertifikat ein Signal: du gehörst zu denen, die sich ernsthaft ausweisen. Für den Vermieter sinkt das Risiko; für dich steigt die Chance, ernst genommen zu werden.',
+    a: 'Nein. Nicht jeder legt geprüfte Angaben vor. Das Zertifikat weist aus, was bestätigt ist — und bleibt damit ein Unterscheidungsmerkmal.',
   },
   {
     q: 'Was kostet es?',
@@ -36,7 +36,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: `Warum genau diese ${SIC_MODULES.length} Angaben?`,
-    a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob dein Ausweis gültig ist. Ungeprüft bleibt das Risiko bei ihm. Sind alle vier geprüft, hat er eine Grundlage für die Entscheidung.',
+    a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob der Ausweis gültig ist. Sind alle vier geprüft, hat er eine vollständige Grundlage. Was fehlt, ist nicht ausgewiesen.',
   },
   {
     q: 'Was muss ich selbst besorgen?',

@@ -26,10 +26,10 @@ describe('SIC_CERT_TAGLINE', () => {
 })
 
 describe('SIC_META_DESCRIPTION', () => {
-  it('positions trust and seriousness, not unread applications', () => {
-    expect(SIC_META_DESCRIPTION).toMatch(/Risiko/)
+  it('names the certificate and the landlord decision, not unread applications', () => {
+    expect(SIC_META_DESCRIPTION).toMatch(/Mieter-Zertifikat/)
     expect(SIC_META_DESCRIPTION).toMatch(/stützen/)
-    expect(SIC_META_DESCRIPTION).not.toMatch(/ungelesen|gelesen/)
+    expect(SIC_META_DESCRIPTION).not.toMatch(/ungelesen|gelesen|Risiko/)
   })
 })
 

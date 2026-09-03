@@ -8,11 +8,12 @@ describe('SIC FAQ copy', () => {
     expect(blob).not.toMatch(/Stapel|kennenlernen|Überall bewerben|Besichtigung/)
   })
 
-  it('sells being taken seriously, not merely being read', () => {
+  it('positions checked facts over unread-dossier copy, without promising a Zusage', () => {
     const blob = SIC_FAQ.map(i => `${i.q} ${i.a}`).join(' ')
+    expect(blob).toMatch(/Selbstauskunft/)
+    expect(blob).toMatch(/Unterscheidungsmerkmal/)
     expect(blob).toMatch(/stützen/)
-    expect(blob).toMatch(/Risiko/)
-    expect(blob).toMatch(/ernst genommen/)
     expect(blob).not.toMatch(/überblättert|ungelesen|fünf Anhänge/)
+    expect(blob).not.toMatch(/Prüfaufwand|sticht heraus|Chance, ernst/)
   })
 })

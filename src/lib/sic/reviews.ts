@@ -21,16 +21,16 @@ export type SicUseCase = {
 
 export const SIC_USE_CASES: readonly SicUseCase[] = [
   {
-    title: 'Ernst genommen statt übergangen',
-    body: 'Der Vermieter kann sich auf geprüfte Angaben stützen — nicht auf Selbstauskunft. Du bist nicht mehr dieselbe Wette wie jeder andere Ordner.',
+    title: 'Geprüft statt Selbstauskunft',
+    body: 'Der Vermieter sieht bestätigte Angaben, nicht ungeprüfte Unterlagen. Das ist eine Grundlage für die Auswahl — nicht nur ein weiterer Anhang.',
   },
   {
-    title: 'Nur wer sich prüfen lässt',
-    body: 'Betreibung, Lohn, Ausweis, Referenz: den Aufwand nimmt nicht jeder auf sich. Das Zertifikat haben die seriösen Bewerber. Genau deshalb zählt es.',
+    title: 'Nicht jeder legt das vor',
+    body: 'Nicht jeder kann Betreibung, Lohn, Ausweis und Referenz als geprüft vorlegen. Genau deshalb unterscheidet das Zertifikat.',
   },
   {
-    title: 'Nicht warten auf die letzte Unterschrift',
-    body: 'Die Referenz vom bisherigen Vermieter dauert oft zwei Wochen. Du kannst das PDF trotzdem schon beilegen — mit dem, was schon geprüft ist.',
+    title: 'Nutzbar, bevor alles vorliegt',
+    body: 'Die Referenz des bisherigen Vermieters braucht oft zwei Wochen. Das PDF kannst du trotzdem beilegen — mit dem Stand, der bereits geprüft ist.',
   },
 ]
 

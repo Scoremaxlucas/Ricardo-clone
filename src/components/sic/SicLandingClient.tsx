@@ -1,7 +1,7 @@
 'use client'
 
 import { SicLogoMark } from '@/components/sic/SicLogo'
-import { SIC_CERT_TAGLINE, SIC_COLORS, SIC_HERO_IMAGE, SIC_MODULE_ACCENT } from '@/lib/sic/brand'
+import { SIC_CERT_TAGLINE, SIC_COLORS, SIC_HERO_IMAGE, SIC_MODULE_ACCENT, SIC_TAGLINE } from '@/lib/sic/brand'
 import { SIC_FAQ } from '@/lib/sic/faq'
 import { sicCatalogPreviewRows } from '@/lib/sic/facts'
 import { SIC_REVIEWS, SIC_USE_CASES, sicLandingHasReviews } from '@/lib/sic/reviews'
@@ -59,13 +59,13 @@ const MODULE_ICON: Record<SicModuleId, LucideIcon> = {
 const HOW_STEPS: { icon: LucideIcon; title: string; note: string }[] = [
   {
     icon: Mail,
-    title: 'Name und E-Mail — dann die Zahlung',
-    note: 'Kein Passwort. Das Zertifikat entsteht mit der Zahlung. Danach ein Anmeldelink.',
+    title: 'Zertifikat anlegen',
+    note: 'Name und E-Mail, dann die Zahlung. Kein Passwort — danach ein Anmeldelink.',
   },
   {
     icon: Upload,
-    title: 'Unterlagen hochladen, Angabe für Angabe',
-    note: 'Betreibungsauszug und Ausweis hast du selbst. Für Lohn und Referenz brauchst du eine Unterschrift — das dauert.',
+    title: 'Unterlagen nachliefern',
+    note: 'Betreibungsauszug und Ausweis beschaffst du selbst. Für Lohn und Referenz braucht es eine Unterschrift Dritter.',
   },
   {
     icon: ListChecks,
@@ -75,13 +75,13 @@ const HOW_STEPS: { icon: LucideIcon; title: string; note: string }[] = [
   {
     icon: QrCode,
     title: 'Der Bewerbung beilegen',
-    note: 'Schon ab der ersten geprüften Angabe: der Vermieter sieht zertifizierte Fakten — nicht Selbstauskunft.',
+    note: 'Bereits mit der ersten geprüften Angabe. Der Vermieter sieht, was bestätigt ist — nicht die Unterlagen selbst.',
   },
 ]
 
 const TODAY_SCENES = [
-  'Du bist geeignet. Trotzdem gehst du leer aus — weil der Vermieter ungeprüften Angaben nicht trauen kann.',
-  'Lohn, Betreibung, Referenz: bei herkömmlichen Bewerbern ist das Selbstauskunft. Für ihn höheres Risiko. Für dich keine Grundlage, vorgezogen zu werden.',
+  'Eignung allein reicht nicht. Ungeprüfte Angaben geben dem Vermieter keine Grundlage, dich vorzuziehen.',
+  'Lohn, Betreibung und Referenz sind bei den meisten Bewerbern Selbstauskunft. Ohne Prüfung bleibt die Unsicherheit bei ihm.',
 ]
 
 /** Beispiel wie auf dem PDF — Zeilen aus denselben Bändern und der 3×-Regel. */
@@ -379,7 +379,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               <div className="min-w-0">
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/80">
                   <ShieldCheck className="h-3.5 w-3.5 text-sic-gold-light" />
-                  Für seriöse Bewerber in der Schweiz
+                  {SIC_TAGLINE}
                 </span>
                 <h1 className="mt-6 font-sic-serif text-[1.7rem] font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
                   Damit der Vermieter dich ernst nimmt.{' '}
@@ -463,7 +463,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   </a>
                 </form>
                 <p className="mt-3 max-w-md text-xs leading-relaxed text-white/45">
-                  Kein Abo. Das PDF legst du der Bewerbung bei — damit er sich auf geprüfte Angaben stützen kann.
+                  Kein Abo. Einmal anlegen, jeder Bewerbung beilegen.
                 </p>
               </div>
               <div id="zertifikat" className="min-w-0">
@@ -482,7 +482,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           <section className="bg-sic-paper">
             <div className="mx-auto max-w-3xl px-5 py-14 sm:py-16">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sic-gold-text">
-                Warum du oft leer ausgehst
+                Die Ausgangslage
               </p>
               <div className="mt-8">
                 {TODAY_SCENES.map((scene, i) => (
@@ -497,8 +497,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 ))}
               </div>
               <p className="mt-8 font-sic-serif text-lg font-semibold leading-snug text-sic-navy sm:text-xl">
-                Deshalb ein geprüftes Zertifikat: Angaben, auf die er sich bei der Entscheidung stützen
-                kann. Das haben nicht alle — nur die, die sich ernsthaft prüfen lassen.
+                Ein SIC-Zertifikat weist aus, was geprüft ist. Es erhalten Bewerber, die sich ausweisen
+                können.
               </p>
             </div>
           </section>
@@ -506,15 +506,14 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           <section className="bg-sic-paper-soft py-14 sm:py-16">
             <div className="mx-auto max-w-5xl px-5">
               <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-sic-gold-text">
-                Was der Vermieter abwägt
+                Herkömmliche Bewerbung und SIC
               </p>
               <h2 className="mt-3 text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
-                Er sucht nicht mehr Unterlagen.{' '}
-                <span className="block sm:inline">Er sucht weniger Risiko.</span>
+                Der Vermieter braucht eine Grundlage — nicht weitere Anhänge.
               </h2>
               <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-                Bei herkömmlichen Bewerbern muss er allem selbst glauben. Mit SIC sieht er geprüfte Angaben —
-                standardisiert, per QR nachvollziehbar. Das haben nur die, die sich prüfen lassen.
+                Bei einer herkömmlichen Bewerbung muss er den Angaben Glauben schenken. Ein Zertifikat weist
+                aus, was geprüft ist — standardisiert und per QR nachvollziehbar.
               </p>
               <div className="mt-10 grid gap-5 md:grid-cols-2">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
@@ -525,7 +524,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                       'Lohn selbst deklariert',
                       'Betreibungsauszug ungeprüft',
                       'Referenz fehlt oder unbelegt',
-                      'Ausweis als Foto im Anhang',
+                      'Ausweis ungeprüft',
                     ].map(f => (
                       <li
                         key={f}
@@ -537,7 +536,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     ))}
                   </ul>
                   <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                    Für den Vermieter bist du ununterscheidbar — und Risiko. Kein Grund, dich vorzuziehen.
+                    Selbstauskunft. Keine geprüfte Grundlage für die Auswahl.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-sic-gold/40 bg-sic-paper p-5 ring-1 ring-sic-gold/20">
@@ -560,8 +559,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     ))}
                   </ul>
                   <p className="mt-3 text-xs leading-relaxed text-sic-navy/70">
-                    Der Vermieter kann sich darauf stützen. Du stehst heraus — weil du den Aufwand auf dich
-                    genommen hast.
+                    Geprüfte Angaben, die der Vermieter nachvollziehen kann. Nicht jeder legt sie vor.
                   </p>
                 </div>
               </div>
@@ -584,9 +582,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           <div className="mx-auto max-w-6xl px-5">
             <h2 className="text-center font-sic-serif text-3xl font-bold tracking-tight text-sic-navy">So läuft es ab</h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-              Du zahlst einmal, lädst die Unterlagen in deinem Tempo hoch — und kannst das PDF schon beilegen,
-              sobald die erste Angabe geprüft ist. Dann hat der Vermieter etwas, worauf er sich stützen kann.{' '}
-              {PRICE_LABEL}, {SIC_VALIDITY_MONTHS} Monate gültig ab der ersten Freigabe.
+              Einmal anlegen, Unterlagen nachliefern. Das PDF steht bereit, sobald die erste Angabe geprüft
+              ist. {PRICE_LABEL}, {SIC_VALIDITY_MONTHS} Monate gültig ab der ersten Freigabe.
             </p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_STEPS.map((step, i) => (
@@ -619,7 +616,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             <p className="mx-auto mt-2 max-w-xl text-slate-500">
               {isReturning ?
                 'Was du schon hast, ist markiert. Fehlendes kannst du ergänzen.'
-              : 'Vier Angaben, auf die sich der Vermieter stützen will. Ungeprüft bleibt das Risiko bei ihm. Alle vier sind vorausgewählt.'}
+              : 'Vier Angaben, die Vermieter für die Auswahl brauchen. Alle vier sind vorausgewählt.'}
             </p>
           </div>
 
@@ -643,8 +640,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             </div>
             <p className="mt-2.5 text-xs leading-relaxed text-slate-500">
               {coveredCount === SIC_MODULES.length ?
-                'Alle vier gewählt — so hat der Vermieter eine vollständige, geprüfte Grundlage. Name und Prüfcode sind immer dabei.'
-              : `Noch offen: ${missingTitles.join(', ')}. Was fehlt, muss der Vermieter selbst nachprüfen — und das Risiko bleibt bei ihm.`}
+                'Alle vier gewählt. Name und Prüfcode sind immer dabei.'
+              : `Noch offen: ${missingTitles.join(', ')}. Was fehlt, erscheint nicht auf dem Zertifikat.`}
             </p>
           </div>
 
@@ -926,13 +923,13 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               </>
             : <>
                 <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-sic-gold-text">
-                  So läuft es
+                  Das Zertifikat
                 </p>
                 <h2 className="mt-3 text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
-                  Drei Wege, ernst genommen zu werden
+                  Was sich für den Vermieter ändert
                 </h2>
                 <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-relaxed text-slate-500">
-                  Keine Kundenbewertungen — das sind Abläufe, die das Produkt hergibt.
+                  Noch ohne Kundenstimmen. Drei Eigenschaften, die das Produkt hergibt.
                 </p>
                 <div className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
                   {SIC_USE_CASES.map(item => (
@@ -986,8 +983,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 'Dein Zertifikat ist vollständig.'
               : 'Fehlende Angabe ergänzen.'
             : IS_FREE ?
-              'Kostenlos anlegen. Damit die nächste Bewerbung ernst genommen wird.'
-            : `Anlegen für ${PRICE_LABEL}. Damit die nächste Bewerbung ernst genommen wird.`}
+              'Zertifikat anlegen — für die nächste Bewerbung.'
+            : `Anlegen für ${PRICE_LABEL}. Für die nächste Bewerbung.`}
           </span>
           {isReturning && nothingToBuy ?
             <a

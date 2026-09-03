@@ -21,11 +21,10 @@ describe('SIC social proof', () => {
     }
   })
 
-  it('positions seriousness and exclusivity, not merely being read', () => {
+  it('positions checked facts and exclusivity, not merely being read', () => {
     const blob = SIC_USE_CASES.map(i => `${i.title} ${i.body}`).join(' ')
-    expect(blob).toMatch(/Ernst genommen/)
-    expect(blob).toMatch(/stützen/)
-    expect(blob).toMatch(/seriösen Bewerber/)
-    expect(blob).not.toMatch(/überblättert|ungelesen|fünf Dateien/)
+    expect(blob).toMatch(/Selbstauskunft/)
+    expect(blob).toMatch(/unterscheidet/)
+    expect(blob).not.toMatch(/überblättert|ungelesen|fünf Dateien|Wette|Aufwand/)
   })
 })
