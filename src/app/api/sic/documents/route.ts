@@ -11,8 +11,8 @@ import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { getSicModule, isSicModuleId } from '@/lib/sic/modules'
 import { nextModuleStatusAfterUpload } from '@/lib/sic/module-status'
+import { putSicDocumentBytes } from '@/lib/sic/blob-put'
 import { getSicSession } from '@/lib/sic/session-cookie'
-import { put } from '@vercel/blob'
 import { randomBytes } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -108,17 +108,14 @@ export async function POST(req: NextRequest) {
 
   let blobUrl: string
   try {
-    const blob = await put(path, buffer, {
-      access: 'private',
-      addRandomSuffix: true,
-      contentType: 'application/octet-stream',
-    })
-    blobUrl = blob.url
+    blobUrl = await putSicDocumentBytes(path, buffer)
   } catch (err) {
-    // Kein Fallback auf öffentlichen Zugriff: eine öffentlich erreichbare
-    // Lohnabrechnung ist schlimmer als ein fehlgeschlagener Upload.
-    console.error('[sic/documents] private blob upload failed', err)
-    sicLog('sic.upload.private_put_failed', { certificateId: cert.id, moduleKind })
+    console.error('[sic/documents] blob upload failed', err)
+    sicLog('sic.upload.put_failed', {
+      certificateId: cert.id,
+      moduleKind,
+      reason: err instanceof Error ? err.message : 'unknown',
+    })
     return NextResponse.json(
       { ok: false, message: 'Hochladen fehlgeschlagen. Bitte später erneut versuchen.' },
       { status: 502 }
