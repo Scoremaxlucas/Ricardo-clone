@@ -21,16 +21,16 @@ export type SicUseCase = {
 
 export const SIC_USE_CASES: readonly SicUseCase[] = [
   {
-    title: 'Geprüft statt Selbstauskunft',
-    body: 'Der Vermieter sieht geprüfte Angaben in einheitlicher Form — nicht ungeprüfte Unterlagen. Nachvollziehbar per QR. Keine behördliche Auskunft.',
+    title: 'Weniger Prüfaufwand',
+    body: 'Der Vermieter braucht weniger Zeit für die Einordnung: die Angaben sind einheitlich und per QR nachvollziehbar.',
   },
   {
-    title: 'Nicht jeder legt das vor',
-    body: 'Nicht alle Bewerber reichen Betreibung, Lohn, Ausweis und Referenz als «GEPRÜFT» ein. Das Zertifikat macht den Unterschied sofort sichtbar.',
+    title: 'Sticht unter vielen Bewerbungen hervor',
+    body: 'Mit dem Zertifikat wirkt der Bewerber sofort klar qualifiziert. Der Vermieter erkennt den Qualitätsstatus auf einen Blick.',
   },
   {
-    title: 'Nutzbar, bevor alles vorliegt',
-    body: 'Auch wenn die Vermieter-Referenz länger dauert: Das PDF ist mit dem bereits geprüften Stand verfügbar. So kann der Vermieter nicht unnötig warten.',
+    title: 'Schnellere Entscheidung',
+    body: 'Die Auswahl geht schneller weiter: weniger Rückfragen, schneller zur Vergabe.',
   },
 ]
 
