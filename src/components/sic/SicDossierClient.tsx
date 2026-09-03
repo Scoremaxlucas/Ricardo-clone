@@ -38,7 +38,7 @@ const STATUS_META: Record<ModuleStatus, { label: string; className: string; Icon
 }
 
 const VERIFY_DEFINITION =
-  'Wir schauen deine Unterlagen an: sind sie vollständig und plausibel? Wir rufen niemanden an — weder Arbeitgeber noch Vermieter.'
+  'Wir prüfen jede Angabe einzeln auf Vollständigkeit und Plausibilität. PDF oder Foto, mehrere Dateien möglich.'
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -430,14 +430,14 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             {verifiedCount > 0 ?
               sealReady ?
                 dossier.couple ?
-                  'Das Mieter-Zertifikat für beide ist da. Legt das PDF der nächsten Bewerbung bei. Die Gültigkeit hängt am älteren der beiden Betreibungsauszüge.'
-                : 'Dein Mieter-Zertifikat ist da. Leg das PDF der nächsten Bewerbung bei. Jede weitere Angabe kommt automatisch dazu. Die Gültigkeit hängt am Betreibungsauszug.'
+                  'Das Mieter-Zertifikat für beide ist da — legt das PDF der nächsten Bewerbung bei.'
+                : 'Dein Mieter-Zertifikat ist da — leg das PDF der nächsten Bewerbung bei.'
               : dossier.couple ?
-                'Der Stand der Prüfung ist als PDF bereit — noch kein Mieter-Zertifikat. Dafür müssen beide Betreibungsauszüge und beide Ausweise geprüft sein.'
-              : 'Der Stand der Prüfung ist als PDF bereit — noch kein Mieter-Zertifikat. Dafür müssen Betreibungsauszug und Ausweis geprüft sein. Du kannst den Stand trotzdem beilegen.'
+                'Der Prüfstand ist als PDF bereit. Zum Mieter-Zertifikat fehlen noch beide Betreibungsauszüge und beide Ausweise.'
+              : 'Der Prüfstand ist als PDF bereit. Zum Mieter-Zertifikat fehlen noch Betreibungsauszug und Ausweis.'
             : dossier.couple ?
-              'Sobald die erste Angabe geprüft ist, kannst du den Stand als PDF herunterladen. Das Mieter-Zertifikat gibt es, sobald beide Betreibungsauszüge und beide Ausweise geprüft sind.'
-            : `Sobald die erste Angabe geprüft ist, kannst du den Stand als PDF herunterladen. Das Mieter-Zertifikat gibt es, sobald Betreibungsauszug und Ausweis geprüft sind.`}
+              'Sobald die erste Angabe geprüft ist, gibt es das PDF. Als Mieter-Zertifikat gilt es mit beiden Betreibungsauszügen und beiden Ausweisen.'
+            : 'Sobald die erste Angabe geprüft ist, gibt es das PDF. Als Mieter-Zertifikat gilt es mit Betreibungsauszug und Ausweis.'}
           </p>
         </div>
         <form action="/api/sic/logout" method="post">
@@ -642,6 +642,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           const meta = STATUS_META[m.status]
           const canUpload = m.status !== 'VERIFIED' && dossier.status !== 'REVOKED'
           const canRemoveDocs = m.status !== 'VERIFIED'
+          // Formular-Zeilen stehen schon im Vorlagen-Block darunter — hier nur echte Uploads.
+          const uploadItems = m.checklist.filter(item => item.kind !== 'template')
           return (
             <li key={m.moduleKind} className="rounded-2xl border border-sic-hairline bg-sic-paper-soft p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -652,10 +654,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                   <meta.Icon className="h-3.5 w-3.5" /> {meta.label}
                 </span>
               </div>
-              <p className="mt-1.5 text-sm text-slate-500">{m.summary}</p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                Der Vermieter sieht: {m.landlordSees}
-              </p>
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{m.summary}</p>
 
               {m.reviewNote && m.status === 'REJECTED' ?
                 <p className="mt-2 rounded-lg bg-sic-danger-bg px-3 py-2 text-sm text-sic-danger-text">
@@ -665,26 +664,16 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
 
               {canUpload ?
                 <div className="mt-4">
-                  <p className="text-xs font-medium text-slate-500">Das brauchst du dafür:</p>
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    Sobald die erste Datei da ist, schauen wir sie an.
-                  </p>
-                  <ul className="mt-2 space-y-1.5">
-                    {m.checklist.map(item => (
-                      <li key={item.id} className="flex items-start gap-2 text-xs text-slate-600">
-                        <span
-                          className={`mt-0.5 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
-                            item.kind === 'template' ?
-                              'bg-sic-navy/10 text-sic-navy'
-                            : 'bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          {item.kind === 'template' ? 'Formular' : 'Datei'}
-                        </span>
-                        <span>{item.label}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {uploadItems.length > 0 ?
+                    <ul className="space-y-1.5">
+                      {uploadItems.map(item => (
+                        <li key={item.id} className="flex items-start gap-2.5 text-xs leading-relaxed text-slate-600">
+                          <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-navy/40" />
+                          <span>{item.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  : null}
 
                   {templatesForModule(m.moduleKind).map(t => {
                     const names = templatePrefillNamesForModule(m.moduleKind, dossier)
@@ -720,9 +709,6 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                     <FileUp className="h-4 w-4" />
                     {uploading === m.moduleKind ? 'Wird hochgeladen …' : 'Datei hochladen'}
                   </button>
-                  <p className="mt-1.5 text-[11px] text-slate-400">
-                    PDF oder Foto. Mehrere Dateien nacheinander sind möglich.
-                  </p>
                 </div>
               : null}
 
