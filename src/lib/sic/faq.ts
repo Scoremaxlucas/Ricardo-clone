@@ -68,7 +68,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Wie lange ist das Zertifikat gültig?',
-    a: `${SIC_VALIDITY_MONTHS} Monate — gerechnet ab der ersten Freigabe, nicht ab der Zahlung. Kommt später eine weitere geprüfte Angabe dazu, verlängert sich die Gültigkeit erneut auf ${SIC_VALIDITY_MONTHS} Monate.`,
+    a: `${SIC_VALIDITY_MONTHS} Monate — gerechnet ab dem Datum des Betreibungsauszugs, nicht ab der Zahlung. Andere geprüfte Angaben verlängern die Frist nicht. Fehlt der Auszug noch, gilt eine vorläufige Frist ab der ersten Freigabe, bis der Auszug geprüft ist.`,
   },
   {
     q: 'Und wenn es abgelaufen ist?',

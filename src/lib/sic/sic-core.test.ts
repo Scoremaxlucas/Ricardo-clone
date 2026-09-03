@@ -22,7 +22,7 @@ import {
   sicCheckoutRetryRequestBody,
 } from '@/lib/sic/checkout-retry'
 import { isSicLandlordPdfReady, joinHolderName, encodePaymentHolderName, decodePaymentHolderName, previewSicVerifiedModules } from '@/lib/sic/dossier'
-import { addCalendarMonths, isSicExpired, sicExtendedExpiresAt, sicValidityExpiresAt } from '@/lib/sic/validity'
+import { addCalendarMonths, isSicExpired, parseSicCalendarDate, sicExpiresAtAfterApproval, sicValidityExpiresAt } from '@/lib/sic/validity'
 
 describe('certificate code', () => {
   it('generates a valid SIC code', () => {
@@ -150,15 +150,56 @@ describe('validity', () => {
     // +3 months from Jan 31 → Apr 30 (Apr has 30 days)
     expect(sicValidityExpiresAt(from).toISOString().slice(0, 10)).toBe('2026-04-30')
   })
-  it('extension never shortens existing validity', () => {
-    const now = new Date(Date.UTC(2026, 0, 1, 0, 0, 0))
-    const farFuture = new Date(Date.UTC(2027, 0, 1, 0, 0, 0))
-    expect(sicExtendedExpiresAt(farFuture, now).getTime()).toBe(farFuture.getTime())
+  it('sets validity from the Betreibungsauszug, not from later approvals', () => {
+    const extract = parseSicCalendarDate('2026-06-12')
+    expect(extract).not.toBeNull()
+    const fromExtract = sicExpiresAtAfterApproval({
+      moduleKind: 'BONITAET',
+      extractDate: '2026-06-12',
+      currentExpiresAt: null,
+      approvedAt: new Date(Date.UTC(2026, 7, 1)),
+    })
+    expect(fromExtract.toISOString().slice(0, 10)).toBe('2026-09-12')
+
+    const laterModule = sicExpiresAtAfterApproval({
+      moduleKind: 'AUFENTHALT',
+      currentExpiresAt: fromExtract,
+      approvedAt: new Date(Date.UTC(2026, 8, 1)),
+    })
+    expect(laterModule.getTime()).toBe(fromExtract.getTime())
   })
-  it('extension refreshes when current is sooner', () => {
-    const now = new Date(Date.UTC(2026, 5, 1, 0, 0, 0))
-    const soon = new Date(Date.UTC(2026, 5, 10, 0, 0, 0))
-    expect(sicExtendedExpiresAt(soon, now).toISOString().slice(0, 10)).toBe('2026-09-01')
+  it('replaces the clock when the extract is checked later — even if that shortens it', () => {
+    const provisional = new Date(Date.UTC(2026, 11, 1))
+    const next = sicExpiresAtAfterApproval({
+      moduleKind: 'BONITAET',
+      extractDate: '2026-06-12',
+      currentExpiresAt: provisional,
+      approvedAt: new Date(Date.UTC(2026, 8, 1)),
+    })
+    expect(next.toISOString().slice(0, 10)).toBe('2026-09-12')
+  })
+  it('uses a provisional clock until the extract exists', () => {
+    const approvedAt = new Date(Date.UTC(2026, 5, 1))
+    const next = sicExpiresAtAfterApproval({
+      moduleKind: 'AUFENTHALT',
+      currentExpiresAt: null,
+      approvedAt,
+    })
+    expect(next.toISOString().slice(0, 10)).toBe('2026-09-01')
+  })
+  it('falls back to the approval day if the extract date is missing', () => {
+    const approvedAt = new Date(Date.UTC(2026, 5, 1))
+    const next = sicExpiresAtAfterApproval({
+      moduleKind: 'BONITAET',
+      extractDate: null,
+      currentExpiresAt: null,
+      approvedAt,
+    })
+    expect(next.toISOString().slice(0, 10)).toBe('2026-09-01')
+  })
+  it('rejects impossible calendar dates', () => {
+    expect(parseSicCalendarDate('2026-02-31')).toBeNull()
+    expect(parseSicCalendarDate('12.06.2026')).toBeNull()
   })
   it('isSicExpired', () => {
     const now = new Date(Date.UTC(2026, 5, 1))

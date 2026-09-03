@@ -583,7 +583,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             <h2 className="text-center font-sic-serif text-3xl font-bold tracking-tight text-sic-navy">So läuft es ab</h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
               Einmal anlegen, Unterlagen nachliefern. Das PDF steht bereit, sobald die erste Angabe geprüft
-              ist. {PRICE_LABEL}, {SIC_VALIDITY_MONTHS} Monate gültig ab der ersten Freigabe.
+              ist. {PRICE_LABEL}, {SIC_VALIDITY_MONTHS} Monate gültig — gerechnet ab dem Betreibungsauszug.
             </p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_STEPS.map((step, i) => (

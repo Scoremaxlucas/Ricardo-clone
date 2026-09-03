@@ -1,3 +1,4 @@
+import type { SicModuleId } from '@/lib/sic/modules'
 import { SIC_VALIDITY_MONTHS } from '@/lib/sic/modules'
 
 /**
@@ -17,20 +18,50 @@ export function addCalendarMonths(from: Date, months: number): Date {
   return result
 }
 
-/** Ablaufdatum ab einem Stichtag (Freigabe) + Gültigkeitsdauer. */
+/** Ablaufdatum ab einem Stichtag + Gültigkeitsdauer (Kalendermonate). */
 export function sicValidityExpiresAt(from = new Date()): Date {
   return addCalendarMonths(from, SIC_VALIDITY_MONTHS)
 }
 
+/** Kalendertag aus einem Fact-Feld `YYYY-MM-DD` — UTC, ohne lokale Verschiebung. */
+export function parseSicCalendarDate(value: string | null | undefined): Date | null {
+  if (!value) return null
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim())
+  if (!m) return null
+  const y = Number(m[1])
+  const month = Number(m[2])
+  const day = Number(m[3])
+  const d = new Date(Date.UTC(y, month - 1, day))
+  if (d.getUTCFullYear() !== y || d.getUTCMonth() !== month - 1 || d.getUTCDate() !== day) return null
+  return d
+}
+
 /**
- * Gültigkeit nach einer Freigabe: drei Monate ab diesem Tag, aber nie kürzer
- * als das bestehende Datum. Die Uhr startet mit der ersten Freigabe und
- * verlängert sich mit jeder weiteren — Vervollständigen wird belohnt.
+ * «Gültig bis» nach einer Freigabe.
+ *
+ * Hängt am Betreibungsauszug: Auszugsdatum + drei Monate. Andere Angaben
+ * verlängern das Siegel nicht. Fehlt die Betreibung noch, läuft eine
+ * vorläufige Frist ab dem Freigabetag — bis der Auszug geprüft ist.
+ * Ein später geprüfter Auszug setzt die Uhr neu, auch wenn sie kürzer wird.
  */
-export function sicExtendedExpiresAt(currentExpiresAt: Date | null, from = new Date()): Date {
-  const fresh = sicValidityExpiresAt(from)
-  if (!currentExpiresAt) return fresh
-  return fresh.getTime() > currentExpiresAt.getTime() ? fresh : currentExpiresAt
+export function sicExpiresAtAfterApproval(opts: {
+  moduleKind: SicModuleId
+  extractDate?: string | null
+  currentExpiresAt: Date | null
+  approvedAt?: Date
+}): Date {
+  const approvedAt = opts.approvedAt ?? new Date()
+  if (opts.moduleKind === 'BONITAET') {
+    const extract = parseSicCalendarDate(opts.extractDate)
+    return sicValidityExpiresAt(extract ?? approvedAt)
+  }
+  if (opts.currentExpiresAt) return opts.currentExpiresAt
+  return sicValidityExpiresAt(approvedAt)
+}
+
+export function sicExpiryClockChanged(previous: Date | null, next: Date): boolean {
+  if (!previous) return true
+  return previous.getTime() !== next.getTime()
 }
 
 export function isSicExpired(expiresAt: Date | null | undefined, now = new Date()): boolean {

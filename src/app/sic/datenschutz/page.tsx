@@ -98,8 +98,9 @@ export default function SicDatenschutzPage() {
         <section>
           <h2 className="font-semibold text-sic-navy">Aufbewahrung und Löschung</h2>
           <p className="mt-1.5">
-            Die Gültigkeit von {SIC_VALIDITY_MONTHS} Monaten beginnt mit der ersten Freigabe. Nach Ablauf des
-            Zertifikats löschen wir die hochgeladenen Dateien spätestens nach {SIC_DOCS_RETENTION_DAYS} Tagen.
+            Die Gültigkeit von {SIC_VALIDITY_MONTHS} Monaten richtet sich nach dem Betreibungsauszug. Nach
+            Ablauf des Zertifikats löschen wir die hochgeladenen Dateien spätestens nach{' '}
+            {SIC_DOCS_RETENTION_DAYS} Tagen.
           </p>
           <p className="mt-1.5">
             Bleibt ein Zertifikat unfertig, löschen wir die hochgeladenen Dateien{' '}

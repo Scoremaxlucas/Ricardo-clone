@@ -4,7 +4,7 @@ import { SicVerifyDocument } from '@/components/sic/SicVerifyDocument'
 import { previewSicVerifiedModules } from '@/lib/sic/dossier'
 import { normalizeSicFacts, type SicFacts } from '@/lib/sic/facts'
 import { sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
-import { sicValidityExpiresAt } from '@/lib/sic/validity'
+import { sicExpiresAtAfterApproval } from '@/lib/sic/validity'
 
 export function SicAdminReviewPreview({
   certificateCode,
@@ -28,7 +28,12 @@ export function SicAdminReviewPreview({
     facts: draftFacts,
   })
   const issuedAt = certifiedAt ? new Date(certifiedAt) : new Date()
-  const validUntil = expiresAt ? new Date(expiresAt) : sicValidityExpiresAt(issuedAt)
+  const validUntil = sicExpiresAtAfterApproval({
+    moduleKind: draftModuleId,
+    extractDate: draftFacts.extractDate,
+    currentExpiresAt: expiresAt ? new Date(expiresAt) : null,
+    approvedAt: new Date(),
+  })
   const parsed = normalizeSicFacts(draftModuleId, draftFacts)
   const gaps =
     parsed.ok ? [] : [...parsed.missing.map(l => `${l} fehlt`), ...parsed.invalid.map(l => `${l} ist ungültig`)]

@@ -88,10 +88,11 @@ export default function SicAgbPage() {
         <section>
           <h2 className="font-semibold text-sic-navy">4. Gültigkeit &amp; Verlängerung</h2>
           <p className="mt-1.5">
-            Die Gültigkeit von {SIC_VALIDITY_MONTHS} Monaten beginnt mit der ersten Freigabe einer Angabe, nicht
-            mit der Zahlung. Wird später eine weitere Angabe freigegeben, verlängert sich die Gültigkeit auf{' '}
-            {SIC_VALIDITY_MONTHS} Monate ab diesem Zeitpunkt; eine bereits laufende Gültigkeit wird dadurch nie
-            verkürzt.
+            Die Gültigkeit von {SIC_VALIDITY_MONTHS} Monaten richtet sich nach dem Betreibungsauszug: sie
+            beginnt mit dessen Ausstellungsdatum, nicht mit der Zahlung und nicht mit späteren Freigaben
+            anderer Angaben. Fehlt der Auszug noch, läuft eine vorläufige Frist von{' '}
+            {SIC_VALIDITY_MONTHS} Monaten ab der ersten Freigabe; sobald der Auszug geprüft ist, gilt dessen
+            Datum. Eine bereits laufende Gültigkeit wird durch andere Angaben nie verlängert.
           </p>
           <p className="mt-1.5">
             Nach Ablauf kannst du für {formatSicChf(SIC_RENEWAL_FEE_CHF)} verlängern. Dafür ist ein frischer

@@ -15,5 +15,7 @@ describe('SIC FAQ copy', () => {
     expect(blob).toMatch(/stützen/)
     expect(blob).not.toMatch(/überblättert|ungelesen|fünf Anhänge/)
     expect(blob).not.toMatch(/Prüfaufwand|sticht heraus|Chance, ernst/)
+    expect(blob).toMatch(/Betreibungsauszugs/)
+    expect(blob).not.toMatch(/verlängert sich die Gültigkeit erneut/)
   })
 })

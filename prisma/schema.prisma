@@ -2804,8 +2804,9 @@ model SicCertificate {
    */
   certifiedAt DateTime?
   /**
-   * Gültigkeit. Null bis zur ersten Freigabe — vorher gibt es kein Zertifikat,
-   * das ablaufen könnte. Gekaufte Module verfallen unabhängig davon nie.
+   * Gültigkeit. Null bis zur ersten Freigabe. Sobald der Betreibungsauszug
+   * geprüft ist: drei Monate ab dessen Ausstellungsdatum. Andere Module
+   * verlängern dieses Datum nicht.
    */
   expiresAt   DateTime?
 

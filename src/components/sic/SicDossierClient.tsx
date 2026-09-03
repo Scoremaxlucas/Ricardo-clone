@@ -284,7 +284,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           <p className="mt-1 break-all text-sm text-slate-500">{dossier.email}</p>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
             {verifiedCount > 0 ?
-              'Dein Zertifikat ist da. Leg das PDF der nächsten Bewerbung bei — der Vermieter sieht geprüfte Angaben, auf die er sich stützen kann. Jede weitere Angabe kommt automatisch dazu und verlängert die Gültigkeit.'
+              'Dein Zertifikat ist da. Leg das PDF der nächsten Bewerbung bei — der Vermieter sieht geprüfte Angaben, auf die er sich stützen kann. Jede weitere Angabe kommt automatisch dazu. Die Gültigkeit hängt am Betreibungsauszug.'
             : `Sobald die erste Angabe geprüft ist, kannst du das PDF herunterladen und der Bewerbung beilegen — und erst dann starten die ${dossier.validityMonths} Monate Gültigkeit. Wartezeit kostet dich keinen Tag.`
             }
           </p>
@@ -349,7 +349,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             <dd className="font-medium text-slate-800">
               {dossier.expiresAt ?
                 formatDate(dossier.expiresAt)
-              : `${dossier.validityMonths} Monate ab der ersten Freigabe`}
+              : `${dossier.validityMonths} Monate ab dem Betreibungsauszug`}
             </dd>
           </div>
         </div>
@@ -592,8 +592,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-6">
           <h3 className="text-sm font-semibold text-slate-900">Später ergänzen</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Für dein aktuelles Zertifikat brauchst du das nicht. Jede zusätzliche Angabe verlängert die
-            Gültigkeit ab dem Tag der Freigabe:
+            Für dein aktuelles Zertifikat brauchst du das nicht. Zusätzliche Angaben erscheinen auf dem
+            Dokument, verlängern die Gültigkeit aber nicht:
           </p>
           <ul className="mt-3 space-y-2">
             {dossier.availableModules.map(a => (

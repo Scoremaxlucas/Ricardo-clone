@@ -110,8 +110,8 @@ async function applyRenewal(certificateId: string): Promise<SicModuleId[]> {
  * Findet/erstellt das Zertifikat per E-Mail, fügt bezahlte Module hinzu (PENDING_DOCS)
  * bzw. wendet eine Verlängerung an und schickt einen Magic-Link zum Upload.
  *
- * Die Gültigkeit wird hier **nicht** gesetzt: sie beginnt erst mit der ersten
- * Freigabe, damit der Kunde keine Wartetage aus seiner Laufzeit verliert.
+ * Die Gültigkeit wird hier **nicht** gesetzt: sie beginnt mit der ersten
+ * Freigabe und richtet sich nach dem Betreibungsauszug, sobald der geprüft ist.
  */
 export async function fulfillSicPaidCheckout(input: {
   stripeCheckoutSessionId: string

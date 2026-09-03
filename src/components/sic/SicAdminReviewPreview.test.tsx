@@ -20,6 +20,8 @@ describe('SicAdminReviewPreview', () => {
     expect(html).toContain('Keine offenen Betreibungen')
     expect(html).toContain('Betreibungsamt Zürich')
     expect(html).toContain('1 von 4 Angaben geprüft')
+    expect(html).toContain('12.09.2026')
+    expect(html).not.toContain('01.11.2026')
     expect(html).not.toContain('Noch unvollständig')
   })
 

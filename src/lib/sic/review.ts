@@ -3,7 +3,7 @@ import { joinHolderName } from '@/lib/sic/dossier'
 import { recordSicEvent } from '@/lib/sic/events'
 import type { SicFacts } from '@/lib/sic/facts'
 import type { SicModuleId } from '@/lib/sic/modules'
-import { sicExtendedExpiresAt } from '@/lib/sic/validity'
+import { sicExpiresAtAfterApproval, sicExpiryClockChanged } from '@/lib/sic/validity'
 import type { SicModuleKind } from '@prisma/client'
 
 export type ApproveResult = {
@@ -20,9 +20,9 @@ export type ApproveResult = {
 /**
  * Gibt ein Modul frei und schreibt die geprüften Werte.
  *
- * Hier startet und verlängert sich die Gültigkeit: drei Monate ab dieser
- * Freigabe, nie kürzer als bisher. Das Ausstellungsdatum auf dem Dokument ist
- * der Tag der ersten Freigabe, nicht der Kauftag.
+ * Die Gültigkeit hängt am Betreibungsauszug (Auszugsdatum + drei Monate).
+ * Andere Angaben ändern «Gültig bis» nicht. Das Ausstellungsdatum auf dem
+ * Dokument bleibt der Tag der ersten Freigabe, nicht der Kauftag.
  */
 export async function approveSicModule(opts: {
   certificateId: string
@@ -51,7 +51,13 @@ export async function approveSicModule(opts: {
   if (cert.status === 'REVOKED') return null
 
   const firstVerification = !cert.certifiedAt
-  const nextExpiresAt = sicExtendedExpiresAt(cert.expiresAt, now)
+  const nextExpiresAt = sicExpiresAtAfterApproval({
+    moduleKind: opts.moduleKind,
+    extractDate: opts.facts.extractDate,
+    currentExpiresAt: cert.expiresAt,
+    approvedAt: now,
+  })
+  const clockChanged = sicExpiryClockChanged(cert.expiresAt, nextExpiresAt)
 
   const result = await prisma.$transaction(async tx => {
     const updated = await tx.sicCertificateModule.updateMany({
@@ -72,9 +78,9 @@ export async function approveSicModule(opts: {
         status: 'ACTIVE',
         expiresAt: nextExpiresAt,
         ...(firstVerification ? { certifiedAt: now } : {}),
-        // Erinnerungen gelten für das neue Datum.
-        expiryReminder14dSentAt: null,
-        expiryReminder3dSentAt: null,
+        ...(clockChanged ?
+          { expiryReminder14dSentAt: null, expiryReminder3dSentAt: null }
+        : {}),
         updatedAt: now,
       },
     })
