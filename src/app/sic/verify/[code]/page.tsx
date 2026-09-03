@@ -1,3 +1,4 @@
+import { SicLandlordExplainer } from '@/components/sic/SicLandlordExplainer'
 import { SicVerifyDocument } from '@/components/sic/SicVerifyDocument'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
@@ -6,7 +7,7 @@ import { SIC_BRAND_NAME } from '@/lib/sic/config'
 import { isSicLandlordPdfReady, joinHouseholdHolderName, sicFactLineOptsFromHolders, verifiedModuleLineItems } from '@/lib/sic/dossier'
 import { isSicCouple } from '@/lib/sic/household'
 import { recordSicVerifyScan } from '@/lib/sic/events'
-import { sicCompletenessLabel } from '@/lib/sic/modules'
+import { isSicCertificateSealReady, sicCompletenessLabel } from '@/lib/sic/modules'
 import { getSicSession } from '@/lib/sic/session-cookie'
 import { isSicExpired } from '@/lib/sic/validity'
 import type { Metadata } from 'next'
@@ -88,6 +89,8 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
         })
       )
     : []
+  const completenessLabel = sicCompletenessLabel(verifiedModules.length)
+  const sealed = isSicCertificateSealReady(verifiedModules.map(m => m.id))
 
   if (cert && landlordReady) {
     const session = getSicSession()
@@ -108,15 +111,18 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
         <SicVerifyDocument state="expired" code={cert.certificateCode} />
       : !landlordReady ?
         <SicVerifyDocument state="not_ready" />
-      : <SicVerifyDocument
-          state="valid"
-          certificateCode={cert.certificateCode}
-          holderName={holderName}
-          issuedAt={cert.certifiedAt ?? cert.issuedAt}
-          expiresAt={cert.expiresAt ?? cert.issuedAt}
-          completenessLabel={sicCompletenessLabel(verifiedModules.length)}
-          modules={verifiedModules}
-        />
+      : <>
+          <SicVerifyDocument
+            state="valid"
+            certificateCode={cert.certificateCode}
+            holderName={holderName}
+            issuedAt={cert.certifiedAt ?? cert.issuedAt}
+            expiresAt={cert.expiresAt ?? cert.issuedAt}
+            completenessLabel={completenessLabel}
+            modules={verifiedModules}
+          />
+          <SicLandlordExplainer completenessLabel={completenessLabel} sealed={sealed} />
+        </>
       }
     </VerifyShell>
   )

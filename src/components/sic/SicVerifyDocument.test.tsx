@@ -50,6 +50,7 @@ describe('SicVerifyDocument', () => {
     expect(html).not.toContain('Vertrauenswürdig')
     expect(html).toContain('Stand der Prüfung SIC-2026-ABCDEFGH')
     expect(html).not.toContain('Gültiges Zertifikat')
+    expect(html).not.toContain('Für Vermieterinnen und Vermieter')
     expect(html).not.toContain('lucide')
   })
 
@@ -82,6 +83,7 @@ describe('SicVerifyDocument', () => {
     expect(html).toContain(SIC_PLAUSIBILITY_FOOTER)
     expect(html).toContain(SIC_CERT_TAGLINE)
     expect(html).toContain('Gültiges Zertifikat')
+    expect(html).not.toContain('Für Vermieterinnen und Vermieter')
   })
 
   it('does not leak holder data when the code is unknown', () => {

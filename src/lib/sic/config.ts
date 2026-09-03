@@ -132,6 +132,8 @@ export const sicPaths = {
   checkoutCancel: `${SIC_BASE_PATH}/checkout/abbruch`,
   verify: (code: string) => `${SIC_BASE_PATH}/verify/${encodeURIComponent(code)}`,
   faq: `${SIC_BASE_PATH}/faq`,
+  agb: `${SIC_BASE_PATH}/agb`,
+  datenschutz: `${SIC_BASE_PATH}/datenschutz`,
   impressum: `${SIC_BASE_PATH}/impressum`,
   /** Seite mit Knopf — der Token wird erst per POST verbraucht. */
   loginConfirm: `${SIC_BASE_PATH}/anmelden`,
