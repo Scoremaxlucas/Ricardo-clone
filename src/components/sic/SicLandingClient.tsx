@@ -309,7 +309,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     href={`${sicPaths.certificateWorkspace}#erganzen`}
                     className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 touch-manipulation transition-transform hover:bg-sic-action-deep sm:w-auto sm:hover:-translate-y-0.5"
                   >
-                    Angabe ergänzen <ArrowRight className="h-4 w-4" />
+                    Angaben ergänzen <ArrowRight className="h-4 w-4" />
                   </a>
                 : <a
                     href={sicPaths.certificateWorkspace}
