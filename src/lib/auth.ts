@@ -11,15 +11,25 @@ const nextAuthSharedCookieDomain =
   process.env.NEXTAUTH_COOKIE_DOMAIN ||
   (process.env.VERCEL_ENV === 'production' ? '.helvenda.ch' : undefined)
 
-function nextAuthCookieBlock(sharedHelvendaDomain: boolean) {
+function sicNextAuthCookieDomain(): string | undefined {
+  if (process.env.NODE_ENV !== 'production') return undefined
+  try {
+    const host = new URL(SIC_SITE_ORIGIN).hostname.toLowerCase()
+    const apex = host.startsWith('www.') ? host.slice(4) : host
+    if (!apex || apex === 'localhost') return undefined
+    return `.${apex}`
+  } catch {
+    return undefined
+  }
+}
+
+function nextAuthCookieBlock(cookieDomain?: string) {
   const options = {
     httpOnly: true,
     sameSite: 'lax' as const,
     path: '/',
     secure: useSecureCookies,
-    ...(sharedHelvendaDomain && nextAuthSharedCookieDomain
-      ? { domain: nextAuthSharedCookieDomain }
-      : {}),
+    ...(cookieDomain ? { domain: cookieDomain } : {}),
   }
   return {
     cookies: {
@@ -38,9 +48,10 @@ function nextAuthCookieBlock(sharedHelvendaDomain: boolean) {
 function cookieConfigForHost(host?: string | null) {
   const h = (host || '').split(':')[0].toLowerCase()
   if (h && isSicProductionHostname(h)) {
-    return nextAuthCookieBlock(false)
+    // Apex + www teilen die Session — sonst Login «ok», Admin-Gate sieht kein Token.
+    return nextAuthCookieBlock(sicNextAuthCookieDomain())
   }
-  return nextAuthSharedCookieDomain != null ? nextAuthCookieBlock(true) : {}
+  return nextAuthSharedCookieDomain != null ? nextAuthCookieBlock(nextAuthSharedCookieDomain) : {}
 }
 
 function isSicAuthHost(host?: string | null): boolean {

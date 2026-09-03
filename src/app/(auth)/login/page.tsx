@@ -63,39 +63,42 @@ function LoginPageContent() {
 
       if (result?.error) {
         console.error('Login error:', result.error)
-        // Check for email not verified error
         if (
           result.error.includes('EMAIL_NOT_VERIFIED') ||
           result.error.includes('CredentialsSignin')
         ) {
-          // Could be email not verified - show helpful message
           setError(
-            'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre E-Mail und Passwort. Falls Sie Ihre E-Mail noch nicht bestätigt haben, klicken Sie auf den Bestätigungslink in Ihrer E-Mail.'
+            isSic
+              ? 'Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen — nur freigeschaltete Prüfer-Konten.'
+              : 'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre E-Mail und Passwort. Falls Sie Ihre E-Mail noch nicht bestätigt haben, klicken Sie auf den Bestätigungslink in Ihrer E-Mail.'
           )
         } else {
           setError(`Fehler: ${result.error}. Bitte überprüfen Sie E-Mail und Passwort.`)
         }
-        setIsLoading(false)
         return
       }
 
       if (result?.ok === true) {
+        const postLoginHref = determinePostLoginRoute()
+        // Harte Navigation: Session-Cookie ist sonst oft noch nicht für Soft-Nav/Middleware da.
+        // Soft router.push liess den Spinner hängen und /sic/admin wirkte «endlos».
+        if (isSic) {
+          window.location.assign(postLoginHref)
+          return
+        }
         setEmail('')
         setPassword('')
         await getSession()
-        const postLoginHref = determinePostLoginRoute()
-        setTimeout(() => {
-          router.push(postLoginHref)
-          router.refresh()
-        }, 100)
-      } else {
-        console.error('Unexpected login result')
-        setError('Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.')
-        setIsLoading(false)
+        router.push(postLoginHref)
+        router.refresh()
+        return
       }
+
+      setError('Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.')
     } catch (error: any) {
       console.error('Login exception:', error)
       setError(`Fehler: ${error.message || 'Unbekannter Fehler'}`)
+    } finally {
       setIsLoading(false)
     }
   }
