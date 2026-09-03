@@ -24,5 +24,7 @@ describe('SIC FAQ copy', () => {
     expect(blob).toMatch(/sieben Tage/)
     expect(blob).toMatch(/zu zweit/)
     expect(blob).toMatch(/ältere der beiden/)
+    expect(blob).toMatch(/ersetzt/)
+    expect(blob).not.toMatch(/zeigt danach nichts mehr/)
   })
 })

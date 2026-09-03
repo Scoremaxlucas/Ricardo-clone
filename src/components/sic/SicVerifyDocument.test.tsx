@@ -86,6 +86,25 @@ describe('SicVerifyDocument', () => {
     expect(html).not.toContain('Für Vermieterinnen und Vermieter')
   })
 
+  it('names a replaced code without leaking holder data', () => {
+    const html = renderToStaticMarkup(
+      <SicVerifyDocument
+        state="replaced"
+        code="SIC-2026-ABCDEFGH"
+        replacedAt={new Date(2026, 8, 3)}
+      />
+    )
+    expect(html).toContain('Ersetzt')
+    expect(html).toContain('03.09.2026')
+    expect(html).toContain('SIC-2026-ABCDEFGH')
+    expect(html).toContain('Bewerber')
+    expect(html).not.toContain('unbekannt')
+    expect(html).not.toContain('Ausgestellt für')
+    expect(html).not.toContain('Anna Muster')
+    expect(html).not.toContain('Gültiges Zertifikat')
+    expect(html).not.toContain('Für Vermieterinnen und Vermieter')
+  })
+
   it('does not leak holder data when the code is unknown', () => {
     const html = renderToStaticMarkup(
       <SicVerifyDocument state="unknown" code="SIC-2026-ABCDEFGH" />

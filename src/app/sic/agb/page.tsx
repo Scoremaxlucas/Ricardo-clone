@@ -156,7 +156,8 @@ export default function SicAgbPage() {
           <p className="mt-1.5">
             Du entscheidest, wem du das Zertifikat gibst.             Wer den Prüf-Link oder QR-Code kennt, sieht den Status
             und die geprüften Angaben. Ist ein Link ungewollt in Umlauf, kannst du unter «Mein Zertifikat»
-            jederzeit einen neuen Code erzeugen; der alte Link ist damit sofort ungültig.
+            jederzeit einen neuen Code erzeugen; der alte Link ist damit sofort ungültig. Die Prüfseite weist
+            ihn als ersetzt aus — ohne die Angaben und ohne den neuen Code.
           </p>
         </section>
 

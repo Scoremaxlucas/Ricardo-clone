@@ -70,7 +70,8 @@ export default function SicDatenschutzPage() {
             Deine Unterlagen sehen nur die für die Prüfung zuständigen Personen bei Swiss Immo Cert. Vermieter sehen
             nie das Original-Dokument, sondern nur das Zertifikat mit den geprüften Angaben — und nur, wenn du
             es teilst. Wer deinen Prüf-Link oder QR-Code hat, sieht den Status und die geprüften Angaben; du
-            kannst unter «Mein Zertifikat» jederzeit einen neuen Code erzeugen und den alten Link damit entwerten.
+            kannst unter «Mein Zertifikat» jederzeit einen neuen Code erzeugen. Der alte Link bleibt erreichbar
+            und weist das Zertifikat als ersetzt aus — ohne deine Angaben und ohne den neuen Code.
           </p>
         </section>
 

@@ -89,7 +89,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was, wenn mein QR-Code in falsche Hände gerät?',
-    a: 'Im Workspace «Mein Zertifikat» kannst du jederzeit einen neuen Code erzeugen. Der alte Link zeigt danach nichts mehr an — auch nicht bei Vermietern, denen du ihn schon gegeben hast.',
+    a: 'Im Workspace «Mein Zertifikat» kannst du jederzeit einen neuen Code erzeugen. Der alte Link bleibt erreichbar, zeigt aber: das Zertifikat wurde ersetzt. Angaben und der neue Code stehen dort nicht — den aktuellen Stand schickst du neu.',
   },
   {
     q: 'Brauche ich ein Passwort?',

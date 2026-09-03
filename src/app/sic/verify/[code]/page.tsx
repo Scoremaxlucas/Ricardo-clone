@@ -3,6 +3,7 @@ import { SicVerifyDocument } from '@/components/sic/SicVerifyDocument'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isValidSicCertificateCode, normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
+import { findSicRetiredCertificateCode } from '@/lib/sic/codes'
 import { SIC_BRAND_NAME } from '@/lib/sic/config'
 import { isSicLandlordPdfReady, joinHouseholdHolderName, sicFactLineOptsFromHolders, verifiedModuleLineItems } from '@/lib/sic/dossier'
 import { isSicCouple } from '@/lib/sic/household'
@@ -58,6 +59,8 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
         include: { modules: { select: { moduleKind: true, status: true, verifiedFacts: true } } },
       })
     : null
+  const retired =
+    !cert && isValidSicCertificateCode(code) ? await findSicRetiredCertificateCode(code) : null
 
   const holderName = cert
     ? joinHouseholdHolderName({
@@ -104,7 +107,13 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
   return (
     <VerifyShell>
       {!cert ?
-        <SicVerifyDocument state="unknown" code={code} />
+        retired ?
+          <SicVerifyDocument
+            state="replaced"
+            code={retired.certificateCode}
+            replacedAt={retired.replacedAt}
+          />
+        : <SicVerifyDocument state="unknown" code={code} />
       : cert.status === 'REVOKED' ?
         <SicVerifyDocument state="revoked" code={cert.certificateCode} />
       : cert.status === 'EXPIRED' || isSicExpired(cert.expiresAt) ?

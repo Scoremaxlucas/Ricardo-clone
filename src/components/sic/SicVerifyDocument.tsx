@@ -15,16 +15,18 @@ import {
   SIC_WORKING_SCOPE_NOTE,
   type SicDocumentPresentation,
 } from '@/lib/sic/modules'
+import { sicReplacedCertificateCopy } from '@/lib/sic/codes'
 import type { ReactNode } from 'react'
 
 function fmt(d: Date): string {
   return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-type QuietState = 'rate_limited' | 'unknown' | 'not_ready' | 'revoked' | 'expired'
+type QuietState = 'rate_limited' | 'unknown' | 'not_ready' | 'revoked' | 'expired' | 'replaced'
 
 export type SicVerifyDocumentProps =
-  | { state: QuietState; code?: string }
+  | { state: Exclude<QuietState, 'replaced'>; code?: string }
+  | { state: 'replaced'; code?: string; replacedAt: Date }
   | {
       state: 'valid'
       certificateCode: string
@@ -238,6 +240,19 @@ export function SicVerifyDocument(props: SicVerifyDocumentProps) {
             <span className="font-mono font-semibold text-sic-navy">{props.code || '—'}</span> ist
             unbekannt.
           </p>
+        </QuietBody>
+      </Frame>
+    )
+  }
+
+  if (props.state === 'replaced') {
+    const copy = sicReplacedCertificateCopy(props.replacedAt)
+    return (
+      <Frame>
+        <NavyBand quiet code={props.code || undefined} />
+        <QuietBody title={copy.title}>
+          <p>{copy.lead}</p>
+          <p className="mt-3">{copy.follow}</p>
         </QuietBody>
       </Frame>
     )

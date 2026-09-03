@@ -2842,17 +2842,37 @@ model SicCertificate {
   pendingEmailToken       String?   @unique
   pendingEmailExpiresAt   DateTime?
 
-  modules   SicCertificateModule[]
-  documents SicDocument[]
-  payments  SicPayment[]
-  scans     SicVerifyScan[]
-  events    SicEvent[]
+  modules      SicCertificateModule[]
+  documents    SicDocument[]
+  payments     SicPayment[]
+  scans        SicVerifyScan[]
+  events       SicEvent[]
+  retiredCodes SicRetiredCertificateCode[]
 
   @@index([certificateCode])
   @@index([email])
   @@index([status, expiresAt])
   @@index([certifiedAt])
   @@map("sic_certificates")
+}
+
+/**
+ * Entwertete Prüf-Codes. Nach «neuen Code erzeugen» bleibt der alte Code
+ * auffindbar, damit die Prüfseite «ersetzt» sagen kann — ohne Name, Angaben
+ * oder den neuen Code zu zeigen. Sonst wirkt der Leak-Schutz wie Betrug.
+ */
+model SicRetiredCertificateCode {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  certificateCode String   @unique
+  replacedAt      DateTime @default(now())
+
+  certificateId String?
+  certificate   SicCertificate? @relation(fields: [certificateId], references: [id], onDelete: SetNull)
+
+  @@index([certificateId])
+  @@map("sic_retired_certificate_codes")
 }
 
 model SicCertificateModule {

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe-server'
-import { generateSicCertificateCode } from '@/lib/sic/certificate-code'
+import { allocateUniqueSicCertificateCode } from '@/lib/sic/codes'
 import { sendSicMagicLinkEmail } from '@/lib/sic/email'
 import { recordSicEvent } from '@/lib/sic/events'
 import { sicLog } from '@/lib/sic/log'
@@ -22,15 +22,7 @@ export type FulfillResult =
   | { ok: false; reason: string }
 
 async function ensureUniqueCode(): Promise<string> {
-  for (let i = 0; i < 6; i++) {
-    const code = generateSicCertificateCode()
-    const exists = await prisma.sicCertificate.findUnique({
-      where: { certificateCode: code },
-      select: { id: true },
-    })
-    if (!exists) return code
-  }
-  throw new Error('Konnte keinen eindeutigen Zertifikatscode erzeugen')
+  return allocateUniqueSicCertificateCode()
 }
 
 async function refundPaymentIntent(paymentIntentId: string | null | undefined): Promise<boolean> {

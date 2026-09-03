@@ -282,7 +282,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
   async function regenerateCode() {
     if (
       !window.confirm(
-        'Neuen Code erzeugen? Bereits verschickte PDFs und QR-Codes werden damit ungültig. Du kannst das Zertifikat danach neu herunterladen.'
+        'Neuen Code erzeugen? Bereits verschickte PDFs und QR-Codes werden ungültig. Die Prüfseite sagt dann, dass das Zertifikat ersetzt wurde — ohne deine Angaben. Danach das PDF neu herunterladen.'
       )
     ) {
       return
