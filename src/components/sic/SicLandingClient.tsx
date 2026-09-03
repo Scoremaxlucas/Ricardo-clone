@@ -630,10 +630,10 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             </p>
           </div>
 
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8">
             {!isReturning ?
               // Erstkauf: nicht als „Shop-Karten“ zeigen, sondern als Inhalt des Zertifikats.
-              <div className="col-span-full rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
                 <p className="text-[13px] font-semibold text-sic-navy sm:text-sm">Für den Vermieter geprüfte Angaben</p>
                 <div className="mt-4 space-y-2">
                   {SIC_MODULES.map(m => {
@@ -662,7 +662,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 </p>
               </div>
             :
-              <div className="col-span-full rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
                 {verifiedModules.size > 0 ? (
                   <>
                     <p className="text-[13px] font-semibold text-sic-navy sm:text-sm">Auf deinem Zertifikat</p>
