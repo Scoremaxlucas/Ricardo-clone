@@ -52,17 +52,32 @@ export function sicOperatorAddressBlock(): string {
  * Absender-Postfach — nicht `noreply@` (Spamfilter). Reply-To bleibt Support.
  * Override: `SIC_FROM_EMAIL` (nackte Adresse oder `Name <addr>`).
  *
- * Wichtig: Der Host in der From-Adresse muss bei Resend verifiziert sein.
- * Solange `swissimmocert.ch` dort fehlt, in Vercel setzen:
- * `SIC_FROM_EMAIL="Swiss Immo Cert <support@helvenda.ch>"`.
+ * Host muss bei Resend verifiziert sein (`swissimmocert.ch`).
+ * Helvenda-Adressen werden bewusst abgelehnt — Kunden dürfen keinen
+ * Helvenda-Absender sehen.
  */
 export const SIC_FROM_MAILBOX = 'hello@swissimmocert.ch'
 
+const SIC_FROM_FALLBACK = `${SIC_BRAND_NAME} <${SIC_FROM_MAILBOX}>`
+
+/** Extrahiert die nackte Adresse aus `Name <addr>` oder gibt den String zurück. */
+export function parseSicMailboxAddress(raw: string): string {
+  const m = raw.match(/<([^>]+)>/)
+  return (m?.[1] || raw).trim().toLowerCase()
+}
+
+/** true, wenn die From-Adresse eine fremde Marke (Helvenda) wäre. */
+export function isForbiddenSicFromAddress(raw: string): boolean {
+  const addr = parseSicMailboxAddress(raw)
+  return addr.endsWith('@helvenda.ch') || addr.endsWith('@wohnen.helvenda.ch')
+}
+
 export function formatSicFromAddress(raw?: string | null): string {
   const explicit = typeof raw === 'string' ? raw.trim() : ''
-  if (!explicit) return `${SIC_BRAND_NAME} <${SIC_FROM_MAILBOX}>`
-  if (explicit.includes('<')) return explicit
-  return `${SIC_BRAND_NAME} <${explicit}>`
+  if (!explicit) return SIC_FROM_FALLBACK
+  const formatted = explicit.includes('<') ? explicit : `${SIC_BRAND_NAME} <${explicit}>`
+  if (isForbiddenSicFromAddress(formatted)) return SIC_FROM_FALLBACK
+  return formatted
 }
 
 export function sicFromAddress(): string {

@@ -18,12 +18,16 @@ const HAIRLINE = SIC_COLORS.hairline
 const INK = '#0f172a'
 const MUTED = '#64748b'
 
-function sicMail(opts: { to: string; subject: string; html: string; text: string }) {
-  return sendEmail({
+async function sicMail(opts: { to: string; subject: string; html: string; text: string }) {
+  const result = await sendEmail({
     ...opts,
     from: sicFromAddress(),
     replyTo: SIC_SUPPORT_EMAIL,
   })
+  if (!result.success) {
+    throw new Error(result.error || 'SIC mail failed')
+  }
+  return result
 }
 
 /** Minimalistisches, seriöses Template für Swiss Immo Cert. */
@@ -95,16 +99,12 @@ export async function sendSicMagicLinkEmail(
     footnoteHtml: copy.footnote,
   })
 
-  const result = await sicMail({
+  return sicMail({
     to: email,
     subject: copy.subject,
     html,
     text: `${copy.heading}\n\n${copy.paragraphs.join('\n\n')}\n\n${url}\n\n${copy.footnote}`,
   })
-  if (!result.success) {
-    throw new Error(result.error || 'SIC magic-link mail failed')
-  }
-  return result
 }
 
 const MAGIC_LINK_FOOTNOTE =

@@ -106,9 +106,9 @@ describe('SicDossierClient — lean layout', () => {
     expect(html).toContain('Betreibungsauszug und Ausweis')
   })
 
-  it('surfaces the review SLA before and while documents are pending', () => {
+  it('surfaces the review SLA once under Unterlagen when docs are pending', () => {
     expect(html).toContain('in der Regel innerhalb eines Werktags nach Eingang')
-    expect(html).toContain('Nach Eingang prüfen wir')
+    expect(html).toContain('Namen oder Haushalt ändern')
     expect(html).toContain('Eingereichte Unterlagen prüfen wir')
   })
 
@@ -124,5 +124,10 @@ describe('SicDossierClient — lean layout', () => {
     expect(html).toContain('Ausweis')
     expect(html).toContain('Lohn')
     expect(html).toContain('Referenz')
+  })
+
+  it('keeps email change out of the hero and in Zugang', () => {
+    expect(html).not.toContain('E-Mail falsch geschrieben?')
+    // Fixture has canChangeEmail: false — Zugang section only when changeable/pending
   })
 })

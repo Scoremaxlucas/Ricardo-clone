@@ -26,5 +26,7 @@ describe('SIC FAQ copy', () => {
     expect(blob).toMatch(/ältere der beiden/)
     expect(blob).toMatch(/ersetzt/)
     expect(blob).not.toMatch(/zeigt danach nichts mehr/)
+    expect(blob).toMatch(/Wen kontaktiere ich/)
+    expect(blob).toMatch(/support@swissimmocert\.ch|SIC_SUPPORT/)
   })
 })

@@ -10,7 +10,7 @@ import {
   type SicFactField,
   type SicFacts,
 } from '@/lib/sic/facts'
-import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
+import { isSicModuleId, sicMinDocsForReview, type SicModuleId } from '@/lib/sic/modules'
 import { SIC_REJECTION_REASONS } from '@/lib/sic/review'
 import { SIC_REVOKE_REASONS } from '@/lib/sic/revoke'
 import { sicReviewSlaLabel, sicReviewSlaState } from '@/lib/sic/review-sla'
@@ -709,7 +709,17 @@ export function SicAdminReview() {
                     m.status === 'IN_REVIEW' && m.firstUploadAt ?
                       sicReviewSlaLabel(new Date(m.firstUploadAt))
                     : null
-                  const moduleWarnings = warnings[key] ?? []
+                  const moduleWarnings = [
+                    ...(warnings[key] ?? []),
+                    ...(item.householdKind === 'COUPLE' &&
+                    moduleId &&
+                    m.documents.length < sicMinDocsForReview(moduleId, true) &&
+                    (m.status === 'IN_REVIEW' || m.status === 'PENDING_DOCS') ?
+                      [
+                        `Paar: mindestens ${sicMinDocsForReview(moduleId, true)} Nachweise nötig (${m.documents.length} vorhanden).`,
+                      ]
+                    : []),
+                  ]
                   return (
                     <li
                       key={m.moduleKind}

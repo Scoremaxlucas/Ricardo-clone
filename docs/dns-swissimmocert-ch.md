@@ -38,6 +38,11 @@ Danach immer **Jetzt speichern**.
 | Key | Value |
 |-----|--------|
 | `NEXT_PUBLIC_SIC_URL` | `https://swissimmocert.ch` |
+| `SIC_FROM_EMAIL` | `Swiss Immo Cert <hello@swissimmocert.ch>` (nie Helvenda) |
+| `SIC_BLOB_READ_WRITE_TOKEN` | Token aus **privatem** Blob-Store |
+| `SIC_BLOB_ALLOW_PUBLIC_FALLBACK` | nur Übergang `true`, danach entfernen |
+
+**Resend:** Domain `swissimmocert.ch` verifizieren — sonst kommen Magic-Links nicht an.
 
 Nach Env-Änderung: Redeploy.
 
@@ -47,6 +52,8 @@ Nach Env-Änderung: Redeploy.
 - [ ] Vercel Domains **Valid**
 - [ ] `https://www.swissimmocert.ch` ohne Safari-Schleife
 - [ ] Env `NEXT_PUBLIC_SIC_URL=https://swissimmocert.ch` + Redeploy
+- [ ] Resend-Domain `swissimmocert.ch` verifiziert
+- [ ] Privater Blob-Store für SIC-Nachweise
 
 ## Lokal
 

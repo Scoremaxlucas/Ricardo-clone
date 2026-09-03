@@ -9,7 +9,7 @@ import { sendSicDocumentsReceivedEmail } from '@/lib/sic/email'
 import { recordSicEventOnce } from '@/lib/sic/events'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
-import { getSicModule, isSicModuleId } from '@/lib/sic/modules'
+import { getSicModule, isSicModuleId, sicMinDocsForReview } from '@/lib/sic/modules'
 import { nextModuleStatusAfterUpload } from '@/lib/sic/module-status'
 import { putSicDocumentBytes } from '@/lib/sic/blob-put'
 import { getSicSession } from '@/lib/sic/session-cookie'
@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
       email: true,
       status: true,
       expiresAt: true,
+      householdKind: true,
       modules: { where: { moduleKind }, select: { id: true, status: true } },
     },
   })
@@ -122,9 +123,18 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  const existingForModule = await prisma.sicDocument.count({
+    where: { certificateId: cert.id, moduleKind },
+  })
   const isFirstDocument =
     (await prisma.sicDocument.count({ where: { certificateId: cert.id } })) === 0
-  const nextStatus = nextModuleStatusAfterUpload(moduleRow.status)
+  const couple = cert.householdKind === 'COUPLE'
+  const minDocs = sicMinDocsForReview(moduleKind, couple)
+  const docCountAfterUpload = existingForModule + 1
+  const nextStatus = nextModuleStatusAfterUpload(moduleRow.status, {
+    docCountAfterUpload,
+    minDocs,
+  })
 
   await prisma.$transaction(async tx => {
     await tx.sicDocument.create({
@@ -191,6 +201,7 @@ export async function DELETE(req: NextRequest) {
         select: {
           id: true,
           email: true,
+          householdKind: true,
           modules: { select: { moduleKind: true, status: true } },
         },
       },
@@ -217,11 +228,13 @@ export async function DELETE(req: NextRequest) {
 
   await prisma.sicDocument.delete({ where: { id: doc.id } })
 
-  // Wenn keine Docs mehr und Modul IN_REVIEW → zurück auf PENDING_DOCS
+  // Wenn zu wenige Docs (Paar: < 2) und Modul IN_REVIEW → zurück auf PENDING_DOCS
   const remaining = await prisma.sicDocument.count({
     where: { certificateId: doc.certificateId, moduleKind: doc.moduleKind },
   })
-  if (remaining === 0 && moduleRow?.status === 'IN_REVIEW') {
+  const couple = doc.certificate.householdKind === 'COUPLE'
+  const minDocs = isSicModuleId(doc.moduleKind) ? sicMinDocsForReview(doc.moduleKind, couple) : 1
+  if (remaining < minDocs && moduleRow?.status === 'IN_REVIEW') {
     await prisma.sicCertificateModule.updateMany({
       where: { certificateId: doc.certificateId, moduleKind: doc.moduleKind },
       data: { status: 'PENDING_DOCS' },

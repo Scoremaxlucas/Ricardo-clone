@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { SIC_BRAND_NAME, SIC_FROM_MAILBOX, SIC_SUPPORT_EMAIL, formatSicFromAddress } from '@/lib/sic/config'
+import {
+  SIC_BRAND_NAME,
+  SIC_FROM_MAILBOX,
+  SIC_SUPPORT_EMAIL,
+  formatSicFromAddress,
+  isForbiddenSicFromAddress,
+} from '@/lib/sic/config'
 
 describe('SIC mail identity', () => {
   it('sends as hello@, not noreply, with the brand as display name', () => {
@@ -21,5 +27,13 @@ describe('SIC mail identity', () => {
     expect(formatSicFromAddress('Swiss Immo Cert <hello@swissimmocert.ch>')).toBe(
       'Swiss Immo Cert <hello@swissimmocert.ch>'
     )
+  })
+
+  it('rejects Helvenda From addresses so customers never see that brand', () => {
+    expect(isForbiddenSicFromAddress('Swiss Immo Cert <support@helvenda.ch>')).toBe(true)
+    expect(formatSicFromAddress('Swiss Immo Cert <support@helvenda.ch>')).toBe(
+      `${SIC_BRAND_NAME} <${SIC_FROM_MAILBOX}>`
+    )
+    expect(formatSicFromAddress('support@helvenda.ch')).not.toMatch(/helvenda/i)
   })
 })

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-/** Setzt den Namen, der auf dem Zertifikat erscheint (nur eigenes Dossier). */
+/** Setzt Namen und Haushalt (SINGLE ↔ COUPLE) auf dem eigenen Dossier. */
 export async function POST(req: NextRequest) {
   const session = getSicSession()
   if (!session) return NextResponse.json({ ok: false, message: 'Nicht angemeldet.' }, { status: 401 })
@@ -41,13 +41,21 @@ export async function POST(req: NextRequest) {
 
   const updated = await prisma.sicCertificate.updateMany({
     where: { email: session.email },
-    data: {
-      holderFirstName: firstName,
-      holderLastName: lastName,
-      ...(couple ?
-        { holder2FirstName: firstName2, holder2LastName: lastName2, householdKind: 'COUPLE' }
-      : {}),
-    },
+    data: couple ?
+      {
+        holderFirstName: firstName,
+        holderLastName: lastName,
+        holder2FirstName: firstName2,
+        holder2LastName: lastName2,
+        householdKind: 'COUPLE',
+      }
+    : {
+        holderFirstName: firstName,
+        holderLastName: lastName,
+        holder2FirstName: null,
+        holder2LastName: null,
+        householdKind: 'SINGLE',
+      },
   })
   if (updated.count === 0) {
     return NextResponse.json({ ok: false, message: 'Kein Zertifikat gefunden.' }, { status: 404 })

@@ -1,8 +1,9 @@
 'use client'
 
 import { SicLogoMark } from '@/components/sic/SicLogo'
-import { SIC_TAGLINE } from '@/lib/sic/brand'
+import { SIC_CERT_TAGLINE, SIC_COLORS, SIC_TAGLINE } from '@/lib/sic/brand'
 import { SIC_REVIEW_SLA_SENTENCE, sicPaths } from '@/lib/sic/config'
+import { HouseMark } from '@/lib/sic/cert/art-web'
 import { MailCheck } from 'lucide-react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
@@ -15,6 +16,44 @@ const DEFAULT_INTRO =
 const DEFAULT_LINK_HINT =
   'Der Link ist 30 Minuten gültig und einmal verwendbar. Den Vorgang kannst du über Tage fortsetzen; einen neuen Link forderst du jederzeit an.'
 
+const INPUT_CLASS =
+  'mt-1.5 w-full rounded-xl border border-sic-hairline bg-sic-paper px-4 py-3 text-base outline-none ring-sic-action/20 focus:border-sic-action focus:ring-2'
+
+function MiniCertificatePreview() {
+  return (
+    <aside
+      aria-hidden
+      className="mb-8 overflow-hidden border border-sic-navy bg-sic-paper shadow-[0_18px_40px_-28px_rgba(15,43,94,0.45)]"
+    >
+      <div className="relative flex flex-col items-center bg-sic-navy px-4 pb-3.5 pt-4">
+        <p className="absolute right-3 top-2 font-mono text-[9px] font-semibold tracking-[0.12em] text-sic-gold-light/90">
+          SIC-2026-BEISPIEL
+        </p>
+        <HouseMark size={28} onDark />
+        <p className="mt-1 text-xs font-bold tracking-tight text-white">
+          Swiss <span style={{ color: SIC_COLORS.red }}>Immo</span> Cert
+        </p>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="h-px w-5 bg-sic-gold" />
+          <span className="text-[8px] font-semibold tracking-[0.22em] text-sic-gold-light">
+            MIETER-ZERTIFIKAT
+          </span>
+          <span className="h-px w-5 bg-sic-gold" />
+        </div>
+        <p className="mt-1 text-[9px] tracking-wide text-[#e8d5a3]">{SIC_CERT_TAGLINE}</p>
+      </div>
+      <div className="px-4 py-3">
+        <p className="text-center text-[10px] font-semibold uppercase tracking-[0.08em] text-sic-navy">
+          4 von 4 Angaben geprüft
+        </p>
+        <p className="mt-2 text-center text-[11px] leading-relaxed text-slate-500">
+          Geprüft · standardisiert · per QR nachvollziehbar
+        </p>
+      </div>
+    </aside>
+  )
+}
+
 export function SicDossierLogin({
   nextPath,
   title = 'Mein Zertifikat',
@@ -22,6 +61,7 @@ export function SicDossierLogin({
   linkHint = DEFAULT_LINK_HINT,
   showReviewSla = true,
   showBrandCue = true,
+  showCertPreview = true,
 }: {
   nextPath?: string
   title?: string
@@ -32,6 +72,8 @@ export function SicDossierLogin({
   showReviewSla?: boolean
   /** Kleines Markensignal über dem Titel — auf Verlängerung reduziert. */
   showBrandCue?: boolean
+  /** Mini-Urkunde wie auf der Landing — nur auf dem Zertifikat-Gate. */
+  showCertPreview?: boolean
 }) {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
@@ -78,6 +120,8 @@ export function SicDossierLogin({
         : null}
         <div className="mb-5 h-px w-16 bg-sic-gold/70" aria-hidden />
 
+        {showCertPreview && !sent ? <MiniCertificatePreview /> : null}
+
         <h1 className="font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">{title}</h1>
         <p className="mt-2 text-base leading-relaxed text-slate-600">{intro}</p>
         {showReviewSla ?
@@ -90,7 +134,7 @@ export function SicDossierLogin({
         : null}
 
         {sent ?
-          <div className="mt-6 rounded-2xl border border-sic-navy/10 bg-white/70 p-5 text-sm text-sic-navy shadow-[0_12px_40px_-28px_rgba(15,43,94,0.35)]">
+          <div className="mt-6 border border-sic-navy/10 bg-white/70 p-5 text-sm text-sic-navy">
             <div className="flex items-start gap-3">
               <MailCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-sic-action" />
               <div>
@@ -126,7 +170,7 @@ export function SicDossierLogin({
               onChange={e => setEmail(e.target.value)}
               placeholder="name@beispiel.ch"
               autoComplete="email"
-              className="mt-1.5 w-full rounded-xl border border-sic-hairline bg-white/80 px-4 py-3 text-base outline-none ring-sic-action/20 focus:border-sic-action focus:ring-2"
+              className={INPUT_CLASS}
             />
             <button
               type="button"

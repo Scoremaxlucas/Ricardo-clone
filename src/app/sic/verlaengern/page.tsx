@@ -18,6 +18,7 @@ export default function SicRenewPage() {
         linkHint="Der Link ist 30 Minuten gültig; die Verlängerungsseite selbst bleibt."
         showReviewSla={false}
         showBrandCue={false}
+        showCertPreview={false}
       />
     )
   }

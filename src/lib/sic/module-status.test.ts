@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { nextModuleStatusAfterUpload } from '@/lib/sic/module-status'
 import { quoteSicOrder } from '@/lib/sic/pricing'
-import { roundSicChf, SIC_BASE_FEE_CHF, SIC_MIN_CHARGE_CHF, SIC_MODULE_FEE_CHF } from '@/lib/sic/modules'
+import {
+  roundSicChf,
+  SIC_BASE_FEE_CHF,
+  SIC_MIN_CHARGE_CHF,
+  SIC_MODULE_FEE_CHF,
+  sicMinDocsForReview,
+} from '@/lib/sic/modules'
 
 /** Erwarteter Betrag: unter dem Stripe-Minimum wird aufs Minimum angehoben. */
 function chargeable(rawChf: number): number {
@@ -18,6 +24,24 @@ describe('nextModuleStatusAfterUpload', () => {
   it('IN_REVIEW / VERIFIED bleibt unverändert (null)', () => {
     expect(nextModuleStatusAfterUpload('IN_REVIEW')).toBeNull()
     expect(nextModuleStatusAfterUpload('VERIFIED')).toBeNull()
+  })
+  it('Paar: bleibt PENDING bis Mindestanzahl Dateien', () => {
+    expect(
+      nextModuleStatusAfterUpload('PENDING_DOCS', { docCountAfterUpload: 1, minDocs: 2 })
+    ).toBeNull()
+    expect(
+      nextModuleStatusAfterUpload('PENDING_DOCS', { docCountAfterUpload: 2, minDocs: 2 })
+    ).toBe('IN_REVIEW')
+  })
+})
+
+describe('sicMinDocsForReview', () => {
+  it('Single = 1, Paar Betreibung/Ausweis/Lohn = 2, Referenz = 1', () => {
+    expect(sicMinDocsForReview('BONITAET', false)).toBe(1)
+    expect(sicMinDocsForReview('BONITAET', true)).toBe(2)
+    expect(sicMinDocsForReview('AUFENTHALT', true)).toBe(2)
+    expect(sicMinDocsForReview('ARBEIT_EINKOMMEN', true)).toBe(2)
+    expect(sicMinDocsForReview('ZUVERLAESSIGKEIT', true)).toBe(1)
   })
 })
 

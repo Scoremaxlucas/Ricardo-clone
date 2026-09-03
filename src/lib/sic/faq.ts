@@ -7,7 +7,7 @@ import {
   sicIsFree,
   sicSealRequirementLabel,
 } from '@/lib/sic/modules'
-import { SIC_REVIEW_SLA } from '@/lib/sic/config'
+import { SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
 import { SIC_CERT_PREVIEW_FACTS, sicFactLines } from '@/lib/sic/facts'
 import { SIC_DOCS_RETENTION_DAYS, SIC_UNFINISHED_DOCS_RETENTION_MONTHS } from '@/lib/sic/validity'
 
@@ -98,5 +98,9 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   {
     q: 'Was, wenn ich die E-Mail falsch geschrieben habe?',
     a: 'Unter «Mein Zertifikat» kannst du sie einmal ändern. Wir schreiben an die neue Adresse — dort tippst du auf «Bestätigen». An die bisherige Adresse geht eine Mitteilung. Danach bleibt die neue Adresse dein Zugang.',
+  },
+  {
+    q: 'Wen kontaktiere ich bei Fragen?',
+    a: `Schreib an ${SIC_SUPPORT_EMAIL}. Die Prüfung läuft ${SIC_REVIEW_SLA}; bei Ablehnung erklären wir per E-Mail, was fehlt, und du reichst ohne Zusatzkosten nach.`,
   },
 ]

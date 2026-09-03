@@ -16,7 +16,7 @@ import { normalizeSicFacts, readSicFacts } from '@/lib/sic/facts'
 import { isSicCouple } from '@/lib/sic/household'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
-import { getSicModule, isSicCertificateSealReady, isSicModuleId } from '@/lib/sic/modules'
+import { getSicModule, isSicCertificateSealReady, isSicModuleId, sicMinDocsForReview } from '@/lib/sic/modules'
 import { approveSicModule, rejectSicModule } from '@/lib/sic/review'
 import { sicReviewSlaOverdue } from '@/lib/sic/review-sla'
 import { normalizeEmail } from '@/lib/sic/session'
@@ -268,9 +268,16 @@ export async function POST(req: NextRequest) {
   }
 
   const docCount = await prisma.sicDocument.count({ where: { certificateId, moduleKind } })
-  if (docCount === 0) {
+  const minDocs = sicMinDocsForReview(moduleKind, isSicCouple(cert.householdKind))
+  if (docCount < minDocs) {
     return NextResponse.json(
-      { ok: false, message: 'Freigabe nicht möglich — kein Nachweis hochgeladen.' },
+      {
+        ok: false,
+        message:
+          isSicCouple(cert.householdKind) && minDocs > 1 ?
+            `Freigabe nicht möglich — für Paare mindestens ${minDocs} Nachweise nötig (${docCount} vorhanden).`
+          : 'Freigabe nicht möglich — kein Nachweis hochgeladen.',
+      },
       { status: 400 }
     )
   }

@@ -72,8 +72,8 @@ export function sicNextStep(dossier: SicDossierView): SicNextStep | null {
     return {
       title: `«${pendingSeal.title}» hochladen`,
       detail: forSeal
-        ? `Für das Mieter-Zertifikat mit Siegel brauchst du diese Angabe. Nach Eingang prüfen wir ${SIC_REVIEW_SLA}.`
-        : `Nach Eingang prüfen wir ${SIC_REVIEW_SLA}.`,
+        ? 'Für das Mieter-Zertifikat mit Siegel brauchst du diese Angabe.'
+        : 'Lade die Unterlagen hoch — danach prüfen wir sie.',
       anchor: `#modul-${pendingSeal.moduleKind}`,
       kind: 'action',
     }
@@ -91,8 +91,8 @@ export function sicNextStep(dossier: SicDossierView): SicNextStep | null {
 
   if (dossier.certificateSealReady && dossier.landlordPdfReady) {
     return {
-      title: 'Mieter-Zertifikat bereit',
-      detail: 'Lade das PDF herunter und leg es der nächsten Bewerbung bei.',
+      title: 'Dein Mieter-Zertifikat ist bereit',
+      detail: 'Mit Siegel und QR — lade das PDF herunter und leg es der nächsten Bewerbung bei.',
       anchor: '#sic-pdf',
       kind: 'done',
     }

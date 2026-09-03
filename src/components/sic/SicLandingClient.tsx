@@ -558,7 +558,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   <p className="mt-1 text-sm font-semibold text-sic-navy">Geprüftes Mieter-Zertifikat</p>
                   <ul className="mt-4 space-y-2">
                     {[
-                      'Keine offenen Betreibungen — geprüft',
+                      'Betreibungsauszug eingereicht — geprüft',
                       'Einkommensband und 3×-Regel — geprüft',
                       'Schriftliche Vermieter-Referenz — geprüft',
                       'Gültiger Ausweis — geprüft',

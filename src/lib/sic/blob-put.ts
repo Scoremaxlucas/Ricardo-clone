@@ -1,19 +1,31 @@
 import { put } from '@vercel/blob'
 import { sicLog } from '@/lib/sic/log'
 
+/** Dedizierter SIC-Store (privat) hat Vorrang vor dem Helvenda-Store. */
+export function sicBlobWriteToken(): string | undefined {
+  return process.env.SIC_BLOB_READ_WRITE_TOKEN?.trim() || process.env.BLOB_READ_WRITE_TOKEN?.trim() || undefined
+}
+
 /**
- * Speichert verschlüsselte SIC-Nachweise im Blob-Store.
+ * Öffentlicher Ciphertext-Fallback nur mit explizitem Opt-in.
+ * Produktion: privaten Blob-Store anlegen und `SIC_BLOB_ALLOW_PUBLIC_FALLBACK` weglassen.
+ */
+export function sicBlobAllowPublicFallback(): boolean {
+  return process.env.SIC_BLOB_ALLOW_PUBLIC_FALLBACK === 'true'
+}
+
+/**
+ * Speichert verschlüsselte SIC-Nachweise im Blob-Store — bevorzugt privat.
  *
- * `access: 'private'` braucht einen *privaten* Vercel-Blob-Store. Der
- * Helvenda-Store ist öffentlich (Inseratsbilder). Ein privater Put dort
- * schlägt fehl — das war der 502 beim Kunden-Upload. Fallback: öffentlich
- * ablegen. Die Datei bleibt AES-256-GCM-Ciphertext unter einem zufälligen
- * Pfad, also ohne den Schlüssel nicht lesbar.
+ * Ohne privaten Store und ohne `SIC_BLOB_ALLOW_PUBLIC_FALLBACK=true` schlägt
+ * der Upload fehl (kein stiller Public-Fallback mehr).
  */
 export async function putSicDocumentBytes(pathname: string, ciphertext: Buffer): Promise<string> {
+  const token = sicBlobWriteToken()
   const options = {
     addRandomSuffix: true,
     contentType: 'application/octet-stream',
+    ...(token ? { token } : {}),
   } as const
 
   try {
@@ -23,6 +35,12 @@ export async function putSicDocumentBytes(pathname: string, ciphertext: Buffer):
     sicLog('sic.upload.private_put_failed', {
       reason: err instanceof Error ? err.message : 'unknown',
     })
+    if (!sicBlobAllowPublicFallback()) {
+      throw new Error(
+        'Privater Blob-Store für SIC-Nachweise fehlt. SIC_BLOB_READ_WRITE_TOKEN setzen ' +
+          'oder vorübergehend SIC_BLOB_ALLOW_PUBLIC_FALLBACK=true.'
+      )
+    }
   }
 
   const blob = await put(pathname, ciphertext, { ...options, access: 'public' })

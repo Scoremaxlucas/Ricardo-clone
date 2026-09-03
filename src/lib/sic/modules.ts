@@ -277,6 +277,16 @@ export function sicRequiredDocuments(id: SicModuleId, couple: boolean): string[]
   return getSicModule(id).requiredDocuments
 }
 
+/**
+ * Mindestanzahl Dateien, bevor das Modul in Prüfung geht / freigegeben werden darf.
+ * Paar: pro Person mindestens ein Nachweis (Referenz bleibt 1).
+ */
+export function sicMinDocsForReview(id: SicModuleId, couple: boolean): number {
+  if (!couple) return 1
+  if (id === 'ZUVERLAESSIGKEIT') return 1
+  return 2
+}
+
 /** «2 von 4 Angaben geprüft» — Bezugsgrösse ist immer der ganze Katalog. */
 export function sicCompletenessLabel(verifiedCount: number): string {
   return `${verifiedCount} von ${SIC_MODULES.length} Angaben geprüft`

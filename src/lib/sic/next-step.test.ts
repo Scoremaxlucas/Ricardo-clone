@@ -95,7 +95,7 @@ describe('sicNextStep', () => {
     )
     expect(step?.title).toContain('Betreibungsauszug')
     expect(step?.anchor).toBe('#modul-BONITAET')
-    expect(step?.detail).toMatch(/Werktag/)
+    expect(step?.detail).toMatch(/Siegel/)
   })
 
   it('surfaces waiting state with SLA', () => {
@@ -148,6 +148,7 @@ describe('sicNextStep', () => {
       })
     )
     expect(step?.title).toMatch(/bereit/)
+    expect(step?.detail).toMatch(/Siegel/)
     expect(step?.anchor).toBe('#sic-pdf')
   })
 })

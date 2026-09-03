@@ -1,3 +1,4 @@
+import { sicBlobWriteToken } from '@/lib/sic/blob-put'
 import { sicLog } from '@/lib/sic/log'
 import { get } from '@vercel/blob'
 
@@ -6,8 +7,12 @@ import { get } from '@vercel/blob'
  * Token nachgefragt, damit Dateien aus der Zeit vor der Umstellung lesbar bleiben.
  */
 export async function readSicBlobBytes(blobUrl: string): Promise<Buffer | null> {
+  const token = sicBlobWriteToken()
   try {
-    const result = await get(blobUrl, { access: 'private' })
+    const result = await get(blobUrl, {
+      access: 'private',
+      ...(token ? { token } : {}),
+    })
     if (result?.statusCode === 200 && result.stream) {
       const chunks: Uint8Array[] = []
       const reader = result.stream.getReader()
@@ -23,7 +28,6 @@ export async function readSicBlobBytes(blobUrl: string): Promise<Buffer | null> 
   }
 
   const headers: HeadersInit = {}
-  const token = process.env.BLOB_READ_WRITE_TOKEN
   if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(blobUrl, { headers })
   if (!res.ok) return null
