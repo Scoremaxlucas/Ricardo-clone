@@ -20,13 +20,32 @@ export function generateSicMagicToken(): string {
 }
 
 export function buildSicMagicLinkUrl(token: string, next?: string): string {
-  const url = new URL(sicUrl(sicPaths.authCallback))
+  const url = new URL(sicUrl(sicPaths.loginConfirm))
   url.searchParams.set('token', token)
   const dest = safeSicNextPath(next)
   if (dest !== sicPaths.certificateWorkspace) {
     url.searchParams.set('next', dest)
   }
   return url.toString()
+}
+
+export function sicMagicLinkStatus(
+  row: { consumedAt: Date | null; expiresAt: Date } | null,
+  now = new Date()
+): 'valid' | 'invalid' {
+  if (!row || row.consumedAt || row.expiresAt.getTime() <= now.getTime()) return 'invalid'
+  return 'valid'
+}
+
+/** Liest den Token, ohne ihn zu verbrauchen — GET/Prefetch darf das. */
+export async function peekSicMagicLink(tokenRaw: string): Promise<'valid' | 'invalid'> {
+  const token = (tokenRaw ?? '').trim()
+  if (!token) return 'invalid'
+  const row = await prisma.sicMagicLink.findUnique({
+    where: { token },
+    select: { consumedAt: true, expiresAt: true },
+  })
+  return sicMagicLinkStatus(row)
 }
 
 export async function createSicMagicLink(

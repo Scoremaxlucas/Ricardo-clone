@@ -88,7 +88,7 @@ export async function sendSicMagicLinkEmail(
     bodyHtml: copy.paragraphs
       .map((p, i) => `<p style="margin:${i === 0 ? '0 0 12px' : '0'};">${p}</p>`)
       .join(''),
-    buttonText: 'Jetzt anmelden',
+    buttonText: 'Anmeldeseite öffnen',
     buttonUrl: url,
     footnoteHtml: copy.footnote,
   })
@@ -102,7 +102,7 @@ export async function sendSicMagicLinkEmail(
 }
 
 const MAGIC_LINK_FOOTNOTE =
-  'Der Anmeldelink ist 30 Minuten gültig und nur einmal verwendbar. Danach kannst du unter «Mein Zertifikat» einen neuen anfordern.'
+  'Der Anmeldelink ist 30 Minuten gültig und nur einmal verwendbar. Auf der Seite tippst du auf «Anmelden» — erst dann wirst du eingeloggt. Danach kannst du unter «Mein Zertifikat» einen neuen anfordern.'
 
 /**
  * Freigabe: das Zertifikat ist ab der ersten geprüften Angabe abrufbar —

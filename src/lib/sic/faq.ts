@@ -89,6 +89,6 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Brauche ich ein Passwort?',
-    a: 'Nein. Du gibst deine E-Mail an und bekommst einen Anmeldelink. Wenn er abgelaufen ist, forderst du einfach einen neuen an.',
+    a: 'Nein. Du gibst deine E-Mail an und bekommst einen Anmeldelink. Auf der Seite tippst du auf «Anmelden» — erst dann wirst du eingeloggt. Wenn der Link abgelaufen ist, forderst du einfach einen neuen an.',
   },
 ]

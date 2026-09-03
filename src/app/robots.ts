@@ -17,7 +17,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         userAgent: '*',
         allow: '/',
         disallow: onSic
-          ? ['/api/', '/sic/admin', '/sic/zertifikat', '/sic/dossier', '/login', '/admin/']
+          ? ['/api/', '/sic/admin', '/sic/zertifikat', '/sic/dossier', '/sic/anmelden', '/login', '/admin/']
           : ['/api/', '/admin/', '/auth/', '/checkout/', '/orders/'],
       },
     ],

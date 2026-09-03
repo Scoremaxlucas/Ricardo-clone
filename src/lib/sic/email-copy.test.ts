@@ -101,6 +101,10 @@ describe('magic link copy', () => {
     const copy = sicMagicLinkEmailCopy('self')
     expect(copy.heading).toMatch(/Anmeldung/)
     expect(copy.paragraphs.join(' ')).toMatch(/30 Minuten/)
+    expect(copy.paragraphs.join(' ')).toMatch(/Anmelden/)
+    expect(copy.paragraphs.join(' ')).toMatch(/Mailprogramm/)
+    expect(copy.footnote).toMatch(/Anmelden/)
+    expect(copy.footnote).not.toMatch(/Link nicht geöffnet/)
   })
 
   it('does not sound like an unsolicited login when support resends', () => {

@@ -133,6 +133,8 @@ export const sicPaths = {
   verify: (code: string) => `${SIC_BASE_PATH}/verify/${encodeURIComponent(code)}`,
   faq: `${SIC_BASE_PATH}/faq`,
   impressum: `${SIC_BASE_PATH}/impressum`,
+  /** Seite mit Knopf — der Token wird erst per POST verbraucht. */
+  loginConfirm: `${SIC_BASE_PATH}/anmelden`,
   authCallback: '/api/sic/auth/callback',
 } as const
 

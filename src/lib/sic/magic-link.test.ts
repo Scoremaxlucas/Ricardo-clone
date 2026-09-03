@@ -1,5 +1,5 @@
 import { sicPaths, sicUrl } from '@/lib/sic/config'
-import { buildSicMagicLinkUrl, safeSicNextPath } from '@/lib/sic/magic-link'
+import { buildSicMagicLinkUrl, safeSicNextPath, sicMagicLinkStatus } from '@/lib/sic/magic-link'
 import { describe, expect, it } from 'vitest'
 
 describe('safeSicNextPath', () => {
@@ -14,9 +14,11 @@ describe('safeSicNextPath', () => {
 })
 
 describe('buildSicMagicLinkUrl', () => {
-  it('omits next when the destination is the workspace', () => {
+  it('points at the confirm page, not the consume endpoint', () => {
     const url = buildSicMagicLinkUrl('tok_abc')
+    expect(url).toContain(sicPaths.loginConfirm)
     expect(url).toContain('token=tok_abc')
+    expect(url).not.toContain('/api/sic/auth/callback')
     expect(url).not.toContain('next=')
   })
 
@@ -26,6 +28,18 @@ describe('buildSicMagicLinkUrl', () => {
     const poisoned = buildSicMagicLinkUrl('tok_abc', 'https://evil.example')
     expect(poisoned).not.toContain('evil')
     expect(poisoned).not.toContain('next=')
+  })
+})
+
+describe('sicMagicLinkStatus', () => {
+  const future = new Date('2026-09-03T12:00:00.000Z')
+  const now = new Date('2026-09-03T11:00:00.000Z')
+
+  it('is valid only while unconsumed and unexpired', () => {
+    expect(sicMagicLinkStatus({ consumedAt: null, expiresAt: future }, now)).toBe('valid')
+    expect(sicMagicLinkStatus({ consumedAt: now, expiresAt: future }, now)).toBe('invalid')
+    expect(sicMagicLinkStatus({ consumedAt: null, expiresAt: now }, now)).toBe('invalid')
+    expect(sicMagicLinkStatus(null, now)).toBe('invalid')
   })
 })
 
