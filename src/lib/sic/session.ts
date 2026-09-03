@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken'
+import { SIC_SITE_ORIGIN } from '@/lib/sic/config'
 
 /**
  * Leichte, passwortlose SIC-Session: signiertes Token mit der E-Mail als Identität.
@@ -61,12 +62,50 @@ export function verifySicSessionToken(token: string | null | undefined): SicSess
   }
 }
 
+/**
+ * Gemeinsame Domain für Apex + www, sonst bleibt Abmelden auf www wirkungslos,
+ * wenn das Cookie auf dem Apex gesetzt wurde (oder umgekehrt).
+ */
+export function sicSessionCookieDomain(): string | undefined {
+  if (process.env.NODE_ENV !== 'production') return undefined
+  try {
+    const host = new URL(SIC_SITE_ORIGIN).hostname.toLowerCase()
+    if (!host || host === 'localhost' || host.endsWith('.localhost')) return undefined
+    const apex = host.startsWith('www.') ? host.slice(4) : host
+    return `.${apex}`
+  } catch {
+    return undefined
+  }
+}
+
 export function sicSessionCookieOptions(maxAgeSeconds = SIC_SESSION_TTL_DAYS * 24 * 60 * 60) {
+  const domain = sicSessionCookieDomain()
   return {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
     path: '/',
     maxAge: maxAgeSeconds,
+    ...(domain ? { domain } : {}),
+  }
+}
+
+/** Löscht Host-only-Cookies und Domain-Cookies (Apex/www). */
+export function clearSicSessionCookie(res: {
+  cookies: { set: (name: string, value: string, options: Record<string, unknown>) => void }
+}) {
+  const base = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 0,
+    expires: new Date(0),
+  }
+  // Alte Host-only-Cookies (ohne Domain)
+  res.cookies.set(SIC_SESSION_COOKIE, '', base)
+  const domain = sicSessionCookieDomain()
+  if (domain) {
+    res.cookies.set(SIC_SESSION_COOKIE, '', { ...base, domain })
   }
 }

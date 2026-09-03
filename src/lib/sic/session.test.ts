@@ -2,6 +2,7 @@ import {
   normalizeEmail,
   SIC_POST_CHECKOUT_TTL_SECONDS,
   sicPaidCheckoutAllowsSessionCookie,
+  sicSessionCookieDomain,
   signSicSessionToken,
   verifySicSessionToken,
 } from '@/lib/sic/session'
@@ -44,5 +45,21 @@ describe('post-checkout session', () => {
     expect(sicPaidCheckoutAllowsSessionCookie(paidAt, new Date('2026-08-30T16:05:00.000Z'))).toBe(true)
     expect(sicPaidCheckoutAllowsSessionCookie(paidAt, new Date('2026-08-30T16:16:00.000Z'))).toBe(false)
     expect(sicPaidCheckoutAllowsSessionCookie(null)).toBe(false)
+  })
+})
+
+describe('sicSessionCookieDomain', () => {
+  it('is unset outside production so localhost stays host-only', () => {
+    const prev = process.env.NODE_ENV
+    Object.assign(process.env, { NODE_ENV: 'test' })
+    expect(sicSessionCookieDomain()).toBeUndefined()
+    Object.assign(process.env, { NODE_ENV: prev })
+  })
+
+  it('covers apex + www in production', () => {
+    const prev = process.env.NODE_ENV
+    Object.assign(process.env, { NODE_ENV: 'production' })
+    expect(sicSessionCookieDomain()).toBe('.swissimmocert.ch')
+    Object.assign(process.env, { NODE_ENV: prev })
   })
 })
