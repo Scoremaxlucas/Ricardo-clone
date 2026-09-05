@@ -4,6 +4,13 @@ export const SIC_BRAND_SHORT = 'SIC'
 export const SIC_ISSUER_LINE = 'Swiss Immo Cert · Prüfung'
 
 /**
+ * Stripe Kontoauszug (Karten): Suffix an den Account-Präfix (z. B. HELVENDA*SIC CERT).
+ * Max. kurz halten — Präfix + «* » + Suffix ≤ 22 Zeichen.
+ * Voller Descriptor ohne Helvenda braucht eigenes Stripe-Konto oder geänderten Präfix im Dashboard.
+ */
+export const SIC_STRIPE_STATEMENT_SUFFIX = 'SIC CERT'
+
+/**
  * Prüfung eingereichter Unterlagen — derselbe Satz in AGB, FAQ, Landing, Dossier, Mail.
  * Nicht «24 Stunden»: Wochenende und Feiertage sind keine Werktage.
  */
@@ -29,7 +36,7 @@ export const SIC_PREVIEW_COOKIE = 'sic-preview'
 export const SIC_SUPPORT_EMAIL =
   process.env.SIC_SUPPORT_EMAIL?.trim() || 'support@swissimmocert.ch'
 
-/** Betreiberin laut Handelsregister — auf Zertifikat und Landing nicht genannt. */
+/** Betreiberin laut Handelsregister — auf Zertifikat und Prüfseite nicht genannt; Footer und Impressum schon. */
 export const SIC_OPERATOR = {
   legalName: 'Score-Max GmbH',
   street: 'In der Hauswiese 2',

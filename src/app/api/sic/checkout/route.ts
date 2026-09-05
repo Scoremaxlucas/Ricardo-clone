@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { sicPaths, sicUrl, SIC_BRAND_NAME } from '@/lib/sic/config'
+import { sicPaths, sicUrl, SIC_BRAND_NAME, SIC_STRIPE_STATEMENT_SUFFIX } from '@/lib/sic/config'
 import { encodePaymentHolderName } from '@/lib/sic/dossier'
 import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
 import { parseSicHouseholdKind } from '@/lib/sic/household'
@@ -216,7 +216,12 @@ export async function POST(req: NextRequest) {
       customer_email: email,
       line_items: lineItems,
       metadata,
-      payment_intent_data: { metadata },
+      payment_intent_data: {
+        metadata,
+        // Karten: Suffix an Account-Präfix (Dashboard). Ohne eigenes SIC-Stripe-Konto
+        // bleibt der Präfix oft «Helvenda» — Suffix macht SIC zumindest sichtbar.
+        statement_descriptor_suffix: SIC_STRIPE_STATEMENT_SUFFIX,
+      },
       success_url: `${sicUrl(sicPaths.checkoutSuccess)}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${sicUrl(sicPaths.checkoutCancel)}?session_id={CHECKOUT_SESSION_ID}`,
     })

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { SIC_CERT_TAGLINE, SIC_COLORS, SIC_HOUSE_MARK, SIC_META_DESCRIPTION, sicLogoMarkHouseStroke } from '@/lib/sic/brand'
-import { SIC_BRAND_NAME, SIC_ISSUER_LINE, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
+import { SIC_BRAND_NAME, SIC_ISSUER_LINE, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE, SIC_STRIPE_STATEMENT_SUFFIX } from '@/lib/sic/config'
 import { SIC_MODULE_BADGE } from '@/lib/sic/modules'
 
 describe('SIC_BRAND_NAME', () => {
@@ -8,6 +8,15 @@ describe('SIC_BRAND_NAME', () => {
     expect(SIC_BRAND_NAME).toBe('Swiss Immo Cert')
     expect(SIC_BRAND_NAME).not.toMatch(/SwissImmoCert/)
     expect(SIC_BRAND_NAME).not.toMatch(/SWISS IMMO CERT/)
+  })
+})
+
+describe('SIC_STRIPE_STATEMENT_SUFFIX', () => {
+  it('fits Stripe card suffix rules and does not say Helvenda', () => {
+    expect(SIC_STRIPE_STATEMENT_SUFFIX.length).toBeGreaterThan(0)
+    expect(SIC_STRIPE_STATEMENT_SUFFIX.length).toBeLessThanOrEqual(12)
+    expect(SIC_STRIPE_STATEMENT_SUFFIX).not.toMatch(/helvenda/i)
+    expect(SIC_STRIPE_STATEMENT_SUFFIX).not.toMatch(/[<>\\'"]/)
   })
 })
 
