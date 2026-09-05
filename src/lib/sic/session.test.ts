@@ -63,3 +63,21 @@ describe('sicSessionCookieDomain', () => {
     Object.assign(process.env, { NODE_ENV: prev })
   })
 })
+
+describe('sic session cookie clear', () => {
+  it('emits host-only and domain clears so Next cookies.set cannot drop one', async () => {
+    const prev = process.env.NODE_ENV
+    Object.assign(process.env, { NODE_ENV: 'production' })
+    const { serializeSicSessionClearCookie, sicSessionClearCookieHeaders } = await import(
+      '@/lib/sic/session'
+    )
+    const lines = sicSessionClearCookieHeaders()
+    expect(lines.length).toBeGreaterThanOrEqual(2)
+    expect(lines[0]).toMatch(/^sic_session=;/)
+    expect(lines[0]).not.toMatch(/Domain=/)
+    expect(lines.some(l => l.includes('Domain=.swissimmocert.ch'))).toBe(true)
+    expect(lines.some(l => /Domain=swissimmocert\.ch(;|$)/.test(l))).toBe(true)
+    expect(serializeSicSessionClearCookie('.swissimmocert.ch')).toMatch(/Secure/)
+    Object.assign(process.env, { NODE_ENV: prev })
+  })
+})

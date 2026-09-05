@@ -90,22 +90,42 @@ export function sicSessionCookieOptions(maxAgeSeconds = SIC_SESSION_TTL_DAYS * 2
   }
 }
 
-/** Löscht Host-only-Cookies und Domain-Cookies (Apex/www). */
-export function clearSicSessionCookie(res: {
-  cookies: { set: (name: string, value: string, options: Record<string, unknown>) => void }
-}) {
-  const base = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
-    path: '/',
-    maxAge: 0,
-    expires: new Date(0),
-  }
-  // Alte Host-only-Cookies (ohne Domain)
-  res.cookies.set(SIC_SESSION_COOKIE, '', base)
+/**
+ * Set-Cookie-Zeile zum Löschen. Next.js `cookies.set` speichert pro Name nur
+ * einen Eintrag — Host-only und Domain-Clear würden sich überschreiben.
+ * Deshalb `headers.append('Set-Cookie', …)` für jede Variante.
+ */
+export function serializeSicSessionClearCookie(domain?: string): string {
+  const parts = [
+    `${SIC_SESSION_COOKIE}=`,
+    'Path=/',
+    'Max-Age=0',
+    'Expires=Thu, 01 Jan 1970 00:00:00 GMT',
+    'HttpOnly',
+    'SameSite=Lax',
+  ]
+  if (process.env.NODE_ENV === 'production') parts.push('Secure')
+  if (domain) parts.push(`Domain=${domain}`)
+  return parts.join('; ')
+}
+
+/** Alle möglichen sic_session-Varianten löschen (Host-only + Domain ± leading dot). */
+export function sicSessionClearCookieHeaders(): string[] {
+  const headers = [serializeSicSessionClearCookie()]
   const domain = sicSessionCookieDomain()
   if (domain) {
-    res.cookies.set(SIC_SESSION_COOKIE, '', { ...base, domain })
+    headers.push(serializeSicSessionClearCookie(domain))
+    const apex = domain.replace(/^\./, '')
+    if (apex && apex !== domain) headers.push(serializeSicSessionClearCookie(apex))
+  }
+  return headers
+}
+
+/** Löscht Host-only- und Domain-Cookies (Apex/www) — mehrere Set-Cookie-Header. */
+export function clearSicSessionCookie(res: {
+  headers: { append: (name: string, value: string) => void }
+}) {
+  for (const line of sicSessionClearCookieHeaders()) {
+    res.headers.append('Set-Cookie', line)
   }
 }
