@@ -3,7 +3,7 @@ import { SicLogo } from '@/components/sic/SicLogo'
 import { authOptions } from '@/lib/auth'
 import { SIC_META_DESCRIPTION, SIC_TAGLINE } from '@/lib/sic/brand'
 import { isSicAdminEmail } from '@/lib/sic/admin-access'
-import { SIC_BASE_PATH, SIC_BRAND_NAME, sicPaths } from '@/lib/sic/config'
+import { SIC_BRAND_NAME, SIC_OPERATOR, SIC_SUPPORT_EMAIL, sicPaths } from '@/lib/sic/config'
 import { getSicLandingAccount } from '@/lib/sic/landing-account'
 import { SIC_MODULES } from '@/lib/sic/modules'
 import type { Metadata } from 'next'
@@ -61,11 +61,26 @@ export default async function SicLayout({ children }: { children: React.ReactNod
       </main>
 
       <footer className="mt-auto bg-sic-navy-deep text-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-[max(1.25rem,env(safe-area-inset-left,0px))] pr-[max(1.25rem,env(safe-area-inset-right,0px))] py-10 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-6xl flex-col gap-8 px-[max(1.25rem,env(safe-area-inset-left,0px))] pr-[max(1.25rem,env(safe-area-inset-right,0px))] py-10 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <SicLogo size={30} onDark />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
               {SIC_TAGLINE}. Geprüfte Angaben für die Auswahl. Keine Wohnungszusage.
+            </p>
+            <p className="mt-4 text-sm leading-relaxed text-white/70">
+              <a
+                href={`mailto:${SIC_SUPPORT_EMAIL}`}
+                className="text-white/80 underline-offset-2 hover:text-white hover:underline"
+              >
+                {SIC_SUPPORT_EMAIL}
+              </a>
+              <span className="mx-2 text-white/30">·</span>
+              <a
+                href={SIC_OPERATOR.phoneHref}
+                className="text-white/80 underline-offset-2 hover:text-white hover:underline"
+              >
+                {SIC_OPERATOR.phoneDisplay}
+              </a>
             </p>
           </div>
           <nav className="flex flex-col gap-2.5 text-sm">
@@ -100,8 +115,14 @@ export default async function SicLayout({ children }: { children: React.ReactNod
           </nav>
         </div>
         <div className="border-t border-white/10">
-          <div className="mx-auto max-w-6xl px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] text-xs text-white/40">
+          <div className="mx-auto max-w-6xl px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] text-xs leading-relaxed text-white/40">
             © {new Date().getFullYear()} {SIC_BRAND_NAME}
+            {' · '}
+            {SIC_OPERATOR.legalName}, {SIC_OPERATOR.zip} {SIC_OPERATOR.city}
+            {' · '}
+            UID {SIC_OPERATOR.uid}
+            {' · '}
+            HR {SIC_OPERATOR.commercialRegisterNo}
           </div>
         </div>
       </footer>

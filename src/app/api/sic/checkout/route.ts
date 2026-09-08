@@ -17,6 +17,7 @@ import { getSicSession } from '@/lib/sic/session-cookie'
 import { stripe } from '@/lib/stripe-server'
 import type { SicModuleKind } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
+import type Stripe from 'stripe'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +25,46 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function clientIp(req: NextRequest): string {
   return (req.headers.get('x-forwarded-for')?.split(',')[0] || '').trim() || 'unknown'
+}
+
+/**
+ * Erkennt vorübergehende Stripe-Fehler (Netzwerk, Rate-Limit, 5xx), bei denen
+ * ein Wiederholungsversuch sinnvoll ist. Kartenfehler, Auth-Fehler und
+ * Validierungsfehler werden **nicht** wiederholt.
+ */
+function isTransientStripeError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false
+  const anyErr = err as { type?: string; code?: string; statusCode?: number; message?: string }
+  if (anyErr.type === 'StripeConnectionError' || anyErr.type === 'StripeAPIError') return true
+  if (anyErr.type === 'StripeRateLimitError') return true
+  if (typeof anyErr.statusCode === 'number' && anyErr.statusCode >= 500) return true
+  const msg = typeof anyErr.message === 'string' ? anyErr.message.toLowerCase() : ''
+  if (msg.includes('etimedout') || msg.includes('econnreset') || msg.includes('fetch failed')) return true
+  return false
+}
+
+async function createStripeSessionWithRetry(
+  params: Stripe.Checkout.SessionCreateParams,
+  opts: { idempotencyKey: string }
+): Promise<Stripe.Checkout.Session> {
+  const delays = [200, 700]
+  let lastErr: unknown
+  for (let attempt = 0; attempt <= delays.length; attempt += 1) {
+    try {
+      return await stripe.checkout.sessions.create(params, { idempotencyKey: opts.idempotencyKey })
+    } catch (err) {
+      lastErr = err
+      if (attempt === delays.length || !isTransientStripeError(err)) throw err
+      console.warn('[sic/checkout] stripe transient error, retrying', {
+        attempt: attempt + 1,
+        type: (err as { type?: string })?.type,
+        code: (err as { code?: string })?.code,
+        statusCode: (err as { statusCode?: number })?.statusCode,
+      })
+      await new Promise(res => setTimeout(res, delays[attempt]))
+    }
+  }
+  throw lastErr
 }
 
 function overlaps(a: string[], b: string[]): boolean {
@@ -210,21 +251,41 @@ export async function POST(req: NextRequest) {
     moduleKinds: candidate.join(','),
   }
 
+  // Idempotency-Key stabil pro Request halten — bei Netzwerk-Retry gibt Stripe
+  // dieselbe Session zurück, keine Doppel-Sessions.
+  const idempotencyKey = `sic-checkout:${email}:${crypto.randomUUID()}`
+
   try {
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      customer_email: email,
-      line_items: lineItems,
-      metadata,
-      payment_intent_data: {
+    const session = await createStripeSessionWithRetry(
+      {
+        mode: 'payment',
+        customer_email: email,
+        line_items: lineItems,
         metadata,
-        // Karten: Suffix an Account-Präfix (Dashboard). Ohne eigenes SIC-Stripe-Konto
-        // bleibt der Präfix oft «Helvenda» — Suffix macht SIC zumindest sichtbar.
-        statement_descriptor_suffix: SIC_STRIPE_STATEMENT_SUFFIX,
+        payment_intent_data: {
+          metadata,
+          // Karten: Suffix an Account-Präfix (Dashboard). Ohne eigenes SIC-Stripe-Konto
+          // bleibt der Präfix oft «Helvenda» — Suffix macht SIC zumindest sichtbar.
+          statement_descriptor_suffix: SIC_STRIPE_STATEMENT_SUFFIX,
+        },
+        success_url: `${sicUrl(sicPaths.checkoutSuccess)}?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${sicUrl(sicPaths.checkoutCancel)}?session_id={CHECKOUT_SESSION_ID}`,
       },
-      success_url: `${sicUrl(sicPaths.checkoutSuccess)}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${sicUrl(sicPaths.checkoutCancel)}?session_id={CHECKOUT_SESSION_ID}`,
-    })
+      { idempotencyKey }
+    )
+
+    if (!session.url) {
+      console.error('[sic/checkout] stripe session created without url', { id: session.id })
+      return NextResponse.json(
+        {
+          ok: false,
+          code: 'stripe_transient',
+          message:
+            'Die Zahlung startete gerade nicht — bitte gleich nochmal versuchen. Deine Angaben bleiben erhalten.',
+        },
+        { status: 502 }
+      )
+    }
 
     await prisma.sicPayment.create({
       data: {
@@ -241,9 +302,25 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, url: session.url })
   } catch (err) {
-    console.error('[sic/checkout] stripe session failed', err)
+    const transient = isTransientStripeError(err)
+    console.error('[sic/checkout] stripe session failed', {
+      transient,
+      email,
+      moduleKinds: candidate,
+      type: (err as { type?: string })?.type,
+      code: (err as { code?: string })?.code,
+      statusCode: (err as { statusCode?: number })?.statusCode,
+      message: (err as { message?: string })?.message,
+    })
     return NextResponse.json(
-      { ok: false, message: 'Zahlung konnte nicht gestartet werden. Bitte später erneut versuchen.' },
+      {
+        ok: false,
+        code: transient ? 'stripe_transient' : 'stripe_error',
+        message:
+          transient ?
+            'Die Zahlung startete gerade nicht — bitte gleich nochmal versuchen. Deine Angaben bleiben erhalten.'
+          : 'Die Zahlung konnte nicht gestartet werden. Bitte in wenigen Minuten erneut versuchen — deine Angaben bleiben erhalten.',
+      },
       { status: 502 }
     )
   }

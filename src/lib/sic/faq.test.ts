@@ -29,4 +29,11 @@ describe('SIC FAQ copy', () => {
     expect(blob).toMatch(/Wen kontaktiere ich/)
     expect(blob).toMatch(/support@swissimmocert\.ch|SIC_SUPPORT/)
   })
+
+  it('states one-off price, validity and renewal under «Was kostet es?»', () => {
+    const price = SIC_FAQ.find(i => i.q === 'Was kostet es?')
+    expect(price?.a).toMatch(/einmalig|ohne Abo/)
+    expect(price?.a).toMatch(/Betreibungsauszug/)
+    expect(price?.a).toMatch(/Verlängerung|Momentan nichts/)
+  })
 })

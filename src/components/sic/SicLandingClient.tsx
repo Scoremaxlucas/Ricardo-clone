@@ -1,17 +1,23 @@
 'use client'
 
 import { SicLogoMark } from '@/components/sic/SicLogo'
+import { SicLandingTrust } from '@/components/sic/SicLandingTrust'
 import { SIC_CERT_TAGLINE, SIC_COLORS, SIC_HERO_IMAGE, SIC_MODULE_ACCENT, SIC_TAGLINE } from '@/lib/sic/brand'
 import { SIC_FAQ } from '@/lib/sic/faq'
 import { sicCatalogPreviewRows } from '@/lib/sic/facts'
+import {
+  SIC_OFFER_TERMS,
+  SIC_PREP_ITEMS,
+  SIC_PRICE_LABEL,
+  SIC_PRODUCT_LINE,
+  SIC_TODAY_CLOSING,
+  SIC_TODAY_SCENES,
+} from '@/lib/sic/landing-copy'
 import { SIC_REVIEWS, SIC_USE_CASES, sicLandingHasReviews } from '@/lib/sic/reviews'
 import {
-  formatSicChf,
   getSicModule,
-  SIC_BUNDLE_ALL_MODULES_CHF,
   SIC_MODULE_BADGE,
   SIC_MODULES,
-  SIC_VALIDITY_MONTHS,
   sicCompletenessLabel,
   sicIsFree,
   sicSealRequirementLabel,
@@ -39,7 +45,7 @@ import toast from 'react-hot-toast'
 
 const IS_FREE = sicIsFree()
 /** Preisangabe für Copy: «Kostenlos» oder der Paketpreis. */
-const PRICE_LABEL = IS_FREE ? 'Kostenlos' : formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)
+const PRICE_LABEL = SIC_PRICE_LABEL
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -73,10 +79,7 @@ const HOW_STEPS: { icon: LucideIcon; title: string; note: string }[] = [
   },
 ]
 
-const TODAY_SCENES = [
-  'Eignung allein reicht nicht. Ungeprüfte Angaben bleiben Selbstauskunft.',
-  'Lohn, Betreibung und Referenz sind bei den meisten Bewerbern Selbstauskunft. Ohne Prüfung bleibt die Unsicherheit bei ihm.',
-]
+const TODAY_SCENES = SIC_TODAY_SCENES
 
 /** Beispiel wie auf dem PDF — Zeilen aus denselben Bändern und der 3×-Regel. */
 const CERT_PREVIEW = sicCatalogPreviewRows()
@@ -210,32 +213,62 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       return
     }
     setSubmitting(true)
+    const payload = {
+      email: email.trim(),
+      moduleIds,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      ...(couple ?
+        {
+          householdKind: 'COUPLE' as const,
+          firstName2: firstName2.trim(),
+          lastName2: lastName2.trim(),
+        }
+      : { householdKind: 'SINGLE' as const }),
+    }
+    // Ein automatischer Retry bei vorübergehenden Fehlern (Netzwerk, Stripe 5xx).
+    // So sieht der Nutzer die Fehlermeldung höchstens einmal — und nur, wenn
+    // auch der zweite Versuch scheitert.
+    async function attempt(): Promise<{ ok: boolean; url?: string; code?: string; message?: string }> {
+      try {
+        const res = await fetch('/api/sic/checkout', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const data = (await res.json().catch(() => ({}))) as {
+          ok?: boolean
+          url?: string
+          code?: string
+          message?: string
+        }
+        const transient =
+          res.status === 502 || res.status === 503 || res.status === 504 || data?.code === 'stripe_transient'
+        return {
+          ok: Boolean(res.ok && data?.url),
+          url: data?.url,
+          code: transient ? 'transient' : data?.code,
+          message: data?.message,
+        }
+      } catch {
+        return { ok: false, code: 'transient', message: 'Netzwerkfehler.' }
+      }
+    }
     try {
-      const res = await fetch('/api/sic/checkout', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim(),
-          moduleIds,
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          ...(couple ?
-            {
-              householdKind: 'COUPLE',
-              firstName2: firstName2.trim(),
-              lastName2: lastName2.trim(),
-            }
-          : { householdKind: 'SINGLE' }),
-        }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok || !data?.url) {
-        toast.error(data?.message || 'Zertifikat konnte nicht gestartet werden.')
+      let result = await attempt()
+      if (!result.ok && result.code === 'transient') {
+        await new Promise(r => setTimeout(r, 900))
+        result = await attempt()
+      }
+      if (!result.ok || !result.url) {
+        toast.error(
+          result.message ||
+            'Zahlung startete gerade nicht. Bitte gleich nochmal auf «Zertifikat anlegen» tippen — deine Angaben bleiben erhalten.',
+          { duration: 6500 }
+        )
         return
       }
-      window.location.href = data.url
-    } catch {
-      toast.error('Netzwerkfehler. Bitte erneut versuchen.')
+      window.location.href = result.url
     } finally {
       setSubmitting(false)
     }
@@ -341,12 +374,15 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 </span>
                 <h1 className="mt-6 font-sic-serif text-[1.7rem] font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
                   Damit der Vermieter dich ernst nimmt.{' '}
-                  <span className="text-sic-gold-light">Nicht nur zur Kenntnis nimmt.</span>
+                  <span className="text-sic-gold-light">Nicht nur zur Kenntnis.</span>
                 </h1>
-                <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-                  Ohne Prüfung bleibt jede Bewerbung Selbstauskunft. Swiss Immo Cert prüft Angaben auf
-                  Vollständigkeit und Plausibilität — standardisiert und per QR nachvollziehbar. Keine
-                  behördliche Auskunft.
+                <p className="mt-4 max-w-xl text-sm font-medium leading-relaxed text-white/85 sm:text-base">
+                  {SIC_PRODUCT_LINE}
+                </p>
+                <p className="mt-3 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+                  Ohne Prüfung bleibt jede Bewerbung Selbstauskunft. Du füllst nicht noch ein Portal-Formular
+                  aus — du legst ein geprüftes PDF bei. Swiss Immo Cert prüft Angaben auf Vollständigkeit und
+                  Plausibilität, standardisiert und per QR nachvollziehbar. Keine behördliche Auskunft.
                 </p>
                 <form
                   id="anlegen"
@@ -471,13 +507,19 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     {submitting ? 'Wird erstellt …' : 'Zertifikat anlegen'}
                     {!submitting && <ArrowRight className="h-4 w-4" />}
                   </button>
-                  <p className="mt-2.5 text-xs leading-relaxed text-white/50">
-                    Alle {SIC_MODULES.length} Angaben ·{' '}
-                    {quote.totalChf > 0 ? formatSicChf(quote.totalChf) : 'Kostenlos'}. Unterlagen danach.
-                  </p>
+                  <p className="mt-2.5 text-xs leading-relaxed text-white/50">{SIC_OFFER_TERMS} Unterlagen danach.</p>
                 </form>
+                <ul className="mt-4 max-w-md space-y-1.5 text-xs leading-relaxed text-white/50">
+                  <li className="font-semibold text-white/60">Was du selbst besorgst — nach dem Anlegen:</li>
+                  {SIC_PREP_ITEMS.map(item => (
+                    <li key={item} className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-gold-light" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
                 <p className="mt-3 max-w-md text-xs leading-relaxed text-white/45">
-                  Kein Abo. Einmal anlegen, jeder Bewerbung beilegen.
+                  Für Bewerber und private Vermieter. Formulare für Arbeitgeber und Vermieter gibt es bei uns.
                 </p>
               </div>
               <div id="zertifikat" className="min-w-0">
@@ -511,8 +553,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 ))}
               </div>
               <p className="mt-8 font-sic-serif text-lg font-semibold leading-snug text-sic-navy sm:text-xl">
-                Ein SIC-Zertifikat weist aus, was geprüft ist. Es erhalten Bewerber, die sich ausweisen
-                können.
+                {SIC_TODAY_CLOSING}
               </p>
             </div>
           </section>
@@ -523,11 +564,11 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 Herkömmliche Bewerbung und SIC
               </p>
               <h2 className="mt-3 text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
-                Geprüft und einheitlich — nicht weitere Anhänge.
+                Ein Dokument statt fünf loser Anhänge.
               </h2>
               <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-                Bei einer herkömmlichen Bewerbung muss er den Angaben Glauben schenken. Ein Zertifikat weist
-                aus, was geprüft ist — standardisiert und per QR nachvollziehbar.
+                Bei einer herkömmlichen Bewerbung muss der Vermieter den Angaben Glauben schenken. Auf dem
+                Zertifikat stehen sie in einheitlicher Form — mit Prüfvermerk und per QR nachvollziehbar.
               </p>
               <div className="mt-10 grid gap-5 md:grid-cols-2">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
@@ -597,8 +638,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             <h2 className="text-center font-sic-serif text-3xl font-bold tracking-tight text-sic-navy">So läuft es ab</h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
               Einmal anlegen, Unterlagen nachliefern. Ein PDF gibt es ab der ersten geprüften Angabe; als
-              Mieter-Zertifikat gilt es erst mit Betreibungsauszug und Ausweis. {PRICE_LABEL},{' '}
-              {SIC_VALIDITY_MONTHS} Monate gültig — gerechnet ab dem Betreibungsauszug.
+              Mieter-Zertifikat gilt es erst mit Betreibungsauszug und Ausweis. {SIC_OFFER_TERMS} Prüfung{' '}
+              {SIC_REVIEW_SLA}.
             </p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_STEPS.map((step, i) => (
@@ -819,10 +860,28 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                       <blockquote className="font-sic-serif text-lg leading-snug text-sic-navy sm:text-[1.15rem]">
                         «{review.quote}»
                       </blockquote>
-                      <figcaption className="mt-5 border-t border-sic-hairline pt-4 text-sm text-slate-600">
-                        <span className="font-semibold text-sic-navy">{review.name}</span>
-                        <span className="text-slate-400"> · </span>
-                        {review.place}
+                      <figcaption className="mt-5 flex items-center gap-3 border-t border-sic-hairline pt-4 text-sm text-slate-600">
+                        {review.photo ?
+                          <img
+                            src={review.photo}
+                            alt=""
+                            width={44}
+                            height={44}
+                            className="h-11 w-11 flex-shrink-0 rounded-full object-cover"
+                          />
+                        : null}
+                        <div className="min-w-0">
+                          <div>
+                            <span className="font-semibold text-sic-navy">{review.name}</span>
+                            {review.role ?
+                              <>
+                                <span className="text-slate-400"> · </span>
+                                {review.role}
+                              </>
+                            : null}
+                          </div>
+                          <div className="text-slate-500">{review.place}</div>
+                        </div>
                       </figcaption>
                     </figure>
                   ))}
@@ -851,6 +910,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           </div>
         </section>
       : null}
+
+      {!isReturning ? <SicLandingTrust /> : null}
 
       {/* ── Inline-FAQ ───────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-3xl px-5 py-16 pb-[max(7.5rem,calc(6rem+env(safe-area-inset-bottom,0px)))]">
@@ -891,7 +952,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               : 'Fehlende Angaben ergänzen.'
             : IS_FREE ?
               'Zertifikat anlegen — für die nächste Bewerbung.'
-            : `Anlegen für ${PRICE_LABEL}. Für die nächste Bewerbung.`}
+            : `Anlegen für ${PRICE_LABEL}. Einmalig, kein Abo.`}
           </span>
           {isReturning ?
             nothingToBuy ?

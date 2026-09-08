@@ -1,17 +1,39 @@
 /**
  * Social proof auf der Landing.
  *
- * `SIC_REVIEWS`: nur echte Zitate mit Einwilligung. Leer lassen, solange keine
- * vorliegen — dann zeigt die Landing namenslose Abläufe (`SIC_USE_CASES`), keine
- * erfundenen Lara/Marco/Sofie.
+ * `SIC_REVIEWS`: nur echte Zitate mit schriftlicher Einwilligung. Leer lassen,
+ * solange keine vorliegen — dann zeigt die Landing namenslose Abläufe
+ * (`SIC_USE_CASES`), keine erfundenen Lara/Marco/Sofie.
+ *
+ * Bild-Assets: `public/sic/testimonials/<slug>.jpg` (Portrait, quadratisch,
+ * mind. 320×320px). Dateipfad in `photo` eintragen — dann zeigt die Landing
+ * das Bild in der Zitat-Kachel.
  */
 
 export type SicReview = {
   quote: string
   name: string
+  /** Ort oder Wohnungslage, z.B. «Wohnung im Kreis 4, Zürich». */
   place: string
+  /** Optionale Rolle/Kontext — z.B. «Mieterin» oder «Umzug mit Familie». */
+  role?: string
+  /** Absoluter Pfad unter `/public`, z.B. `/sic/testimonials/lara.jpg`. */
+  photo?: string
 }
 
+/**
+ * @todo Sobald echte Zitate + Fotos vorliegen: Einträge hier ergänzen.
+ * Format-Beispiel (nicht aktiv, dient nur der Referenz — nicht auskommentieren
+ * und einchecken, sondern echte Daten einfügen):
+ *
+ *   {
+ *     quote: '…',
+ *     name: 'Vorname N.',
+ *     role: 'Mieterin',
+ *     place: 'Wohnung im Kreis 4, Zürich',
+ *     photo: '/sic/testimonials/vorname.jpg',
+ *   }
+ */
 export const SIC_REVIEWS: readonly SicReview[] = []
 
 export type SicUseCase = {

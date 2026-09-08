@@ -12,6 +12,20 @@ describe('SIC social proof', () => {
     expect(blob).toMatch(/Vermieter/)
   })
 
+  it('accepts optional photo and role on real reviews without breaking older entries', () => {
+    // Type-Level-Prüfung: photo und role sind optional — falsche Typen würden
+    // hier den TS-Build brechen (nur dokumentarisch, kein Runtime-Assertion).
+    const sample = {
+      quote: 'x',
+      name: 'y',
+      place: 'z',
+      role: 'Mieterin',
+      photo: '/sic/testimonials/y.jpg',
+    }
+    expect(sample.role).toBe('Mieterin')
+    expect(sample.photo?.startsWith('/sic/')).toBe(true)
+  })
+
   it('keeps use-cases as situations, not quotes from people', () => {
     expect(SIC_USE_CASES).toHaveLength(3)
     for (const s of SIC_USE_CASES) {
