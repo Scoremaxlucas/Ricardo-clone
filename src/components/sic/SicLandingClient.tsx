@@ -854,38 +854,18 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 <h2 className="mt-3 text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
                   Was Bewerberinnen und Bewerber sagen
                 </h2>
-                <div className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
-                  {SIC_REVIEWS.map(review => (
-                    <figure key={`${review.name}-${review.place}`} className="flex flex-col">
-                      <blockquote className="font-sic-serif text-lg leading-snug text-sic-navy sm:text-[1.15rem]">
-                        «{review.quote}»
-                      </blockquote>
-                      <figcaption className="mt-5 flex items-center gap-3 border-t border-sic-hairline pt-4 text-sm text-slate-600">
-                        {review.photo ?
-                          <img
-                            src={review.photo}
-                            alt=""
-                            width={44}
-                            height={44}
-                            className="h-11 w-11 flex-shrink-0 rounded-full object-cover"
-                          />
-                        : null}
-                        <div className="min-w-0">
-                          <div>
-                            <span className="font-semibold text-sic-navy">{review.name}</span>
-                            {review.role ?
-                              <>
-                                <span className="text-slate-400"> · </span>
-                                {review.role}
-                              </>
-                            : null}
-                          </div>
-                          <div className="text-slate-500">{review.place}</div>
-                        </div>
-                      </figcaption>
-                    </figure>
-                  ))}
-                </div>
+                {SIC_REVIEWS.length === 1 ?
+                  // Featured-Layout: ein Zitat, grosszügig gesetzt. Sonst wirkt ein einzelnes
+                  // Statement in einem 3-Spalten-Raster verloren und unfertig.
+                  <TestimonialFeatured review={SIC_REVIEWS[0]!} />
+                : <div
+                    className={`mt-12 grid gap-10 ${SIC_REVIEWS.length === 2 ? 'md:grid-cols-2 md:gap-12' : 'md:grid-cols-3 md:gap-10'}`}
+                  >
+                    {SIC_REVIEWS.map(review => (
+                      <TestimonialCard key={`${review.name}-${review.place}`} review={review} />
+                    ))}
+                  </div>
+                }
               </>
             : <>
                 <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-sic-gold-text">
@@ -982,6 +962,89 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       </div>
     </div>
   )
+}
+
+/** Zitat-Kachel für 2- oder 3-Spalten-Layout: rundes Portrait oben, Zitat, Autor unten. */
+function TestimonialCard({ review }: { review: (typeof SIC_REVIEWS)[number] }) {
+  return (
+    <figure className="flex flex-col items-center text-center">
+      {review.photo ?
+        <img
+          src={review.photo}
+          alt=""
+          width={96}
+          height={96}
+          className="h-24 w-24 flex-shrink-0 rounded-full object-cover shadow-md ring-4 ring-white"
+          loading="lazy"
+        />
+      : <span className="grid h-24 w-24 flex-shrink-0 place-items-center rounded-full bg-sic-navy/5 text-lg font-semibold text-sic-navy">
+          {initialsFromName(review.name)}
+        </span>
+      }
+      <blockquote className="mt-5 font-sic-serif text-lg leading-snug text-sic-navy sm:text-[1.15rem]">
+        «{review.quote}»
+      </blockquote>
+      <figcaption className="mt-4 text-sm text-slate-600">
+        <div>
+          <span className="font-semibold text-sic-navy">{review.name}</span>
+          {review.role ?
+            <>
+              <span className="text-slate-400"> · </span>
+              {review.role}
+            </>
+          : null}
+        </div>
+        <div className="text-slate-500">{review.place}</div>
+      </figcaption>
+    </figure>
+  )
+}
+
+/** Feature-Layout für ein einzelnes Zitat: grosses Portrait links, Zitat rechts. */
+function TestimonialFeatured({ review }: { review: (typeof SIC_REVIEWS)[number] }) {
+  return (
+    <figure className="mx-auto mt-12 flex max-w-3xl flex-col items-center gap-6 rounded-3xl border border-sic-hairline/70 bg-white px-6 py-8 shadow-sm sm:flex-row sm:items-center sm:gap-8 sm:px-10 sm:py-10 sm:text-left">
+      {review.photo ?
+        <img
+          src={review.photo}
+          alt=""
+          width={144}
+          height={144}
+          className="h-32 w-32 flex-shrink-0 rounded-full object-cover shadow-md ring-4 ring-white sm:h-36 sm:w-36"
+          loading="lazy"
+        />
+      : <span className="grid h-32 w-32 flex-shrink-0 place-items-center rounded-full bg-sic-navy/5 text-2xl font-semibold text-sic-navy sm:h-36 sm:w-36">
+          {initialsFromName(review.name)}
+        </span>
+      }
+      <div className="min-w-0 text-center sm:text-left">
+        <blockquote className="font-sic-serif text-xl leading-snug text-sic-navy sm:text-[1.35rem]">
+          «{review.quote}»
+        </blockquote>
+        <figcaption className="mt-4 text-sm text-slate-600">
+          <div>
+            <span className="font-semibold text-sic-navy">{review.name}</span>
+            {review.role ?
+              <>
+                <span className="text-slate-400"> · </span>
+                {review.role}
+              </>
+            : null}
+          </div>
+          <div className="text-slate-500">{review.place}</div>
+        </figcaption>
+      </div>
+    </figure>
+  )
+}
+
+function initialsFromName(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase() ?? '')
+    .join('')
 }
 
 function CertUrkundeCard() {
