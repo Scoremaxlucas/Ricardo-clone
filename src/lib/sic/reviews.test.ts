@@ -2,28 +2,29 @@ import { describe, expect, it } from 'vitest'
 import { SIC_REVIEWS, SIC_USE_CASES, sicLandingHasReviews } from '@/lib/sic/reviews'
 
 describe('SIC social proof', () => {
-  it('does not invent customer names while reviews are empty', () => {
-    expect(sicLandingHasReviews()).toBe(false)
-    expect(SIC_REVIEWS).toHaveLength(0)
+  it('exposes reviews when any are present and use-cases stay untouched', () => {
+    expect(sicLandingHasReviews()).toBe(SIC_REVIEWS.length > 0)
     const blob = SIC_USE_CASES.map(s => `${s.title} ${s.body}`).join(' ')
+    // Erfundene Namen der frühen Prototypen dürfen nicht wieder auftauchen.
     expect(blob).not.toMatch(/Lara|Marco|Sofie/)
     expect(blob).not.toMatch(/Besichtigung|Wohnungszusage/)
     expect(blob).not.toMatch(/Stapel/)
     expect(blob).toMatch(/Vermieter/)
   })
 
-  it('accepts optional photo and role on real reviews without breaking older entries', () => {
-    // Type-Level-Prüfung: photo und role sind optional — falsche Typen würden
-    // hier den TS-Build brechen (nur dokumentarisch, kein Runtime-Assertion).
-    const sample = {
-      quote: 'x',
-      name: 'y',
-      place: 'z',
-      role: 'Mieterin',
-      photo: '/sic/testimonials/y.jpg',
+  it('has properly structured review entries (name, place, quote, optional photo/role)', () => {
+    for (const r of SIC_REVIEWS) {
+      expect(r.quote.length).toBeGreaterThan(20)
+      expect(r.name.length).toBeGreaterThan(0)
+      expect(r.place.length).toBeGreaterThan(0)
+      if (r.photo !== undefined) {
+        // Fotos müssen unter dem Testimonial-Pfad liegen (public/sic/testimonials/*).
+        expect(r.photo).toMatch(/^\/sic\/testimonials\/.+\.(png|jpe?g|webp)$/i)
+      }
+      if (r.role !== undefined) {
+        expect(r.role.length).toBeGreaterThan(0)
+      }
     }
-    expect(sample.role).toBe('Mieterin')
-    expect(sample.photo?.startsWith('/sic/')).toBe(true)
   })
 
   it('keeps use-cases as situations, not quotes from people', () => {

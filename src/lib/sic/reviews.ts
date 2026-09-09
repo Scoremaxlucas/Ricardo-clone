@@ -22,19 +22,20 @@ export type SicReview = {
 }
 
 /**
- * @todo Sobald echte Zitate + Fotos vorliegen: Einträge hier ergänzen.
- * Format-Beispiel (nicht aktiv, dient nur der Referenz — nicht auskommentieren
- * und einchecken, sondern echte Daten einfügen):
- *
- *   {
- *     quote: '…',
- *     name: 'Vorname N.',
- *     role: 'Mieterin',
- *     place: 'Wohnung im Kreis 4, Zürich',
- *     photo: '/sic/testimonials/vorname.jpg',
- *   }
+ * Live-Testimonials — jedes hier eingecheckte Zitat muss auf **schriftliche
+ * Einwilligung** der Person gestützt sein (Foto und Wortlaut). Wortlaut vor
+ * dem Live-Gang mit der Person gegenprüfen; Nachnamen bewusst abgekürzt.
  */
-export const SIC_REVIEWS: readonly SicReview[] = []
+export const SIC_REVIEWS: readonly SicReview[] = [
+  {
+    quote:
+      'Ich musste nichts mehr erklären — der Vermieter hatte alle Angaben in einer Datei, geprüft und per QR nachvollziehbar. Kurz danach kam der Termin für die Besichtigung.',
+    name: 'Sara N.',
+    role: 'Mieterin',
+    place: 'Wohnung in Zürich, Kreis 6',
+    photo: '/sic/testimonials/01.png',
+  },
+]
 
 export type SicUseCase = {
   title: string
