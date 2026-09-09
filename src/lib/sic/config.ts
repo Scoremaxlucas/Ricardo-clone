@@ -30,9 +30,19 @@ export const SIC_REVIEW_SLA_SENTENCE = 'In der Regel innerhalb eines Werktags na
  * die vollständige URL für Stripe (`success_url` etc.) ungültig — genau das
  * war die Ursache der «Zahlung konnte nicht gestartet werden»-Meldung.
  */
-export const SIC_SITE_ORIGIN = (process.env.NEXT_PUBLIC_SIC_URL || 'https://swissimmocert.ch')
-  .trim()
-  .replace(/\/+$/, '')
+const RAW_SIC_ORIGIN = process.env.NEXT_PUBLIC_SIC_URL || 'https://swissimmocert.ch'
+export const SIC_SITE_ORIGIN = RAW_SIC_ORIGIN.trim().replace(/\/+$/, '')
+
+// Startup-Sichtbarkeit: wenn der Env-Wert getrimmt/verändert werden musste,
+// im Vercel-Log warnen — dann weiss man sofort, dass der Env-Var in Vercel
+// nochmal sauber neu gesetzt gehört. Reine Info, kein Fail.
+if (RAW_SIC_ORIGIN !== SIC_SITE_ORIGIN) {
+  const preview = JSON.stringify(RAW_SIC_ORIGIN)
+  console.warn(
+    `[sic/config] NEXT_PUBLIC_SIC_URL required sanitizing (raw=${preview}) → "${SIC_SITE_ORIGIN}". ` +
+      `Bitte den Vercel-Env-Wert exakt "${SIC_SITE_ORIGIN}" setzen (kein Zeilenumbruch/Leerzeichen).`
+  )
+}
 
 /** Alle SIC-Seiten leben unter diesem Präfix (Koexistenz mit bestehender App). */
 export const SIC_BASE_PATH = '/sic'
