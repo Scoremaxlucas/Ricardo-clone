@@ -9,7 +9,8 @@ function rawHost(h: HeaderBag): string {
 
 function hostnameFromOrigin(origin: string, fallback: string): string {
   try {
-    return new URL(origin.replace(/\/$/, '')).hostname.toLowerCase()
+    // `.trim()` fängt versehentlich in Env-Vars kopierte Zeilenumbrüche/Leerzeichen.
+    return new URL(origin.trim().replace(/\/+$/, '')).hostname.toLowerCase()
   } catch {
     return fallback
   }

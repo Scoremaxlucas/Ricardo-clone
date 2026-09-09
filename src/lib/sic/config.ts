@@ -24,9 +24,15 @@ export const SIC_REVIEW_SLA_SENTENCE = 'In der Regel innerhalb eines Werktags na
  * Vercel kann den Apex trotzdem auf www umleiten. Dann darf die Middleware
  * nicht www → Apex schicken — das ist die Safari-Schleife «Too many redirects».
  */
-export const SIC_SITE_ORIGIN = (
-  process.env.NEXT_PUBLIC_SIC_URL || 'https://swissimmocert.ch'
-).replace(/\/$/, '')
+/**
+ * `.trim()` **vor** allem anderen: Vercels Env-UI übernimmt gelegentlich einen
+ * mitkopierten Zeilenumbruch aus der Zwischenablage. Ein `\n` am Ende macht
+ * die vollständige URL für Stripe (`success_url` etc.) ungültig — genau das
+ * war die Ursache der «Zahlung konnte nicht gestartet werden»-Meldung.
+ */
+export const SIC_SITE_ORIGIN = (process.env.NEXT_PUBLIC_SIC_URL || 'https://swissimmocert.ch')
+  .trim()
+  .replace(/\/+$/, '')
 
 /** Alle SIC-Seiten leben unter diesem Präfix (Koexistenz mit bestehender App). */
 export const SIC_BASE_PATH = '/sic'
