@@ -377,6 +377,11 @@ export async function POST(req: NextRequest) {
               successUrl: `${sicUrl(sicPaths.checkoutSuccess)}?session_id={CHECKOUT_SESSION_ID}`,
               cancelUrl: `${sicUrl(sicPaths.checkoutCancel)}?session_id={CHECKOUT_SESSION_ID}`,
               siteOriginEnv: process.env.NEXT_PUBLIC_SIC_URL || null,
+              // Der Wert, den unser Code am Ende nutzt — nach .trim()+Slash-Strip.
+              // Wenn hier kein "\n" mehr steht, aber siteOriginEnv eines hat,
+              // greift das Härten korrekt und Vercel muss den Env-Wert später
+              // trotzdem einmal sauber neu setzen.
+              siteOriginUsed: sicUrl('/'),
             },
           }
         : {}),
