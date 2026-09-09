@@ -373,8 +373,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   {SIC_TAGLINE}
                 </span>
                 <h1 className="mt-6 font-sic-serif text-[1.7rem] font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
-                  Damit der Vermieter dich ernst nimmt.{' '}
-                  <span className="text-sic-gold-light">Nicht nur zur Kenntnis.</span>
+                  Damit der Vermieter dich ernst nimmt{' '}
+                  <span className="text-sic-gold-light">— nicht nur zur Kenntnis.</span>
                 </h1>
                 <p className="mt-4 max-w-xl text-sm font-medium leading-relaxed text-white/85 sm:text-base">
                   {SIC_PRODUCT_LINE}
