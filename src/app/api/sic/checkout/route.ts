@@ -374,6 +374,9 @@ export async function POST(req: NextRequest) {
               statusCode: errStatus,
               message: errMessage,
               wantDescriptorSuffix,
+              successUrl: `${sicUrl(sicPaths.checkoutSuccess)}?session_id={CHECKOUT_SESSION_ID}`,
+              cancelUrl: `${sicUrl(sicPaths.checkoutCancel)}?session_id={CHECKOUT_SESSION_ID}`,
+              siteOriginEnv: process.env.NEXT_PUBLIC_SIC_URL || null,
             },
           }
         : {}),
