@@ -299,8 +299,8 @@ export async function POST(req: NextRequest) {
   // Card-Descriptor-Suffix ist rein kosmetisch («SIC CERT» auf Kartenauszügen
   // statt nur «Helvenda»). Stripe lehnt die Session **konstant** ab, wenn das
   // Konto keinen konfigurierten Descriptor-Präfix hat — deshalb per Env opt-in.
-  // Zahlungsmethoden: nicht fest verdrahtet — Stripe zeigt die im Dashboard
-  // aktivierten Methoden (aktuell Karte; TWINT sobald freigeschaltet).
+  // Zahlungsmethoden: Karte + Link. TWINT bewusst weggelassen, solange Stripe
+  // es als Ineligible führt (sonst scheitert der ganze Checkout).
   const wantDescriptorSuffix = process.env.SIC_STRIPE_USE_DESCRIPTOR_SUFFIX === '1'
 
   const buildParams = (
@@ -310,6 +310,7 @@ export async function POST(req: NextRequest) {
     customer_email: email,
     line_items: lineItems,
     metadata,
+    payment_method_types: ['card', 'link'],
     payment_intent_data:
       opts.withDescriptorSuffix ?
         { metadata, statement_descriptor_suffix: SIC_STRIPE_STATEMENT_SUFFIX }
