@@ -44,8 +44,8 @@ export default function SicDatenschutzPage() {
               Lohns.
             </li>
             <li>
-              Zahlungsdaten bei Stripe. Kreditkartendaten erreichen unsere Server nicht; wir speichern nur
-              Betrag, Status und die Stripe-Referenz.
+              Zahlungsdaten bei Stripe (Zahlungsmethode: TWINT). Kartendaten erreichen unsere Server nicht;
+              wir speichern nur Betrag, Status und die Stripe-Referenz.
             </li>
             <li>
               Technische Protokolle: Aufrufe der QR-Prüfseite werden gezählt. Dabei speichern wir keine

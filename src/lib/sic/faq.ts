@@ -19,7 +19,7 @@ const PREVIEW_CEILING = PREVIEW_INCOME.find(l => l.startsWith('Tragbar')) ?? ''
 const PRICE_ANSWER =
   sicIsFree() ?
     `Momentan nichts. Du kannst das Zertifikat ohne Abo anlegen und der Bewerbung beilegen. ${SIC_VALIDITY_MONTHS} Monate gültig — gerechnet ab dem Betreibungsauszug.`
-  : `Das vollständige Zertifikat mit allen ${SIC_MODULES.length} Angaben kostet ${formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)}. Bezahlt wird einmalig beim Anlegen — nicht pro Bewerbung und nicht als Abo. ${SIC_VALIDITY_MONTHS} Monate gültig, gerechnet ab dem Betreibungsauszug. Verlängerung ${formatSicChf(SIC_RENEWAL_FEE_CHF)}.`
+  : `Das vollständige Zertifikat mit allen ${SIC_MODULES.length} Angaben kostet ${formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)}. Bezahlt wird einmalig per TWINT beim Anlegen — nicht pro Bewerbung und nicht als Abo. ${SIC_VALIDITY_MONTHS} Monate gültig, gerechnet ab dem Betreibungsauszug. Verlängerung ${formatSicChf(SIC_RENEWAL_FEE_CHF)}.`
 
 /** Shared FAQ for Landing + /sic/faq (single source of truth). Alltagssprache, kurze Antworten. */
 export const SIC_FAQ: { q: string; a: string }[] = [
@@ -34,6 +34,10 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   {
     q: 'Was kostet es?',
     a: PRICE_ANSWER,
+  },
+  {
+    q: 'Wie bezahle ich?',
+    a: 'Nur per TWINT. Kreditkarte und andere Methoden sind bei Swiss Immo Cert nicht vorgesehen.',
   },
   {
     q: 'Kann ich nur einzelne Angaben kaufen?',
