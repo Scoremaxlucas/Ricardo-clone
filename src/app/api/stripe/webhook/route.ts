@@ -181,13 +181,31 @@ export async function POST(request: NextRequest) {
                 break
               }
               const { fulfillSicPaidCheckout } = await import('@/lib/sic/fulfillment')
-              await fulfillSicPaidCheckout({
+              const result = await fulfillSicPaidCheckout({
                 stripeCheckoutSessionId: session.id,
                 stripePaymentIntentId:
                   typeof session.payment_intent === 'string' ?
                     session.payment_intent
                   : (session.payment_intent?.id ?? null),
               })
+              // Wichtig: bei !ok den Fehler weiterwerfen. Sonst markiert der
+              // outer Handler das Event als «processed» (`markEventProcessed(..., true)`)
+              // und Stripe versucht es nie wieder — Kunde hat gezahlt, hat aber
+              // kein Zertifikat. Werfen → outer catch → 500 → Stripe retries.
+              if (!result.ok) {
+                const { sicLog } = await import('@/lib/sic/log')
+                sicLog('sic.webhook.fulfillment_failed', {
+                  sessionId: session.id,
+                  reason: result.reason,
+                  paymentIntentId:
+                    typeof session.payment_intent === 'string' ?
+                      session.payment_intent
+                    : (session.payment_intent?.id ?? null),
+                })
+                const err = new Error(`SIC fulfillment failed: ${result.reason}`)
+                ;(err as Error & { sicFulfillReason: string }).sicFulfillReason = result.reason
+                throw err
+              }
               break
             }
             orderId = session.metadata?.orderId
