@@ -389,9 +389,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   {SIC_PRODUCT_LINE}
                 </p>
                 <p className="mt-3 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-                  Ohne Prüfung bleibt jede Bewerbung Selbstauskunft. Du füllst nicht noch ein Portal-Formular
-                  aus — du legst ein geprüftes PDF bei. Swiss Immo Cert prüft Angaben auf Vollständigkeit und
-                  Plausibilität, standardisiert und per QR nachvollziehbar. Keine behördliche Auskunft.
+                  Ohne Prüfung bleibt jede Bewerbung nur Selbstauskunft. Du legst ein geprüftes PDF bei.
+                  Swiss Immo Cert prüft Angaben auf Vollständigkeit und Plausibilität, standardisiert und per
+                  QR nachvollziehbar. Keine behördliche Auskunft.
                 </p>
                 <form
                   id="anlegen"
