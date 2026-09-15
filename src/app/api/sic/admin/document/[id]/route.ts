@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { requireSicAdmin } from '@/lib/sic/admin'
 import { readSicBlobBytes } from '@/lib/sic/blob-read'
 import { decryptSicDocument } from '@/lib/sic/document-crypto'
@@ -10,6 +11,17 @@ export const dynamic = 'force-dynamic'
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const admin = await requireSicAdmin()
   if (!admin) return new NextResponse('Zugriff verweigert', { status: 403 })
+
+  // Rate-Limit gegen Automation, die alle Blob-URLs durchprobieren würde.
+  // 300/h reicht für einen intensiven Prüftag; Blob-Download ist relativ teuer.
+  const rl = await checkRateLimit({
+    identifier: `sic-admin-doc:${admin.email}`,
+    limit: 300,
+    window: 3600,
+  })
+  if (!rl.allowed) {
+    return new NextResponse('Zu viele Downloads. Kurz pausieren.', { status: 429 })
+  }
 
   const { id } = await ctx.params
   const doc = await prisma.sicDocument.findUnique({ where: { id } })

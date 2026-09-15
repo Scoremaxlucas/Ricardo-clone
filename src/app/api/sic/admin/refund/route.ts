@@ -1,3 +1,4 @@
+import { checkRateLimit } from '@/lib/rate-limit'
 import { requireSicAdmin } from '@/lib/sic/admin'
 import { formatSicChf } from '@/lib/sic/modules'
 import { refundSicPaidModule } from '@/lib/sic/module-refund'
@@ -9,6 +10,21 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   const admin = await requireSicAdmin()
   if (!admin) return NextResponse.json({ ok: false, message: 'Zugriff verweigert' }, { status: 403 })
+
+  // Sensitive Aktion (Geld raus) → fail-closed: bei DB-Blip lieber blockieren
+  // als versehentlich unbegrenzt Rückerstattungen erlauben.
+  const rl = await checkRateLimit({
+    identifier: `sic-admin-refund:${admin.email}`,
+    limit: 30,
+    window: 3600,
+    failMode: 'failClosed',
+  })
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { ok: false, message: 'Zu viele Rückerstattungen. Bitte kurz warten oder Support benachrichtigen.' },
+      { status: 429 }
+    )
+  }
 
   let body: { certificateId?: string; moduleKind?: string }
   try {

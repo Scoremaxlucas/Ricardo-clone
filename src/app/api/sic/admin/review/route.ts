@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { requireSicAdmin } from '@/lib/sic/admin'
 import {
   adminQueueCursorWhere,
@@ -219,6 +220,20 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const admin = await requireSicAdmin()
   if (!admin) return NextResponse.json({ ok: false, message: 'Zugriff verweigert' }, { status: 403 })
+
+  // Grobes Rate-Limit gegen versehentliche Loop-Klicks bzw. gestohlene Session.
+  // 200/h reicht für den intensivsten Prüftag; darüber lohnt kurz durchzuatmen.
+  const rl = await checkRateLimit({
+    identifier: `sic-admin-review:${admin.email}`,
+    limit: 200,
+    window: 3600,
+  })
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { ok: false, message: 'Zu viele Prüfaktionen kurz hintereinander. Bitte kurz pausieren.' },
+      { status: 429 }
+    )
+  }
 
   let body: {
     certificateId?: string

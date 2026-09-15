@@ -4,6 +4,15 @@ interface RateLimitOptions {
   identifier: string
   limit: number
   window: number // in seconds
+  /**
+   * `failOpen` (Default): Wenn die Rate-Limit-DB nicht erreichbar ist, wird die
+   * Anfrage durchgelassen — Verfügbarkeit vor Missbrauchsschutz.
+   *
+   * `failClosed`: Nur für sensitive Aktionen (Admin-Rückerstattung, Widerruf).
+   * Bei DB-Ausfall bleibt der Aufruf blockiert; das schützt gegen einen
+   * gezielten DB-Ausfall + Missbrauchsversuch.
+   */
+  failMode?: 'failOpen' | 'failClosed'
 }
 
 /**
@@ -14,6 +23,7 @@ export async function checkRateLimit({
   identifier,
   limit,
   window,
+  failMode = 'failOpen',
 }: RateLimitOptions): Promise<{ allowed: boolean; remaining: number; resetAt: Date }> {
   const now = new Date()
   const windowStart = new Date(now.getTime() - window * 1000)
@@ -62,8 +72,17 @@ export async function checkRateLimit({
 
     return { allowed, remaining, resetAt }
   } catch (error) {
+    console.error('[rate-limit] Error checking rate limit:', error, { identifier, failMode })
+    if (failMode === 'failClosed') {
+      // Sensitive Aktion: im Zweifel blockieren. Aufrufer signalisiert dem
+      // Nutzer eine „vorübergehend nicht möglich“-Meldung.
+      return {
+        allowed: false,
+        remaining: 0,
+        resetAt: new Date(now.getTime() + window * 1000),
+      }
+    }
     // On error, allow the request (fail open)
-    console.error('[rate-limit] Error checking rate limit:', error)
     return {
       allowed: true,
       remaining: limit,
