@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { sicPaths, sicUrl, SIC_BRAND_NAME } from '@/lib/sic/config'
+import { sicPaths, sicUrl, SIC_BRAND_NAME, SIC_STRIPE_STATEMENT_SUFFIX } from '@/lib/sic/config'
 import { encodePaymentHolderName } from '@/lib/sic/dossier'
 import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
 import { parseSicHouseholdKind } from '@/lib/sic/household'
@@ -26,6 +26,19 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function clientIp(req: NextRequest): string {
   return (req.headers.get('x-forwarded-for')?.split(',')[0] || '').trim() || 'unknown'
+}
+
+/**
+ * Erkennt Stripe-Ablehnungen, die den `statement_descriptor_suffix` betreffen.
+ * Diese Fehler sind reproduzierbar — beim Fallback (Session ohne Suffix)
+ * geht die Zahlung durch.
+ */
+function isDescriptorSuffixError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false
+  const anyErr = err as { param?: string; message?: string }
+  if (typeof anyErr.param === 'string' && anyErr.param.includes('statement_descriptor')) return true
+  const msg = typeof anyErr.message === 'string' ? anyErr.message.toLowerCase() : ''
+  return msg.includes('statement_descriptor')
 }
 
 /**
@@ -283,27 +296,47 @@ export async function POST(req: NextRequest) {
   const bucket = attemptId || Math.floor(Date.now() / (5 * 60 * 1000)).toString(36)
   const idempotencyKey = `sic-checkout:${createHash('sha256').update(`${orderKey}|${bucket}`).digest('hex').slice(0, 40)}`
 
-  // Card-Descriptor-Suffix ist für TWINT irrelevant (Karten-Feature). SIC nimmt
-  // bewusst nur TWINT — keine Kreditkarte, kein Dashboard-Mix.
-  const buildParams = (): Stripe.Checkout.SessionCreateParams => ({
+  // Card-Descriptor-Suffix ist rein kosmetisch («SIC CERT» auf Kartenauszügen
+  // statt nur «Helvenda»). Stripe lehnt die Session **konstant** ab, wenn das
+  // Konto keinen konfigurierten Descriptor-Präfix hat — deshalb per Env opt-in.
+  // Zahlungsmethoden: nicht fest verdrahtet — Stripe zeigt die im Dashboard
+  // aktivierten Methoden (aktuell Karte; TWINT sobald freigeschaltet).
+  const wantDescriptorSuffix = process.env.SIC_STRIPE_USE_DESCRIPTOR_SUFFIX === '1'
+
+  const buildParams = (
+    opts: { withDescriptorSuffix: boolean } = { withDescriptorSuffix: wantDescriptorSuffix }
+  ): Stripe.Checkout.SessionCreateParams => ({
     mode: 'payment',
     customer_email: email,
     line_items: lineItems,
     metadata,
-    // Explizit nur TWINT — sonst würde Stripe Karte (und ggf. weitere aktivierte
-    // Methoden) anbieten. Voraussetzung: TWINT im Stripe-Dashboard aktiviert,
-    // Betrag in CHF (bereits der Fall).
-    // Cast: Stripe Node SDK v14 kennt 'twint' in den Checkout-Typen noch nicht;
-    // die API akzeptiert es (vgl. Invoice-TWINT-Flow).
-    payment_method_types: ['twint' as Stripe.Checkout.SessionCreateParams.PaymentMethodType],
-    payment_intent_data: { metadata },
+    payment_intent_data:
+      opts.withDescriptorSuffix ?
+        { metadata, statement_descriptor_suffix: SIC_STRIPE_STATEMENT_SUFFIX }
+      : { metadata },
     locale: 'de',
     success_url: `${sicUrl(sicPaths.checkoutSuccess)}?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${sicUrl(sicPaths.checkoutCancel)}?session_id={CHECKOUT_SESSION_ID}`,
   })
 
   try {
-    const session = await createStripeSessionWithRetry(buildParams(), { idempotencyKey })
+    let session: Stripe.Checkout.Session
+    try {
+      session = await createStripeSessionWithRetry(buildParams(), { idempotencyKey })
+    } catch (err) {
+      // Selbst-Heilung: Wenn Stripe den Descriptor-Suffix ablehnt, sofort ohne
+      // Suffix nochmal versuchen. Kosmetik darf keine Zahlung blockieren.
+      if (wantDescriptorSuffix && isDescriptorSuffixError(err)) {
+        console.warn('[sic/checkout] descriptor suffix rejected, retrying without', {
+          message: (err as { message?: string })?.message,
+        })
+        session = await createStripeSessionWithRetry(buildParams({ withDescriptorSuffix: false }), {
+          idempotencyKey: `${idempotencyKey}:nosuffix`,
+        })
+      } else {
+        throw err
+      }
+    }
 
     if (!session.url) {
       console.error('[sic/checkout] stripe session created without url', { id: session.id })
@@ -349,24 +382,12 @@ export async function POST(req: NextRequest) {
       statusCode: errStatus,
       message: errMessage,
     })
-
-    // Klarer Hinweis, wenn TWINT im Stripe-Dashboard noch nicht aktiviert ist —
-    // sonst landet der Kunde bei einer generischen «bitte später»-Meldung.
-    const twintNotEnabled =
-      typeof errParam === 'string' &&
-      errParam.includes('payment_method') &&
-      typeof errMessage === 'string' &&
-      /twint/i.test(errMessage) &&
-      /invalid|activated|dashboard/i.test(errMessage)
-
     return NextResponse.json(
       {
         ok: false,
-        code: twintNotEnabled ? 'twint_not_enabled' : transient ? 'stripe_transient' : 'stripe_error',
+        code: transient ? 'stripe_transient' : 'stripe_error',
         message:
-          twintNotEnabled ?
-            'Zahlung per TWINT ist gerade nicht verfügbar. Bitte später erneut versuchen — deine Angaben bleiben erhalten.'
-          : transient ?
+          transient ?
             'Die Zahlung startete gerade nicht — bitte gleich nochmal versuchen. Deine Angaben bleiben erhalten.'
           : 'Die Zahlung konnte nicht gestartet werden. Bitte in wenigen Minuten erneut versuchen — deine Angaben bleiben erhalten.',
       },

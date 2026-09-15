@@ -18,7 +18,7 @@ export const SIC_PRODUCT_LINE =
 export const SIC_OFFER_TERMS =
   IS_FREE ?
     `Kostenlos. Kein Abo. ${SIC_VALIDITY_MONTHS} Monate gültig — gerechnet ab dem Betreibungsauszug.`
-  : `${SIC_PRICE_LABEL} · alle ${SIC_MODULES.length} Angaben. Einmalig, kein Abo. Zahlung per TWINT. ${SIC_VALIDITY_MONTHS} Monate gültig — gerechnet ab dem Betreibungsauszug. Verlängerung ${formatSicChf(SIC_RENEWAL_FEE_CHF)}.`
+  : `${SIC_PRICE_LABEL} · alle ${SIC_MODULES.length} Angaben. Einmalig, kein Abo. ${SIC_VALIDITY_MONTHS} Monate gültig — gerechnet ab dem Betreibungsauszug. Verlängerung ${formatSicChf(SIC_RENEWAL_FEE_CHF)}.`
 
 /** Was nach dem Anlegen selbst zu beschaffen ist — vor dem Kauf sichtbar. */
 export const SIC_PREP_ITEMS = [

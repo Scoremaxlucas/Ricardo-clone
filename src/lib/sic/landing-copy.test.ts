@@ -16,13 +16,10 @@ describe('SIC landing offer copy', () => {
     expect(SIC_PRODUCT_LINE).toMatch(/kein Pflicht-Abo/i)
   })
 
-  it('states price, one-off terms, TWINT, validity and renewal on the landing', () => {
+  it('states price, one-off terms, validity and renewal on the landing', () => {
     expect(SIC_OFFER_TERMS).toMatch(/kein Abo/i)
     expect(SIC_OFFER_TERMS).toMatch(/Betreibungsauszug/)
     expect(SIC_OFFER_TERMS).toMatch(/Verlängerung|Kostenlos/)
-    if (!/Kostenlos/.test(SIC_OFFER_TERMS)) {
-      expect(SIC_OFFER_TERMS).toMatch(/TWINT/)
-    }
   })
 
   it('lists the four things the tenant must obtain', () => {
