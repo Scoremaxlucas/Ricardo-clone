@@ -213,11 +213,19 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       return
     }
     setSubmitting(true)
+    // Ein `attemptId` pro Klick: der Server nutzt ihn als Stripe-Idempotency-Key,
+    // sodass Netzwerk-Retries dieselbe Session zurückliefern und der Kunde nie
+    // versehentlich zweimal bezahlt.
+    const attemptId =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ?
+        crypto.randomUUID().replace(/-/g, '')
+      : `sic-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
     const payload = {
       email: email.trim(),
       moduleIds,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
+      attemptId,
       ...(couple ?
         {
           householdKind: 'COUPLE' as const,
@@ -228,7 +236,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
     }
     // Ein automatischer Retry bei vorübergehenden Fehlern (Netzwerk, Stripe 5xx).
     // So sieht der Nutzer die Fehlermeldung höchstens einmal — und nur, wenn
-    // auch der zweite Versuch scheitert.
+    // auch der zweite Versuch scheitert. Der attemptId bleibt gleich → Stripe
+    // gibt exakt eine Session zurück, keine Doppel-Zahlung.
     async function attempt(): Promise<{ ok: boolean; url?: string; code?: string; message?: string }> {
       try {
         const res = await fetch('/api/sic/checkout', {

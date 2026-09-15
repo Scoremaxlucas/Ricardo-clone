@@ -16,6 +16,7 @@ import {
 import { getSicSession } from '@/lib/sic/session-cookie'
 import { stripe } from '@/lib/stripe-server'
 import type { SicModuleKind } from '@prisma/client'
+import { createHash, randomUUID } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 
@@ -110,16 +111,28 @@ async function cancelOverlappingPending(email: string, candidate: string[], incl
   }
 }
 
+/**
+ * Der Client darf einen `attemptId` pro Klick mitschicken (UUID/hex-Token).
+ * Dann bleibt der Stripe-Idempotency-Key über alle Netzwerk-Retries derselbe →
+ * Stripe liefert exakt eine Session, kein Doppel-Checkout. Ohne `attemptId`
+ * fallen wir auf einen deterministischen 5-Minuten-Bucket zurück.
+ */
+const ATTEMPT_ID_RE = /^[a-zA-Z0-9_-]{16,120}$/
+
 export async function POST(req: NextRequest) {
   let email = ''
   let requested: SicModuleId[] = []
   let holderName: string | null = null
   let wantsRenewal = false
+  let attemptId = ''
   try {
     const body = await req.json()
     email = normalizeEmail(typeof body?.email === 'string' ? body.email : '')
     requested = normalizeSicModuleIds(body?.moduleIds)
     wantsRenewal = body?.renewal === true
+    if (typeof body?.attemptId === 'string' && ATTEMPT_ID_RE.test(body.attemptId)) {
+      attemptId = body.attemptId
+    }
     const firstName = typeof body?.firstName === 'string' ? body.firstName.trim().replace(/\s+/g, ' ').slice(0, 80) : ''
     const lastName = typeof body?.lastName === 'string' ? body.lastName.trim().replace(/\s+/g, ' ').slice(0, 80) : ''
     const firstName2 =
@@ -195,7 +208,7 @@ export async function POST(req: NextRequest) {
   await cancelOverlappingPending(email, candidate, includeBaseFee)
 
   if (quote.totalChf === 0) {
-    const sessionId = `free_${crypto.randomUUID()}`
+    const sessionId = `free_${randomUUID()}`
     await prisma.sicPayment.create({
       data: {
         email,
@@ -264,9 +277,24 @@ export async function POST(req: NextRequest) {
     moduleKinds: candidate.join(','),
   }
 
-  // Idempotency-Key stabil pro Request halten — bei Netzwerk-Retry gibt Stripe
-  // dieselbe Session zurück, keine Doppel-Sessions.
-  const idempotencyKey = `sic-checkout:${email}:${crypto.randomUUID()}`
+  // Idempotency-Key stabil halten — bei Netzwerk-Retry gibt Stripe dieselbe
+  // Session zurück, keine Doppel-Sessions/Doppel-Zahlungen.
+  //   1) Wenn der Client eine `attemptId` mitschickt: die verwenden (bevorzugt).
+  //      Der Client generiert die UUID einmal beim ersten Klick und wiederholt
+  //      sie bei jedem HTTP-Retry.
+  //   2) Sonst: deterministisch aus Bestellabsicht + 5-Min-Zeitfenster.
+  //      Zwei Klicks des selben Kunden auf dieselbe Bestellung innerhalb
+  //      derselben 5 Min → gleiche Stripe-Session. Nach 5 Min oder mit anderen
+  //      Modulen → neue Session.
+  const orderKey = [
+    email,
+    isRenewal ? 'renewal' : 'purchase',
+    includeBaseFee ? 'base' : 'nobase',
+    [...candidate].sort().join(','),
+    Math.round(quote.totalChf * 100),
+  ].join('|')
+  const bucket = attemptId || Math.floor(Date.now() / (5 * 60 * 1000)).toString(36)
+  const idempotencyKey = `sic-checkout:${createHash('sha256').update(`${orderKey}|${bucket}`).digest('hex').slice(0, 40)}`
 
   // Card-Descriptor-Suffix ist rein kosmetisch («SIC CERT» auf Kartenauszügen
   // statt nur «Helvenda»). Stripe lehnt die Session **konstant** ab, wenn das
