@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   // Sensitive Aktion (Geld raus) → fail-closed: bei DB-Blip lieber blockieren
   // als versehentlich unbegrenzt Rückerstattungen erlauben.
   const rl = await checkRateLimit({
-    identifier: `sic-admin-refund:${admin.email}`,
+    identifier: `sic-admin-refund:${admin.userId}`,
     limit: 30,
     window: 3600,
     failMode: 'failClosed',

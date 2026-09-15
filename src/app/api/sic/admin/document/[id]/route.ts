@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   // Rate-Limit gegen Automation, die alle Blob-URLs durchprobieren würde.
   // 300/h reicht für einen intensiven Prüftag; Blob-Download ist relativ teuer.
   const rl = await checkRateLimit({
-    identifier: `sic-admin-doc:${admin.email}`,
+    identifier: `sic-admin-doc:${admin.userId}`,
     limit: 300,
     window: 3600,
   })

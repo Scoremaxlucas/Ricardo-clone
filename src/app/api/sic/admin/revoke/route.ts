@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   // Sensitive Aktion (Zertifikat wird ungültig) → fail-closed.
   const rl = await checkRateLimit({
-    identifier: `sic-admin-revoke:${admin.email}`,
+    identifier: `sic-admin-revoke:${admin.userId}`,
     limit: 30,
     window: 3600,
     failMode: 'failClosed',

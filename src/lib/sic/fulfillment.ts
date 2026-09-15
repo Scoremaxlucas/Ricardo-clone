@@ -37,12 +37,21 @@ async function refundPaymentIntent(paymentIntentId: string | null | undefined): 
 }
 
 /**
- * Verlängerung anwenden: die alternden Angaben zurück auf «Unterlagen fehlen»,
- * ihre Nachweise löschen, damit die Prüfung nicht auf ein altes Dokument schaut.
- * Die dauerhaften Angaben bleiben verifiziert.
+ * Verlängerung innerhalb einer bestehenden Prisma-Transaction anwenden. Alternde
+ * Angaben werden auf «Unterlagen fehlen» zurückgesetzt und ihre Dokumente aus
+ * der DB entfernt. Die zugehörigen Blob-URLs werden zurückgegeben, damit die
+ * Vercel-Blob-Löschung erst NACH dem Commit passiert (Netzwerk-Nebeneffekt,
+ * darf keine Transaction offenhalten).
+ *
+ * So bleibt Zahlung + Verlängerungs-Reset atomar: entweder beides oder keines.
+ * Vorher wurde die Verlängerung nach der Payment-Transaction ausgeführt — ein
+ * Absturz dazwischen hätte den Kunden bezahlen lassen ohne Modul-Reset.
  */
-async function applyRenewal(certificateId: string): Promise<SicModuleId[]> {
-  const modules = await prisma.sicCertificateModule.findMany({
+async function applyRenewalInTx(
+  tx: Prisma.TransactionClient,
+  certificateId: string
+): Promise<{ resetModules: SicModuleId[]; staleBlobUrls: string[] }> {
+  const modules = await tx.sicCertificateModule.findMany({
     where: { certificateId },
     select: { moduleKind: true, status: true, reviewedAt: true, verifiedFacts: true },
   })
@@ -55,46 +64,80 @@ async function applyRenewal(certificateId: string): Promise<SicModuleId[]> {
       verifiedFacts: m.verifiedFacts,
     }))
   )
-  if (toReset.length === 0) return []
+  if (toReset.length === 0) return { resetModules: [], staleBlobUrls: [] }
 
-  const staleDocs = await prisma.sicDocument.findMany({
+  const staleDocs = await tx.sicDocument.findMany({
     where: { certificateId, moduleKind: { in: toReset as SicModuleKind[] } },
     select: { id: true, blobUrl: true },
   })
 
-  await prisma.$transaction(async tx => {
-    await tx.sicCertificateModule.updateMany({
-      where: { certificateId, moduleKind: { in: toReset as SicModuleKind[] } },
-      data: {
-        status: 'PENDING_DOCS',
-        verifiedFacts: Prisma.DbNull,
-        reviewedAt: null,
-        reviewedByUserId: null,
-        reviewNote: null,
-        uploadReminderSentAt: null,
-      },
-    })
-    if (staleDocs.length > 0) {
-      await tx.sicDocument.deleteMany({ where: { id: { in: staleDocs.map(d => d.id) } } })
-    }
-    await tx.sicCertificate.update({
-      where: { id: certificateId },
-      data: { status: 'ACTIVE', docsPurgeWarningSentAt: null },
-    })
+  await tx.sicCertificateModule.updateMany({
+    where: { certificateId, moduleKind: { in: toReset as SicModuleKind[] } },
+    data: {
+      status: 'PENDING_DOCS',
+      verifiedFacts: Prisma.DbNull,
+      reviewedAt: null,
+      reviewedByUserId: null,
+      reviewNote: null,
+      uploadReminderSentAt: null,
+    },
+  })
+  if (staleDocs.length > 0) {
+    await tx.sicDocument.deleteMany({ where: { id: { in: staleDocs.map(d => d.id) } } })
+  }
+  await tx.sicCertificate.update({
+    where: { id: certificateId },
+    data: { status: 'ACTIVE', docsPurgeWarningSentAt: null },
   })
 
-  if (staleDocs.length > 0) {
+  return { resetModules: toReset, staleBlobUrls: staleDocs.map(d => d.blobUrl) }
+}
+
+/**
+ * Nach dem Commit die (nicht mehr referenzierten) Blobs entfernen.
+ * Best-effort: ein Blob-Fehler kippt keinen bereits fixierten DB-Zustand mehr.
+ */
+async function deleteStaleBlobs(blobUrls: string[]): Promise<void> {
+  if (blobUrls.length === 0) return
+  try {
+    const { del } = await import('@vercel/blob')
+    await Promise.all(blobUrls.map(u => del(u).catch(() => undefined)))
+  } catch {
+    // Blobs evtl. schon weg — DB-Zustand ist bereits korrekt.
+  }
+}
+
+/**
+ * Magic-Link nach erfolgreicher Zahlung zustellen — mit kurzem Retry, weil
+ * transiente Mail-Fehler (Provider-Timeout, TLS-Blip) sonst ein bezahltes,
+ * aber unerreichbares Zertifikat hinterlassen würden.
+ *
+ * Kunde hat trotzdem immer noch die Rettung: auf /sic/zertifikat kann er sich
+ * per Magic-Link jederzeit einen neuen Zugangslink zusenden lassen.
+ */
+async function sendPostCheckoutMagicLinkWithRetry(email: string): Promise<void> {
+  const delays = [500, 2000]
+  let lastErr: unknown
+  for (let attempt = 0; attempt <= delays.length; attempt += 1) {
     try {
-      const { del } = await import('@vercel/blob')
-      await Promise.all(
-        staleDocs.map(d => del(d.blobUrl).catch(() => undefined))
-      )
-    } catch {
-      // Blobs evtl. schon weg — DB-Zustand ist bereits korrekt.
+      const { url } = await createSicMagicLink(email)
+      await sendSicMagicLinkEmail(email, url, 'checkout')
+      if (attempt > 0) {
+        sicLog('sic.fulfillment.magic_link_recovered', { email, attempt })
+      }
+      return
+    } catch (err) {
+      lastErr = err
+      if (attempt < delays.length) {
+        await new Promise(r => setTimeout(r, delays[attempt]))
+      }
     }
   }
-
-  return toReset
+  console.error('[sic/fulfillment] magic link email failed after retries', lastErr)
+  sicLog('sic.fulfillment.magic_link_failed_after_retries', {
+    email,
+    reason: lastErr instanceof Error ? lastErr.message : 'unknown',
+  })
 }
 
 /**
@@ -217,8 +260,12 @@ export async function fulfillSicPaidCheckout(input: {
   const isFirstCertificate = !existing
 
   let cert
+  let renewalResult: { resetModules: SicModuleId[]; staleBlobUrls: string[] } = {
+    resetModules: [],
+    staleBlobUrls: [],
+  }
   try {
-    cert = await prisma.$transaction(async tx => {
+    const txResult = await prisma.$transaction(async tx => {
       const nameData =
         prefillName ?
           {
@@ -260,6 +307,16 @@ export async function fulfillSicPaidCheckout(input: {
         })
       }
 
+      // Verlängerung im gleichen Transaction-Kontext: entweder wird die Zahlung
+      // UND der Modul-Reset atomar committed, oder gar nichts.
+      let renewal: { resetModules: SicModuleId[]; staleBlobUrls: string[] } = {
+        resetModules: [],
+        staleBlobUrls: [],
+      }
+      if (isRenewal) {
+        renewal = await applyRenewalInTx(tx, c.id)
+      }
+
       await tx.sicPayment.update({
         where: { id: payment.id },
         data: {
@@ -270,8 +327,10 @@ export async function fulfillSicPaidCheckout(input: {
         },
       })
 
-      return c
+      return { cert: c, renewal }
     })
+    cert = txResult.cert
+    renewalResult = txResult.renewal
   } catch (err: unknown) {
     // Unique email race: zweiter paralleler Erstkauf — nachgeladen fortsetzen (max. 1 Retry-Semantik via PAID-Check oben)
     const again = await prisma.sicCertificate.findUnique({
@@ -290,13 +349,15 @@ export async function fulfillSicPaidCheckout(input: {
     return fulfillSicPaidCheckout(input)
   }
 
+  // NACH-Commit: Nebeneffekte, die nicht in die Transaction gehören.
+  await deleteStaleBlobs(renewalResult.staleBlobUrls)
+
   if (isRenewal) {
-    const reset = await applyRenewal(cert.id)
     await recordSicEvent({
       kind: 'RENEWAL_PURCHASED',
       certificateId: cert.id,
       email,
-      meta: { resetModules: reset },
+      meta: { resetModules: renewalResult.resetModules },
     })
   }
 
@@ -309,12 +370,7 @@ export async function fulfillSicPaidCheckout(input: {
     })
   }
 
-  try {
-    const { url } = await createSicMagicLink(email)
-    await sendSicMagicLinkEmail(email, url, 'checkout')
-  } catch (err) {
-    console.error('[sic/fulfillment] magic link email failed', err)
-  }
+  await sendPostCheckoutMagicLinkWithRetry(email)
 
   return { ok: true, certificateId: cert.id, certificateCode: cert.certificateCode, email, alreadyDone: false }
 }

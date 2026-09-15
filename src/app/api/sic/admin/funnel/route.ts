@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   // Analyse-Aggregate sind kostspielig — Dashboard soll nicht per Auto-Reload
   // die DB grillen. 60/h reicht dicke.
   const rl = await checkRateLimit({
-    identifier: `sic-admin-funnel:${admin.email}`,
+    identifier: `sic-admin-funnel:${admin.userId}`,
     limit: 60,
     window: 3600,
   })

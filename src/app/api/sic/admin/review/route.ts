@@ -224,7 +224,7 @@ export async function POST(req: NextRequest) {
   // Grobes Rate-Limit gegen versehentliche Loop-Klicks bzw. gestohlene Session.
   // 200/h reicht für den intensivsten Prüftag; darüber lohnt kurz durchzuatmen.
   const rl = await checkRateLimit({
-    identifier: `sic-admin-review:${admin.email}`,
+    identifier: `sic-admin-review:${admin.userId}`,
     limit: 200,
     window: 3600,
   })

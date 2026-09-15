@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   // Rate-Limit gegen versehentliche Loop-Klicks oder kompromittierte Sessions,
   // die sonst grosse Anthropic-Rechnungen (LLM-Aufrufe pro Klick) verursachen.
   const rl = await checkRateLimit({
-    identifier: `sic-admin-prefill:${admin.email}`,
+    identifier: `sic-admin-prefill:${admin.userId}`,
     limit: 60,
     window: 3600,
   })
