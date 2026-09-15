@@ -276,7 +276,6 @@ export async function POST(req: NextRequest) {
   // «Statement Descriptor (kurz)» gesetzt und getestet ist.
   const wantDescriptorSuffix = process.env.SIC_STRIPE_USE_DESCRIPTOR_SUFFIX === '1'
 
-  const debug = req.nextUrl.searchParams.get('debug') === '1'
   const buildParams = (
     opts: { withDescriptorSuffix: boolean } = { withDescriptorSuffix: wantDescriptorSuffix }
   ): Stripe.Checkout.SessionCreateParams => ({
@@ -363,28 +362,9 @@ export async function POST(req: NextRequest) {
           transient ?
             'Die Zahlung startete gerade nicht — bitte gleich nochmal versuchen. Deine Angaben bleiben erhalten.'
           : 'Die Zahlung konnte nicht gestartet werden. Bitte in wenigen Minuten erneut versuchen — deine Angaben bleiben erhalten.',
-        // Diagnose (nur mit ?debug=1) — hilft, Stripe-Rejects live einzuordnen,
-        // ohne dass reguläre Kunden interne Details sehen.
-        ...(debug ?
-          {
-            debug: {
-              type: errType,
-              code: errCode,
-              param: errParam,
-              statusCode: errStatus,
-              message: errMessage,
-              wantDescriptorSuffix,
-              successUrl: `${sicUrl(sicPaths.checkoutSuccess)}?session_id={CHECKOUT_SESSION_ID}`,
-              cancelUrl: `${sicUrl(sicPaths.checkoutCancel)}?session_id={CHECKOUT_SESSION_ID}`,
-              siteOriginEnv: process.env.NEXT_PUBLIC_SIC_URL || null,
-              // Der Wert, den unser Code am Ende nutzt — nach .trim()+Slash-Strip.
-              // Wenn hier kein "\n" mehr steht, aber siteOriginEnv eines hat,
-              // greift das Härten korrekt und Vercel muss den Env-Wert später
-              // trotzdem einmal sauber neu setzen.
-              siteOriginUsed: sicUrl('/'),
-            },
-          }
-        : {}),
+        // Absichtlich keine Debug-Details im Response-Body. Alles Relevante steht
+        // im Server-Log (`sic/checkout] stripe session failed`) — Kunden sollen
+        // keine Stripe-Interna, Env-Werte oder Success-URLs zu sehen bekommen.
       },
       { status: 502 }
     )

@@ -40,10 +40,12 @@ describe('post-checkout session', () => {
     expect(SIC_POST_CHECKOUT_TTL_SECONDS).toBe(7 * 24 * 60 * 60)
   })
 
-  it('grants the cookie only for a few minutes after payment', () => {
+  it('grants the cookie only for five minutes after payment (history/referer leaks stay short)', () => {
     const paidAt = new Date('2026-08-30T16:00:00.000Z')
-    expect(sicPaidCheckoutAllowsSessionCookie(paidAt, new Date('2026-08-30T16:05:00.000Z'))).toBe(true)
-    expect(sicPaidCheckoutAllowsSessionCookie(paidAt, new Date('2026-08-30T16:16:00.000Z'))).toBe(false)
+    // 4 min danach: noch gültig
+    expect(sicPaidCheckoutAllowsSessionCookie(paidAt, new Date('2026-08-30T16:04:00.000Z'))).toBe(true)
+    // 6 min danach: kein Cookie mehr
+    expect(sicPaidCheckoutAllowsSessionCookie(paidAt, new Date('2026-08-30T16:06:00.000Z'))).toBe(false)
     expect(sicPaidCheckoutAllowsSessionCookie(null)).toBe(false)
   })
 })

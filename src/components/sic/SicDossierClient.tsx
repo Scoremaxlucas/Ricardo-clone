@@ -494,12 +494,18 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
             : 'Sobald die erste Angabe geprüft ist, gibt es das PDF. Als Mieter-Zertifikat gilt es mit Betreibungsauszug und Ausweis.'}
           </p>
         </div>
-        <a
-          href={sicPaths.logout}
-          className="inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+        <form
+          method="POST"
+          action={sicPaths.logout}
+          // Abmelden ist bewusst ein POST — GET wäre per <img>/Link CSRF-fähig.
         >
-          Abmelden
-        </a>
+          <button
+            type="submit"
+            className="inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+          >
+            Abmelden
+          </button>
+        </form>
       </div>
 
       {nextStep ?

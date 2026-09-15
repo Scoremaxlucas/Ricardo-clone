@@ -16,11 +16,19 @@ function logoutRedirect(req: NextRequest) {
   return res
 }
 
-/** Form-POST oder Link-GET von «Abmelden» — immer harter Redirect auf die Landing. */
+/**
+ * Abmelden ausschliesslich per POST. GET wäre CSRF-anfällig: ein `<img src>` oder
+ * eingebetteter Link auf einer fremden Seite könnte den Kunden ausloggen. Der
+ * «Abmelden»-Button ist deshalb ein Form-POST auf denselben Endpoint.
+ */
 export async function POST(req: NextRequest) {
   return logoutRedirect(req)
 }
 
-export async function GET(req: NextRequest) {
-  return logoutRedirect(req)
+/** GET absichtlich verweigert — siehe Kommentar oben. */
+export function GET() {
+  return new NextResponse('Method Not Allowed', {
+    status: 405,
+    headers: { Allow: 'POST', 'Cache-Control': 'no-store' },
+  })
 }

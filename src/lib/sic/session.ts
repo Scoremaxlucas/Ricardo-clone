@@ -21,8 +21,13 @@ export const SIC_POST_CHECKOUT_TTL_SECONDS = SIC_POST_CHECKOUT_TTL_DAYS * 24 * 6
 /**
  * Das Stripe-`session_id` in der Erfolgs-URL darf nur kurz eine Sitzung ausstellen.
  * Danach gilt der Magic-Link. Sonst wäre die History ein Dauerticket ins Dossier.
+ *
+ * 5 Minuten: der Kunde landet unmittelbar nach der Zahlung auf der Erfolgsseite
+ * und wird binnen Sekunden ins Zertifikat geleitet. Fünf Minuten decken übliche
+ * Redirect-/Polling-Latenzen ab; wer die URL Minuten später aus der History
+ * öffnet (fremdes Gerät, Referer-Leak), erhält keinen Zugang mehr.
  */
-export const SIC_CHECKOUT_COOKIE_GRANT_SECONDS = 15 * 60
+export const SIC_CHECKOUT_COOKIE_GRANT_SECONDS = 5 * 60
 
 export function sicPaidCheckoutAllowsSessionCookie(
   paidAt: Date | null | undefined,

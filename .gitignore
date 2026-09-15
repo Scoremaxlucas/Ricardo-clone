@@ -68,3 +68,10 @@ preview-certificate.pdf
 preview-certificate*.png
 preview-sic-certificate.pdf
 preview-sic-certificate*.png
+
+# Fremde/interne Präsentationen und Notizen — nicht ins Kunden-Repo
+*.pptx
+*.docx
+*.xlsx
+!Seller-Outreach-Tracker.xlsx.example
+Slide_*_*.pptx
