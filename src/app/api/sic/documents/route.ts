@@ -7,6 +7,7 @@ import {
 } from '@/lib/sic/document-crypto'
 import { sendSicDocumentsReceivedEmail } from '@/lib/sic/email'
 import { recordSicEventOnce } from '@/lib/sic/events'
+import { detectSicUploadMime } from '@/lib/sic/file-signature'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { getSicModule, isSicModuleId, sicMinDocsForReview } from '@/lib/sic/modules'
@@ -104,6 +105,30 @@ export async function POST(req: NextRequest) {
   }
 
   const original = Buffer.from(await file.arrayBuffer())
+
+  // Magic-Byte-Prüfung: der angegebene Content-Type kann gelogen sein. Erst wenn
+  // die tatsächliche Byte-Signatur zu einem erlaubten Typ passt UND mit dem
+  // gemeldeten Typ übereinstimmt, geht der Upload durch. Sonst würde ein PDF
+  // mit `image/png`-Header (oder umgekehrt eine ausführbare Datei mit
+  // `application/pdf`-Header) den MIME-Filter aushebeln.
+  const detectedMime = detectSicUploadMime(original)
+  if (!detectedMime || detectedMime !== file.type) {
+    sicLog('sic.upload.mime_mismatch', {
+      certificateId: cert.id,
+      moduleKind,
+      claimed: file.type,
+      detected: detectedMime,
+    })
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          'Der Dateiinhalt passt nicht zum Format. Bitte lade das Original als PDF, JPG, PNG oder WEBP hoch.',
+      },
+      { status: 415 }
+    )
+  }
+
   const buffer = encryptSicDocument(original)
   const path = `sic/${cert.id}/${moduleKind}/${Date.now()}-${randomBytes(12).toString('hex')}.bin`
 
@@ -136,29 +161,59 @@ export async function POST(req: NextRequest) {
     minDocs,
   })
 
-  await prisma.$transaction(async tx => {
-    await tx.sicDocument.create({
-      data: {
+  try {
+    await prisma.$transaction(async tx => {
+      await tx.sicDocument.create({
+        data: {
+          certificateId: cert.id,
+          moduleKind,
+          blobUrl,
+          fileName: file.name.slice(0, 200),
+          contentType: file.type,
+          sizeBytes: original.length,
+        },
+      })
+      if (nextStatus) {
+        await tx.sicCertificateModule.update({
+          where: { id: moduleRow.id },
+          data: { status: nextStatus, reviewNote: null },
+        })
+        // Touch cert so Admin-Queue (oldest-first) die Nachreichung sieht.
+        await tx.sicCertificate.update({
+          where: { id: cert.id },
+          data: { updatedAt: new Date() },
+        })
+      }
+    })
+  } catch (err) {
+    // DB-Update fehlgeschlagen — Blob wieder wegräumen, sonst hinterlassen wir
+    // verwaiste Ciphertext-Dateien für die niemand mehr eine DB-Zeile kennt.
+    try {
+      const { del } = await import('@vercel/blob')
+      await del(blobUrl)
+    } catch (delErr) {
+      sicLog('sic.upload.orphan_cleanup_failed', {
         certificateId: cert.id,
         moduleKind,
         blobUrl,
-        fileName: file.name.slice(0, 200),
-        contentType: file.type,
-        sizeBytes: original.length,
-      },
-    })
-    if (nextStatus) {
-      await tx.sicCertificateModule.update({
-        where: { id: moduleRow.id },
-        data: { status: nextStatus, reviewNote: null },
-      })
-      // Touch cert so Admin-Queue (oldest-first) die Nachreichung sieht.
-      await tx.sicCertificate.update({
-        where: { id: cert.id },
-        data: { updatedAt: new Date() },
+        reason: delErr instanceof Error ? delErr.message : 'unknown',
       })
     }
-  })
+    sicLog('sic.upload.db_failed', {
+      certificateId: cert.id,
+      moduleKind,
+      reason: err instanceof Error ? err.message : 'unknown',
+    })
+    console.error('[sic/documents] db write failed after blob put', err)
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          'Der Upload wurde nicht gespeichert. Bitte in wenigen Sekunden erneut versuchen — deine Angaben bleiben erhalten.',
+      },
+      { status: 503 }
+    )
+  }
 
   if (isFirstDocument) {
     await recordSicEventOnce({

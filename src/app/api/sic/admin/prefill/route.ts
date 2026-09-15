@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { requireSicAdmin } from '@/lib/sic/admin'
 import { readSicBlobBytes } from '@/lib/sic/blob-read'
 import { decryptSicDocument } from '@/lib/sic/document-crypto'
@@ -10,12 +11,34 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 /**
+ * Obergrenze für die Anthropic-Vorbefüllung. Uploads sind bereits auf 8 MB
+ * begrenzt (siehe `/api/sic/documents`); wir setzen hier einen zweiten Riegel,
+ * falls ein Admin-Account jemals per Direktzugriff eine grössere Blob-URL
+ * einreicht. Base64-Overhead ~33 %, deshalb effektiv ca. 8 MB Rohbytes.
+ */
+const PREFILL_MAX_BYTES = 8 * 1024 * 1024
+
+/**
  * Liest die Prüffelder aus dem hochgeladenen Nachweis vor. Reine Vorbefüllung —
  * der Prüfer korrigiert und bestätigt, freigegeben wird nichts automatisch.
  */
 export async function POST(req: NextRequest) {
   const admin = await requireSicAdmin()
   if (!admin) return NextResponse.json({ ok: false, message: 'Zugriff verweigert' }, { status: 403 })
+
+  // Rate-Limit gegen versehentliche Loop-Klicks oder kompromittierte Sessions,
+  // die sonst grosse Anthropic-Rechnungen (LLM-Aufrufe pro Klick) verursachen.
+  const rl = await checkRateLimit({
+    identifier: `sic-admin-prefill:${admin.email}`,
+    limit: 60,
+    window: 3600,
+  })
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { ok: false, message: 'Zu viele Vorbefüll-Aufrufe. Bitte kurz warten.' },
+      { status: 429 }
+    )
+  }
 
   let body: { documentId?: string; moduleKind?: string }
   try {
@@ -39,6 +62,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Datei nicht abrufbar.' }, { status: 502 })
   }
   const { buffer } = decryptSicDocument(raw)
+
+  if (buffer.byteLength > PREFILL_MAX_BYTES) {
+    sicLog('sic.admin.prefill_too_large', {
+      documentId,
+      moduleKind,
+      sizeBytes: buffer.byteLength,
+    })
+    return NextResponse.json(
+      {
+        ok: false,
+        message: 'Nachweis zu gross zum Vorbefüllen — Werte bitte manuell erfassen.',
+      },
+      { status: 413 }
+    )
+  }
 
   const outcome = await parseSicDocumentFacts({
     moduleId: moduleKind,
