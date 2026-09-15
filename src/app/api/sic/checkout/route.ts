@@ -349,17 +349,26 @@ export async function POST(req: NextRequest) {
       statusCode: errStatus,
       message: errMessage,
     })
+
+    // Klarer Hinweis, wenn TWINT im Stripe-Dashboard noch nicht aktiviert ist —
+    // sonst landet der Kunde bei einer generischen «bitte später»-Meldung.
+    const twintNotEnabled =
+      typeof errParam === 'string' &&
+      errParam.includes('payment_method') &&
+      typeof errMessage === 'string' &&
+      /twint/i.test(errMessage) &&
+      /invalid|activated|dashboard/i.test(errMessage)
+
     return NextResponse.json(
       {
         ok: false,
-        code: transient ? 'stripe_transient' : 'stripe_error',
+        code: twintNotEnabled ? 'twint_not_enabled' : transient ? 'stripe_transient' : 'stripe_error',
         message:
-          transient ?
+          twintNotEnabled ?
+            'Zahlung per TWINT ist gerade nicht verfügbar. Bitte später erneut versuchen — deine Angaben bleiben erhalten.'
+          : transient ?
             'Die Zahlung startete gerade nicht — bitte gleich nochmal versuchen. Deine Angaben bleiben erhalten.'
           : 'Die Zahlung konnte nicht gestartet werden. Bitte in wenigen Minuten erneut versuchen — deine Angaben bleiben erhalten.',
-        // Absichtlich keine Debug-Details im Response-Body. Alles Relevante steht
-        // im Server-Log (`sic/checkout] stripe session failed`) — Kunden sollen
-        // keine Stripe-Interna, Env-Werte oder Success-URLs zu sehen bekommen.
       },
       { status: 502 }
     )
