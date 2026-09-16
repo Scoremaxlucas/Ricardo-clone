@@ -493,12 +493,14 @@ describe('checkout retry', () => {
       renewal: false,
     })
     expect(canResumeSicCheckout(retry!)).toBe(true)
-    expect(sicCheckoutRetryRequestBody(retry!)).toEqual({
+    const body = sicCheckoutRetryRequestBody(retry!)
+    expect(body).toMatchObject({
       email: 'max@example.ch',
       moduleIds: ['BONITAET', 'AUFENTHALT'],
       firstName: 'Anna Maria',
       lastName: 'de la Cruz',
     })
+    expect(body.attemptId).toMatch(/^[a-zA-Z0-9_-]{16,}$/)
   })
 
   it('expands a first-purchase retry to the full catalog', () => {
@@ -533,11 +535,13 @@ describe('checkout retry', () => {
       status: 'CANCELLED',
     })
     expect(canResumeSicCheckout(retry!)).toBe(true)
-    expect(sicCheckoutRetryRequestBody(retry!)).toEqual({
+    const body = sicCheckoutRetryRequestBody(retry!)
+    expect(body).toMatchObject({
       email: 'a@b.ch',
       moduleIds: [],
       renewal: true,
     })
+    expect(body.attemptId).toMatch(/^[a-zA-Z0-9_-]{16,}$/)
   })
 
   it('cannot resume a first purchase without both names', () => {

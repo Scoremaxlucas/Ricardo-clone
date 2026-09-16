@@ -51,15 +51,26 @@ export function canResumeSicCheckout(retry: SicCheckoutRetry): boolean {
   return true
 }
 
-export function sicCheckoutRetryRequestBody(retry: SicCheckoutRetry) {
+export function newSicCheckoutAttemptId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID().replace(/-/g, '')
+  }
+  return `sic-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
+}
+
+export function sicCheckoutRetryRequestBody(retry: SicCheckoutRetry): Record<string, unknown> & {
+  attemptId: string
+} {
+  const attemptId = newSicCheckoutAttemptId()
   if (retry.renewal) {
-    return { email: retry.email, moduleIds: retry.moduleIds, renewal: true as const }
+    return { email: retry.email, moduleIds: retry.moduleIds, renewal: true as const, attemptId }
   }
   return {
     email: retry.email,
     moduleIds: retry.moduleIds,
     firstName: retry.firstName,
     lastName: retry.lastName,
+    attemptId,
     ...(retry.householdKind === 'COUPLE' ?
       {
         householdKind: 'COUPLE' as const,

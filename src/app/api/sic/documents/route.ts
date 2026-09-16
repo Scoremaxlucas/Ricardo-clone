@@ -7,7 +7,7 @@ import {
 } from '@/lib/sic/document-crypto'
 import { sendSicDocumentsReceivedEmail } from '@/lib/sic/email'
 import { recordSicEventOnce } from '@/lib/sic/events'
-import { detectSicUploadMime } from '@/lib/sic/file-signature'
+import { detectSicUploadMime, sicUploadContentType } from '@/lib/sic/file-signature'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { getSicModule, isSicModuleId, sicMinDocsForReview } from '@/lib/sic/modules'
@@ -20,7 +20,6 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 const MAX_BYTES = 8 * 1024 * 1024
-const ALLOWED_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
 
 export async function POST(req: NextRequest) {
   const session = getSicSession()
@@ -48,12 +47,6 @@ export async function POST(req: NextRequest) {
   }
   if (!isSicModuleId(moduleKind)) {
     return NextResponse.json({ ok: false, message: 'Unbekanntes Modul.' }, { status: 400 })
-  }
-  if (!ALLOWED_TYPES.has(file.type)) {
-    return NextResponse.json(
-      { ok: false, message: 'Nur PDF, JPG, PNG oder WEBP erlaubt.' },
-      { status: 415 }
-    )
   }
   if (file.size > MAX_BYTES) {
     return NextResponse.json({ ok: false, message: 'Datei zu gross (max. 8 MB).' }, { status: 413 })
@@ -106,13 +99,11 @@ export async function POST(req: NextRequest) {
 
   const original = Buffer.from(await file.arrayBuffer())
 
-  // Magic-Byte-Prüfung: der angegebene Content-Type kann gelogen sein. Erst wenn
-  // die tatsächliche Byte-Signatur zu einem erlaubten Typ passt UND mit dem
-  // gemeldeten Typ übereinstimmt, geht der Upload durch. Sonst würde ein PDF
-  // mit `image/png`-Header (oder umgekehrt eine ausführbare Datei mit
-  // `application/pdf`-Header) den MIME-Filter aushebeln.
+  // Magic-Byte zuerst. Leerer/generischer Browser-Typ (Safari) darf ein echtes
+  // PDF nicht blockieren. Ein widersprüchlicher Header bleibt ein Reject.
   const detectedMime = detectSicUploadMime(original)
-  if (!detectedMime || detectedMime !== file.type) {
+  const contentType = sicUploadContentType({ claimed: file.type, detected: detectedMime })
+  if (!contentType) {
     sicLog('sic.upload.mime_mismatch', {
       certificateId: cert.id,
       moduleKind,
@@ -169,7 +160,7 @@ export async function POST(req: NextRequest) {
           moduleKind,
           blobUrl,
           fileName: file.name.slice(0, 200),
-          contentType: file.type,
+          contentType,
           sizeBytes: original.length,
         },
       })

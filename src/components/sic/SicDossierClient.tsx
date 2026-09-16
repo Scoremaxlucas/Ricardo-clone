@@ -336,6 +336,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           moduleIds: Array.from(addonSelected),
           firstName: given,
           lastName: family,
+          attemptId: crypto.randomUUID().replace(/-/g, ''),
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -358,7 +359,11 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ renewal: true, moduleIds: [] }),
+        body: JSON.stringify({
+          renewal: true,
+          moduleIds: [],
+          attemptId: crypto.randomUUID().replace(/-/g, ''),
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data?.url) {

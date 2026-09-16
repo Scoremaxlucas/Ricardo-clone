@@ -59,7 +59,7 @@ export default function SicAgbPage() {
             Angaben für {formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)}
             {bundleSavings > 0 ? ` — ${formatSicChf(bundleSavings)} günstiger als die Summe der Einzelpreise` : ''}.
             Einzelne Angaben kannst du später nachkaufen, falls sie noch nicht enthalten sind (je{' '}
-            {formatSicChf(SIC_MODULE_FEE_CHF)}). Die Zahlung erfolgt vorab über Stripe.
+            {formatSicChf(SIC_MODULE_FEE_CHF)}). Die Zahlung erfolgt vorab über Stripe (Karte oder Link).
           </p>
           <p className="mt-1.5">
             Liegt die Summe unter dem von Stripe verrechenbaren Mindestbetrag von{' '}

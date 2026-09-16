@@ -1,4 +1,4 @@
-import { detectSicUploadMime } from '@/lib/sic/file-signature'
+import { detectSicUploadMime, sicUploadContentType } from '@/lib/sic/file-signature'
 import { describe, expect, it } from 'vitest'
 
 function bytes(hex: string): Uint8Array {
@@ -51,5 +51,24 @@ describe('detectSicUploadMime', () => {
     const buf = new Uint8Array(30)
     buf.set([0x25, 0x50, 0x44, 0x46, 0x2d], 20)
     expect(detectSicUploadMime(buf)).toBeNull()
+  })
+})
+
+describe('sicUploadContentType', () => {
+  it('nimmt die Signatur, wenn der Browser keinen oder einen generischen Typ schickt', () => {
+    expect(sicUploadContentType({ claimed: '', detected: 'application/pdf' })).toBe('application/pdf')
+    expect(sicUploadContentType({ claimed: 'application/octet-stream', detected: 'image/jpeg' })).toBe(
+      'image/jpeg'
+    )
+  })
+
+  it('lehnt Widerspruch zwischen Header und Bytes ab', () => {
+    expect(sicUploadContentType({ claimed: 'image/png', detected: 'application/pdf' })).toBeNull()
+  })
+
+  it('akzeptiert, wenn Header und Bytes übereinstimmen', () => {
+    expect(sicUploadContentType({ claimed: 'application/pdf', detected: 'application/pdf' })).toBe(
+      'application/pdf'
+    )
   })
 })

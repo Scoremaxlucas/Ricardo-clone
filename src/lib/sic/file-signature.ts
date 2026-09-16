@@ -9,6 +9,24 @@
 
 export type SicDetectedMime = 'application/pdf' | 'image/jpeg' | 'image/png' | 'image/webp'
 
+const GENERIC_CLAIMED = new Set(['', 'application/octet-stream', 'binary/octet-stream'])
+
+/**
+ * Safari/iOS schickt oft keinen oder einen generischen Content-Type.
+ * Dann gilt die Byte-Signatur. Ein explizit anderer erlaubter Typ als die
+ * Signatur bleibt ein Reject (gefälschter Header).
+ */
+export function sicUploadContentType(opts: {
+  claimed: string
+  detected: SicDetectedMime | null
+}): SicDetectedMime | null {
+  if (!opts.detected) return null
+  const claimed = (opts.claimed || '').toLowerCase().trim()
+  if (GENERIC_CLAIMED.has(claimed)) return opts.detected
+  if (claimed === opts.detected) return opts.detected
+  return null
+}
+
 /** Prüft, ob `bytes` an Position `offset` die Sequenz `sig` enthält. */
 function matches(bytes: Uint8Array, sig: readonly number[], offset = 0): boolean {
   if (bytes.length < offset + sig.length) return false

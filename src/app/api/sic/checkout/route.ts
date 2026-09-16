@@ -7,6 +7,11 @@ import { parseSicHouseholdKind } from '@/lib/sic/household'
 import { normalizeSicModuleIds, resolveSicCheckoutModuleIds, type SicModuleId } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import {
+  SIC_CHECKOUT_PAYMENT_METHODS,
+  sicCheckoutMethodsWithout,
+  stripeRejectedPaymentMethod,
+} from '@/lib/sic/stripe-checkout-methods'
+import {
   normalizeEmail,
   SIC_POST_CHECKOUT_TTL_SECONDS,
   SIC_SESSION_COOKIE,
@@ -79,6 +84,47 @@ async function createStripeSessionWithRetry(
     }
   }
   throw lastErr
+}
+
+function isPrismaUniqueViolation(err: unknown): boolean {
+  return Boolean(err && typeof err === 'object' && 'code' in err && err.code === 'P2002')
+}
+
+/** Session merken — bei Idempotency-Retry existiert die Zeile oft schon. */
+async function rememberSicCheckoutPayment(input: {
+  email: string
+  holderName: string | null
+  includeBaseFee: boolean
+  isRenewal: boolean
+  moduleKinds: SicModuleKind[]
+  amountChf: number
+  stripeCheckoutSessionId: string
+}) {
+  const existing = await prisma.sicPayment.findUnique({
+    where: { stripeCheckoutSessionId: input.stripeCheckoutSessionId },
+  })
+  if (existing) return existing
+  try {
+    return await prisma.sicPayment.create({
+      data: {
+        email: input.email,
+        holderName: input.holderName,
+        includeBaseFee: input.includeBaseFee,
+        isRenewal: input.isRenewal,
+        moduleKinds: input.moduleKinds,
+        amountChf: input.amountChf,
+        stripeCheckoutSessionId: input.stripeCheckoutSessionId,
+        status: 'PENDING',
+      },
+    })
+  } catch (err) {
+    if (!isPrismaUniqueViolation(err)) throw err
+    const again = await prisma.sicPayment.findUnique({
+      where: { stripeCheckoutSessionId: input.stripeCheckoutSessionId },
+    })
+    if (again) return again
+    throw err
+  }
 }
 
 function overlaps(a: string[], b: string[]): boolean {
@@ -299,18 +345,22 @@ export async function POST(req: NextRequest) {
   // Card-Descriptor-Suffix ist rein kosmetisch («SIC CERT» auf Kartenauszügen
   // statt nur «Helvenda»). Stripe lehnt die Session **konstant** ab, wenn das
   // Konto keinen konfigurierten Descriptor-Präfix hat — deshalb per Env opt-in.
-  // Zahlungsmethoden: Karte + Link. TWINT bewusst weggelassen, solange Stripe
-  // es als Ineligible führt (sonst scheitert der ganze Checkout).
+  // Zahlung: Karte + Link (Apple Pay / Google Pay kommen mit Karte). TWINT
+  // absichtlich nicht — das Konto hat es noch nicht freigeschaltet.
   const wantDescriptorSuffix = process.env.SIC_STRIPE_USE_DESCRIPTOR_SUFFIX === '1'
+  let paymentMethods: string[] = [...SIC_CHECKOUT_PAYMENT_METHODS]
 
   const buildParams = (
-    opts: { withDescriptorSuffix: boolean } = { withDescriptorSuffix: wantDescriptorSuffix }
+    opts: { withDescriptorSuffix: boolean; methods: string[] } = {
+      withDescriptorSuffix: wantDescriptorSuffix,
+      methods: paymentMethods,
+    }
   ): Stripe.Checkout.SessionCreateParams => ({
     mode: 'payment',
     customer_email: email,
     line_items: lineItems,
     metadata,
-    payment_method_types: ['card', 'link'],
+    payment_method_types: opts.methods as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
     payment_intent_data:
       opts.withDescriptorSuffix ?
         { metadata, statement_descriptor_suffix: SIC_STRIPE_STATEMENT_SUFFIX }
@@ -323,17 +373,39 @@ export async function POST(req: NextRequest) {
   try {
     let session: Stripe.Checkout.Session
     try {
-      session = await createStripeSessionWithRetry(buildParams(), { idempotencyKey })
+      session = await createStripeSessionWithRetry(buildParams(), {
+        idempotencyKey: `${idempotencyKey}:${paymentMethods.join('+')}`,
+      })
     } catch (err) {
-      // Selbst-Heilung: Wenn Stripe den Descriptor-Suffix ablehnt, sofort ohne
-      // Suffix nochmal versuchen. Kosmetik darf keine Zahlung blockieren.
-      if (wantDescriptorSuffix && isDescriptorSuffixError(err)) {
+      const rejected = stripeRejectedPaymentMethod(err)
+      if (rejected) {
+        const nextMethods = sicCheckoutMethodsWithout(paymentMethods, rejected)
+        if (nextMethods.join() !== paymentMethods.join()) {
+          console.warn('[sic/checkout] payment method rejected, retrying without', {
+            rejected,
+            nextMethods,
+          })
+          paymentMethods = nextMethods
+          session = await createStripeSessionWithRetry(
+            buildParams({ withDescriptorSuffix: wantDescriptorSuffix, methods: paymentMethods }),
+            { idempotencyKey: `${idempotencyKey}:${paymentMethods.join('+')}` }
+          )
+        } else if (wantDescriptorSuffix && isDescriptorSuffixError(err)) {
+          session = await createStripeSessionWithRetry(
+            buildParams({ withDescriptorSuffix: false, methods: paymentMethods }),
+            { idempotencyKey: `${idempotencyKey}:nosuffix` }
+          )
+        } else {
+          throw err
+        }
+      } else if (wantDescriptorSuffix && isDescriptorSuffixError(err)) {
         console.warn('[sic/checkout] descriptor suffix rejected, retrying without', {
           message: (err as { message?: string })?.message,
         })
-        session = await createStripeSessionWithRetry(buildParams({ withDescriptorSuffix: false }), {
-          idempotencyKey: `${idempotencyKey}:nosuffix`,
-        })
+        session = await createStripeSessionWithRetry(
+          buildParams({ withDescriptorSuffix: false, methods: paymentMethods }),
+          { idempotencyKey: `${idempotencyKey}:nosuffix` }
+        )
       } else {
         throw err
       }
@@ -352,17 +424,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    await prisma.sicPayment.create({
-      data: {
-        email,
-        holderName,
-        includeBaseFee,
-        isRenewal,
-        moduleKinds: candidate as SicModuleKind[],
-        amountChf: quote.totalChf,
-        stripeCheckoutSessionId: session.id,
-        status: 'PENDING',
-      },
+    await rememberSicCheckoutPayment({
+      email,
+      holderName,
+      includeBaseFee,
+      isRenewal,
+      moduleKinds: candidate as SicModuleKind[],
+      amountChf: quote.totalChf,
+      stripeCheckoutSessionId: session.id,
     })
 
     return NextResponse.json({ ok: true, url: session.url })

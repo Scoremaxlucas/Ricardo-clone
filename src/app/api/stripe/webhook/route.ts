@@ -19,6 +19,43 @@ const webhookSecret = STRIPE_WEBHOOK_SECRET
 // Maximum processing time (30 seconds)
 const MAX_PROCESSING_TIME = 30000
 
+const SIC_FULFILL_TERMINAL = new Set(['PAYMENT_REFUNDED', 'RENEWAL_WITHOUT_CERTIFICATE'])
+
+async function fulfillSicCheckoutSession(session: Stripe.Checkout.Session): Promise<void> {
+  if (session.metadata?.type !== 'sic_certificate') return
+  if (session.payment_status !== 'paid') {
+    const { sicLog } = await import('@/lib/sic/log')
+    sicLog('sic.webhook.skip_not_paid', {
+      sessionId: session.id,
+      paymentStatus: session.payment_status,
+    })
+    return
+  }
+  const { fulfillSicPaidCheckout } = await import('@/lib/sic/fulfillment')
+  const result = await fulfillSicPaidCheckout({
+    stripeCheckoutSessionId: session.id,
+    stripePaymentIntentId:
+      typeof session.payment_intent === 'string' ?
+        session.payment_intent
+      : (session.payment_intent?.id ?? null),
+  })
+  if (result.ok) return
+  const { sicLog } = await import('@/lib/sic/log')
+  sicLog('sic.webhook.fulfillment_failed', {
+    sessionId: session.id,
+    reason: result.reason,
+    paymentIntentId:
+      typeof session.payment_intent === 'string' ?
+        session.payment_intent
+      : (session.payment_intent?.id ?? null),
+  })
+  // Endzustand: Stripe soll nicht endlos retrien (Refund / gegenstandslose Verlängerung).
+  if (SIC_FULFILL_TERMINAL.has(result.reason)) return
+  const err = new Error(`SIC fulfillment failed: ${result.reason}`)
+  ;(err as Error & { sicFulfillReason: string }).sicFulfillReason = result.reason
+  throw err
+}
+
 /**
  * Stripe Webhook Handler
  * Verarbeitet Zahlungsbestätigungen und aktualisiert Rechnungen
@@ -172,45 +209,20 @@ export async function POST(request: NextRequest) {
           case 'checkout.session.completed':
             const session = event.data.object as Stripe.Checkout.Session
             if (session.metadata?.type === 'sic_certificate') {
-              if (session.payment_status !== 'paid') {
-                const { sicLog } = await import('@/lib/sic/log')
-                sicLog('sic.webhook.skip_not_paid', {
-                  sessionId: session.id,
-                  paymentStatus: session.payment_status,
-                })
-                break
-              }
-              const { fulfillSicPaidCheckout } = await import('@/lib/sic/fulfillment')
-              const result = await fulfillSicPaidCheckout({
-                stripeCheckoutSessionId: session.id,
-                stripePaymentIntentId:
-                  typeof session.payment_intent === 'string' ?
-                    session.payment_intent
-                  : (session.payment_intent?.id ?? null),
-              })
-              // Wichtig: bei !ok den Fehler weiterwerfen. Sonst markiert der
-              // outer Handler das Event als «processed» (`markEventProcessed(..., true)`)
-              // und Stripe versucht es nie wieder — Kunde hat gezahlt, hat aber
-              // kein Zertifikat. Werfen → outer catch → 500 → Stripe retries.
-              if (!result.ok) {
-                const { sicLog } = await import('@/lib/sic/log')
-                sicLog('sic.webhook.fulfillment_failed', {
-                  sessionId: session.id,
-                  reason: result.reason,
-                  paymentIntentId:
-                    typeof session.payment_intent === 'string' ?
-                      session.payment_intent
-                    : (session.payment_intent?.id ?? null),
-                })
-                const err = new Error(`SIC fulfillment failed: ${result.reason}`)
-                ;(err as Error & { sicFulfillReason: string }).sicFulfillReason = result.reason
-                throw err
-              }
+              await fulfillSicCheckoutSession(session)
               break
             }
             orderId = session.metadata?.orderId
             await handleCheckoutSessionCompleted(session)
             break
+
+          case 'checkout.session.async_payment_succeeded': {
+            const asyncSession = event.data.object as Stripe.Checkout.Session
+            if (asyncSession.metadata?.type === 'sic_certificate') {
+              await fulfillSicCheckoutSession(asyncSession)
+            }
+            break
+          }
 
           case 'transfer.created':
             const transfer = event.data.object as Stripe.Transfer
