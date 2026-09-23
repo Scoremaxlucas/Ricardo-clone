@@ -11,6 +11,12 @@ export const SIC_ISSUER_LINE = 'Swiss Immo Cert · Prüfung'
 export const SIC_STRIPE_STATEMENT_SUFFIX = 'SIC CERT'
 
 /**
+ * Offizielle Bestellung eines Betreibungsregisterauszugs.
+ * EasyGov ist die Plattform von Bund, Kantonen und Gemeinden — kein privater Zwischenhändler.
+ */
+export const SIC_DEBT_EXTRACT_ORDER_URL = 'https://betreibungen.easygov.swiss/'
+
+/**
  * Prüfung eingereichter Unterlagen — derselbe Satz in AGB, FAQ, Landing, Dossier, Mail.
  * Nicht «24 Stunden»: Wochenende und Feiertage sind keine Werktage.
  */

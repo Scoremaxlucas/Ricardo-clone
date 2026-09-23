@@ -29,6 +29,7 @@ export function SicTemplateForm({
   const splitPeople = Boolean(holderName2)
   const [person, setPerson] = useState<1 | 2>(1)
   const [open, setOpen] = useState(false)
+  const [guide, setGuide] = useState(false)
   const [values, setValues] = useState<SicTemplateValues>(() => emptyTemplateValues(template, holderName))
   const [busy, setBusy] = useState(false)
 
@@ -99,15 +100,26 @@ export function SicTemplateForm({
           <p className="flex items-center gap-2 text-sm font-semibold text-sic-navy">
             <FileText className="h-4 w-4 flex-shrink-0" /> {template.title}
           </p>
-          <p className="mt-0.5 text-xs text-slate-500">{template.subtitle}</p>
-          <ol className="mt-2 list-decimal space-y-0.5 pl-4 text-[11px] text-slate-500">
-            {template.howTo.map(step => (
-              <li key={step}>{step}</li>
-            ))}
-            {splitPeople ?
-              <li>Für jede Person ein eigenes Formular — zuerst Person 1, dann Person 2.</li>
-            : null}
-          </ol>
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+            Herunterladen, vom {template.thirdPartyLabel} unterschreiben lassen, dann hier hochladen.
+          </p>
+          <button
+            type="button"
+            onClick={() => setGuide(g => !g)}
+            className="mt-1 text-[11px] font-semibold text-sic-navy/70 underline-offset-2 hover:underline"
+          >
+            {guide ? 'Anleitung schliessen' : 'So geht’s'}
+          </button>
+          {guide ?
+            <ol className="mt-2 list-decimal space-y-0.5 pl-4 text-[11px] text-slate-500">
+              {template.howTo.map(step => (
+                <li key={step}>{step}</li>
+              ))}
+              {splitPeople ?
+                <li>Für jede Person ein eigenes Formular — zuerst Person 1, dann Person 2.</li>
+              : null}
+            </ol>
+          : null}
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
           <button

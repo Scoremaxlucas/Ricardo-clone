@@ -1,10 +1,10 @@
 'use client'
 
 import { SicTemplateForm } from '@/components/sic/SicTemplateForm'
-import { SIC_REVIEW_SLA, sicPaths, sicVerifyUrl } from '@/lib/sic/config'
+import { SIC_DEBT_EXTRACT_ORDER_URL, SIC_REVIEW_SLA, sicPaths, sicVerifyUrl } from '@/lib/sic/config'
 import type { SicDossierView, SicUploadedDocMeta } from '@/lib/sic/dossier'
 import { templatePrefillNamesForModule } from '@/lib/sic/dossier'
-import { formatSicChf, SIC_MODULES, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
+import { formatSicChf, isSicModuleId, SIC_MODULES, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
 import { sicNextStep } from '@/lib/sic/next-step'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { sicVerifyMailtoHref, sicVerifyWhatsAppHref } from '@/lib/sic/share'
@@ -13,8 +13,10 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
+  ChevronDown,
   Clock,
   Download,
+  ExternalLink,
   FileText,
   FileUp,
   KeyRound,
@@ -229,6 +231,22 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
   const sealReady = dossier.certificateSealReady
   const { verifiedCount } = dossier.progress
   const nextStep = sicNextStep(dossier)
+  const [openModule, setOpenModule] = useState<SicModuleId | null>(() => {
+    const anchor = nextStep?.anchor
+    if (!anchor?.startsWith('#modul-')) return null
+    const id = anchor.slice('#modul-'.length)
+    return isSicModuleId(id) ? id : null
+  })
+
+  useEffect(() => {
+    function openFromHash() {
+      const id = window.location.hash.replace(/^#modul-/, '')
+      if (isSicModuleId(id)) setOpenModule(id)
+    }
+    openFromHash()
+    window.addEventListener('hashchange', openFromHash)
+    return () => window.removeEventListener('hashchange', openFromHash)
+  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -820,112 +838,143 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
           const canRemoveDocs = m.status !== 'VERIFIED'
           // Formular-Zeilen stehen schon im Vorlagen-Block darunter — hier nur echte Uploads.
           const uploadItems = m.checklist.filter(item => item.kind !== 'template')
+          const open = openModule === m.moduleKind
           return (
             <li
               key={m.moduleKind}
               id={`modul-${m.moduleKind}`}
-              className="scroll-mt-24 py-5"
+              className="scroll-mt-24 py-3"
             >
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                aria-expanded={open}
+                onClick={() => setOpenModule(open ? null : m.moduleKind)}
+                className="flex w-full items-center justify-between gap-3 py-2 text-left"
+              >
                 <span className="font-semibold text-slate-900">{m.title}</span>
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ${meta.className}`}
-                >
-                  <meta.Icon className="h-3.5 w-3.5" /> {meta.label}
+                <span className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ${meta.className}`}
+                  >
+                    <meta.Icon className="h-3.5 w-3.5" /> {meta.label}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
                 </span>
-              </div>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{m.summary}</p>
+              </button>
 
-              {m.reviewNote && m.status === 'REJECTED' ?
-                <p className="mt-2 border-l-2 border-sic-danger-text bg-sic-danger-bg px-3 py-2 text-sm text-sic-danger-text">
-                  {m.reviewNote}
-                </p>
-              : null}
+              {open ?
+                <div className="pb-3">
+                  {m.reviewNote && m.status === 'REJECTED' ?
+                    <p className="mt-1 border-l-2 border-sic-danger-text bg-sic-danger-bg px-3 py-2 text-sm text-sic-danger-text">
+                      {m.reviewNote}
+                    </p>
+                  : null}
 
-              {canUpload ?
-                <div className="mt-4">
-                  {uploadItems.length > 0 ?
-                    <ul className="space-y-1.5">
-                      {uploadItems.map(item => (
-                        <li key={item.id} className="flex items-start gap-2.5 text-xs leading-relaxed text-slate-600">
-                          <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-navy/40" />
-                          <span>{item.label}</span>
-                        </li>
+                  {canUpload ?
+                    <div className="mt-3">
+                      {uploadItems.length > 0 ?
+                        <ul className="space-y-1.5">
+                          {uploadItems.map(item => (
+                            <li key={item.id} className="flex items-start gap-2.5 text-xs leading-relaxed text-slate-600">
+                              <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-navy/40" />
+                              <span>{item.label}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      : null}
+
+                      {m.moduleKind === 'BONITAET' ?
+                        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                          {dossier.couple ? 'Für jede Person einen eigenen Auszug. ' : null}
+                          Noch keinen?{' '}
+                          <a
+                            href={SIC_DEBT_EXTRACT_ORDER_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-semibold text-sic-navy underline-offset-2 hover:underline"
+                          >
+                            Auszug offiziell bestellen
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                          <span className="mt-0.5 block text-xs text-slate-500">
+                            EasyGov — Plattform von Bund, Kantonen und Gemeinden.
+                          </span>
+                        </p>
+                      : null}
+
+                      {templatesForModule(m.moduleKind).map(t => {
+                        const names = templatePrefillNamesForModule(m.moduleKind, dossier)
+                        return (
+                          <SicTemplateForm
+                            key={t.id}
+                            template={t}
+                            holderName={names.primary}
+                            holderName2={names.secondary}
+                          />
+                        )
+                      })}
+
+                      <input
+                        ref={el => {
+                          inputs.current[m.moduleKind] = el
+                        }}
+                        type="file"
+                        accept="application/pdf,image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={e => {
+                          const f = e.target.files?.[0]
+                          if (f) upload(m.moduleKind, f)
+                          e.target.value = ''
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => inputs.current[m.moduleKind]?.click()}
+                        disabled={uploading === m.moduleKind}
+                        className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-4 py-2 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60 sm:w-auto"
+                      >
+                        <FileUp className="h-4 w-4" />
+                        {uploading === m.moduleKind ? 'Wird hochgeladen …' : 'Datei hochladen'}
+                      </button>
+                    </div>
+                  : null}
+
+                  {m.documents.length > 0 ?
+                    <ul className="mt-3 space-y-2">
+                      {m.documents.map(d => (
+                        <DocumentChip
+                          key={d.id}
+                          doc={d}
+                          status={m.status}
+                          canRemove={canRemoveDocs}
+                          removing={removingId === d.id}
+                          onRemove={() => removeDocument(d.id)}
+                        />
                       ))}
                     </ul>
                   : null}
 
-                  {templatesForModule(m.moduleKind).map(t => {
-                    const names = templatePrefillNamesForModule(m.moduleKind, dossier)
-                    return (
-                      <SicTemplateForm
-                        key={t.id}
-                        template={t}
-                        holderName={names.primary}
-                        holderName2={names.secondary}
-                      />
-                    )
-                  })}
+                  {m.status === 'IN_REVIEW' ?
+                    <p className="mt-3 text-sm text-slate-500">
+                      Wir schauen es an, {SIC_REVIEW_SLA}. Du bekommst eine E-Mail, sobald es durch ist.
+                    </p>
+                  : null}
 
-                  <input
-                    ref={el => {
-                      inputs.current[m.moduleKind] = el
-                    }}
-                    type="file"
-                    accept="application/pdf,image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    onChange={e => {
-                      const f = e.target.files?.[0]
-                      if (f) upload(m.moduleKind, f)
-                      e.target.value = ''
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => inputs.current[m.moduleKind]?.click()}
-                    disabled={uploading === m.moduleKind}
-                    className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-4 py-2 text-sm font-semibold text-white hover:bg-sic-action-deep disabled:opacity-60 sm:w-auto"
-                  >
-                    <FileUp className="h-4 w-4" />
-                    {uploading === m.moduleKind ? 'Wird hochgeladen …' : 'Datei hochladen'}
-                  </button>
-                </div>
-              : null}
-
-              {m.documents.length > 0 ?
-                <ul className="mt-3 space-y-2">
-                  {m.documents.map(d => (
-                    <DocumentChip
-                      key={d.id}
-                      doc={d}
-                      status={m.status}
-                      canRemove={canRemoveDocs}
-                      removing={removingId === d.id}
-                      onRemove={() => removeDocument(d.id)}
-                    />
-                  ))}
-                </ul>
-              : null}
-
-              {m.status === 'IN_REVIEW' ?
-                <p className="mt-3 text-sm text-slate-500">
-                  Wir schauen es an, {SIC_REVIEW_SLA}. Du bekommst eine E-Mail, sobald es durch ist.
-                </p>
-              : null}
-
-              {m.status === 'VERIFIED' ?
-                <div className="mt-3 border-l-2 border-sic-verified bg-sic-verified-bg px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-sic-verified-text">
-                    Das steht auf deinem Zertifikat
-                  </p>
-                  <ul className="mt-1.5 space-y-1">
-                    {m.certificateLines.map(line => (
-                      <li key={line} className="flex items-start gap-2 text-sm text-slate-700">
-                        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-sic-verified" />
-                        {line}
-                      </li>
-                    ))}
-                  </ul>
+                  {m.status === 'VERIFIED' ?
+                    <div className="mt-3 border-l-2 border-sic-verified bg-sic-verified-bg px-4 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-sic-verified-text">
+                        Das steht auf deinem Zertifikat
+                      </p>
+                      <ul className="mt-1.5 space-y-1">
+                        {m.certificateLines.map(line => (
+                          <li key={line} className="flex items-start gap-2 text-sm text-slate-700">
+                            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-sic-verified" />
+                            {line}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  : null}
                 </div>
               : null}
             </li>

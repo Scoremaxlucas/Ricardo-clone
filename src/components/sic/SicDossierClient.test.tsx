@@ -89,12 +89,16 @@ describe('SicDossierClient — lean layout', () => {
     expect(html).not.toContain('Mehrere Dateien nacheinander')
   })
 
-  it('keeps the essentials per module', () => {
+  it('keeps the next module open and the rest collapsed', () => {
     expect(html).toContain('Deine Unterlagen')
     expect(html).toContain('Auszug vom Betreibungsamt (max. 3 Monate alt)')
-    expect(html).toContain('Lohnabrechnung der letzten 3 Monate')
     expect(html).toContain('Datei hochladen')
-    expect(html).toContain('Vorlage herunterladen')
+    expect(html).toContain('Auszug offiziell bestellen')
+    expect(html).toContain('https://betreibungen.easygov.swiss/')
+    expect(html).toContain('Lohn &amp; Arbeitsstelle')
+    expect(html).not.toContain('Lohnabrechnung der letzten 3 Monate')
+    expect(html).not.toContain('Vorlage herunterladen')
+    expect(html).not.toContain('Der Auszug vom Betreibungsamt zeigt')
   })
 
   it('does not duplicate template rows in the checklist', () => {
