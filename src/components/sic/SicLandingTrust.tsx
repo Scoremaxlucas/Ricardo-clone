@@ -26,9 +26,7 @@ export function SicLandingTrust() {
               {SIC_REVIEWER.role} · {SIC_BRAND_NAME}
             </p>
             <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              {SIC_REVIEWER.name} prüft die Unterlagen persönlich. {SIC_REVIEW_SLA_SENTENCE} Eine KI liest sie
-              zur Vorbereitung aus; freigeben tut immer ein Mensch. Das ist keine behördliche Auskunft und
-              keine Empfehlung an den Vermieter.
+              {SIC_REVIEWER.name} schaut die Unterlagen persönlich an. {SIC_REVIEW_SLA_SENTENCE}
             </p>
             <p className="mt-4 text-sm leading-relaxed text-slate-600">
               Fragen vor dem Anlegen:{' '}

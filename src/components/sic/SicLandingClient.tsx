@@ -6,8 +6,8 @@ import { SIC_CERT_TAGLINE, SIC_COLORS, SIC_HERO_IMAGE, SIC_MODULE_ACCENT, SIC_TA
 import { SIC_FAQ } from '@/lib/sic/faq'
 import { sicCatalogPreviewRows } from '@/lib/sic/facts'
 import {
+  SIC_BEFORE_PAY,
   SIC_OFFER_TERMS,
-  SIC_PREP_ITEMS,
   SIC_PRICE_LABEL,
   SIC_PRODUCT_LINE,
   SIC_TODAY_CLOSING,
@@ -304,7 +304,6 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             {owned.size > 0 ?
               <span className="mt-0.5 block text-xs text-slate-600 sm:mt-0 sm:inline sm:before:mx-1.5 sm:before:content-['·']">
                 {owned.size} von {SIC_MODULES.length} Angaben enthalten
-                {availableModules.length > 0 ? ' — fehlende Angaben ergänzt du unter Mein Zertifikat' : ''}
               </span>
             : null}
           </div>
@@ -353,13 +352,6 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   >
                     Zum Zertifikat <ArrowRight className="h-4 w-4" />
                   </a>
-                : !nothingToBuy ?
-                  <a
-                    href={`${sicPaths.certificateWorkspace}#erganzen`}
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 touch-manipulation transition-transform hover:bg-sic-action-deep sm:w-auto sm:hover:-translate-y-0.5"
-                  >
-                    Angaben ergänzen <ArrowRight className="h-4 w-4" />
-                  </a>
                 : <a
                     href={sicPaths.certificateWorkspace}
                     className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-black/20 touch-manipulation transition-transform hover:bg-sic-action-deep sm:w-auto sm:hover:-translate-y-0.5"
@@ -389,9 +381,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   {SIC_PRODUCT_LINE}
                 </p>
                 <p className="mt-3 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-                  Ohne Prüfung bleibt jede Bewerbung nur Selbstauskunft. Du legst ein geprüftes PDF bei.
-                  Swiss Immo Cert prüft Angaben auf Vollständigkeit und Plausibilität, standardisiert und per
-                  QR nachvollziehbar. Keine behördliche Auskunft.
+                  Eine Datei statt mehrerer Anhänge. Der Vermieter sieht, was geprüft ist, und kann es per QR nachvollziehen.
                 </p>
                 <form
                   id="anlegen"
@@ -516,20 +506,16 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     {submitting ? 'Wird erstellt …' : 'Zertifikat anlegen'}
                     {!submitting && <ArrowRight className="h-4 w-4" />}
                   </button>
-                  <p className="mt-2.5 text-xs leading-relaxed text-white/50">{SIC_OFFER_TERMS} Unterlagen danach.</p>
+                  <p className="mt-4 text-sm font-semibold leading-relaxed text-white">{SIC_OFFER_TERMS}</p>
+                  <ul className="mt-3 max-w-md space-y-1.5 text-sm leading-relaxed text-white/80">
+                    {SIC_BEFORE_PAY.map(item => (
+                      <li key={item} className="flex items-start gap-2">
+                        <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-sic-gold-light" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
                 </form>
-                <ul className="mt-4 max-w-md space-y-1.5 text-xs leading-relaxed text-white/50">
-                  <li className="font-semibold text-white/60">Was du selbst besorgst — nach dem Anlegen:</li>
-                  {SIC_PREP_ITEMS.map(item => (
-                    <li key={item} className="flex items-start gap-2">
-                      <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-gold-light" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-3 max-w-md text-xs leading-relaxed text-white/45">
-                  Für Bewerber und private Vermieter. Formulare für Arbeitgeber und Vermieter gibt es bei uns.
-                </p>
               </div>
               <div id="zertifikat" className="min-w-0">
                 <CertUrkundeCard />
@@ -585,10 +571,10 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   <p className="mt-1 text-sm font-semibold text-slate-700">Herkömmliche Bewerbung</p>
                   <ul className="mt-4 space-y-2">
                     {[
-                      'Lohn selbst deklariert',
-                      'Betreibungsauszug ungeprüft',
-                      'Referenz fehlt oder unbelegt',
-                      'Ausweis ungeprüft',
+                      'Mehrere Dateien, die der Vermieter einzeln öffnet',
+                      'Lohn, Auszug und Referenz in unterschiedlicher Form',
+                      'Kein gemeinsamer Prüfvermerk',
+                      'Kein QR zum Nachvollziehen',
                     ].map(f => (
                       <li
                         key={f}
@@ -600,7 +586,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     ))}
                   </ul>
                   <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                    Selbstauskunft. Ungeprüft und nicht standardisiert.
+                    Der Vermieter sucht sich die Angaben selbst zusammen.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-sic-gold/40 bg-sic-paper p-5 ring-1 ring-sic-gold/20">
@@ -608,10 +594,10 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   <p className="mt-1 text-sm font-semibold text-sic-navy">Geprüftes Mieter-Zertifikat</p>
                   <ul className="mt-4 space-y-2">
                     {[
-                      'Betreibungsauszug eingereicht — geprüft',
-                      'Einkommensband und 3×-Regel — geprüft',
-                      'Schriftliche Vermieter-Referenz — geprüft',
-                      'Gültiger Ausweis — geprüft',
+                      'Eine Datei mit den Angaben, die geprüft sind',
+                      'Einkommensband und 3×-Regel, sobald der Lohn geprüft ist',
+                      'Vermieter-Referenz, sobald das Formular geprüft ist',
+                      'Siegel, sobald Betreibungsauszug und Ausweis geprüft sind',
                     ].map(f => (
                       <li
                         key={f}
@@ -623,7 +609,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     ))}
                   </ul>
                   <p className="mt-3 text-xs leading-relaxed text-sic-navy/70">
-                    Geprüfte Angaben, die der Vermieter nachvollziehen kann. Nicht jeder legt sie vor.
+                    Nicht alles ist am Kauftag fertig. Das Siegel folgt mit Auszug und Ausweis.
                   </p>
                 </div>
               </div>
@@ -646,9 +632,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           <div className="mx-auto max-w-6xl px-5">
             <h2 className="text-center font-sic-serif text-3xl font-bold tracking-tight text-sic-navy">So läuft es ab</h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-              Einmal anlegen, Unterlagen nachliefern. Ein PDF gibt es ab der ersten geprüften Angabe; als
-              Mieter-Zertifikat gilt es erst mit Betreibungsauszug und Ausweis. {SIC_OFFER_TERMS} Prüfung{' '}
-              {SIC_REVIEW_SLA}.
+              Einmal anlegen, Unterlagen nachliefern. Prüfung {SIC_REVIEW_SLA}.
             </p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_STEPS.map((step, i) => (
@@ -830,10 +814,10 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   Zum Zertifikat <ArrowRight className="h-4 w-4" />
                 </a>
               : <a
-                  href={`${sicPaths.certificateWorkspace}#erganzen`}
+                  href={sicPaths.certificateWorkspace}
                   className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep"
                 >
-                  Offene Angaben ergänzen <ArrowRight className="h-4 w-4" />
+                  Zum Zertifikat <ArrowRight className="h-4 w-4" />
                 </a>
               }
             </p>
@@ -845,7 +829,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 Zertifikat anlegen <ArrowRight className="h-4 w-4" />
               </a>
               <span className="mt-2 block text-xs text-slate-500">
-                {quote.totalChf > 0 ? PRICE_LABEL : 'Kostenlos'} · alle {SIC_MODULES.length} Angaben.
+                {quote.totalChf > 0 ? PRICE_LABEL : 'Kostenlos'} einmalig, kein Abo.
               </span>
             </p>
           }

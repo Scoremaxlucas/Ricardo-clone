@@ -18,7 +18,15 @@ export const SIC_PRODUCT_LINE =
 export const SIC_OFFER_TERMS =
   IS_FREE ?
     `Kostenlos. Kein Abo. ${SIC_VALIDITY_MONTHS} Monate gültig — gerechnet ab dem Betreibungsauszug.`
-  : `${SIC_PRICE_LABEL} · alle ${SIC_MODULES.length} Angaben. Einmalig, kein Abo. Zahlung per Karte oder Link. ${SIC_VALIDITY_MONTHS} Monate gültig — gerechnet ab dem Betreibungsauszug. Verlängerung ${formatSicChf(SIC_RENEWAL_FEE_CHF)}.`
+  : `${SIC_PRICE_LABEL} einmalig, kein Abo. Verlängerung ${formatSicChf(SIC_RENEWAL_FEE_CHF)}.`
+
+/** Direkt am Kaufknopf — einmal, in normaler Grösse. */
+export const SIC_BEFORE_PAY = [
+  'Das Siegel gibt es, sobald Betreibungsauszug und Ausweis geprüft sind. Ein PDF mit dem Stand gibt es früher.',
+  'Der Auszug vom Amt kostet zusätzlich etwa CHF 18. Das ist nicht im Preis enthalten.',
+  'Die Referenz braucht einen bisherigen Vermieter. Ohne den geht diese Angabe nicht.',
+  'Ist eine Angabe negativ, etwa offene Betreibungen, steht sie nicht auf dem Zertifikat. Der Preis bleibt.',
+] as const
 
 /** Was nach dem Anlegen selbst zu beschaffen ist — vor dem Kauf sichtbar. */
 export const SIC_PREP_ITEMS = [

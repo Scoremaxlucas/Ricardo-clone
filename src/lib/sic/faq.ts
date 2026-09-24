@@ -36,10 +36,6 @@ export const SIC_FAQ: { q: string; a: string }[] = [
     a: PRICE_ANSWER,
   },
   {
-    q: 'Kann ich nur einzelne Angaben kaufen?',
-    a: 'Beim Anlegen gehören alle vier dazu. Fehlt später etwas, ergänzt du es unter «Mein Zertifikat» — nicht als Baukasten auf der Startseite.',
-  },
-  {
     q: `Warum genau diese ${SIC_MODULES.length} Angaben?`,
     a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob der Ausweis gültig ist. Sind alle vier geprüft, steht das in einheitlicher Form da. Was fehlt, ist nicht ausgewiesen.',
   },
@@ -49,7 +45,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was muss ich selbst besorgen?',
-    a: 'Den Auszug vom Betreibungsamt, deinen Ausweis und deine Lohnabrechnung hast du selbst. Für Arbeitgeber und bisherigen Vermieter gibt es bei uns ein kurzes Formular zum Unterschreiben. Du kannst alles in deinem Tempo nachliefern.',
+    a: 'Den Auszug vom Betreibungsamt (etwa CHF 18, nicht im Zertifikatspreis), deinen Ausweis und deine Lohnabrechnung hast du selbst. Für Arbeitgeber und bisherigen Vermieter gibt es bei uns ein kurzes Formular. Ohne bisherigen Vermieter geht die Referenz nicht.',
   },
   {
     q: 'Wie lange dauert es insgesamt?',

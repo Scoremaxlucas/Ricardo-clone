@@ -45,15 +45,15 @@ export type SicUseCase = {
 export const SIC_USE_CASES: readonly SicUseCase[] = [
   {
     title: 'Weniger Prüfaufwand',
-    body: 'Der Vermieter braucht weniger Zeit für die Einordnung: die Angaben sind einheitlich und per QR nachvollziehbar.',
+    body: 'Der Vermieter liest eine Datei statt mehrerer Anhänge. Die Angaben sind einheitlich und per QR nachvollziehbar.',
   },
   {
-    title: 'Sticht unter vielen Bewerbungen hervor',
-    body: 'Mit dem Zertifikat wirkt der Bewerber sofort klar qualifiziert. Der Vermieter erkennt den Qualitätsstatus auf einen Blick.',
+    title: 'Eine Datei unter vielen Bewerbungen',
+    body: 'Was geprüft ist, steht beisammen. Ob das den Unterschied macht, entscheidet der Vermieter.',
   },
   {
-    title: 'Schnellere Entscheidung',
-    body: 'Die Auswahl geht schneller weiter: weniger Rückfragen, schneller zur Vergabe.',
+    title: 'Klarere Entscheidung',
+    body: 'Weniger Suchen in Anhängen. Ob jemand die Wohnung bekommt, bleibt die Entscheidung des Vermieters.',
   },
 ]
 
