@@ -51,6 +51,7 @@ const STATUS_LABEL: Record<string, string> = {
   IN_REVIEW: 'In Prüfung',
   VERIFIED: 'Verifiziert',
   REJECTED: 'Abgelehnt',
+  NOT_APPLICABLE: 'Keine Referenz',
 }
 
 const TABS: { id: Filter; label: string }[] = [

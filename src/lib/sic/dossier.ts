@@ -5,7 +5,9 @@ import { isSicCouple, type SicHouseholdKind } from '@/lib/sic/household'
 import {
   getSicModule,
   isSicCertificateSealReady,
+  SIC_DECLARED_BADGE,
   SIC_MODULES,
+  SIC_NO_PRIOR_REFERENCE_LINE,
   SIC_RENEWAL_FEE_CHF,
   SIC_VALIDITY_MONTHS,
   sicRequiredDocuments,
@@ -101,7 +103,7 @@ export type SicDossierView = {
   }[]
 }
 
-export type SicVerifiedModuleView = { id: SicModuleId; title: string; lines: string[] }
+export type SicVerifiedModuleView = { id: SicModuleId; title: string; lines: string[]; badge?: string }
 
 /**
  * Baut die Liste verifizierter Module für PDF und Prüfseite.
@@ -115,7 +117,7 @@ export function verifiedModuleLineItems(
   const verified = new Map(
     modules.filter(m => m.status === 'VERIFIED').map(m => [m.moduleKind, m.verifiedFacts])
   )
-  return SIC_MODULES.filter(def => verified.has(def.id)).map(def => {
+  const rows = SIC_MODULES.filter(def => verified.has(def.id)).map(def => {
     const facts = readSicFacts(def.id, verified.get(def.id))
     const lines = sicFactLines(def.id, facts, lineOpts)
     return {
@@ -124,6 +126,18 @@ export function verifiedModuleLineItems(
       lines: lines.length > 0 ? lines : def.lineItems,
     }
   })
+  const waived = modules.some(m => m.moduleKind === 'ZUVERLAESSIGKEIT' && m.status === 'NOT_APPLICABLE')
+  if (!waived || verified.has('ZUVERLAESSIGKEIT')) return rows
+  const def = getSicModule('ZUVERLAESSIGKEIT')
+  return [
+    ...rows,
+    {
+      id: def.id,
+      title: def.title,
+      lines: [SIC_NO_PRIOR_REFERENCE_LINE],
+      badge: SIC_DECLARED_BADGE,
+    },
+  ]
 }
 
 /**

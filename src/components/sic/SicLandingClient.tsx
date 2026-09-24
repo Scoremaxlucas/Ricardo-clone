@@ -6,7 +6,6 @@ import { SIC_CERT_TAGLINE, SIC_COLORS, SIC_HERO_IMAGE, SIC_MODULE_ACCENT, SIC_TA
 import { SIC_FAQ } from '@/lib/sic/faq'
 import { sicCatalogPreviewRows } from '@/lib/sic/facts'
 import {
-  SIC_BEFORE_PAY,
   SIC_OFFER_TERMS,
   SIC_PRICE_LABEL,
   SIC_PRODUCT_LINE,
@@ -18,6 +17,7 @@ import {
   getSicModule,
   SIC_MODULE_BADGE,
   SIC_MODULES,
+  SIC_NO_PRIOR_REFERENCE_LINE,
   sicCompletenessLabel,
   sicIsFree,
   sicSealRequirementLabel,
@@ -87,6 +87,7 @@ const CERT_PREVIEW = sicCatalogPreviewRows()
 export function SicLandingClient({ account }: { account?: SicLandingAccount | null }) {
   const owned = useMemo(() => new Set<SicModuleId>(account?.ownedModules ?? []), [account])
   const verifiedModules = useMemo(() => new Set<SicModuleId>(account?.verifiedModules ?? []), [account])
+  const declaredModules = useMemo(() => new Set<SicModuleId>(account?.declaredModules ?? []), [account])
   const isReturning = Boolean(account)
   const availableModules = useMemo(() => SIC_MODULES.filter(m => !owned.has(m.id)), [owned])
 
@@ -498,6 +499,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     autoComplete="email"
                     className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-base text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
                   />
+                  <p className="mt-4 text-sm font-semibold leading-relaxed text-white">{SIC_OFFER_TERMS}</p>
                   <button
                     type="submit"
                     disabled={submitting}
@@ -506,15 +508,6 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     {submitting ? 'Wird erstellt …' : 'Zertifikat anlegen'}
                     {!submitting && <ArrowRight className="h-4 w-4" />}
                   </button>
-                  <p className="mt-4 text-sm font-semibold leading-relaxed text-white">{SIC_OFFER_TERMS}</p>
-                  <ul className="mt-3 max-w-md space-y-1.5 text-sm leading-relaxed text-white/80">
-                    {SIC_BEFORE_PAY.map(item => (
-                      <li key={item} className="flex items-start gap-2">
-                        <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-sic-gold-light" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
                 </form>
               </div>
               <div id="zertifikat" className="min-w-0">
@@ -731,7 +724,11 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   </>
                 ) : null}
 
-                {SIC_MODULES.filter(m => owned.has(m.id) && !verifiedModules.has(m.id)).length > 0 ? (
+                {declaredModules.has('ZUVERLAESSIGKEIT') ?
+                  <p className="mt-4 text-sm leading-relaxed text-slate-600">{SIC_NO_PRIOR_REFERENCE_LINE}</p>
+                : null}
+
+                {SIC_MODULES.filter(m => owned.has(m.id) && !verifiedModules.has(m.id) && !declaredModules.has(m.id)).length > 0 ? (
                   <>
                     <div className="mt-5 border-t border-slate-200 pt-5 sm:mt-6 sm:pt-6">
                       <p className="text-[13px] font-semibold text-sic-navy sm:text-sm">
@@ -739,7 +736,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                       </p>
                     </div>
                     <div className="mt-4 space-y-2">
-                      {SIC_MODULES.filter(m => owned.has(m.id) && !verifiedModules.has(m.id)).map(m => {
+                      {SIC_MODULES.filter(m => owned.has(m.id) && !verifiedModules.has(m.id) && !declaredModules.has(m.id)).map(m => {
                         const accent = SIC_MODULE_ACCENT[m.id]
                         const Icon = MODULE_ICON[m.id]
                         return (

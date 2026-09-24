@@ -34,6 +34,7 @@ describe('SIC FAQ copy', () => {
     const price = SIC_FAQ.find(i => i.q === 'Was kostet es?')
     expect(price?.a).toMatch(/einmalig|ohne Abo/)
     expect(price?.a).toMatch(/Betreibungsauszug/)
+    expect(price?.a).not.toMatch(/CHF 18/)
     expect(price?.a).toMatch(/Verlängerung|Momentan nichts/)
   })
 })

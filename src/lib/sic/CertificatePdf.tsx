@@ -324,7 +324,7 @@ export function SicCertificatePdfDocument(props: {
                     ))}
                   </View>
                   <View style={s.badge}>
-                    <Text style={s.badgeText}>{SIC_MODULE_BADGE}</Text>
+                    <Text style={s.badgeText}>{m.badge ?? SIC_MODULE_BADGE}</Text>
                   </View>
                 </View>
               ))}

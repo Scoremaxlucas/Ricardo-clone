@@ -178,7 +178,7 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
                 </ul>
               </div>
               <span className="mt-0.5 hidden flex-shrink-0 text-[9px] font-bold tracking-[0.12em] text-sic-navy min-[400px]:inline">
-                {SIC_MODULE_BADGE}
+                {m.badge ?? SIC_MODULE_BADGE}
               </span>
             </li>
           ))}

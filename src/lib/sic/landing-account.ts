@@ -14,6 +14,8 @@ export type SicLandingAccount = {
   holderLastName: string | null
   ownedModules: SicModuleId[]
   verifiedModules: SicModuleId[]
+  /** Referenz bewusst ohne bisherigen Vermieter — nicht «noch nicht geprüft». */
+  declaredModules: SicModuleId[]
 }
 
 /** Session + Zertifikat für Returning-User-UX auf der Landing. */
@@ -45,6 +47,10 @@ export async function getSicLandingAccount(): Promise<SicLandingAccount | null> 
     .filter(m => m.status === 'VERIFIED' && isSicModuleId(m.moduleKind))
     .map(m => m.moduleKind)
 
+  const declaredModules = cert.modules
+    .filter(m => m.status === 'NOT_APPLICABLE' && isSicModuleId(m.moduleKind))
+    .map(m => m.moduleKind)
+
   const holderFirstName = cert.holderFirstName?.trim() || null
   const holderLastName = cert.holderLastName?.trim() || null
   const holderName = joinHouseholdHolderName({
@@ -69,5 +75,6 @@ export async function getSicLandingAccount(): Promise<SicLandingAccount | null> 
     holderLastName,
     ownedModules,
     verifiedModules,
+    declaredModules,
   }
 }

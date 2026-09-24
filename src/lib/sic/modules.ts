@@ -252,6 +252,10 @@ export const SIC_WORKING_PLAUSIBILITY_FOOTER =
 /** Badge auf Urkunde und Prüfseite — «geprüft», nicht «verifiziert» im Sinne einer Auskunftei. */
 export const SIC_MODULE_BADGE = 'GEPRÜFT'
 
+/** Selbstangabe ohne bisherigen Vermieter — kein «GEPRÜFT», kein «fehlend». */
+export const SIC_DECLARED_BADGE = 'ANGABE'
+export const SIC_NO_PRIOR_REFERENCE_LINE = 'Keine bisherige Vermieter-Referenz.'
+
 /** Nachweise je Angabe — beim Paar-Zertifikat zwei Auszüge, zwei Ausweise, zwei Löhne; eine Referenz. */
 export function sicRequiredDocuments(id: SicModuleId, couple: boolean): string[] {
   if (!couple) return getSicModule(id).requiredDocuments

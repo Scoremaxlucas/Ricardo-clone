@@ -39,6 +39,7 @@ const STATUS_META: Record<ModuleStatus, { label: string; className: string; Icon
   IN_REVIEW: { label: 'Bei uns in Prüfung', className: 'bg-sic-review-bg text-sic-review-text', Icon: Clock },
   VERIFIED: { label: 'Geprüft', className: 'bg-sic-verified-bg text-sic-verified-text', Icon: CheckCircle2 },
   REJECTED: { label: 'Bitte nachreichen', className: 'bg-sic-danger-bg text-sic-danger-text', Icon: AlertCircle },
+  NOT_APPLICABLE: { label: 'Keine Referenz', className: 'bg-sic-paper-soft text-sic-navy', Icon: CheckCircle2 },
 }
 
 const PROGRESS_SHORT: Record<SicModuleId, string> = {
@@ -96,6 +97,8 @@ function ModuleProgressStrip({ dossier }: { dossier: SicDossierView }) {
                     ? 'bg-sic-danger-text text-white'
                   : status === 'PENDING_DOCS'
                     ? 'bg-sic-navy text-white'
+                  : status === 'NOT_APPLICABLE'
+                    ? 'bg-sic-navy text-white'
                   : 'bg-sic-paper-soft text-slate-400 ring-1 ring-sic-hairline'
                 }`}
               >
@@ -105,6 +108,8 @@ function ModuleProgressStrip({ dossier }: { dossier: SicDossierView }) {
                   <Clock className="h-4 w-4" />
                 : status === 'REJECTED' ?
                   <AlertCircle className="h-4 w-4" />
+                : status === 'NOT_APPLICABLE' ?
+                  <CheckCircle2 className="h-4 w-4" />
                 : index + 1}
               </span>
               <span className="min-w-0">
@@ -207,6 +212,7 @@ function DocumentChip({
 export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
   const router = useRouter()
   const [uploading, setUploading] = useState<SicModuleId | null>(null)
+  const [declaringReference, setDeclaringReference] = useState(false)
   const [removingId, setRemovingId] = useState<string | null>(null)
   const inputs = useRef<Record<string, HTMLInputElement | null>>({})
   const [firstName, setFirstName] = useState(dossier.holderFirstName ?? '')
@@ -444,6 +450,28 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       else toast.error('Kopieren fehlgeschlagen')
     } catch {
       toast.error('Kopieren fehlgeschlagen')
+    }
+  }
+
+  async function setNoPriorReference(none: boolean) {
+    setDeclaringReference(true)
+    try {
+      const res = await fetch('/api/sic/reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ none }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data?.message || 'Das hat nicht geklappt.')
+        return
+      }
+      toast.success(none ? 'Keine Referenz — die Angabe gilt nicht als fehlend.' : 'Du kannst die Referenz jetzt hochladen.')
+      router.refresh()
+    } catch {
+      toast.error('Netzwerkfehler.')
+    } finally {
+      setDeclaringReference(false)
     }
   }
 
@@ -834,7 +862,13 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       <ul className="mt-4 divide-y divide-sic-hairline border-y border-sic-hairline">
         {dossier.purchasedModules.map(m => {
           const meta = STATUS_META[m.status]
-          const canUpload = m.status !== 'VERIFIED' && dossier.status !== 'REVOKED'
+          const canUpload =
+            m.status !== 'VERIFIED' && m.status !== 'NOT_APPLICABLE' && dossier.status !== 'REVOKED'
+          const canDeclareNoReference =
+            m.moduleKind === 'ZUVERLAESSIGKEIT' &&
+            (m.status === 'PENDING_DOCS' || m.status === 'REJECTED') &&
+            m.documentCount === 0 &&
+            dossier.status !== 'REVOKED'
           const canRemoveDocs = m.status !== 'VERIFIED'
           // Formular-Zeilen stehen schon im Vorlagen-Block darunter — hier nur echte Uploads.
           const uploadItems = m.checklist.filter(item => item.kind !== 'template')
@@ -868,6 +902,38 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                     <p className="mt-1 border-l-2 border-sic-danger-text bg-sic-danger-bg px-3 py-2 text-sm text-sic-danger-text">
                       {m.reviewNote}
                     </p>
+                  : null}
+
+                  {m.status === 'NOT_APPLICABLE' ?
+                    <div className="mt-3">
+                      <p className="text-sm leading-relaxed text-slate-600">
+                        Keine bisherige Vermieter-Referenz. Das steht so auf dem Zertifikat und gilt nicht als fehlend.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={declaringReference || dossier.status === 'REVOKED'}
+                        onClick={() => void setNoPriorReference(false)}
+                        className="mt-3 text-sm font-semibold text-sic-navy underline-offset-2 hover:underline disabled:opacity-60"
+                      >
+                        Doch eine Referenz einreichen
+                      </button>
+                    </div>
+                  : null}
+
+                  {canDeclareNoReference ?
+                    <div className="mt-3 rounded-xl border border-sic-hairline bg-sic-paper-soft px-3 py-3">
+                      <p className="text-sm leading-relaxed text-slate-700">
+                        Zuzug, erstes Mietverhältnis oder bisher kein eigener Vertrag? Dann hast du keine Referenz — das ist keine fehlende Unterlage.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={declaringReference}
+                        onClick={() => void setNoPriorReference(true)}
+                        className="mt-2 text-sm font-semibold text-sic-navy underline-offset-2 hover:underline disabled:opacity-60"
+                      >
+                        {declaringReference ? 'Wird gespeichert …' : 'Keine Referenz — so vermerken'}
+                      </button>
+                    </div>
                   : null}
 
                   {canUpload ?
@@ -960,7 +1026,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                     </p>
                   : null}
 
-                  {m.status === 'VERIFIED' ?
+                  {m.status === 'VERIFIED' || m.status === 'NOT_APPLICABLE' ?
                     <div className="mt-3 border-l-2 border-sic-verified bg-sic-verified-bg px-4 py-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-sic-verified-text">
                         Das steht auf deinem Zertifikat

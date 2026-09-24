@@ -13,6 +13,7 @@ import {
   SIC_MIN_CHARGE_CHF,
   SIC_MODULE_FEE_CHF,
   SIC_MODULES,
+  SIC_NO_PRIOR_REFERENCE_LINE,
   isSicCertificateSealReady,
   resolveSicCheckoutModuleIds,
   sicAllModuleIds,
@@ -24,7 +25,7 @@ import {
   sicCheckoutRetryFromPayment,
   sicCheckoutRetryRequestBody,
 } from '@/lib/sic/checkout-retry'
-import { isSicLandlordPdfReady, joinHolderName, joinHouseholdHolderName, encodePaymentHolderName, decodePaymentHolderName, previewSicVerifiedModules, templatePrefillNamesForModule } from '@/lib/sic/dossier'
+import { isSicLandlordPdfReady, joinHolderName, joinHouseholdHolderName, encodePaymentHolderName, decodePaymentHolderName, previewSicVerifiedModules, templatePrefillNamesForModule, verifiedModuleLineItems } from '@/lib/sic/dossier'
 import { addCalendarMonths, isSicExpired, parseSicCalendarDate, sicExpiresAtAfterApproval, sicValidityExpiresAt } from '@/lib/sic/validity'
 
 describe('certificate code', () => {
@@ -278,6 +279,19 @@ describe('certificate seal', () => {
     expect(isSicCertificateSealReady(['BONITAET', 'ARBEIT_EINKOMMEN'])).toBe(false)
     expect(isSicCertificateSealReady(['BONITAET', 'AUFENTHALT'])).toBe(true)
     expect(isSicCertificateSealReady(['AUFENTHALT', 'BONITAET', 'ARBEIT_EINKOMMEN'])).toBe(true)
+  })
+})
+
+describe('no prior landlord reference', () => {
+  it('prints the declaration and does not call it checked', () => {
+    const rows = verifiedModuleLineItems([
+      { moduleKind: 'BONITAET', status: 'VERIFIED', verifiedFacts: { extractDate: '2026-06-12', office: 'Zürich' } },
+      { moduleKind: 'ZUVERLAESSIGKEIT', status: 'NOT_APPLICABLE' },
+    ])
+    const ref = rows.find(r => r.id === 'ZUVERLAESSIGKEIT')
+    expect(ref?.lines).toEqual([SIC_NO_PRIOR_REFERENCE_LINE])
+    expect(ref?.badge).toBe('ANGABE')
+    expect(rows.filter(r => r.id === 'BONITAET')[0]?.badge).toBeUndefined()
   })
 })
 

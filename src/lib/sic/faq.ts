@@ -19,7 +19,7 @@ const PREVIEW_CEILING = PREVIEW_INCOME.find(l => l.startsWith('Tragbar')) ?? ''
 const PRICE_ANSWER =
   sicIsFree() ?
     `Momentan nichts. Du kannst das Zertifikat ohne Abo anlegen und der Bewerbung beilegen. ${SIC_VALIDITY_MONTHS} Monate gültig — gerechnet ab dem Betreibungsauszug.`
-  : `Das vollständige Zertifikat mit allen ${SIC_MODULES.length} Angaben kostet ${formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)}. Bezahlt wird einmalig beim Anlegen — nicht pro Bewerbung und nicht als Abo. ${SIC_VALIDITY_MONTHS} Monate gültig, gerechnet ab dem Betreibungsauszug. Verlängerung ${formatSicChf(SIC_RENEWAL_FEE_CHF)}.`
+  : `Das Zertifikat kostet ${formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)}. Bezahlt wird einmalig beim Anlegen — nicht pro Bewerbung und nicht als Abo. ${SIC_VALIDITY_MONTHS} Monate gültig, gerechnet ab dem Betreibungsauszug. Verlängerung ${formatSicChf(SIC_RENEWAL_FEE_CHF)}.`
 
 /** Shared FAQ for Landing + /sic/faq (single source of truth). Alltagssprache, kurze Antworten. */
 export const SIC_FAQ: { q: string; a: string }[] = [
@@ -45,7 +45,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was muss ich selbst besorgen?',
-    a: 'Den Auszug vom Betreibungsamt (etwa CHF 18, nicht im Zertifikatspreis), deinen Ausweis und deine Lohnabrechnung hast du selbst. Für Arbeitgeber und bisherigen Vermieter gibt es bei uns ein kurzes Formular. Ohne bisherigen Vermieter geht die Referenz nicht.',
+    a: 'Den Auszug vom Betreibungsamt, deinen Ausweis und deine Lohnabrechnung hast du selbst. Für Arbeitgeber und bisherigen Vermieter gibt es bei uns ein kurzes Formular. Ohne bisherigen Vermieter wählst du «Keine Referenz» — dann gilt die Angabe nicht als fehlend.',
   },
   {
     q: 'Wie lange dauert es insgesamt?',

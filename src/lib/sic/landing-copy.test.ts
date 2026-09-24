@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  SIC_BEFORE_PAY,
   SIC_OFFER_TERMS,
   SIC_PREP_ITEMS,
   SIC_PRODUCT_LINE,
@@ -21,14 +20,6 @@ describe('SIC landing offer copy', () => {
     expect(SIC_OFFER_TERMS).toMatch(/kein Abo/i)
     expect(SIC_OFFER_TERMS).toMatch(/Verlängerung|Kostenlos/)
     expect(SIC_OFFER_TERMS).not.toMatch(/Karte oder Link/)
-  })
-
-  it('says what the buyer should know before paying', () => {
-    const blob = SIC_BEFORE_PAY.join(' ')
-    expect(blob).toMatch(/Siegel/)
-    expect(blob).toMatch(/CHF 18/)
-    expect(blob).toMatch(/bisherigen Vermieter/)
-    expect(blob).toMatch(/offene Betreibungen/)
   })
 
   it('lists the four things the tenant must obtain', () => {

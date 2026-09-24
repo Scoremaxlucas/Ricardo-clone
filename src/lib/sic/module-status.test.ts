@@ -17,6 +17,7 @@ function chargeable(rawChf: number): number {
 describe('nextModuleStatusAfterUpload', () => {
   it('PENDING_DOCS → IN_REVIEW', () => {
     expect(nextModuleStatusAfterUpload('PENDING_DOCS')).toBe('IN_REVIEW')
+    expect(nextModuleStatusAfterUpload('NOT_APPLICABLE')).toBe('IN_REVIEW')
   })
   it('REJECTED → IN_REVIEW (nachreichen)', () => {
     expect(nextModuleStatusAfterUpload('REJECTED')).toBe('IN_REVIEW')
