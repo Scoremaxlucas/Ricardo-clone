@@ -11,24 +11,22 @@
 export const SIC_CURRENCY = 'CHF' as const
 
 /**
- * TESTPREISE: 10 Rappen pro Position, damit der Zahlungsweg echt durchlaufen wird.
- * Bei Total 0 wird Stripe übersprungen; unter `SIC_MIN_CHARGE_CHF` hebt das Quote
- * den Betrag sichtbar auf das Stripe-Minimum an.
- * Produktion wiederherstellen: Basis 20 / Modul 30 / Bundle 120.
+ * Erstkauf ist ein Preis für das ganze Zertifikat. Angaben werden nicht einzeln verkauft;
+ * `SIC_MODULE_FEE_CHF` bleibt 0, damit kein Rabatt und keine Modulzeile entsteht.
  */
-export const SIC_BASE_FEE_CHF: number = 0.1
+export const SIC_BASE_FEE_CHF: number = 79
 
-/** Preis pro verifiziertem Modul. */
-export const SIC_MODULE_FEE_CHF: number = 0.1
+/** Nachkauf einzelner Angaben: im Erstkauf enthalten, deshalb 0. */
+export const SIC_MODULE_FEE_CHF: number = 0
 
-/** Komplett-Paket: Basis + alle 4 Module zum Bundle-Preis. */
-export const SIC_BUNDLE_ALL_MODULES_CHF: number = 0.5
+/** Was Neukunden zahlen: das vollständige Zertifikat. */
+export const SIC_BUNDLE_ALL_MODULES_CHF: number = 79
 
 /**
  * Verlängerung: setzt die alternden Angaben zurück (frischer Betreibungsauszug),
- * die dauerhaften bleiben stehen. Produktion wiederherstellen: 30.
+ * die dauerhaften bleiben stehen.
  */
-export const SIC_RENEWAL_FEE_CHF: number = 0.1
+export const SIC_RENEWAL_FEE_CHF: number = 30
 
 /**
  * Stripe verrechnet keine Zahlung unter diesem Betrag (docs.stripe.com/currencies,

@@ -301,15 +301,17 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ]
-    : quote.lines.map(l => ({
+    : quote.lines
+        .filter(l => l.amountChf > 0)
+        .map(l => ({
         price_data: {
           currency: 'chf' as const,
           unit_amount: Math.round(l.amountChf * 100),
           product_data: {
             name:
-              l.kind === 'base' ? `${SIC_BRAND_NAME} — Basis`
+              l.kind === 'base' ? `${SIC_BRAND_NAME} — Mieter-Zertifikat`
               : l.kind === 'renewal' ? `${SIC_BRAND_NAME} — Verlängerung`
-              : `Modul: ${l.label}`,
+              : l.label,
           },
         },
         quantity: 1,
