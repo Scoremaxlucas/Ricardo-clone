@@ -5,6 +5,7 @@ import { encodePaymentHolderName } from '@/lib/sic/dossier'
 import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
 import { parseSicHouseholdKind } from '@/lib/sic/household'
 import { normalizeSicModuleIds, resolveSicCheckoutModuleIds, type SicModuleId } from '@/lib/sic/modules'
+import { createPayrexxTwintGateway, payrexxConfigured, payrexxSessionId } from '@/lib/sic/payrexx'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import {
   SIC_CHECKOUT_PAYMENT_METHODS,
@@ -278,6 +279,42 @@ export async function POST(req: NextRequest) {
       sicSessionCookieOptions(SIC_POST_CHECKOUT_TTL_SECONDS)
     )
     return res
+  }
+
+  if (payrexxConfigured()) {
+    const reference = randomUUID().replace(/-/g, '')
+    const sessionId = payrexxSessionId(reference)
+    const purpose = isRenewal ? `${SIC_BRAND_NAME} — Verlängerung` : `${SIC_BRAND_NAME} — Mieter-Zertifikat`
+    try {
+      const gateway = await createPayrexxTwintGateway({
+        amountCents: Math.round(quote.totalChf * 100),
+        referenceId: sessionId,
+        purpose,
+        email,
+        successUrl: `${sicUrl(sicPaths.checkoutSuccess)}?session_id=${encodeURIComponent(sessionId)}`,
+        failedUrl: `${sicUrl(sicPaths.checkoutCancel)}?session_id=${encodeURIComponent(sessionId)}`,
+      })
+      await rememberSicCheckoutPayment({
+        email,
+        holderName,
+        includeBaseFee,
+        isRenewal,
+        moduleKinds: candidate as SicModuleKind[],
+        amountChf: quote.totalChf,
+        stripeCheckoutSessionId: sessionId,
+      })
+      await prisma.sicPayment.update({
+        where: { stripeCheckoutSessionId: sessionId },
+        data: { stripePaymentIntentId: String(gateway.id) },
+      })
+      return NextResponse.json({ ok: true, url: gateway.link })
+    } catch (err) {
+      console.error('[sic/checkout] payrexx', err)
+      return NextResponse.json(
+        { ok: false, message: 'TWINT ist gerade nicht erreichbar. Bitte in einem Moment erneut versuchen.' },
+        { status: 502 }
+      )
+    }
   }
 
   // Rabatt (negativ) und Mindestbetrag-Aufschlag lassen sich nicht als eigene

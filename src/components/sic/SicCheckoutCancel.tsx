@@ -52,7 +52,7 @@ export function SicCheckoutCancel({ retry }: { retry: SicCheckoutRetry | null })
         : ' Du kannst das Zertifikat jederzeit erneut anlegen.'}
       </p>
       {retry?.renewal ?
-        <p className="mt-2 text-sm text-slate-500">Verlängerung — ein Klick, und du bist wieder bei Stripe.</p>
+        <p className="mt-2 text-sm text-slate-500">Verlängerung — ein Klick, und du bist wieder bei der Zahlung.</p>
       : null}
       {moduleLabels.length > 0 ?
         <p className="mt-2 text-sm text-slate-500">{moduleLabels.join(', ')}</p>

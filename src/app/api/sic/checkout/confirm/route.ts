@@ -1,4 +1,5 @@
 import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
+import { isPayrexxSessionId, payrexxGateway, payrexxGatewayConfirmed } from '@/lib/sic/payrexx'
 import { prisma } from '@/lib/prisma'
 import {
   SIC_POST_CHECKOUT_TTL_SECONDS,
@@ -55,6 +56,26 @@ export async function GET(req: NextRequest) {
   try {
     if (sessionId.startsWith('free_')) {
       const result = await fulfillSicPaidCheckout({ stripeCheckoutSessionId: sessionId })
+      return respondAfterFulfill({ sessionId, result })
+    }
+
+    if (isPayrexxSessionId(sessionId)) {
+      const payment = await prisma.sicPayment.findUnique({
+        where: { stripeCheckoutSessionId: sessionId },
+        select: { stripePaymentIntentId: true },
+      })
+      const gatewayId = Number(payment?.stripePaymentIntentId)
+      if (!Number.isFinite(gatewayId) || gatewayId <= 0) {
+        return NextResponse.json({ ok: false, pending: true, message: 'Zahlung noch nicht bestätigt.' })
+      }
+      const gateway = await payrexxGateway(gatewayId)
+      if (!payrexxGatewayConfirmed(gateway, sessionId)) {
+        return NextResponse.json({ ok: false, pending: true, message: 'Zahlung noch nicht bestätigt.' })
+      }
+      const result = await fulfillSicPaidCheckout({
+        stripeCheckoutSessionId: sessionId,
+        stripePaymentIntentId: String(gatewayId),
+      })
       return respondAfterFulfill({ sessionId, result })
     }
 
