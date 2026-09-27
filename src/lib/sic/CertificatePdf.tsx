@@ -235,6 +235,8 @@ export type SicPdfModule = {
   id?: SicModuleId
   title: string
   lines: string[]
+  /** Leer = GEPRÜFT. «ANGABE» bei einer Erklärung ohne Nachweis. */
+  badge?: string
 }
 
 export function SicCertificatePdfDocument(props: {
