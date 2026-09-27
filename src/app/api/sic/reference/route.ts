@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { getSicSession } from '@/lib/sic/session-cookie'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
     }
     await prisma.sicCertificateModule.update({
       where: { id: row.id },
-      data: { status: 'NOT_APPLICABLE', reviewNote: null, reviewedAt: null, verifiedFacts: null },
+      data: { status: 'NOT_APPLICABLE', reviewNote: null, reviewedAt: null, verifiedFacts: Prisma.DbNull },
     })
     return NextResponse.json({ ok: true })
   }
