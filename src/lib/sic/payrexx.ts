@@ -11,7 +11,10 @@ export function isPayrexxSessionId(sessionId: string): boolean {
 }
 
 export function payrexxConfigured(): boolean {
-  return Boolean(process.env.PAYREXX_INSTANCE?.trim() && process.env.PAYREXX_API_SECRET?.trim())
+  return (
+    process.env.PAYREXX_CHECKOUT === '1' &&
+    Boolean(process.env.PAYREXX_INSTANCE?.trim() && process.env.PAYREXX_API_SECRET?.trim())
+  )
 }
 
 function instance(): string {
