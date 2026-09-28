@@ -14,9 +14,11 @@ import {
 } from '@/lib/sic/landing-copy'
 import { SIC_REVIEWS, SIC_USE_CASES, sicLandingHasReviews } from '@/lib/sic/reviews'
 import {
+  formatSicChf,
   getSicModule,
   SIC_MODULE_BADGE,
   SIC_MODULES,
+  SIC_RENEWAL_FEE_CHF,
   SIC_NO_PRIOR_REFERENCE_LINE,
   sicCompletenessLabel,
   sicIsFree,
@@ -370,9 +372,9 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             </div>
           : <div className="grid min-w-0 items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
               <div className="min-w-0">
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/80">
-                  <ShieldCheck className="h-3.5 w-3.5 text-sic-gold-light" />
-                  {SIC_TAGLINE}
+                <span className="flex max-w-full items-start gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-white/80">
+                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sic-gold-light" />
+                  <span>{SIC_TAGLINE}</span>
                 </span>
                 <h1 className="mt-6 font-sic-serif text-[1.7rem] font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
                   Damit der Vermieter dich ernst nimmt{' '}
@@ -499,7 +501,17 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     autoComplete="email"
                     className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-4 py-3 text-base text-sic-navy outline-none ring-sic-gold/30 placeholder:text-slate-400 focus:ring-2"
                   />
-                  <p className="mt-4 text-sm font-semibold leading-relaxed text-white">{SIC_OFFER_TERMS}</p>
+                  <p className="mt-4 text-sm font-semibold leading-snug text-white">
+                    {sicIsFree() ?
+                      SIC_OFFER_TERMS
+                    : <>
+                        <span className="block">{SIC_PRICE_LABEL} einmalig, kein Abo</span>
+                        <span className="mt-1 block font-medium text-white/85">
+                          Verlängerung {formatSicChf(SIC_RENEWAL_FEE_CHF)}
+                        </span>
+                      </>
+                    }
+                  </p>
                   <button
                     type="submit"
                     disabled={submitting}
@@ -1084,8 +1096,13 @@ function CertUrkundeCard() {
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-sic-navy">{getSicModule(row.id).title}</p>
                   <ul className="mt-0.5 space-y-0.5">
-                    {row.lines.map(line => (
-                      <li key={line} className="flex items-start gap-1.5 text-[11px] leading-snug text-slate-600">
+                    {row.lines.map((line, i) => (
+                      <li
+                        key={line}
+                        className={`items-start gap-1.5 text-[11px] leading-snug text-slate-600 ${
+                          i === 0 ? 'flex' : 'hidden sm:flex'
+                        }`}
+                      >
                         <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-navy" />
                         {line}
                       </li>
