@@ -4,7 +4,7 @@
 
 Ein Next.js-14-Monorepo (App Router) mit drei Produkten unter einem Vercel-Deployment und gemeinsamem NextAuth:
 
-- **SwissImmoCert (SIC)** unter `src/app/sic`, `src/app/api/sic`, `src/components/sic`: Mietenden-Zertifikat, modulbasiert (CHF 20 Basis, CHF 30 pro Modul: Bonität, Arbeit & Einkommen, Zuverlässigkeit, Aufenthaltsstatus). Gültigkeit 3 Monate. Prüfung nur anhand eingereichter Dokumente. **Das ist der aktuelle Fokus.**
+- **SwissImmoCert (SIC)** unter `src/app/sic`, `src/app/api/sic`, `src/components/sic`: Mietenden-Zertifikat, Komplettpaket CHF 79.– einmalig (alle 4 Angaben: Bonität, Arbeit & Einkommen, Zuverlässigkeit, Aufenthaltsstatus; Modulpreis 0, siehe `src/lib/sic/modules.ts`), Verlängerung CHF 30.–, Paar-Zertifikat ohne Aufpreis. Gültigkeit 3 Monate ab Datum des Betreibungsauszugs. Prüfung nur anhand eingereichter Dokumente. **Das ist der aktuelle Fokus.**
 - **Wohnen Helvenda** (wohnen.helvenda.ch): Mietwohnungen, Qualitätsnachweis HLV. **Pausiert.** Kontext in `.cursor/rules/wohnen-helvenda-context.mdc`, gilt weiterhin, wenn daran gearbeitet wird.
 - **Helvenda Marktplatz** (helvenda.ch): C2C-Marktplatz. **Pausiert.**
 
