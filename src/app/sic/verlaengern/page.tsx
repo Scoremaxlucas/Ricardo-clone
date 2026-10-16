@@ -5,7 +5,7 @@ import { getSicSession } from '@/lib/sic/session-cookie'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Verlängerung' }
+export const metadata = { title: 'Verlängerung', robots: { index: false, follow: false } }
 
 export default function SicRenewPage() {
   const session = getSicSession()

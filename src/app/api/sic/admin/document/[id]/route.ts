@@ -30,7 +30,13 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const raw = await readSicBlobBytes(doc.blobUrl)
   if (!raw) return new NextResponse('Datei nicht abrufbar', { status: 502 })
 
-  const { buffer } = decryptSicDocument(raw)
+  let buffer: Buffer
+  try {
+    buffer = decryptSicDocument(raw).buffer
+  } catch (err) {
+    console.error('[sic/admin/document] decrypt failed', { documentId: doc.id, reason: (err as Error).message })
+    return new NextResponse('Datei konnte nicht entschlüsselt werden', { status: 500 })
+  }
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {

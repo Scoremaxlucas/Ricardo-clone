@@ -7,7 +7,7 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Mein Zertifikat' }
+export const metadata = { title: 'Mein Zertifikat', robots: { index: false, follow: false } }
 
 export default async function SicZertifikatPage() {
   const session = getSicSession()

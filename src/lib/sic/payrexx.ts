@@ -96,7 +96,8 @@ export async function payrexxGateway(id: number): Promise<GatewayRow | null> {
 
 export function payrexxGatewayConfirmed(row: GatewayRow | null, referenceId: string): boolean {
   if (!row) return false
-  if (row.referenceId && row.referenceId !== referenceId) return false
+  // Jedes von uns erzeugte Gateway trägt unsere referenceId — ohne Übereinstimmung keine Freigabe.
+  if (row.referenceId !== referenceId) return false
   return row.status === 'confirmed'
 }
 

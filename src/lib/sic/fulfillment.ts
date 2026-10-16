@@ -123,7 +123,7 @@ async function sendPostCheckoutMagicLinkWithRetry(email: string): Promise<void> 
       const { url } = await createSicMagicLink(email)
       await sendSicMagicLinkEmail(email, url, 'checkout')
       if (attempt > 0) {
-        sicLog('sic.fulfillment.magic_link_recovered', { email, attempt })
+        sicLog('sic.fulfillment.magic_link_recovered', { attempt })
       }
       return
     } catch (err) {
@@ -135,7 +135,6 @@ async function sendPostCheckoutMagicLinkWithRetry(email: string): Promise<void> 
   }
   console.error('[sic/fulfillment] magic link email failed after retries', lastErr)
   sicLog('sic.fulfillment.magic_link_failed_after_retries', {
-    email,
     reason: lastErr instanceof Error ? lastErr.message : 'unknown',
   })
 }

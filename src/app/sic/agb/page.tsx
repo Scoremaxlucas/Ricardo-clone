@@ -1,14 +1,14 @@
 import {
   formatSicChf,
   SIC_BUNDLE_ALL_MODULES_CHF,
-  SIC_MIN_CHARGE_CHF,
-  SIC_MODULE_FEE_CHF,
   SIC_MODULES,
   SIC_RENEWAL_FEE_CHF,
   SIC_VALIDITY_MONTHS,
-  sicBundleSavingsChf,
 } from '@/lib/sic/modules'
 import { SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL, sicPaths } from '@/lib/sic/config'
+
+/** Datum der letzten inhaltlichen Änderung — bewusst fix, nicht das aktuelle Jahr. */
+const SIC_AGB_STAND = '16. Oktober 2026'
 import { SIC_DOCS_RETENTION_DAYS, SIC_UNFINISHED_DOCS_RETENTION_MONTHS } from '@/lib/sic/validity'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -21,7 +21,6 @@ export const metadata: Metadata = {
 }
 
 export default function SicAgbPage() {
-  const bundleSavings = sicBundleSavingsChf()
 
   return (
     <div className="mx-auto max-w-2xl break-words px-5 py-10 sm:py-16">
@@ -29,7 +28,7 @@ export default function SicAgbPage() {
         Allgemeine Geschäftsbedingungen
       </h1>
       <p className="mt-2 text-sm text-slate-500">
-        Swiss Immo Cert — Stand {new Date().getFullYear()}. Anbieterin: siehe{' '}
+        Swiss Immo Cert — Stand {SIC_AGB_STAND}. Anbieterin: siehe{' '}
         <Link href={sicPaths.impressum} className="text-sic-action underline-offset-2 hover:underline">
           Impressum
         </Link>
@@ -55,17 +54,10 @@ export default function SicAgbPage() {
         <section>
           <h2 className="font-semibold text-sic-navy">2. Preise &amp; Zahlung</h2>
           <p className="mt-1.5">
-            Beim erstmaligen Anlegen kaufst du das Komplett-Paket: Basis und alle {SIC_MODULES.length}{' '}
-            Angaben für {formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)}
-            {bundleSavings > 0 ? ` — ${formatSicChf(bundleSavings)} günstiger als die Summe der Einzelpreise` : ''}.
-            Einzelne Angaben kannst du später nachkaufen, falls sie noch nicht enthalten sind (je{' '}
-            {formatSicChf(SIC_MODULE_FEE_CHF)}). Die Zahlung erfolgt vorab über Stripe (Karte oder Link).
-          </p>
-          <p className="mt-1.5">
-            Liegt die Summe unter dem von Stripe verrechenbaren Mindestbetrag von{' '}
-            {formatSicChf(SIC_MIN_CHARGE_CHF)}, weisen wir die Differenz vor der Zahlung als eigene Position aus.
-            Der angezeigte Betrag entspricht immer dem belasteten Betrag. Alle Preise verstehen sich in
-            Schweizer Franken, inklusive allfälliger Mehrwertsteuer.
+            Das Zertifikat kostet einmalig {formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)} und umfasst alle{' '}
+            {SIC_MODULES.length} Angaben. Die Zahlung erfolgt vorab über Stripe (Karte oder Link). Der angezeigte
+            Betrag entspricht immer dem belasteten Betrag. Alle Preise verstehen sich in Schweizer Franken,
+            inklusive allfälliger Mehrwertsteuer.
           </p>
         </section>
 
@@ -130,8 +122,9 @@ export default function SicAgbPage() {
         <section>
           <h2 className="font-semibold text-sic-navy">7. Rückerstattung</h2>
           <p className="mt-1.5">
-            Können wir eine bezahlte Angabe aus Gründen, die bei uns liegen, nicht prüfen, erstatten wir den
-            entsprechenden Betrag. Keine Rückerstattung erfolgt, wenn du die nötigen Unterlagen nicht
+            Können wir eine bezahlte Angabe aus Gründen, die bei uns liegen, nicht prüfen, erstatten wir ihren
+            Anteil am bezahlten Betrag: ein Viertel des Zertifikatspreises je Angabe, bei der Verlängerung gibt
+            es keine anteilige Rückerstattung. Keine Rückerstattung erfolgt, wenn du die nötigen Unterlagen nicht
             einreichst, wenn eine Angabe wegen ihres Inhalts nicht freigegeben werden kann oder wenn ein
             Vermieter dich trotz Zertifikat nicht berücksichtigt. Anfragen an {SIC_SUPPORT_EMAIL}.
           </p>

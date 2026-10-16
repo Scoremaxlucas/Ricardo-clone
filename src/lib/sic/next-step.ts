@@ -100,7 +100,7 @@ export function sicNextStep(dossier: SicDossierView): SicNextStep | null {
 
   if (dossier.landlordPdfReady && !dossier.certificateSealReady) {
     return {
-      title: 'Prüfstand als PDF nutzen',
+      title: 'Stand der Prüfung als PDF nutzen',
       detail: 'Das Siegel folgt, sobald Betreibungsauszug und Ausweis geprüft sind. Bis dahin kannst du den Stand schon beilegen.',
       anchor: '#sic-pdf',
       kind: 'done',

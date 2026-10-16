@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { randomBytes } from 'crypto'
+import { createHash, randomBytes } from 'crypto'
 import { sicPaths, sicUrl } from '@/lib/sic/config'
 import { normalizeEmail } from '@/lib/sic/session'
 
@@ -17,6 +17,14 @@ export function safeSicNextPath(raw: unknown): string {
 
 export function generateSicMagicToken(): string {
   return randomBytes(32).toString('base64url')
+}
+
+/**
+ * In der DB liegt nur der SHA-256 des Tokens: ein Lesezugriff auf die Tabelle
+ * (Backup, Log, Dump) reicht damit nicht mehr für eine Anmeldung.
+ */
+export function sicTokenDigest(token: string): string {
+  return createHash('sha256').update(token).digest('base64url')
 }
 
 export function buildSicMagicLinkUrl(token: string, next?: string): string {
@@ -42,7 +50,7 @@ export async function peekSicMagicLink(tokenRaw: string): Promise<'valid' | 'inv
   const token = (tokenRaw ?? '').trim()
   if (!token) return 'invalid'
   const row = await prisma.sicMagicLink.findUnique({
-    where: { token },
+    where: { token: sicTokenDigest(token) },
     select: { consumedAt: true, expiresAt: true },
   })
   return sicMagicLinkStatus(row)
@@ -55,7 +63,7 @@ export async function createSicMagicLink(
   const email = normalizeEmail(emailRaw)
   const token = generateSicMagicToken()
   const expiresAt = new Date(Date.now() + SIC_MAGIC_LINK_TTL_MINUTES * 60_000)
-  await prisma.sicMagicLink.create({ data: { email, token, expiresAt } })
+  await prisma.sicMagicLink.create({ data: { email, token: sicTokenDigest(token), expiresAt } })
   return { token, url: buildSicMagicLinkUrl(token, opts?.next), expiresAt }
 }
 
@@ -64,7 +72,7 @@ export async function consumeSicMagicLink(tokenRaw: string): Promise<{ email: st
   const token = (tokenRaw ?? '').trim()
   if (!token) return null
 
-  const row = await prisma.sicMagicLink.findUnique({ where: { token } })
+  const row = await prisma.sicMagicLink.findUnique({ where: { token: sicTokenDigest(token) } })
   if (!row || row.consumedAt || row.expiresAt.getTime() <= Date.now()) return null
 
   // Atomar als verbraucht markieren (nur wenn noch nicht verbraucht) — verhindert Doppel-Einlösung.

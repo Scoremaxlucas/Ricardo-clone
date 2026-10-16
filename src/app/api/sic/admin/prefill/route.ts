@@ -61,7 +61,12 @@ export async function POST(req: NextRequest) {
   if (!raw) {
     return NextResponse.json({ ok: false, message: 'Datei nicht abrufbar.' }, { status: 502 })
   }
-  const { buffer } = decryptSicDocument(raw)
+  let buffer: Buffer
+  try {
+    buffer = decryptSicDocument(raw).buffer
+  } catch {
+    return NextResponse.json({ ok: false, message: 'Datei konnte nicht entschlüsselt werden.' }, { status: 500 })
+  }
 
   if (buffer.byteLength > PREFILL_MAX_BYTES) {
     sicLog('sic.admin.prefill_too_large', {

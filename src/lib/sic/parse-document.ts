@@ -148,10 +148,8 @@ export async function parseSicDocumentFacts(opts: {
   if (!isPdf && !supportedImage) return { ok: false, error: 'parse' }
 
   try {
-    const client = new Anthropic({
-      apiKey,
-      defaultHeaders: { 'anthropic-beta': 'pdfs-2024-09-25' },
-    })
+    // PDF-Dokumentblöcke sind in der Messages API regulär verfügbar; der frühere Beta-Header ist nicht mehr nötig.
+    const client = new Anthropic({ apiKey })
 
     const documentBlock =
       isPdf ?

@@ -15,9 +15,13 @@ export async function POST(req: NextRequest) {
 
   const payment = await prisma.sicPayment.findUnique({
     where: { stripeCheckoutSessionId: hook.referenceId },
-    select: { id: true },
+    select: { id: true, stripePaymentIntentId: true },
   })
   if (!payment) return NextResponse.json({ ok: true })
+  // Der Hook ist nicht signiert: nur das beim Checkout gespeicherte Gateway darf diese Zahlung freischalten.
+  if (!payment.stripePaymentIntentId || payment.stripePaymentIntentId !== String(hook.gatewayId)) {
+    return NextResponse.json({ ok: true })
+  }
 
   try {
     const gateway = await payrexxGateway(hook.gatewayId)

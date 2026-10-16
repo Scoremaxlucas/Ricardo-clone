@@ -33,7 +33,8 @@ export function googleOAuthCallbackUrlForHost(host?: string | null): string {
 }
 
 export function sicPostLoginPath(callbackUrl?: string | null): string {
-  if (callbackUrl && callbackUrl.startsWith('/') && !callbackUrl.startsWith('//')) {
+  // Nur ein Pfad auf derselben Origin; «//» und «/\» würden Browser als fremde Host-Angabe lesen.
+  if (callbackUrl && callbackUrl.startsWith('/') && !/^\/[\/\\]/.test(callbackUrl)) {
     return callbackUrl
   }
   return '/sic/admin'

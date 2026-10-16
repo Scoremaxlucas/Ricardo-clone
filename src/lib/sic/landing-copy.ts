@@ -59,7 +59,7 @@ export const SIC_REVIEWER = {
 export const SIC_TRUST_FACTS = [
   {
     title: 'Ein Mensch gibt frei',
-    body: 'Eine KI liest die Unterlagen zur Vorbereitung aus. Freigeben tut immer ein Mensch — keine automatisierte Entscheidung.',
+    body: 'Eine KI liest die Unterlagen zur Vorbereitung aus. Freigegeben wird immer von einem Menschen — keine automatisierte Entscheidung.',
   },
   {
     title: 'Keine Behörde, keine Empfehlung',

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { sicPaths, sicUrl } from '@/lib/sic/config'
-import { generateSicMagicToken } from '@/lib/sic/magic-link'
+import { generateSicMagicToken, sicTokenDigest } from '@/lib/sic/magic-link'
 import { normalizeEmail } from '@/lib/sic/session'
 
 /** Kurzlebige Bestätigung der neuen Adresse — gleiches Fenster wie der Anmeldelink. */
@@ -140,7 +140,7 @@ export async function requestSicEmailChange(opts: {
     where: { id: cert.id },
     data: {
       pendingEmail: evaluated.email,
-      pendingEmailToken: token,
+      pendingEmailToken: sicTokenDigest(token),
       pendingEmailExpiresAt: expiresAt,
     },
   })
@@ -156,7 +156,7 @@ export async function peekSicEmailChange(tokenRaw: string): Promise<'valid' | 'i
   const token = (tokenRaw ?? '').trim()
   if (!token) return 'invalid'
   const row = await prisma.sicCertificate.findUnique({
-    where: { pendingEmailToken: token },
+    where: { pendingEmailToken: sicTokenDigest(token) },
     select: {
       pendingEmail: true,
       pendingEmailToken: true,
@@ -176,7 +176,7 @@ export async function confirmSicEmailChange(
   if (!token) return { ok: false, code: 'invalid' }
 
   const cert = await prisma.sicCertificate.findUnique({
-    where: { pendingEmailToken: token },
+    where: { pendingEmailToken: sicTokenDigest(token) },
     select: {
       id: true,
       email: true,
@@ -215,7 +215,7 @@ export async function confirmSicEmailChange(
       const updated = await tx.sicCertificate.updateMany({
         where: {
           id: cert.id,
-          pendingEmailToken: token,
+          pendingEmailToken: sicTokenDigest(token),
           emailChangedAt: null,
         },
         data: {

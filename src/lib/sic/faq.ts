@@ -57,7 +57,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was heisst «geprüft»?',
-    a: 'Wir schauen deine Unterlagen an: sind sie echt aussehend, vollständig, aktuell und plausibel? Danach stehen die Angaben in einheitlicher Form auf dem Zertifikat. Das ist keine behördliche Auskunft und keine Bonitätsbewertung. Wir rufen niemanden an — weder deinen Arbeitgeber noch deinen Vermieter.',
+    a: 'Wir schauen deine Unterlagen an: sind sie echt, vollständig, aktuell und plausibel? Danach stehen die Angaben in einheitlicher Form auf dem Zertifikat. Das ist keine behördliche Auskunft und keine Bonitätsbewertung. Wir rufen niemanden an — weder deinen Arbeitgeber noch deinen Vermieter.',
   },
   {
     q: 'Was, wenn eine Angabe nicht passt?',

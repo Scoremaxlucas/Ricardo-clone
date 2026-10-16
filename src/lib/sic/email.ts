@@ -179,7 +179,7 @@ export async function sendSicModuleRejectedEmail(opts: {
     html: sicEmailShell({
       preheader: `${title} — Nacharbeit nötig`,
       heading: `«${title}»: bitte nachreichen`,
-      bodyHtml: `<p style="margin:0 0 12px;">Für die Angabe <strong>${escapeHtml(title)}</strong> konnten wir noch nicht freigeben.</p>
+      bodyHtml: `<p style="margin:0 0 12px;">Die Angabe <strong>${escapeHtml(title)}</strong> konnten wir noch nicht freigeben.</p>
         ${opts.note ? `<p style="margin:0 0 12px;"><strong>Grund:</strong> ${escapeHtml(opts.note)}</p>` : ''}
         <p style="margin:0;">Reich einen passenden Nachweis nach — dein Anspruch darauf bleibt bestehen, es gibt keine Frist und keine zusätzlichen Kosten.</p>`,
       buttonText: 'Nachweis nachreichen',

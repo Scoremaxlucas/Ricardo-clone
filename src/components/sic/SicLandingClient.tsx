@@ -253,13 +253,14 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           url?: string
           code?: string
           message?: string
+          loginSent?: boolean
         }
         const transient =
           res.status === 502 || res.status === 503 || res.status === 504 || data?.code === 'stripe_transient'
         return {
           ok: Boolean(res.ok && data?.url),
           url: data?.url,
-          code: transient ? 'transient' : data?.code,
+          code: transient ? 'transient' : data?.loginSent ? 'login_sent' : data?.code,
           message: data?.message,
         }
       } catch {
@@ -271,6 +272,10 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       if (!result.ok && result.code === 'transient') {
         await new Promise(r => setTimeout(r, 900))
         result = await attempt()
+      }
+      if (result.code === 'login_sent') {
+        toast.success(result.message || 'Wir haben dir einen Anmeldelink geschickt.', { duration: 8000 })
+        return
       }
       if (!result.ok || !result.url) {
         toast.error(
@@ -520,6 +525,17 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     {submitting ? 'Wird erstellt …' : 'Zertifikat anlegen'}
                     {!submitting && <ArrowRight className="h-4 w-4" />}
                   </button>
+                  <p className="mt-2 text-xs text-white/60">
+                    Mit der Zahlung akzeptierst du die{' '}
+                    <a href={sicPaths.agb} className="underline underline-offset-2 hover:text-white">
+                      AGB
+                    </a>{' '}
+                    und die{' '}
+                    <a href={sicPaths.datenschutz} className="underline underline-offset-2 hover:text-white">
+                      Datenschutzerklärung
+                    </a>
+                    .
+                  </p>
                 </form>
               </div>
               <div id="zertifikat" className="min-w-0">
@@ -961,6 +977,15 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
             </button>
           }
         </div>
+        {!isReturning ?
+          <p className="mt-2 text-center text-[11px] text-slate-500 sm:text-right">
+            Mit der Zahlung akzeptierst du die{' '}
+            <a href={sicPaths.agb} className="underline underline-offset-2">
+              AGB
+            </a>
+            .
+          </p>
+        : null}
       </div>
     </div>
   )

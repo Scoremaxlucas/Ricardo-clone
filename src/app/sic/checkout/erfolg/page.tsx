@@ -1,6 +1,7 @@
 import { SicCheckoutSuccess } from '@/components/sic/SicCheckoutSuccess'
 
 export const dynamic = 'force-dynamic'
+export const metadata = { title: 'Zahlung', robots: { index: false, follow: false } }
 
 export default async function SicCheckoutSuccessPage({
   searchParams,

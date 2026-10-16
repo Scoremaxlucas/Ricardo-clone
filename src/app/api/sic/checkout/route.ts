@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { sicPaths, sicUrl, SIC_BRAND_NAME, SIC_STRIPE_STATEMENT_SUFFIX } from '@/lib/sic/config'
 import { encodePaymentHolderName } from '@/lib/sic/dossier'
+import { sendSicMagicLinkEmail } from '@/lib/sic/email'
 import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
 import { parseSicHouseholdKind } from '@/lib/sic/household'
 import { normalizeSicModuleIds, resolveSicCheckoutModuleIds, type SicModuleId } from '@/lib/sic/modules'
@@ -19,6 +20,7 @@ import {
   sicSessionCookieOptions,
   signSicSessionToken,
 } from '@/lib/sic/session'
+import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { getSicSession } from '@/lib/sic/session-cookie'
 import { stripe } from '@/lib/stripe-server'
 import type { SicModuleKind } from '@prisma/client'
@@ -223,6 +225,24 @@ export async function POST(req: NextRequest) {
     where: { email },
     select: { certifiedAt: true, status: true, modules: { select: { moduleKind: true } } },
   })
+
+  // Ohne Anmeldung darf eine fremde E-Mail nichts am bestehenden Zertifikat auslösen:
+  // keine offenen Sessions der Inhaberin abbrechen, keine Angaben an ihr Dossier hängen.
+  // Stattdessen bekommt die Inhaberin einen Anmeldelink und verlängert aus dem Dossier.
+  if (existing && !wantsRenewal && getSicSession()?.email !== email) {
+    try {
+      const { url } = await createSicMagicLink(email, { next: sicPaths.certificateWorkspace })
+      await sendSicMagicLinkEmail(email, url)
+    } catch (err) {
+      console.error('[sic/checkout] magic link for existing certificate failed', err)
+    }
+    return NextResponse.json({
+      ok: true,
+      loginSent: true,
+      message:
+        'Zu dieser E-Mail besteht bereits ein Zertifikat. Wir haben dir einen Anmeldelink geschickt — verlängern oder ergänzen kannst du direkt in deinem Dossier.',
+    })
+  }
   const includeBaseFee = !existing
   const alreadyPaid = (existing?.modules ?? []).map(m => m.moduleKind)
   const candidate = resolveSicCheckoutModuleIds({
@@ -483,7 +503,7 @@ export async function POST(req: NextRequest) {
     const errMessage = (err as { message?: string })?.message
     console.error('[sic/checkout] stripe session failed', {
       transient,
-      email,
+      emailHash: createHash('sha256').update(email).digest('hex').slice(0, 12),
       moduleKinds: candidate,
       type: errType,
       code: errCode,

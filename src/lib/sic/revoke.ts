@@ -48,7 +48,7 @@ export async function revokeSicCertificate(opts: {
   sicLog('sic.admin.revoked', {
     certificateId: cert.id,
     reviewerId: opts.reviewerId,
-    reason,
+    reasonLength: reason.length,
   })
   await recordSicEvent({
     kind: 'CERTIFICATE_REVOKED',

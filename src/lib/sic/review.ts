@@ -5,7 +5,7 @@ import { recordSicEvent } from '@/lib/sic/events'
 import type { SicFacts } from '@/lib/sic/facts'
 import type { SicModuleId } from '@/lib/sic/modules'
 import { sicExpiresAtAfterApproval, sicExpiryClockChanged } from '@/lib/sic/validity'
-import type { SicModuleKind } from '@prisma/client'
+import { Prisma, type SicModuleKind } from '@prisma/client'
 
 export type ApproveResult = {
   certificateId: string
@@ -146,10 +146,17 @@ export async function rejectSicModule(opts: {
   })
   if (!cert) return null
 
+  const wasVerified =
+    (await prisma.sicCertificateModule.count({
+      where: { certificateId: opts.certificateId, moduleKind: opts.moduleKind as SicModuleKind, status: 'VERIFIED' },
+    })) > 0
+
   const updated = await prisma.sicCertificateModule.updateMany({
     where: { certificateId: opts.certificateId, moduleKind: opts.moduleKind as SicModuleKind },
     data: {
       status: 'REJECTED',
+      // Eine abgelehnte Angabe darf keine früher freigegebenen Werte mehr tragen.
+      verifiedFacts: Prisma.DbNull,
       reviewedAt: now,
       reviewedByUserId: opts.reviewerId,
       reviewNote: opts.note,
@@ -157,9 +164,14 @@ export async function rejectSicModule(opts: {
   })
   if (updated.count === 0) return null
 
+  // Wird der Betreibungsauszug nach einer Freigabe abgelehnt, fällt die daraus abgeleitete Gültigkeit weg.
+  const dropExpiry = wasVerified && opts.moduleKind === 'BONITAET'
   await prisma.sicCertificate.update({
     where: { id: opts.certificateId },
-    data: { updatedAt: now },
+    data: {
+      updatedAt: now,
+      ...(dropExpiry ? { expiresAt: null, expiryReminder14dSentAt: null, expiryReminder3dSentAt: null } : {}),
+    },
   })
 
   await recordSicEvent({

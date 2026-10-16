@@ -158,7 +158,7 @@ function certificateStatusMeta(dossier: SicDossierView): { label: string; classN
     return { label: 'Mieter-Zertifikat', className: 'bg-sic-verified-bg text-sic-verified-text' }
   }
   if (dossier.progress.verifiedCount > 0) {
-    return { label: 'Prüfstand · noch kein Siegel', className: 'bg-sic-action-bg text-sic-action-deep' }
+    return { label: 'Stand der Prüfung · noch kein Siegel', className: 'bg-sic-action-bg text-sic-action-deep' }
   }
   return { label: 'In Arbeit', className: 'bg-slate-100 text-slate-700' }
 }
@@ -541,8 +541,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                   'Das Mieter-Zertifikat für beide ist da — legt das PDF der nächsten Bewerbung bei.'
                 : 'Dein Mieter-Zertifikat ist da — leg das PDF der nächsten Bewerbung bei.'
               : dossier.couple ?
-                'Der Prüfstand ist als PDF bereit. Zum Mieter-Zertifikat fehlen noch beide Betreibungsauszüge und beide Ausweise.'
-              : 'Der Prüfstand ist als PDF bereit. Zum Mieter-Zertifikat fehlen noch Betreibungsauszug und Ausweis.'
+                'Der Stand der Prüfung ist als PDF bereit. Zum Mieter-Zertifikat fehlen noch beide Betreibungsauszüge und beide Ausweise.'
+              : 'Der Stand der Prüfung ist als PDF bereit. Zum Mieter-Zertifikat fehlen noch Betreibungsauszug und Ausweis.'
             : dossier.couple ?
               'Sobald die erste Angabe geprüft ist, gibt es das PDF. Als Mieter-Zertifikat gilt es mit beiden Betreibungsauszügen und beiden Ausweisen.'
             : 'Sobald die erste Angabe geprüft ist, gibt es das PDF. Als Mieter-Zertifikat gilt es mit Betreibungsauszug und Ausweis.'}

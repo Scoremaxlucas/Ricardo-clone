@@ -1,4 +1,5 @@
 import crypto from 'crypto'
+import { detectSicUploadMime } from '@/lib/sic/file-signature'
 
 /**
  * Verschlüsselung der hochgeladenen Nachweise (AES-256-GCM).
@@ -66,11 +67,22 @@ export function encryptSicDocument(plain: Buffer): Buffer {
 }
 
 /**
- * Entschlüsselt mit allen bekannten Schlüsseln. Schlägt alles fehl, wird das
- * Original zurückgegeben — Dateien aus der Zeit ohne Schlüssel bleiben lesbar.
+ * Entschlüsselt mit allen bekannten Schlüsseln. Schlägt alles fehl, gilt die Datei
+ * nur dann als unverschlüsseltes Legacy-Dokument, wenn sie mit der Signatur eines
+ * erlaubten Dateityps beginnt (PDF/JPEG/PNG/WEBP). Alles andere (falscher
+ * Schlüssel, manipulierter Blob) wird als Fehler gemeldet statt roh ausgeliefert.
  */
+export class SicDocumentDecryptError extends Error {
+  constructor() {
+    super('SIC-Dokument konnte mit keinem bekannten Schlüssel entschlüsselt werden')
+  }
+}
+
 export function decryptSicDocument(stored: Buffer): { buffer: Buffer; decrypted: boolean } {
-  if (stored.length < IV_LEN + TAG_LEN + 1) return { buffer: stored, decrypted: false }
+  if (stored.length < IV_LEN + TAG_LEN + 1) {
+    if (detectSicUploadMime(stored)) return { buffer: stored, decrypted: false }
+    throw new SicDocumentDecryptError()
+  }
   const iv = stored.subarray(0, IV_LEN)
   const tag = stored.subarray(IV_LEN, IV_LEN + TAG_LEN)
   const enc = stored.subarray(IV_LEN + TAG_LEN)
@@ -84,5 +96,6 @@ export function decryptSicDocument(stored: Buffer): { buffer: Buffer; decrypted:
       // Nächster Schlüssel.
     }
   }
-  return { buffer: stored, decrypted: false }
+  if (detectSicUploadMime(stored)) return { buffer: stored, decrypted: false }
+  throw new SicDocumentDecryptError()
 }

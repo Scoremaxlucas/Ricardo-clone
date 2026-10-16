@@ -122,8 +122,8 @@ export default function SicDatenschutzPage() {
             Du kannst Auskunft über deine Daten verlangen, sie berichtigen oder löschen lassen und die Löschung
             deines Zertifikats verlangen. Eine Anfrage an {SIC_SUPPORT_EMAIL} genügt. Wird das Zertifikat
             gelöscht, zeigt die Prüfseite anschliessend keine Angaben mehr — auch nicht gegenüber Vermietern,
-            denen du den Link gegeben hast. Alle {SIC_MODULES.length} Angaben sind freiwillig; du wählst selbst,
-            welche du prüfen lässt.
+            denen du den Link gegeben hast. Alle {SIC_MODULES.length} Angaben sind freiwillig; du entscheidest selbst,
+            welche Unterlagen du einreichst.
           </p>
         </section>
       </div>
