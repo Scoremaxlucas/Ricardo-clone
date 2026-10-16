@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
 import { parseSicHouseholdKind } from '@/lib/sic/household'
 import { getSicSession } from '@/lib/sic/session-cookie'
 import { NextRequest, NextResponse } from 'next/server'
@@ -36,6 +37,41 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { ok: false, message: 'Bitte Vor- und Nachname der zweiten Person angeben.' },
       { status: 400 }
+    )
+  }
+
+  // Sobald eine Angabe freigegeben oder in Prüfung ist, sind Name und Haushalt eingefroren:
+  // sonst liesse sich ein geprüftes Einzel-Zertifikat umbenennen oder ohne Unterlagen zum Paar machen.
+  const current = await prisma.sicCertificate.findUnique({
+    where: { email: session.email },
+    select: {
+      holderFirstName: true,
+      holderLastName: true,
+      holder2FirstName: true,
+      holder2LastName: true,
+      householdKind: true,
+      modules: { select: { status: true } },
+    },
+  })
+  if (!current) {
+    return NextResponse.json({ ok: false, message: 'Kein Zertifikat gefunden.' }, { status: 404 })
+  }
+  const locked = current.modules.some(m => m.status === 'VERIFIED' || m.status === 'IN_REVIEW')
+  if (locked) {
+    const same =
+      current.holderFirstName === firstName &&
+      current.holderLastName === lastName &&
+      (current.holder2FirstName ?? '') === (couple ? firstName2 : '') &&
+      (current.holder2LastName ?? '') === (couple ? lastName2 : '') &&
+      (current.householdKind === 'COUPLE') === couple
+    if (same) return NextResponse.json({ ok: true })
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          `Name und Haushalt sind fixiert, sobald eine Angabe in Prüfung oder freigegeben ist. Melde dich bei ${SIC_SUPPORT_EMAIL}, falls etwas nicht stimmt.`,
+      },
+      { status: 409 }
     )
   }
 

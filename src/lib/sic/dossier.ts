@@ -105,6 +105,11 @@ export type SicDossierView = {
 
 export type SicVerifiedModuleView = { id: SicModuleId; title: string; lines: string[]; badge?: string }
 
+/** Zählt nur tatsächlich geprüfte Angaben; die selbst deklarierte Referenz (badge) zählt nicht als «geprüft». */
+export function sicVerifiedRowCount(rows: SicVerifiedModuleView[]): number {
+  return rows.filter(r => !r.badge).length
+}
+
 /**
  * Baut die Liste verifizierter Module für PDF und Prüfseite.
  * Bevorzugt die bei der Freigabe erfassten Werte; bereits freigegebene Module

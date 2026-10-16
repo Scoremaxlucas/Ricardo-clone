@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { certificateVerifyQrDataUrl } from '@/lib/certificate/qrDataUrl'
 import { SicCertificatePdfDocument } from '@/lib/sic/CertificatePdf'
 import { SIC_BRAND_NAME, sicVerifyUrl } from '@/lib/sic/config'
-import { isSicLandlordPdfReady, joinHouseholdHolderName, sicFactLineOptsFromHolders, verifiedModuleLineItems } from '@/lib/sic/dossier'
+import { isSicLandlordPdfReady, joinHouseholdHolderName, sicFactLineOptsFromHolders, sicVerifiedRowCount, verifiedModuleLineItems } from '@/lib/sic/dossier'
 import { isSicCouple } from '@/lib/sic/household'
 import { recordSicEventOnce } from '@/lib/sic/events'
 import {
@@ -89,7 +89,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       issuedAt={cert.certifiedAt ?? cert.issuedAt}
       expiresAt={cert.expiresAt}
       verifiedModules={verifiedModules}
-      completenessLabel={sicCompletenessLabel(verifiedModules.length)}
+      completenessLabel={sicCompletenessLabel(sicVerifiedRowCount(verifiedModules))}
       scopeNote={sealReady ? SIC_SCOPE_NOTE : SIC_WORKING_SCOPE_NOTE}
       verifyUrl={verifyUrl}
       qrDataUrl={qrDataUrl}
@@ -104,7 +104,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       kind: 'PDF_DOWNLOADED',
       certificateId: cert.id,
       email: cert.email,
-      meta: { verifiedCount: verifiedModules.length },
+      meta: { verifiedCount: sicVerifiedRowCount(verifiedModules) },
     })
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,

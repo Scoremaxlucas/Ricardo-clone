@@ -125,6 +125,13 @@ function pickKnownFields(moduleId: SicModuleId, raw: Record<string, unknown>): S
       facts[field.key] = String(value)
     }
   }
+  // Booleans aus dem Parser als gespeicherte Fakten übernehmen (Prüfer sieht sie im Formular und kann sie korrigieren).
+  if (moduleId === 'BONITAET' && typeof raw.hasOpenProceedings === 'boolean') {
+    facts.proceedings = raw.hasOpenProceedings ? 'open' : 'none'
+  }
+  if (moduleId === 'ARBEIT_EINKOMMEN' && typeof raw.noticeGiven === 'boolean') {
+    facts.noticeGiven = raw.noticeGiven ? 'yes' : 'no'
+  }
   return facts
 }
 

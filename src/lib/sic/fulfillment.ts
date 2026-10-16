@@ -148,10 +148,22 @@ async function sendPostCheckoutMagicLinkWithRetry(email: string): Promise<void> 
  * Die Gültigkeit wird hier **nicht** gesetzt: sie beginnt mit der ersten
  * Freigabe und richtet sich nach dem Betreibungsauszug, sobald der geprüft ist.
  */
-export async function fulfillSicPaidCheckout(input: {
-  stripeCheckoutSessionId: string
-  stripePaymentIntentId?: string | null
-}): Promise<FulfillResult> {
+/** Wird geworfen, wenn ein paralleler Worker die Zahlung innerhalb der Transaction bereits auf PAID gesetzt hat. */
+class SicPaymentAlreadyClaimedError extends Error {
+  constructor() {
+    super('SIC payment already claimed by a concurrent fulfillment')
+  }
+}
+
+const SIC_FULFILL_MAX_ATTEMPTS = 3
+
+export async function fulfillSicPaidCheckout(
+  input: {
+    stripeCheckoutSessionId: string
+    stripePaymentIntentId?: string | null
+  },
+  attempt = 1
+): Promise<FulfillResult> {
   const payment = await prisma.sicPayment.findUnique({
     where: { stripeCheckoutSessionId: input.stripeCheckoutSessionId },
   })
@@ -182,7 +194,7 @@ export async function fulfillSicPaidCheckout(input: {
   const pi = input.stripePaymentIntentId ?? payment.stripePaymentIntentId
 
   // Race: Zertifikat erneut laden — Module die schon existieren, nicht nochmals «verkaufen».
-  let existing = await prisma.sicCertificate.findUnique({
+  const existing = await prisma.sicCertificate.findUnique({
     where: { email },
     include: { modules: { select: { moduleKind: true } } },
   })
@@ -266,6 +278,15 @@ export async function fulfillSicPaidCheckout(input: {
   }
   try {
     const txResult = await prisma.$transaction(async tx => {
+      // Zuerst die Zahlung beanspruchen: nur PENDING/CANCELLED → PAID. Ein zweiter Worker wartet auf
+      // die Zeilensperre, sieht danach PAID und bricht hier ab — so gibt es Zertifikat, Reset und
+      // Magic-Link-Mail genau einmal, auch bei Verlängerung und Nachkauf ohne Unique-Constraint.
+      const claimed = await tx.sicPayment.updateMany({
+        where: { id: payment.id, status: { in: ['PENDING', 'CANCELLED'] } },
+        data: { status: 'PAID', paidAt: now, stripePaymentIntentId: pi },
+      })
+      if (claimed.count === 0) throw new SicPaymentAlreadyClaimedError()
+
       const nameData =
         prefillName ?
           {
@@ -319,12 +340,7 @@ export async function fulfillSicPaidCheckout(input: {
 
       await tx.sicPayment.update({
         where: { id: payment.id },
-        data: {
-          status: 'PAID',
-          paidAt: now,
-          certificateId: c.id,
-          stripePaymentIntentId: pi,
-        },
+        data: { certificateId: c.id },
       })
 
       return { cert: c, renewal }
@@ -332,21 +348,22 @@ export async function fulfillSicPaidCheckout(input: {
     cert = txResult.cert
     renewalResult = txResult.renewal
   } catch (err: unknown) {
-    // Unique email race: zweiter paralleler Erstkauf — nachgeladen fortsetzen (max. 1 Retry-Semantik via PAID-Check oben)
-    const again = await prisma.sicCertificate.findUnique({
-      where: { email },
-      include: { modules: { select: { moduleKind: true } } },
-    })
-    if (!again) throw err
-    // Payment kann zwischenzeitlich von anderem Worker auf PAID gesetzt worden sein
-    const refreshed = await prisma.sicPayment.findUnique({
-      where: { id: payment.id },
-    })
-    if (refreshed?.status === 'PAID' || refreshed?.status === 'REFUNDED') {
-      return fulfillSicPaidCheckout(input)
+    // Nur zwei Fälle werden wiederholt, beide mit begrenzter Tiefe:
+    //  - ein paralleler Worker hat die Zahlung beansprucht → erneuter Aufruf liefert alreadyDone
+    //  - Unique-Race beim Erstkauf (P2002 auf email) → mit bestehendem Zertifikat fortsetzen
+    // Jeder andere Fehler (DB weg, Timeout) wird weitergereicht, statt endlos zu rekursieren.
+    const uniqueRace = err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
+    const claimedElsewhere = err instanceof SicPaymentAlreadyClaimedError
+    if (!uniqueRace && !claimedElsewhere) throw err
+    if (attempt >= SIC_FULFILL_MAX_ATTEMPTS) throw err
+    if (uniqueRace) {
+      const again = await prisma.sicCertificate.findUnique({
+        where: { email },
+        select: { id: true },
+      })
+      if (!again) throw err
     }
-    existing = again
-    return fulfillSicPaidCheckout(input)
+    return fulfillSicPaidCheckout(input, attempt + 1)
   }
 
   // NACH-Commit: Nebeneffekte, die nicht in die Transaction gehören.

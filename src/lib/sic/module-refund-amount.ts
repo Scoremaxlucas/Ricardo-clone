@@ -1,12 +1,12 @@
 import { isSicModuleId, normalizeSicModuleIds, roundSicChf } from '@/lib/sic/modules'
-import { quoteSicOrder } from '@/lib/sic/pricing'
 
 /**
- * AGB §7: Anteil einer bezahlten Angabe am Stripe-Betrag.
+ * AGB §7: Anteil einer bezahlten Angabe am belasteten Betrag.
  *
- * Basisgebühr bleibt beim Zertifikat. Stripe-Mindestbetrag hängt an den Angaben,
- * nicht an der Basis — bei nur einer Angabe auf der Zahlung geht der Rest
- * (inkl. Minimum) an diese Angabe. Verlängerung hat keine modulweise Erstattung.
+ * Seit dem Komplettpaket (eine Gebühr für Basis und alle Angaben) gibt es keinen
+ * Einzelpreis pro Angabe mehr. Der erstattbare Anteil ist deshalb der gleiche
+ * Bruchteil des tatsächlich bezahlten Betrags für jede Angabe auf der Zahlung
+ * (Paket mit 4 Angaben: ein Viertel). Verlängerung hat keine modulweise Erstattung.
  */
 export function sicModuleRefundAmountChf(opts: {
   amountPaidChf: number
@@ -23,29 +23,7 @@ export function sicModuleRefundAmountChf(opts: {
   const kinds = normalizeSicModuleIds(opts.moduleKinds)
   if (!kinds.includes(opts.moduleKind)) return null
 
-  const quote = quoteSicOrder({ includeBaseFee: opts.includeBaseFee, moduleIds: kinds })
-  const moduleLine = quote.lines.find(l => l.kind === 'module' && l.moduleId === opts.moduleKind)
-  if (!moduleLine) return null
-
-  const moduleLines = quote.lines.filter(l => l.kind === 'module')
-  const discountAbs = Math.abs(quote.lines.find(l => l.kind === 'discount')?.amountChf ?? 0)
-  const minimum = quote.lines.find(l => l.kind === 'minimum')?.amountChf ?? 0
-  const base = quote.lines.find(l => l.kind === 'base')?.amountChf ?? 0
-  const moduleSum = moduleLines.reduce((sum, l) => sum + l.amountChf, 0)
-  const positiveSum = moduleSum + base
-  if (positiveSum <= 0) return null
-
-  const scale = quote.totalChf > 0 ? opts.amountPaidChf / quote.totalChf : 1
-  const baseNet = (base / positiveSum) * (positiveSum - discountAbs)
-
-  let share: number
-  if (moduleLines.length === 1) {
-    share = opts.amountPaidChf - baseNet * scale
-  } else {
-    const moduleNet = (moduleLine.amountChf / positiveSum) * (positiveSum - discountAbs)
-    const minShare = moduleSum > 0 ? (moduleLine.amountChf / moduleSum) * minimum : 0
-    share = (moduleNet + minShare) * scale
-  }
+  const share = opts.amountPaidChf / kinds.length
 
   const already = Number.isFinite(opts.alreadyRefundedChf) ? Math.max(0, opts.alreadyRefundedChf ?? 0) : 0
   const remaining = Math.max(0, opts.amountPaidChf - already)

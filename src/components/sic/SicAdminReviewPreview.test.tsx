@@ -12,7 +12,7 @@ describe('SicAdminReviewPreview', () => {
         expiresAt="2026-11-01T00:00:00.000Z"
         modules={[{ moduleKind: 'BONITAET', status: 'IN_REVIEW', verifiedFacts: null }]}
         draftModuleId="BONITAET"
-        draftFacts={{ extractDate: '2026-06-12', office: 'Betreibungsamt Zürich' }}
+        draftFacts={{ extractDate: '2026-06-12', office: 'Betreibungsamt Zürich', proceedings: 'none' }}
       />
     )
     expect(html).toContain('Vorschau für den Vermieter')

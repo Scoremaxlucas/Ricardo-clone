@@ -5,7 +5,7 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { isValidSicCertificateCode, normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
 import { findSicRetiredCertificateCode } from '@/lib/sic/codes'
 import { SIC_BRAND_NAME } from '@/lib/sic/config'
-import { isSicLandlordPdfReady, joinHouseholdHolderName, sicFactLineOptsFromHolders, verifiedModuleLineItems } from '@/lib/sic/dossier'
+import { isSicLandlordPdfReady, joinHouseholdHolderName, sicFactLineOptsFromHolders, sicVerifiedRowCount, verifiedModuleLineItems } from '@/lib/sic/dossier'
 import { isSicCouple } from '@/lib/sic/household'
 import { recordSicVerifyScan } from '@/lib/sic/events'
 import { isSicCertificateSealReady, sicCompletenessLabel } from '@/lib/sic/modules'
@@ -92,7 +92,7 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
         })
       )
     : []
-  const completenessLabel = sicCompletenessLabel(verifiedModules.length)
+  const completenessLabel = sicCompletenessLabel(sicVerifiedRowCount(verifiedModules))
   const sealed = isSicCertificateSealReady(verifiedModules.map(m => m.id))
 
   if (cert && landlordReady) {

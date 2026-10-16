@@ -17,11 +17,12 @@ describe('normalizeSicFacts', () => {
     const res = normalizeSicFacts('BONITAET', {
       extractDate: '2026-06-12',
       office: ' Betreibungsamt Zürich ',
+      proceedings: 'none',
       sneaky: 'ignoriert',
     })
     expect(res.ok).toBe(true)
     if (!res.ok) return
-    expect(res.facts).toEqual({ extractDate: '2026-06-12', office: 'Betreibungsamt Zürich' })
+    expect(res.facts).toEqual({ extractDate: '2026-06-12', office: 'Betreibungsamt Zürich', proceedings: 'none' })
   })
 
   it('meldet fehlende Pflichtfelder mit Klartext-Label', () => {
@@ -29,6 +30,7 @@ describe('normalizeSicFacts', () => {
     expect(res.ok).toBe(false)
     if (res.ok) return
     expect(res.missing).toContain('Ausstellendes Betreibungsamt')
+    expect(res.missing).toContain('Offene Betreibungen')
   })
 
   it('weist Select-Werte ausserhalb der Liste und unlesbare Daten ab', () => {
@@ -78,9 +80,38 @@ describe('sicRentCeilingChf', () => {
 
 describe('sicFactLines', () => {
   it('nennt den Betreibungsauszug mit Datum und Amt', () => {
-    const lines = sicFactLines('BONITAET', { extractDate: '2026-06-12', office: 'Betreibungsamt Zürich' })
+    const lines = sicFactLines('BONITAET', {
+      extractDate: '2026-06-12',
+      office: 'Betreibungsamt Zürich',
+      proceedings: 'none',
+    })
     expect(lines[0]).toBe('Keine offenen Betreibungen')
     expect(lines[1]).toContain('Betreibungsamt Zürich')
+  })
+
+  it('behauptet «Keine offenen Betreibungen» und «ungekündigt» nie ohne gespeicherten Wert', () => {
+    const bonitaet = sicFactLines('BONITAET', { extractDate: '2026-06-12', office: 'Betreibungsamt Zürich' })
+    expect(bonitaet.join(' ')).not.toContain('Keine offenen Betreibungen')
+    const open = sicFactLines('BONITAET', {
+      extractDate: '2026-06-12',
+      office: 'Betreibungsamt Zürich',
+      proceedings: 'open',
+    })
+    expect(open[0]).toBe('Offene Betreibungen vermerkt')
+    const income = sicFactLines('ARBEIT_EINKOMMEN', {
+      incomeBand: '80_100k',
+      employmentType: 'unbefristet',
+      employedSince: '2020-03-01',
+    })
+    expect(income.join(' ')).not.toContain('ungekündigt')
+    const notice = sicFactLines('ARBEIT_EINKOMMEN', {
+      incomeBand: '80_100k',
+      employmentType: 'unbefristet',
+      employedSince: '2020-03-01',
+      noticeGiven: 'yes',
+    })
+    expect(notice.join(' ')).toContain('Kündigung ausgesprochen')
+    expect(notice.join(' ')).not.toContain('ungekündigt')
   })
 
   it('zeigt Einkommensband und tragbare Miete, nie den exakten Lohn', () => {
@@ -89,6 +120,7 @@ describe('sicFactLines', () => {
       employmentType: 'unbefristet',
       employedSince: '2020-03-01',
       employerName: 'Muster AG',
+      noticeGiven: 'no',
     })
     expect(lines.join(' | ')).toContain('CHF 80’000 – 100’000')
     expect(lines.join(' | ')).toContain('Tragbar bis CHF 2’200 Monatsmiete')
@@ -157,12 +189,15 @@ describe('couple fact lines', () => {
       {
         extractDate: '2026-06-12',
         office: 'Betreibungsamt Zürich',
+        proceedings: 'none',
         extractDate2: '2026-05-20',
         office2: 'Betreibungsamt Bern',
+        proceedings2: 'none',
       },
       { couple: true, person1Label: 'Anna Muster', person2Label: 'Luca Bianchi' }
     )
-    expect(bonitaet[0]).toBe('Keine offenen Betreibungen')
+    expect(bonitaet[0]).toBe('Anna Muster: Keine offenen Betreibungen')
+    expect(bonitaet[1]).toBe('Luca Bianchi: Keine offenen Betreibungen')
     expect(bonitaet.join(' ')).toMatch(/Anna Muster/)
     expect(bonitaet.join(' ')).toMatch(/Luca Bianchi/)
 
@@ -187,10 +222,10 @@ describe('couple prefill mapping', () => {
   it('remaps person-1 keys to person-2 keys for the second document', () => {
     const remapped = remapSicPrefillToPerson(
       'BONITAET',
-      { extractDate: '2026-06-12', office: 'Betreibungsamt Zürich' },
+      { extractDate: '2026-06-12', office: 'Betreibungsamt Zürich', proceedings: 'none' },
       2
     )
-    expect(remapped).toEqual({ extractDate2: '2026-06-12', office2: 'Betreibungsamt Zürich' })
+    expect(remapped).toEqual({ extractDate2: '2026-06-12', office2: 'Betreibungsamt Zürich', proceedings2: 'none' })
   })
 
   it('strips person-2 keys so person-1 facts cannot overwrite person-2 facts', () => {

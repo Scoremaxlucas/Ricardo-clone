@@ -299,6 +299,9 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
     }
   }
 
+  // Spiegel der Server-Regel in /api/sic/profile: geprüfte oder in Prüfung stehende Angaben frieren Name und Haushalt ein.
+  const nameLocked = dossier.progress.verifiedCount > 0 || dossier.progress.inReviewCount > 0
+
   async function saveName() {
     if (!firstName.trim() || !lastName.trim()) {
       toast.error('Bitte Vor- und Nachname angeben.')
@@ -806,13 +809,16 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
               <KeyRound className="h-3.5 w-3.5" />
               {recoding ? 'Code wird erzeugt …' : 'Neuen Code erzeugen (alter Link wird ersetzt)'}
             </button>
-            <button
-              type="button"
-              onClick={() => setEditingName(true)}
-              className="mt-3 block text-xs font-medium text-slate-500 hover:text-sic-navy hover:underline"
-            >
-              Namen oder Haushalt ändern
-            </button>
+            {nameLocked ?
+              <p className="mt-3 text-xs text-slate-400">Name und Haushalt sind fixiert, sobald eine Angabe geprüft wird.</p>
+            : <button
+                type="button"
+                onClick={() => setEditingName(true)}
+                className="mt-3 block text-xs font-medium text-slate-500 hover:text-sic-navy hover:underline"
+              >
+                Namen oder Haushalt ändern
+              </button>
+            }
           </div>
         : <div className="mt-5">
             <span
@@ -826,7 +832,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                 'Die Gültigkeit ist abgelaufen — verlängere, um das PDF wieder abzurufen.'
               : 'Kommt, sobald die erste Angabe geprüft ist. Als Zertifikat gilt es erst mit Betreibungsauszug und Ausweis.'}
             </p>
-            {dossier.holderName ?
+            {dossier.holderName && !nameLocked ?
               <button
                 type="button"
                 onClick={() => setEditingName(true)}

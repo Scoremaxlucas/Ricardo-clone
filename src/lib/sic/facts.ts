@@ -53,6 +53,16 @@ const EMPLOYMENT_TYPES = [
   { value: 'probezeit', label: 'In der Probezeit' },
 ] as const
 
+const PROCEEDINGS = [
+  { value: 'none', label: 'Keine offenen Betreibungen' },
+  { value: 'open', label: 'Offene Betreibungen vermerkt' },
+] as const
+
+const NOTICE_GIVEN = [
+  { value: 'no', label: 'Ungekündigt' },
+  { value: 'yes', label: 'Kündigung ausgesprochen' },
+] as const
+
 const PAYMENT_BEHAVIOUR = [
   { value: 'always_on_time', label: 'Stets fristgerecht' },
   { value: 'mostly_on_time', label: 'Überwiegend fristgerecht' },
@@ -83,6 +93,14 @@ const FIELDS: Record<SicModuleId, SicFactField[]> = {
       required: true,
       placeholder: 'Betreibungsamt Zürich',
     },
+    {
+      key: 'proceedings',
+      label: 'Offene Betreibungen',
+      kind: 'select',
+      required: true,
+      options: [...PROCEEDINGS],
+      hint: 'Laut Auszug — «Keine offenen Betreibungen» erscheint nur mit diesem Wert auf dem Zertifikat',
+    },
   ],
   ARBEIT_EINKOMMEN: [
     {
@@ -105,6 +123,14 @@ const FIELDS: Record<SicModuleId, SicFactField[]> = {
       label: 'Anstellung seit',
       kind: 'date',
       required: true,
+    },
+    {
+      key: 'noticeGiven',
+      label: 'Kündigung',
+      kind: 'select',
+      required: true,
+      options: [...NOTICE_GIVEN],
+      hint: 'Laut Arbeitgeberbestätigung — «ungekündigt» erscheint nur mit diesem Wert auf dem Zertifikat',
     },
     {
       key: 'employerName',
@@ -174,6 +200,14 @@ function extraCoupleFields(moduleId: SicModuleId): SicFactField[] {
         placeholder: 'Betreibungsamt Bern',
         group: 'person2',
       },
+      {
+        key: 'proceedings2',
+        label: 'Person 2 — Offene Betreibungen',
+        kind: 'select',
+        required: true,
+        options: [...PROCEEDINGS],
+        group: 'person2',
+      },
     ]
   }
   if (moduleId === 'ARBEIT_EINKOMMEN') {
@@ -199,6 +233,14 @@ function extraCoupleFields(moduleId: SicModuleId): SicFactField[] {
         label: 'Person 2 — Anstellung seit',
         kind: 'date',
         required: true,
+        group: 'person2',
+      },
+      {
+        key: 'noticeGiven2',
+        label: 'Person 2 — Kündigung',
+        kind: 'select',
+        required: true,
+        options: [...NOTICE_GIVEN],
         group: 'person2',
       },
       {
@@ -337,7 +379,7 @@ export function readSicFacts(moduleId: SicModuleId, stored: unknown): SicFacts |
 }
 
 export function formatSicAmountChf(amount: number): string {
-  return `CHF ${Math.round(amount).toLocaleString('de-CH').replace(/\u00a0/g, '’')}`
+  return `CHF ${Math.round(amount).toLocaleString('de-CH').replace(/[\u00a0']/g, '’')}`
 }
 
 /**
@@ -407,10 +449,12 @@ function withPerson(label: string | null | undefined, line: string): string {
 function employmentLines(
   moduleId: SicModuleId,
   facts: SicFacts,
-  keys: { band: string; type: string; since: string; employer: string },
+  keys: { band: string; type: string; since: string; employer: string; notice: string },
   personLabel?: string | null
 ): string[] {
   const lines: string[] = []
+  // Nur ein gespeicherter Wert erzeugt die Aussage — nie als Default behaupten.
+  const notice = facts[keys.notice] === 'no' ? ', ungekündigt' : facts[keys.notice] === 'yes' ? ', Kündigung ausgesprochen' : ''
   const bandField = fieldFor(moduleId, keys.band)
   if (bandField && facts[keys.band]) {
     lines.push(withPerson(personLabel, `Bruttojahreslohn ${optionLabel(bandField, facts[keys.band])}`))
@@ -422,11 +466,11 @@ function employmentLines(
     lines.push(
       withPerson(
         personLabel,
-        since ? `${typeLabel} angestellt seit ${since}, ungekündigt` : `${typeLabel} angestellt, ungekündigt`
+        since ? `${typeLabel} angestellt seit ${since}${notice}` : `${typeLabel} angestellt${notice}`
       )
     )
   } else if (since) {
-    lines.push(withPerson(personLabel, `Angestellt seit ${since}, ungekündigt`))
+    lines.push(withPerson(personLabel, `Angestellt seit ${since}${notice}`))
   }
   if (facts[keys.employer]) lines.push(withPerson(personLabel, `Arbeitgeber: ${facts[keys.employer]}`))
   return lines
@@ -449,7 +493,16 @@ export function sicFactLines(
   const p2 = opts?.person2Label?.trim() || null
 
   if (moduleId === 'BONITAET') {
-    lines.push('Keine offenen Betreibungen')
+    // Nur ein gespeicherter Wert erzeugt die Aussage — nie als Default behaupten.
+    const proceedingsField = fieldFor(moduleId, 'proceedings')
+    if (proceedingsField) {
+      if (couple) {
+        if (facts.proceedings) lines.push(withPerson(p1, optionLabel(proceedingsField, facts.proceedings)))
+        if (facts.proceedings2) lines.push(withPerson(p2, optionLabel(proceedingsField, facts.proceedings2)))
+      } else if (facts.proceedings) {
+        lines.push(optionLabel(proceedingsField, facts.proceedings))
+      }
+    }
     const date = fmtDate(facts.extractDate)
     const office = facts.office
     let first = ''
@@ -474,7 +527,7 @@ export function sicFactLines(
         ...employmentLines(
           moduleId,
           facts,
-          { band: 'incomeBand', type: 'employmentType', since: 'employedSince', employer: 'employerName' },
+          { band: 'incomeBand', type: 'employmentType', since: 'employedSince', employer: 'employerName', notice: 'noticeGiven' },
           p1
         )
       )
@@ -482,7 +535,7 @@ export function sicFactLines(
         ...employmentLines(
           moduleId,
           facts,
-          { band: 'incomeBand2', type: 'employmentType2', since: 'employedSince2', employer: 'employerName2' },
+          { band: 'incomeBand2', type: 'employmentType2', since: 'employedSince2', employer: 'employerName2', notice: 'noticeGiven2' },
           p2
         )
       )
@@ -497,6 +550,7 @@ export function sicFactLines(
           type: 'employmentType',
           since: 'employedSince',
           employer: 'employerName',
+          notice: 'noticeGiven',
         })
       )
       const ceiling = sicRentCeilingChf(facts.incomeBand)
@@ -574,11 +628,12 @@ export function sicFactSummary(moduleId: SicModuleId, facts: SicFacts | null): s
  * Keine erfundenen Intervalle wie «90–110k».
  */
 export const SIC_CERT_PREVIEW_FACTS: Record<SicModuleId, SicFacts> = {
-  BONITAET: { extractDate: '2026-06-12', office: 'Betreibungsamt Zürich' },
+  BONITAET: { extractDate: '2026-06-12', office: 'Betreibungsamt Zürich', proceedings: 'none' },
   ARBEIT_EINKOMMEN: {
     incomeBand: '80_100k',
     employmentType: 'unbefristet',
     employedSince: '2020-03-01',
+    noticeGiven: 'no',
   },
   ZUVERLAESSIGKEIT: { tenancyFrom: '2021-01-01', paymentBehaviour: 'always_on_time' },
   AUFENTHALT: { documentType: 'ch_pass', validUntil: '2031-05-31' },

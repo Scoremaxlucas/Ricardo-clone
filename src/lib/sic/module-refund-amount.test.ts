@@ -30,35 +30,21 @@ describe('sicModuleRefundAmountChf', () => {
     ).toBeNull()
   })
 
-  it('refunds the full add-on charge when that payment has only one Angabe', () => {
-    const q = quoteSicOrder({ includeBaseFee: false, moduleIds: ['BONITAET'] })
+  it('refunds the whole payment when it covered a single Angabe', () => {
     expect(
       sicModuleRefundAmountChf({
-        amountPaidChf: q.totalChf,
+        amountPaidChf: 30,
         includeBaseFee: false,
         isRenewal: false,
         moduleKinds: ['BONITAET'],
         moduleKind: 'BONITAET',
       })
-    ).toBe(q.totalChf)
+    ).toBe(30)
   })
 
-  it('keeps the base fee when refunding the only Angabe of a first purchase', () => {
-    const q = quoteSicOrder({ includeBaseFee: true, moduleIds: ['BONITAET'] })
-    const base = q.lines.find(l => l.kind === 'base')?.amountChf ?? 0
-    expect(
-      sicModuleRefundAmountChf({
-        amountPaidChf: q.totalChf,
-        includeBaseFee: true,
-        isRenewal: false,
-        moduleKinds: ['BONITAET'],
-        moduleKind: 'BONITAET',
-      })
-    ).toBe(roundSicChf(q.totalChf - base))
-  })
-
-  it('splits a bundle across Angaben without refunding the base', () => {
+  it('splits the package price equally across its Angaben (CHF 79 → 19.75 each)', () => {
     const q = quoteSicOrder({ includeBaseFee: true, moduleIds: ALL })
+    expect(q.totalChf).toBe(79)
     const shares = ALL.map(
       id =>
         sicModuleRefundAmountChf({
@@ -69,14 +55,24 @@ describe('sicModuleRefundAmountChf', () => {
           moduleKind: id,
         })!
     )
-    expect(shares.every(s => s >= 0.01)).toBe(true)
-    const refunded = roundSicChf(shares.reduce((sum, n) => sum + n, 0))
-    expect(refunded).toBeLessThan(q.totalChf)
-    expect(roundSicChf(q.totalChf - refunded)).toBeGreaterThan(0)
+    expect(shares).toEqual([19.75, 19.75, 19.75, 19.75])
+    expect(roundSicChf(shares.reduce((sum, n) => sum + n, 0))).toBe(q.totalChf)
+  })
+
+  it('rounds the share to Rappen', () => {
+    expect(
+      sicModuleRefundAmountChf({
+        amountPaidChf: 10,
+        includeBaseFee: true,
+        isRenewal: false,
+        moduleKinds: ['BONITAET', 'AUFENTHALT', 'ARBEIT_EINKOMMEN'],
+        moduleKind: 'AUFENTHALT',
+      })
+    ).toBe(3.33)
   })
 
   it('caps the share at what Stripe has not yet refunded', () => {
-    const q = quoteSicOrder({ includeBaseFee: false, moduleIds: ['BONITAET'] })
+    const q = { totalChf: 30 }
     expect(
       sicModuleRefundAmountChf({
         amountPaidChf: q.totalChf,
