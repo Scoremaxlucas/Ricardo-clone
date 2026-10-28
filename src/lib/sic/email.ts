@@ -270,32 +270,50 @@ export async function sendSicExpiryReminderEmail(opts: {
   })
 }
 
+/**
+ * Eine Erinnerung pro Zertifikat mit allen fehlenden Nachweisen — nie eine Mail pro Angabe.
+ */
 export async function sendSicUploadReminderEmail(opts: {
   email: string
-  moduleKind: SicModuleId
+  moduleKinds: SicModuleId[]
   magicLinkUrl?: string
 }) {
+  if (opts.moduleKinds.length === 0) {
+    throw new Error('sendSicUploadReminderEmail: keine Module übergeben')
+  }
   const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
-  const copy = sicUploadReminderCopy(opts.moduleKind)
-  const title = getSicModule(opts.moduleKind).title
-  const bodyHtml = copy.paragraphs
-    .map((p, i) =>
-      i === copy.paragraphs.length - 1
-        ? `<p style="margin:0;">${escapeHtml(p)}</p>`
-        : `<p style="margin:0 0 12px;">${escapeHtml(p)}</p>`
+  const copy = sicUploadReminderCopy(opts.moduleKinds)
+  const single = opts.moduleKinds.length === 1
+  const listHtml =
+    single ? '' : (
+      `<ul style="margin:0 0 12px;padding-left:20px;">${copy.items
+        .map(t => `<li style="margin:0 0 4px;">${escapeHtml(t)}</li>`)
+        .join('')}</ul>`
     )
+  const paragraphsHtml = copy.paragraphs
+    .map((p, i) => {
+      const html = i === copy.paragraphs.length - 1 ? `<p style="margin:0;">${escapeHtml(p)}</p>` : `<p style="margin:0 0 12px;">${escapeHtml(p)}</p>`
+      // Checkliste direkt nach dem Einleitungssatz einfügen.
+      return i === 0 ? html + listHtml : html
+    })
     .join('')
+  const subject =
+    single ?
+      `${SIC_BRAND_NAME}: Noch offen — «${copy.items[0]}»`
+    : `${SIC_BRAND_NAME}: ${copy.items.length} Nachweise noch offen`
+  const textList = single ? '' : `\n${copy.items.map(t => `- ${t}`).join('\n')}\n`
+  const text = [copy.paragraphs[0] + textList, ...copy.paragraphs.slice(1)].join('\n\n')
   return sicMail({
     to: opts.email,
-    subject: `${SIC_BRAND_NAME}: Noch offen — «${title}»`,
+    subject,
     html: sicEmailShell({
       preheader: copy.preheader,
       heading: copy.heading,
-      bodyHtml,
+      bodyHtml: paragraphsHtml,
       buttonText: 'Nachweise hochladen',
       buttonUrl,
     }),
-    text: `${copy.paragraphs.join('\n\n')}\n\n${buttonUrl}`,
+    text: `${text}\n\n${buttonUrl}`,
   })
 }
 

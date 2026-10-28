@@ -94,6 +94,21 @@ describe('upload reminder copy', () => {
       expect(sicUploadReminderCopy(m.id).paragraphs.length).toBeGreaterThan(0)
     }
   })
+
+  it('bundles several missing proofs into one message', () => {
+    const copy = sicUploadReminderCopy(['BONITAET', 'ZUVERLAESSIGKEIT'])
+    expect(copy.items).toHaveLength(2)
+    expect(copy.heading).toMatch(/Nachweise/)
+    expect(copy.paragraphs[0]).toMatch(/2 Nachweise/)
+    const all = copy.paragraphs.join(' ')
+    expect(all).toMatch(/selbst/)
+    expect(all).toMatch(/Unterschrift Dritter/)
+  })
+
+  it('lists all four modules in one preheader', () => {
+    const copy = sicUploadReminderCopy(SIC_MODULES.map(m => m.id))
+    for (const m of SIC_MODULES) expect(copy.preheader).toContain(m.title)
+  })
 })
 
 describe('magic link copy', () => {

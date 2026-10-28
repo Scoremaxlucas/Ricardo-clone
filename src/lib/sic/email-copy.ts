@@ -81,30 +81,60 @@ export function sicCertificateReadyCopy(opts: {
   }
 }
 
-export function sicUploadReminderCopy(moduleKind: SicModuleId): {
+/**
+ * Eine Erinnerung pro Zertifikat: listet alle noch fehlenden Nachweise auf.
+ * Selbst beschaffbare Dokumente und Vorlagen mit Unterschrift Dritter werden getrennt benannt.
+ */
+export function sicUploadReminderCopy(moduleKinds: SicModuleId | SicModuleId[]): {
   heading: string
   preheader: string
   paragraphs: string[]
+  /** Fehlende Nachweise als Liste (Titel). */
+  items: string[]
 } {
-  const def = getSicModule(moduleKind)
-  if (def.selfObtainable) {
-    return {
-      heading: 'Nachweis noch offen',
-      preheader: `Noch offen: ${def.title}`,
-      paragraphs: [
-        `Für «${def.title}» fehlt noch der Upload. Das Dokument hast du selbst — oft innerhalb eines Tages.`,
-        'Lade es hoch, sobald es vorliegt.',
-      ],
+  const kinds = Array.isArray(moduleKinds) ? moduleKinds : [moduleKinds]
+  const defs = kinds.map(k => getSicModule(k))
+  const selfDefs = defs.filter(d => d.selfObtainable)
+  const thirdDefs = defs.filter(d => !d.selfObtainable)
+  const items = defs.map(d => d.title)
+  const single = defs.length === 1
+
+  const paragraphs: string[] = []
+  if (single) {
+    const def = defs[0]
+    paragraphs.push(
+      def.selfObtainable ?
+        `Für «${def.title}» fehlt noch der Upload. Das Dokument hast du selbst — oft innerhalb eines Tages.`
+      : `Für «${def.title}» fehlt noch die unterzeichnete Vorlage. Eine Unterschrift Dritter darf ein paar Tage dauern.`
+    )
+    paragraphs.push(def.selfObtainable ? 'Lade es hoch, sobald es vorliegt.' : 'Lade sie hoch, sobald sie vorliegt.')
+  } else {
+    paragraphs.push(`Für dein Zertifikat fehlen noch ${defs.length} Nachweise:`)
+    if (selfDefs.length > 0) {
+      paragraphs.push(
+        `${joinTitles(selfDefs.map(d => d.title))}: Diese Dokumente hast du selbst — oft innerhalb eines Tages beschafft.`
+      )
     }
+    if (thirdDefs.length > 0) {
+      paragraphs.push(
+        `${joinTitles(thirdDefs.map(d => d.title))}: Hier braucht es die unterzeichnete Vorlage. Eine Unterschrift Dritter darf ein paar Tage dauern.`
+      )
+    }
+    paragraphs.push('Lade alles hoch, sobald es vorliegt. Jeder Nachweis wird einzeln geprüft.')
   }
+
   return {
-    heading: 'Nachweis noch offen',
-    preheader: `Noch offen: ${def.title}`,
-    paragraphs: [
-      `Für «${def.title}» fehlt noch die unterzeichnete Vorlage. Eine Unterschrift Dritter darf ein paar Tage dauern.`,
-      'Lade sie hoch, sobald sie vorliegt.',
-    ],
+    heading: single ? 'Nachweis noch offen' : 'Nachweise noch offen',
+    preheader: single ? `Noch offen: ${items[0]}` : `Noch offen: ${items.join(', ')}`,
+    paragraphs,
+    items,
   }
+}
+
+function joinTitles(titles: string[]): string {
+  const quoted = titles.map(t => `«${t}»`)
+  if (quoted.length <= 1) return quoted.join('')
+  return `${quoted.slice(0, -1).join(', ')} und ${quoted[quoted.length - 1]}`
 }
 
 export type SicMagicLinkMailSource = 'self' | 'support' | 'checkout'

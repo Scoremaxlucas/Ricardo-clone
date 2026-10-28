@@ -15,7 +15,7 @@ import {
 } from '@/lib/sic/email'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
-import { isSicModuleId } from '@/lib/sic/modules'
+import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
 import { cronBudgetState } from '@/lib/sic/refund-gate'
 import {
   sicUploadNudgeRepeatAfter,
@@ -269,58 +269,76 @@ export async function GET(request: NextRequest) {
       if (!stillBudget(toPurge.length)) break
     }
 
-    // — Upload nudges: Tag 1 selbst beschaffbar, ~3 Tage bei Unterschrift Dritter —
+    // — Upload nudges: eine Mail pro Zertifikat mit allen fehlenden Nachweisen —
+    // Fällig: selbst beschaffbar nach Tag 1, Drittunterschrift nach ~3 Tagen.
+    // Gate pro Zertifikat: höchstens eine Erinnerung pro Woche, auch bei Nachkäufen.
     const remAfter = sicUploadNudgeRepeatAfter(now)
-    for (const window of sicUploadNudgeWindows(now)) {
-      while (stillBudget(BATCH)) {
-        const pendingModules = await prisma.sicCertificateModule.findMany({
-          where: {
-            status: 'PENDING_DOCS',
-            moduleKind: { in: window.moduleKinds },
-            paidAt: { lte: window.paidBefore },
-            OR: [{ uploadReminderSentAt: null }, { uploadReminderSentAt: { lt: remAfter } }],
-          },
-          include: {
-            certificate: { select: { email: true, id: true } },
-          },
-          take: BATCH,
-          orderBy: { paidAt: 'asc' },
+    const dueWindows = sicUploadNudgeWindows(now)
+    const dueWhere = dueWindows.map(w => ({
+      moduleKind: { in: w.moduleKinds },
+      paidAt: { lte: w.paidBefore },
+    }))
+    const nudgedCertificates = new Set<string>()
+    while (stillBudget(BATCH)) {
+      const dueModules = await prisma.sicCertificateModule.findMany({
+        where: {
+          status: 'PENDING_DOCS',
+          OR: dueWhere,
+          certificateId: nudgedCertificates.size > 0 ? { notIn: Array.from(nudgedCertificates) } : undefined,
+        },
+        select: { certificateId: true },
+        distinct: ['certificateId'],
+        take: BATCH,
+        orderBy: { paidAt: 'asc' },
+      })
+      if (dueModules.length === 0) break
+      let processed = 0
+      for (const { certificateId } of dueModules) {
+        if (!stillBudget(1)) break
+        processed++
+        nudgedCertificates.add(certificateId)
+
+        // Alle offenen Angaben dieses Zertifikats — auch die noch nicht fälligen.
+        const openModules = await prisma.sicCertificateModule.findMany({
+          where: { certificateId, status: 'PENDING_DOCS' },
+          select: { id: true, moduleKind: true, uploadReminderSentAt: true },
         })
-        if (pendingModules.length === 0) break
-        let processed = 0
-        for (const m of pendingModules) {
-          if (!stillBudget(1)) break
-          const docCount = await prisma.sicDocument.count({
-            where: { certificateId: m.certificateId, moduleKind: m.moduleKind },
+        // Wochen-Gate auf Zertifikatsebene: irgendeine Erinnerung in den letzten 7 Tagen → still.
+        if (openModules.some(m => m.uploadReminderSentAt && m.uploadReminderSentAt >= remAfter)) continue
+
+        const docs = await prisma.sicDocument.groupBy({
+          by: ['moduleKind'],
+          where: { certificateId, moduleKind: { in: openModules.map(m => m.moduleKind) } },
+          _count: { _all: true },
+        })
+        const hasDocs = new Set(docs.map(d => d.moduleKind))
+        const missing = openModules.filter(m => !hasDocs.has(m.moduleKind) && isSicModuleId(m.moduleKind))
+        if (missing.length === 0) continue
+
+        const certificate = await prisma.sicCertificate.findUnique({
+          where: { id: certificateId },
+          select: { email: true },
+        })
+        if (!certificate) continue
+
+        try {
+          const { url } = await createSicMagicLink(certificate.email)
+          await sendSicUploadReminderEmail({
+            email: certificate.email,
+            moduleKinds: missing.map(m => m.moduleKind as SicModuleId),
+            magicLinkUrl: url,
           })
-          if (docCount > 0) {
-            processed++
-            continue
-          }
-          if (!isSicModuleId(m.moduleKind)) {
-            processed++
-            continue
-          }
-          try {
-            const { url } = await createSicMagicLink(m.certificate.email)
-            await sendSicUploadReminderEmail({
-              email: m.certificate.email,
-              moduleKind: m.moduleKind,
-              magicLinkUrl: url,
-            })
-            await prisma.sicCertificateModule.update({
-              where: { id: m.id },
-              data: { uploadReminderSentAt: now },
-            })
-            stats.uploadNudges++
-          } catch (e) {
-            console.error('[sic-certificate-expiry] upload nudge', m.id, e)
-          }
-          processed++
+          await prisma.sicCertificateModule.updateMany({
+            where: { id: { in: missing.map(m => m.id) } },
+            data: { uploadReminderSentAt: now },
+          })
+          stats.uploadNudges++
+        } catch (e) {
+          console.error('[sic-certificate-expiry] upload nudge', certificateId, e)
         }
-        if (pendingModules.length < BATCH) break
-        if (!stillBudget(processed)) break
       }
+      if (dueModules.length < BATCH) break
+      if (!stillBudget(processed)) break
     }
 
     // — Cleanup Magic Links (expiresAt < now - 7d) —
