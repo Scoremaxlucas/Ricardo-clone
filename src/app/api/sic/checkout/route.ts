@@ -9,7 +9,7 @@ import { normalizeSicModuleIds, resolveSicCheckoutModuleIds, type SicModuleId } 
 import { createPayrexxTwintGateway, payrexxConfigured, payrexxSessionId } from '@/lib/sic/payrexx'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { loadSicRenewalPending } from '@/lib/sic/renewal'
-import { sicRevokedCanStartOver } from '@/lib/sic/revoke'
+import { sicRevokedCanStartOver } from '@/lib/sic/start-over'
 import {
   SIC_CHECKOUT_PAYMENT_METHODS,
   sicCheckoutMethodsWithout,

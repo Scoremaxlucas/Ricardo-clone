@@ -3,17 +3,8 @@ import { sendSicRevokedEmail } from '@/lib/sic/email'
 import { recordSicEvent } from '@/lib/sic/events'
 import { sicLog } from '@/lib/sic/log'
 
-export function parseSicRevokeReason(raw: unknown): string | null {
-  if (typeof raw !== 'string') return null
-  const note = raw.trim().slice(0, 1000)
-  return note.length >= 8 ? note : null
-}
-
-export const SIC_REVOKE_REASONS = [
-  'Gefälschte Unterlagen',
-  'Fremde Unterlagen',
-  'Sonstiger schwerer Missbrauch',
-] as const
+export { parseSicRevokeReason, SIC_REVOKE_REASONS } from '@/lib/sic/revoke-reasons'
+import { parseSicRevokeReason } from '@/lib/sic/revoke-reasons'
 
 export type SicRevokeResult =
   | { ok: true; already: boolean; certificateCode: string; email: string }
@@ -65,13 +56,4 @@ export async function revokeSicCertificate(opts: {
   }
 
   return { ok: true, already: false, certificateCode: cert.certificateCode, email: cert.email }
-}
-
-/**
- * Neu anlegen nach Widerruf: nur, wenn keine Zahlung mehr gilt (volle Erstattung,
- * Rückbuchung). Ein Widerruf wegen Missbrauchs (§8) lässt die Zahlung PAID — dann nicht.
- */
-export async function sicRevokedCanStartOver(certificateId: string): Promise<boolean> {
-  const paid = await prisma.sicPayment.count({ where: { certificateId, status: 'PAID' } })
-  return paid === 0
 }

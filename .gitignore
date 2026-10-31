@@ -75,3 +75,7 @@ preview-sic-certificate*.png
 *.xlsx
 !Seller-Outreach-Tracker.xlsx.example
 Slide_*_*.pptx
+
+# Playwright
+/test-results/
+/playwright-report/

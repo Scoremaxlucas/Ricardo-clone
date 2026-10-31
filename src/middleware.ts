@@ -39,7 +39,8 @@ function isAllowedOnSicHost(pathname: string): boolean {
   if (isSicAppRoute(pathname)) return true
   if (pathname === '/icon' || pathname === '/apple-icon') return true
   if (pathname.startsWith('/api/auth')) return true
-  if (pathname.startsWith('/api/stripe')) return true
+  // Nur der Webhook — die übrigen Stripe-Routen gehören zum Marktplatz (Connect, Rechnungen).
+  if (pathname === '/api/stripe/webhook') return true
   if (pathname.startsWith('/api/cron')) return true
   if (pathname === '/robots.txt' || pathname === '/sitemap.xml') return true
   if (pathname === '/login') return true

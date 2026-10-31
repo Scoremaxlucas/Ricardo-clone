@@ -12,7 +12,7 @@ import {
 } from '@/lib/sic/facts'
 import { isSicModuleId, sicMinDocsForReview, type SicModuleId } from '@/lib/sic/modules'
 import { SIC_REJECTION_REASONS } from '@/lib/sic/review'
-import { SIC_REVOKE_REASONS } from '@/lib/sic/revoke'
+import { SIC_REVOKE_REASONS } from '@/lib/sic/revoke-reasons'
 import { sicReviewSlaLabel, sicReviewSlaState } from '@/lib/sic/review-sla'
 import { AlertTriangle, Banknote, Check, ExternalLink, Loader2, Mail, Search, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'

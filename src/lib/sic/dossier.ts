@@ -14,7 +14,7 @@ import {
   type SicModuleId,
 } from '@/lib/sic/modules'
 import { loadSicRenewalPending, modulesResetByRenewal } from '@/lib/sic/renewal'
-import { sicRevokedCanStartOver } from '@/lib/sic/revoke'
+import { sicRevokedCanStartOver } from '@/lib/sic/start-over'
 import { templatesForModule } from '@/lib/sic/templates'
 import { normalizeEmail } from '@/lib/sic/session'
 import { isSicExpired } from '@/lib/sic/validity'

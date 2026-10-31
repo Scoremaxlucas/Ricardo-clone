@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET
   if (!secret) {
     console.error('[sic-certificate-expiry] CRON_SECRET nicht gesetzt')
+    sicLog('sic.cron.config_error', { missing: 'CRON_SECRET' })
     return NextResponse.json({ error: 'Not configured' }, { status: 503 })
   }
   if (request.headers.get('authorization') !== `Bearer ${secret}`) {
@@ -129,6 +130,7 @@ export async function GET(request: NextRequest) {
           } catch (e) {
             failed.push(c.id)
             console.error(`[sic-certificate-expiry] ${reminder.days}d mail`, c.id, e)
+            sicLog('sic.cron.mail_failed', { kind: `${reminder.days}d` })
           }
         }
         if (batch.length < BATCH) break
@@ -157,6 +159,7 @@ export async function GET(request: NextRequest) {
           }
         } catch (e) {
           console.error('[sic-certificate-expiry] expired mail', c.id, e)
+          sicLog('sic.cron.mail_failed', { kind: 'expired_mail' })
         }
         const res = await prisma.sicCertificate.updateMany({
           where: { id: c.id, status: 'ACTIVE', expiresAt: { lte: now } },
@@ -243,6 +246,7 @@ export async function GET(request: NextRequest) {
           stats.purgeWarnings++
         } catch (e) {
           console.error('[sic-certificate-expiry] purge warning', c.id, e)
+          sicLog('sic.cron.mail_failed', { kind: 'purge_warning' })
         }
       }
       if (toWarn.length < BATCH) break
@@ -391,6 +395,7 @@ export async function GET(request: NextRequest) {
           stats.uploadNudges++
         } catch (e) {
           console.error('[sic-certificate-expiry] upload nudge', certificateId, e)
+          sicLog('sic.cron.mail_failed', { kind: 'upload_nudge' })
         }
       }
       if (dueModules.length < BATCH) break
