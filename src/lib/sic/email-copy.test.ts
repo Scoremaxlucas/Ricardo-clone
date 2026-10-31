@@ -160,3 +160,19 @@ describe('email change copy', () => {
     expect(`${copy.subject} ${copy.paragraphs.join(' ')}`).not.toMatch(/stützen/)
   })
 })
+
+describe('ready copy ohne Frist', () => {
+  it('verspricht kein Datum, solange der neue Auszug fehlt', () => {
+    const copy = sicCertificateReadyCopy({
+      moduleKind: 'ARBEIT_EINKOMMEN',
+      verifiedCount: 2,
+      firstVerification: false,
+      pdfReady: true,
+      sealReady: false,
+      validUntil: null,
+    })
+    const text = copy.paragraphs.join(' ')
+    expect(text).not.toContain('Gültig bis')
+    expect(text).toContain('Betreibungsauszug')
+  })
+})

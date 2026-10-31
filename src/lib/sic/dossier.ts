@@ -13,7 +13,8 @@ import {
   sicRequiredDocuments,
   type SicModuleId,
 } from '@/lib/sic/modules'
-import { modulesResetByRenewal } from '@/lib/sic/renewal'
+import { loadSicRenewalPending, modulesResetByRenewal } from '@/lib/sic/renewal'
+import { sicRevokedCanStartOver } from '@/lib/sic/revoke'
 import { templatesForModule } from '@/lib/sic/templates'
 import { normalizeEmail } from '@/lib/sic/session'
 import { isSicExpired } from '@/lib/sic/validity'
@@ -86,9 +87,13 @@ export type SicDossierView = {
     inReviewCount: number
     rejectedCount: number
   }
+  /** Widerrufen nach voller Erstattung: unter derselben E-Mail neu anlegen. */
+  canStartOver: boolean
   renewal: {
     available: boolean
     recommended: boolean
+    /** Verlängerung bezahlt, neuer Betreibungsauszug noch nicht freigegeben. */
+    pending: boolean
     priceChf: number
     /** Angaben, die eine Verlängerung neu einfordert. */
     refreshes: { moduleKind: SicModuleId; title: string }[]
@@ -108,6 +113,27 @@ export type SicVerifiedModuleView = { id: SicModuleId; title: string; lines: str
 /** Zählt nur tatsächlich geprüfte Angaben; die selbst deklarierte Referenz (badge) zählt nicht als «geprüft». */
 export function sicVerifiedRowCount(rows: SicVerifiedModuleView[]): number {
   return rows.filter(r => !r.badge).length
+}
+
+/**
+ * Was Vermieter sehen: freigegebene Angaben, plus bei einer frühzeitigen
+ * Verlängerung die zuletzt geprüften Werte, solange das Zertifikat noch gilt
+ * und der neue Nachweis offen ist. Nach Ablauf zählt nur noch VERIFIED.
+ */
+export function sicPresentedModules<
+  M extends { moduleKind: string; status: SicModuleStatus; verifiedFacts?: unknown },
+>(
+  modules: M[],
+  cert: { status: string; expiresAt: Date | null },
+  now = new Date()
+): M[] {
+  const valid = cert.status === 'ACTIVE' && !!cert.expiresAt && cert.expiresAt.getTime() > now.getTime()
+  if (!valid) return modules
+  return modules.map(m =>
+    m.status !== 'VERIFIED' && m.status !== 'NOT_APPLICABLE' && m.verifiedFacts != null ?
+      { ...m, status: 'VERIFIED' as const }
+    : m
+  )
 }
 
 /**
@@ -392,8 +418,9 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
     couple,
   })
 
+  const presentedModules = sicPresentedModules(cert.modules, cert)
   const certificateLinesByKind = new Map(
-    verifiedModuleLineItems(cert.modules, lineOpts).map(m => [m.id as string, m.lines])
+    verifiedModuleLineItems(presentedModules, lineOpts).map(m => [m.id as string, m.lines])
   )
 
   const purchasedModules: SicDossierModuleView[] = SIC_MODULES.filter(def => purchasedKinds.has(def.id)).map(def => {
@@ -443,6 +470,10 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
       verifiedFacts: m.verifiedFacts,
     }))
   )
+  const [renewalPending, canStartOver] = await Promise.all([
+    cert.certifiedAt ? loadSicRenewalPending(prisma, cert.id) : Promise.resolve(false),
+    cert.status === 'REVOKED' ? sicRevokedCanStartOver(cert.id) : Promise.resolve(false),
+  ])
   const expiresSoon =
     !!cert.expiresAt && cert.expiresAt.getTime() - Date.now() <= 30 * 24 * 60 * 60 * 1000
 
@@ -476,10 +507,10 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
       holderName,
       status: cert.status,
       expiresAt: cert.expiresAt,
-      modules: purchasedModules,
+      modules: presentedModules,
     }),
     certificateSealReady: isSicCertificateSealReady(
-      purchasedModules.filter(m => m.status === 'VERIFIED').map(m => m.moduleKind)
+      presentedModules.filter(m => m.status === 'VERIFIED').map(m => m.moduleKind)
     ),
     progress: {
       totalModules: purchasedModules.length,
@@ -489,9 +520,11 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
       inReviewCount,
       rejectedCount,
     },
+    canStartOver,
     renewal: {
-      available: !!cert.certifiedAt && cert.status !== 'REVOKED',
-      recommended: !!cert.certifiedAt && (expired || expiresSoon),
+      available: !!cert.certifiedAt && cert.status !== 'REVOKED' && !renewalPending,
+      recommended: !!cert.certifiedAt && !renewalPending && (expired || expiresSoon),
+      pending: renewalPending,
       priceChf: SIC_RENEWAL_FEE_CHF,
       refreshes: renewalRefreshes.map(id => ({ moduleKind: id, title: getSicModule(id).title })),
     },

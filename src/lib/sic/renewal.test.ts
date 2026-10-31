@@ -1,6 +1,6 @@
 import { SIC_RENEWAL_FEE_CHF } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
-import { modulesResetByRenewal } from '@/lib/sic/renewal'
+import { isSicRenewalPending, modulesResetByRenewal, sicRenewalCarriesFacts } from '@/lib/sic/renewal'
 import { describe, expect, it } from 'vitest'
 
 const NOW = new Date(Date.UTC(2026, 7, 1))
@@ -84,5 +84,51 @@ describe('Verlängerung im Preis', () => {
       isRenewal: true,
     })
     expect(quote.lines.some(l => l.kind === 'discount')).toBe(false)
+  })
+})
+
+describe('isSicRenewalPending', () => {
+  const verifiedAt = new Date(Date.UTC(2026, 5, 1))
+  const paidAfter = new Date(Date.UTC(2026, 7, 1))
+
+  it('läuft, solange nach der Zahlung kein neuer Auszug freigegeben ist', () => {
+    expect(
+      isSicRenewalPending({ bonitaetStatus: 'PENDING_DOCS', lastBonitaetVerifiedAt: verifiedAt, renewalPaidAts: [paidAfter] })
+    ).toBe(true)
+    expect(
+      isSicRenewalPending({ bonitaetStatus: 'REJECTED', lastBonitaetVerifiedAt: verifiedAt, renewalPaidAts: [paidAfter] })
+    ).toBe(true)
+  })
+
+  it('endet mit der Freigabe des neuen Auszugs', () => {
+    expect(
+      isSicRenewalPending({ bonitaetStatus: 'VERIFIED', lastBonitaetVerifiedAt: paidAfter, renewalPaidAts: [paidAfter] })
+    ).toBe(false)
+  })
+
+  it('zählt alte, bereits abgeschlossene Verlängerungen nicht', () => {
+    const oldRenewal = new Date(Date.UTC(2026, 2, 1))
+    expect(
+      isSicRenewalPending({ bonitaetStatus: 'PENDING_DOCS', lastBonitaetVerifiedAt: verifiedAt, renewalPaidAts: [oldRenewal] })
+    ).toBe(false)
+    expect(isSicRenewalPending({ bonitaetStatus: 'PENDING_DOCS', lastBonitaetVerifiedAt: null, renewalPaidAts: [] })).toBe(
+      false
+    )
+  })
+})
+
+describe('isSicRenewalPending ohne Betreibungs-Angabe', () => {
+  it('blockiert keine Verlängerung, wenn der Auszug erstattet wurde', () => {
+    expect(
+      isSicRenewalPending({ bonitaetStatus: null, lastBonitaetVerifiedAt: null, renewalPaidAts: [new Date()] })
+    ).toBe(false)
+  })
+})
+
+describe('sicRenewalCarriesFacts', () => {
+  it('behält Auszug und Arbeit bis zur neuen Prüfung, nie einen abgelaufenen Ausweis', () => {
+    expect(sicRenewalCarriesFacts('BONITAET')).toBe(true)
+    expect(sicRenewalCarriesFacts('ARBEIT_EINKOMMEN')).toBe(true)
+    expect(sicRenewalCarriesFacts('AUFENTHALT')).toBe(false)
   })
 })

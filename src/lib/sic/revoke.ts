@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { sendSicRevokedEmail } from '@/lib/sic/email'
 import { recordSicEvent } from '@/lib/sic/events'
 import { sicLog } from '@/lib/sic/log'
 
@@ -57,5 +58,20 @@ export async function revokeSicCertificate(opts: {
     meta: { reason, reviewerId: opts.reviewerId },
   })
 
+  try {
+    await sendSicRevokedEmail({ email: cert.email, certificateCode: cert.certificateCode })
+  } catch (err) {
+    console.error('[sic/revoke] notification email', err)
+  }
+
   return { ok: true, already: false, certificateCode: cert.certificateCode, email: cert.email }
+}
+
+/**
+ * Neu anlegen nach Widerruf: nur, wenn keine Zahlung mehr gilt (volle Erstattung,
+ * Rückbuchung). Ein Widerruf wegen Missbrauchs (§8) lässt die Zahlung PAID — dann nicht.
+ */
+export async function sicRevokedCanStartOver(certificateId: string): Promise<boolean> {
+  const paid = await prisma.sicPayment.count({ where: { certificateId, status: 'PAID' } })
+  return paid === 0
 }

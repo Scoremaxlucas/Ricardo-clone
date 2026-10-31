@@ -2,7 +2,14 @@ import { prisma } from '@/lib/prisma'
 import { certificateVerifyQrDataUrl } from '@/lib/certificate/qrDataUrl'
 import { SicCertificatePdfDocument } from '@/lib/sic/CertificatePdf'
 import { SIC_BRAND_NAME, sicVerifyUrl } from '@/lib/sic/config'
-import { isSicLandlordPdfReady, joinHouseholdHolderName, sicFactLineOptsFromHolders, sicVerifiedRowCount, verifiedModuleLineItems } from '@/lib/sic/dossier'
+import {
+  isSicLandlordPdfReady,
+  joinHouseholdHolderName,
+  sicFactLineOptsFromHolders,
+  sicPresentedModules,
+  sicVerifiedRowCount,
+  verifiedModuleLineItems,
+} from '@/lib/sic/dossier'
 import { isSicCouple } from '@/lib/sic/household'
 import { recordSicEventOnce } from '@/lib/sic/events'
 import {
@@ -45,10 +52,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
     holderName,
     status: cert.status,
     expiresAt: cert.expiresAt,
-    modules: cert.modules,
+    modules: sicPresentedModules(cert.modules, cert),
   })
   const verifiedModules = verifiedModuleLineItems(
-    cert.modules,
+    sicPresentedModules(cert.modules, cert),
     sicFactLineOptsFromHolders({
       couple,
       firstName: cert.holderFirstName,

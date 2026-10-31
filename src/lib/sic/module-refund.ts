@@ -2,9 +2,10 @@ import { prisma } from '@/lib/prisma'
 import { sicLog } from '@/lib/sic/log'
 import { isSicModuleId } from '@/lib/sic/modules'
 import { sicChfToStripeCents, sicModuleRefundAmountChf } from '@/lib/sic/module-refund-amount'
+import { refundSicPayment, sicPaymentRefundProgress } from '@/lib/sic/payment-refund'
 import { isFullStripeRefund } from '@/lib/sic/refund-gate'
-import { stripe } from '@/lib/stripe-server'
-import { del } from '@vercel/blob'
+import { deleteSicBlob } from '@/lib/sic/blob-delete'
+import { sendSicRefundEmail } from '@/lib/sic/email'
 import type { SicModuleKind } from '@prisma/client'
 
 export type RefundSicModuleResult =
@@ -68,9 +69,9 @@ export async function refundSicPaidModule(opts: {
     return { ok: false, code: 'NO_PAYMENT', message: 'Keine passende Zahlung für diese Angabe.' }
   }
 
-  const stripeState = await stripeRefundProgress(payment.stripePaymentIntentId)
-  if (!stripeState) {
-    return { ok: false, code: 'STRIPE', message: 'Stripe-Zahlung konnte nicht gelesen werden.' }
+  const progress = await sicPaymentRefundProgress(payment)
+  if (!progress) {
+    return { ok: false, code: 'STRIPE', message: 'Die Zahlung konnte beim Zahlungsanbieter nicht gelesen werden.' }
   }
 
   const amountChf = sicModuleRefundAmountChf({
@@ -79,58 +80,67 @@ export async function refundSicPaidModule(opts: {
     isRenewal: payment.isRenewal,
     moduleKinds: payment.moduleKinds,
     moduleKind,
-    alreadyRefundedChf: stripeState.refundedChf,
+    alreadyRefundedChf: progress.refundedCents / 100,
   })
   if (amountChf == null) {
     return { ok: false, code: 'NO_PAYMENT', message: 'Für diese Angabe ist kein erstattbarer Betrag übrig.' }
   }
 
-  const amountCents = sicChfToStripeCents(amountChf)
-  try {
-    await stripe.refunds.create(
-      {
-        payment_intent: payment.stripePaymentIntentId,
-        amount: amountCents,
-        reason: 'requested_by_customer',
-        metadata: {
-          sic_agb: '7',
-          sic_certificate_id: cert.id,
-          sic_module: moduleKind,
-          sic_reviewer: opts.reviewerId,
-        },
+  // Erst die Angabe beanspruchen (bedingt löschen), dann erstatten: ein Doppelklick
+  // erstattet so nur einmal — auch bei Payrexx, das keinen Idempotency-Key kennt.
+  const claimed = await prisma.sicCertificateModule.deleteMany({ where: { id: mod.id, status: 'IN_REVIEW' } })
+  if (claimed.count === 0) {
+    return { ok: true, already: true, amountChf: 0 }
+  }
+
+  const refunded = await refundSicPayment(payment, {
+    amountCents: sicChfToStripeCents(amountChf),
+    idempotencyKey: `sic-mod-refund:${payment.id}:${moduleKind}`,
+    metadata: {
+      sic_agb: '7',
+      sic_certificate_id: cert.id,
+      sic_module: moduleKind,
+      sic_reviewer: opts.reviewerId,
+    },
+  })
+  if (!refunded) {
+    // Angabe zurückgeben, damit sie weiter geprüft oder erneut erstattet werden kann.
+    await prisma.sicCertificateModule.create({
+      data: {
+        id: mod.id,
+        certificateId: cert.id,
+        moduleKind,
+        status: mod.status,
+        paidAt: mod.paidAt,
+        verifiedFacts: mod.verifiedFacts ?? undefined,
+        uploadReminderSentAt: mod.uploadReminderSentAt,
       },
-      { idempotencyKey: `sic-mod-refund:${cert.id}:${moduleKind}` }
-    )
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Stripe-Erstattung fehlgeschlagen.'
-    sicLog('sic.admin.module_refund.stripe_failed', {
-      certificateId: cert.id,
-      moduleKind,
-      message,
     })
-    return { ok: false, code: 'STRIPE', message: 'Stripe-Erstattung fehlgeschlagen.' }
+    sicLog('sic.admin.module_refund.provider_failed', { certificateId: cert.id, moduleKind })
+    return { ok: false, code: 'STRIPE', message: 'Erstattung beim Zahlungsanbieter fehlgeschlagen.' }
   }
 
   for (const doc of cert.documents) {
-    try {
-      await del(doc.blobUrl)
-    } catch {
-      // Alt-URL oder schon weg
-    }
+    await deleteSicBlob(doc.blobUrl)
   }
   if (cert.documents.length > 0) {
     await prisma.sicDocument.deleteMany({
       where: { id: { in: cert.documents.map(d => d.id) } },
     })
   }
-  await prisma.sicCertificateModule.delete({ where: { id: mod.id } })
 
-  const after = await stripeRefundProgress(payment.stripePaymentIntentId)
+  const after = await sicPaymentRefundProgress(payment)
   if (after && isFullStripeRefund(after.amountCents, after.refundedCents)) {
     await prisma.sicPayment.update({
       where: { id: payment.id },
       data: { status: 'REFUNDED' },
     })
+  }
+
+  try {
+    await sendSicRefundEmail({ email: cert.email, amountChf, moduleKinds: [moduleKind] })
+  } catch (err) {
+    console.error('[sic/module-refund] refund email', err)
   }
 
   sicLog('sic.admin.module_refund', {
@@ -142,21 +152,4 @@ export async function refundSicPaidModule(opts: {
   })
 
   return { ok: true, already: false, amountChf }
-}
-
-async function stripeRefundProgress(
-  paymentIntentId: string
-): Promise<{ refundedChf: number; amountCents: number; refundedCents: number } | null> {
-  try {
-    const charges = await stripe.charges.list({ payment_intent: paymentIntentId, limit: 1 })
-    const charge = charges.data[0]
-    if (!charge) return null
-    return {
-      amountCents: charge.amount,
-      refundedCents: charge.amount_refunded,
-      refundedChf: charge.amount_refunded / 100,
-    }
-  } catch {
-    return null
-  }
 }

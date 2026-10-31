@@ -72,6 +72,11 @@ function hashIp(ip: string, day: string): string {
   return createHash('sha256').update(`${secret}:${day}:${ip}`).digest('hex').slice(0, 32)
 }
 
+/** Tagesgesalzener IP-Schlüssel für Rate-Limits ohne Klartext-IP. */
+export function sicIpKey(ip: string, now = new Date()): string {
+  return hashIp(ip, dayKey(now))
+}
+
 /**
  * Zählt einen Scan der Prüfseite, entdoppelt pro Zertifikat, Tag und IP.
  * Aufrufe des Inhabers selbst zählen nicht — sonst misst die Zahl nur, wie oft

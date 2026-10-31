@@ -28,12 +28,19 @@ function pickModule(
  */
 export function sicNextStep(dossier: SicDossierView): SicNextStep | null {
   if (dossier.status === 'REVOKED') {
-    return {
-      title: 'Zertifikat widerrufen',
-      detail: 'Dieses Zertifikat ist nicht mehr gültig. Für eine neue Bewerbung legst du ein neues an.',
-      anchor: null,
-      kind: 'done',
-    }
+    return dossier.canStartOver ?
+        {
+          title: 'Neues Zertifikat anlegen',
+          detail: 'Dieses Zertifikat ist nicht mehr gültig. Unter derselben E-Mail legst du ein neues an.',
+          anchor: '#sic-neu',
+          kind: 'action',
+        }
+      : {
+          title: 'Zertifikat widerrufen',
+          detail: 'Dieses Zertifikat ist nicht mehr gültig. Bei Fragen hilft dir unser Support.',
+          anchor: null,
+          kind: 'done',
+        }
   }
 
   if (dossier.expired && dossier.renewal.available) {

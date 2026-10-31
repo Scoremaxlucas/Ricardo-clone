@@ -8,14 +8,17 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { deleteSicBlob } from '@/lib/sic/blob-delete'
 import {
   sendSicDocsPurgeWarningEmail,
+  sendSicExpiredEmail,
   sendSicExpiryReminderEmail,
   sendSicUploadReminderEmail,
 } from '@/lib/sic/email'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
+import { loadSicRenewalPending } from '@/lib/sic/renewal'
 import { cronBudgetState } from '@/lib/sic/refund-gate'
 import {
   sicUploadNudgeRepeatAfter,
@@ -26,7 +29,6 @@ import {
   SIC_DOCS_RETENTION_DAYS,
   SIC_UNFINISHED_DOCS_RETENTION_MONTHS,
 } from '@/lib/sic/validity'
-import { del } from '@vercel/blob'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -89,111 +91,122 @@ export async function GET(request: NextRequest) {
     })
     stats.paymentsCancelled = stale.count
 
-    // — 14d Reminder (loop) —
-    while (stillBudget(BATCH)) {
-      const batch = await prisma.sicCertificate.findMany({
-        where: {
-          status: 'ACTIVE',
-          expiryReminder14dSentAt: null,
-          expiresAt: { gt: now, lte: new Date(now.getTime() + 14 * DAY_MS) },
-        },
-        take: BATCH,
-        orderBy: { expiresAt: 'asc' },
-      })
-      if (batch.length === 0) break
-      for (const c of batch) {
-        if (!stillBudget(1)) break
-        const expiresAt = c.expiresAt
-        if (!expiresAt) continue
-        const daysLeft = Math.max(1, Math.ceil((expiresAt.getTime() - now.getTime()) / DAY_MS))
-        try {
-          await sendSicExpiryReminderEmail({
-            email: c.email,
-            daysLeft,
-            expiresAt,
-          })
-          await prisma.sicCertificate.update({
-            where: { id: c.id },
-            data: { expiryReminder14dSentAt: now },
-          })
-          stats.reminded14d++
-        } catch (e) {
-          console.error('[sic-certificate-expiry] 14d mail', c.id, e)
+    // — Ablauf-Erinnerungen 14 und 3 Tage vorher —
+    // Fehlgeschlagene Mails werden für diesen Lauf ausgeklammert, sonst holte die
+    // Schleife bei einem Provider-Ausfall dieselbe Charge bis zum Budgetende neu.
+    // Wer schon verlängert hat, bekommt keine Aufforderung mehr — nur das Flag.
+    for (const reminder of [
+      { days: 14, flag: 'expiryReminder14dSentAt', stat: 'reminded14d' },
+      { days: 3, flag: 'expiryReminder3dSentAt', stat: 'reminded3d' },
+    ] as const) {
+      const failed: string[] = []
+      while (stillBudget(BATCH)) {
+        const batch = await prisma.sicCertificate.findMany({
+          where: {
+            status: 'ACTIVE',
+            [reminder.flag]: null,
+            expiresAt: { gt: now, lte: new Date(now.getTime() + reminder.days * DAY_MS) },
+            ...(failed.length > 0 ? { id: { notIn: failed } } : {}),
+          },
+          take: BATCH,
+          orderBy: { expiresAt: 'asc' },
+        })
+        if (batch.length === 0) break
+        for (const c of batch) {
+          if (!stillBudget(1)) break
+          const expiresAt = c.expiresAt
+          if (!expiresAt) continue
+          const daysLeft = Math.max(1, Math.ceil((expiresAt.getTime() - now.getTime()) / DAY_MS))
+          try {
+            if (!(await loadSicRenewalPending(prisma, c.id))) {
+              await sendSicExpiryReminderEmail({ email: c.email, daysLeft, expiresAt })
+              stats[reminder.stat]++
+            }
+            await prisma.sicCertificate.update({
+              where: { id: c.id },
+              data: { [reminder.flag]: now },
+            })
+          } catch (e) {
+            failed.push(c.id)
+            console.error(`[sic-certificate-expiry] ${reminder.days}d mail`, c.id, e)
+          }
         }
+        if (batch.length < BATCH) break
+        if (!stillBudget(batch.length)) break
       }
-      if (batch.length < BATCH) break
-      if (!stillBudget(batch.length)) break
     }
 
-    // — 3d Reminder (loop) —
+    // — Mark EXPIRED, mit kurzer Mitteilung und Weg zur Verlängerung —
+    // Erst die Mail, dann der Status: was das Budget nicht mehr schafft, bleibt
+    // ACTIVE und kommt im nächsten Lauf samt Mail dran. Eine fehlgeschlagene Mail
+    // hält den Ablauf nicht auf.
     while (stillBudget(BATCH)) {
-      const batch = await prisma.sicCertificate.findMany({
-        where: {
-          status: 'ACTIVE',
-          expiryReminder3dSentAt: null,
-          expiresAt: { gt: now, lte: new Date(now.getTime() + 3 * DAY_MS) },
-        },
+      const due = await prisma.sicCertificate.findMany({
+        where: { status: 'ACTIVE', expiresAt: { lte: now } },
+        select: { id: true, email: true, expiresAt: true },
         take: BATCH,
-        orderBy: { expiresAt: 'asc' },
       })
-      if (batch.length === 0) break
-      for (const c of batch) {
+      if (due.length === 0) break
+      let handled = 0
+      for (const c of due) {
         if (!stillBudget(1)) break
-        const expiresAt = c.expiresAt
-        if (!expiresAt) continue
-        const daysLeft = Math.max(1, Math.ceil((expiresAt.getTime() - now.getTime()) / DAY_MS))
+        handled++
         try {
-          await sendSicExpiryReminderEmail({
-            email: c.email,
-            daysLeft,
-            expiresAt,
-          })
-          await prisma.sicCertificate.update({
-            where: { id: c.id },
-            data: { expiryReminder3dSentAt: now },
-          })
-          stats.reminded3d++
+          if (c.expiresAt && !(await loadSicRenewalPending(prisma, c.id))) {
+            await sendSicExpiredEmail({ email: c.email, expiredAt: c.expiresAt })
+          }
         } catch (e) {
-          console.error('[sic-certificate-expiry] 3d mail', c.id, e)
+          console.error('[sic-certificate-expiry] expired mail', c.id, e)
         }
+        const res = await prisma.sicCertificate.updateMany({
+          where: { id: c.id, status: 'ACTIVE', expiresAt: { lte: now } },
+          data: { status: 'EXPIRED' },
+        })
+        stats.expired += res.count
       }
-      if (batch.length < BATCH) break
-      if (!stillBudget(batch.length)) break
+      if (handled < due.length || due.length < BATCH) break
     }
-
-    // — Mark EXPIRED —
-    const expiredRes = await prisma.sicCertificate.updateMany({
-      where: { status: 'ACTIVE', expiresAt: { lte: now } },
-      data: { status: 'EXPIRED' },
-    })
-    stats.expired = expiredRes.count
 
     // — Docs löschen: EXPIRED + expiresAt älter als die Aufbewahrungsfrist —
+    // Nur Dateien von vor dem Ablauf. Was danach kam, ist ein neuer Nachweis
+    // (Verlängerung) und wartet auf Prüfung — der fällt unter die Frist für Unfertiges.
     const retentionCutoff = new Date(now.getTime() - SIC_DOCS_RETENTION_DAYS * DAY_MS)
+    let purgeCursor: string | undefined
     while (stillBudget(BATCH)) {
       const toPurge = await prisma.sicCertificate.findMany({
         where: {
           status: 'EXPIRED',
           expiresAt: { lt: retentionCutoff },
           documents: { some: {} },
+          ...(purgeCursor ? { id: { gt: purgeCursor } } : {}),
         },
         select: {
           id: true,
-          documents: { select: { id: true, blobUrl: true } },
+          expiresAt: true,
+          documents: { select: { id: true, blobUrl: true, moduleKind: true, uploadedAt: true } },
         },
+        orderBy: { id: 'asc' },
         take: BATCH,
       })
       if (toPurge.length === 0) break
       for (const c of toPurge) {
-        for (const d of c.documents) {
-          try {
-            await del(d.blobUrl)
-          } catch {
-            // already gone
-          }
+        purgeCursor = c.id
+        const old = c.documents.filter(d => !c.expiresAt || d.uploadedAt.getTime() <= c.expiresAt.getTime())
+        if (old.length === 0) continue
+        for (const d of old) {
+          await deleteSicBlob(d.blobUrl)
         }
-        const delRes = await prisma.sicDocument.deleteMany({ where: { certificateId: c.id } })
+        const delRes = await prisma.sicDocument.deleteMany({ where: { id: { in: old.map(d => d.id) } } })
         stats.docsDeleted += delRes.count
+        // Angaben in Prüfung, denen jetzt jede Datei fehlt, zurück auf «Unterlagen fehlen».
+        const kept = new Set(c.documents.filter(d => !old.includes(d)).map(d => d.moduleKind))
+        const emptied = Array.from(new Set(old.map(d => d.moduleKind))).filter(k => !kept.has(k))
+        if (emptied.length > 0) {
+          await prisma.sicCertificateModule.updateMany({
+            where: { certificateId: c.id, moduleKind: { in: emptied }, status: { in: ['IN_REVIEW', 'REJECTED'] } },
+            data: { status: 'PENDING_DOCS', uploadReminderSentAt: null },
+          })
+        }
       }
       if (toPurge.length < BATCH) break
       if (!stillBudget(toPurge.length)) break
@@ -251,11 +264,7 @@ export async function GET(request: NextRequest) {
       if (toPurge.length === 0) break
       for (const c of toPurge) {
         for (const d of c.documents) {
-          try {
-            await del(d.blobUrl)
-          } catch {
-            // already gone
-          }
+          await deleteSicBlob(d.blobUrl)
         }
         const delRes = await prisma.sicDocument.deleteMany({ where: { certificateId: c.id } })
         // Ohne Dateien ist keine Prüfung möglich — zurück auf «Unterlagen fehlen».
@@ -267,6 +276,53 @@ export async function GET(request: NextRequest) {
       }
       if (toPurge.length < BATCH) break
       if (!stillBudget(toPurge.length)) break
+    }
+
+    // — Datenschutzfrist nach Verlängerung ohne neuen Auszug —
+    // Nach einer Verlängerung eines abgelaufenen Zertifikats gibt es keine Frist, bis der
+    // neue Auszug geprüft ist. Kommt er nie, gilt dieselbe Frist wie für Unfertiges, ab
+    // der letzten bezahlten Verlängerung gerechnet.
+    let stuckCursor: string | undefined
+    while (stillBudget(BATCH)) {
+      const stuck = await prisma.sicCertificate.findMany({
+        where: {
+          status: 'ACTIVE',
+          certifiedAt: { not: null },
+          expiresAt: null,
+          documents: { some: {} },
+          payments: { some: { isRenewal: true, status: 'PAID', paidAt: { lt: unfinishedCutoff } } },
+          ...(stuckCursor ? { id: { gt: stuckCursor } } : {}),
+        },
+        select: {
+          id: true,
+          payments: {
+            where: { isRenewal: true, status: 'PAID' },
+            orderBy: { paidAt: 'desc' },
+            take: 1,
+            select: { paidAt: true },
+          },
+          documents: { select: { id: true, blobUrl: true } },
+        },
+        orderBy: { id: 'asc' },
+        take: BATCH,
+      })
+      if (stuck.length === 0) break
+      for (const c of stuck) {
+        stuckCursor = c.id
+        const lastRenewal = c.payments[0]?.paidAt
+        if (!lastRenewal || lastRenewal.getTime() >= unfinishedCutoff.getTime()) continue
+        for (const d of c.documents) {
+          await deleteSicBlob(d.blobUrl)
+        }
+        const delRes = await prisma.sicDocument.deleteMany({ where: { certificateId: c.id } })
+        await prisma.sicCertificateModule.updateMany({
+          where: { certificateId: c.id, status: { in: ['IN_REVIEW', 'REJECTED'] } },
+          data: { status: 'PENDING_DOCS', uploadReminderSentAt: null },
+        })
+        stats.unfinishedDocsDeleted += delRes.count
+      }
+      if (stuck.length < BATCH) break
+      if (!stillBudget(stuck.length)) break
     }
 
     // — Upload nudges: eine Mail pro Zertifikat mit allen fehlenden Nachweisen —

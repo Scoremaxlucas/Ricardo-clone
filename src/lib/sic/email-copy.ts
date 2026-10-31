@@ -12,9 +12,14 @@ export function sicCertificateReadyCopy(opts: {
   pdfReady: boolean
   /** Betreibung + Ausweis: Urkunde. Sonst Stand der Prüfung. */
   sealReady?: boolean
-  validUntil: string
+  /** Null: ausgestellt, aber ohne Frist, bis der neue Betreibungsauszug geprüft ist. */
+  validUntil: string | null
 }): { subject: string; heading: string; preheader: string; paragraphs: string[] } {
   const title = getSicModule(opts.moduleKind).title
+  const validity =
+    opts.validUntil ?
+      `Gültig bis ${opts.validUntil}.`
+    : 'Gültig wird das Zertifikat wieder mit dem geprüften neuen Betreibungsauszug.'
   const onDoc = sicStandsOnDocLine(opts.verifiedCount)
   const moreOpen = opts.verifiedCount < SIC_MODULES.length
   const sealReady = opts.sealReady === true
@@ -24,12 +29,12 @@ export function sicCertificateReadyCopy(opts: {
     const paragraphs = sealReady ?
       [
         `Das Mieter-Zertifikat ist bereit. ${onDoc}.`,
-        `Geprüft ist «${title}». Gültig bis ${opts.validUntil}.`,
+        `Geprüft ist «${title}». ${validity}`,
         'Lade das PDF herunter und leg es der nächsten Bewerbung bei. Nicht geprüfte Angaben stehen nicht auf dem Dokument. Eine Zusage versprechen wir nicht.',
       ]
     : [
         `Der Stand der Prüfung ist als PDF bereit. ${onDoc}.`,
-        `Geprüft ist «${title}». Gültig bis ${opts.validUntil}.`,
+        `Geprüft ist «${title}». ${validity}`,
         `Das ist noch kein Mieter-Zertifikat. Dafür müssen ${sealNeed} geprüft sein. Du kannst den Stand trotzdem beilegen — der Vermieter sieht den Umfang auf dem Dokument. Eine Zusage versprechen wir nicht.`,
       ]
     if (moreOpen) {
@@ -52,7 +57,7 @@ export function sicCertificateReadyCopy(opts: {
       preheader: onDoc,
       paragraphs: [
         `${onDoc} — für das PDF fehlt noch dein Name, das ist in einer Minute erledigt.`,
-        `Geprüft ist «${title}». Gültig bis ${opts.validUntil}.`,
+        `Geprüft ist «${title}». ${validity}`,
       ],
     }
   }
@@ -61,7 +66,7 @@ export function sicCertificateReadyCopy(opts: {
     sealReady ?
       `Die Angabe «${title}» ist geprüft und steht auf deinem Zertifikat.`
     : `Die Angabe «${title}» ist geprüft und steht auf dem Stand der Prüfung.`,
-    `Aktueller Stand: ${onDoc}. Gültig bis ${opts.validUntil}.`,
+    `Aktueller Stand: ${onDoc}. ${validity}`,
   ]
   if (opts.pdfReady) {
     paragraphs.push(

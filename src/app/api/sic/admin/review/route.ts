@@ -13,7 +13,7 @@ import {
 import { normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
 import { sendSicCertificateReadyEmail, sendSicModuleRejectedEmail } from '@/lib/sic/email'
 import { joinHouseholdHolderName } from '@/lib/sic/dossier'
-import { normalizeSicFacts, readSicFacts } from '@/lib/sic/facts'
+import { normalizeSicFacts, readSicFacts, sicApprovalBlockers } from '@/lib/sic/facts'
 import { isSicCouple } from '@/lib/sic/household'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
@@ -261,10 +261,13 @@ export async function POST(req: NextRequest) {
 
   const cert = await prisma.sicCertificate.findUnique({
     where: { id: certificateId },
-    select: { id: true, email: true, householdKind: true },
+    select: { id: true, email: true, householdKind: true, status: true },
   })
   if (!cert) {
     return NextResponse.json({ ok: false, message: 'Zertifikat nicht gefunden.' }, { status: 404 })
+  }
+  if (cert.status === 'REVOKED') {
+    return NextResponse.json({ ok: false, message: 'Dieses Zertifikat ist widerrufen.' }, { status: 409 })
   }
 
   if (action === 'reject') {
@@ -306,6 +309,14 @@ export async function POST(req: NextRequest) {
     ]
     return NextResponse.json(
       { ok: false, message: `Freigabe nicht möglich — ${problems.join(', ')}.` },
+      { status: 400 }
+    )
+  }
+
+  const blockers = sicApprovalBlockers(moduleKind, parsed.facts)
+  if (blockers.length > 0) {
+    return NextResponse.json(
+      { ok: false, message: `Freigabe nicht möglich — ${blockers.join('; ')}.` },
       { status: 400 }
     )
   }

@@ -185,6 +185,8 @@ export async function POST(request: NextRequest) {
           case 'payment_intent.succeeded':
             const paymentIntent = event.data.object as Stripe.PaymentIntent
             orderId = paymentIntent.metadata?.orderId
+            // SIC wird über checkout.session.completed erfüllt — hier nichts zu tun.
+            if (paymentIntent.metadata?.type === 'sic_certificate') break
             if (orderId) {
               await handlePaymentIntentSucceeded(paymentIntent)
             } else {

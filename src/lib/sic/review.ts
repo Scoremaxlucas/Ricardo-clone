@@ -16,7 +16,7 @@ export type ApproveResult = {
   firstVerification: boolean
   verifiedCount: number
   verifiedModuleIds: SicModuleId[]
-  expiresAt: Date
+  expiresAt: Date | null
 }
 
 /**
@@ -56,14 +56,21 @@ export async function approveSicModule(opts: {
   if (cert.status === 'REVOKED') return null
 
   const firstVerification = !cert.certifiedAt
-  const nextExpiresAt = sicExpiresAtAfterApproval({
-    moduleKind: opts.moduleKind,
-    extractDate: opts.facts.extractDate,
-    extractDate2: opts.facts.extractDate2,
-    currentExpiresAt: cert.expiresAt,
-    approvedAt: now,
-  })
-  const clockChanged = sicExpiryClockChanged(cert.expiresAt, nextExpiresAt)
+  // Schon ausgestellt, aber ohne Frist (Verlängerung nach Ablauf, Auszug abgelehnt):
+  // gültig wird es erst wieder mit einem geprüften Betreibungsauszug, nicht mit einer
+  // anderen Angabe. Die vorläufige Frist gilt nur bis zur allerersten Freigabe.
+  const awaitingExtract = !firstVerification && !cert.expiresAt && opts.moduleKind !== 'BONITAET'
+  const nextExpiresAt: Date | null =
+    awaitingExtract ? null : (
+      sicExpiresAtAfterApproval({
+        moduleKind: opts.moduleKind,
+        extractDate: opts.facts.extractDate,
+        extractDate2: opts.facts.extractDate2,
+        currentExpiresAt: cert.expiresAt,
+        approvedAt: now,
+      })
+    )
+  const clockChanged = !!nextExpiresAt && sicExpiryClockChanged(cert.expiresAt, nextExpiresAt)
 
   const result = await prisma.$transaction(async tx => {
     const updated = await tx.sicCertificateModule.updateMany({
@@ -81,7 +88,8 @@ export async function approveSicModule(opts: {
     await tx.sicCertificate.update({
       where: { id: opts.certificateId },
       data: {
-        status: 'ACTIVE',
+        // Eine Freigabe belebt kein abgelaufenes Zertifikat mit alter Frist wieder.
+        status: !nextExpiresAt || nextExpiresAt.getTime() > now.getTime() ? 'ACTIVE' : 'EXPIRED',
         expiresAt: nextExpiresAt,
         ...(firstVerification ? { certifiedAt: now } : {}),
         ...(clockChanged ?
@@ -90,6 +98,19 @@ export async function approveSicModule(opts: {
         updatedAt: now,
       },
     })
+
+    // Neuer Auszug geprüft = neue Frist. Werte, die aus der Zeit vor einer frühzeitigen
+    // Verlängerung mitgetragen wurden, gelten ab hier nicht mehr.
+    if (opts.moduleKind === 'BONITAET') {
+      await tx.sicCertificateModule.updateMany({
+        where: {
+          certificateId: opts.certificateId,
+          status: { in: ['PENDING_DOCS', 'IN_REVIEW', 'REJECTED'] },
+          NOT: { verifiedFacts: { equals: Prisma.DbNull } },
+        },
+        data: { verifiedFacts: Prisma.DbNull },
+      })
+    }
 
     const verified = await tx.sicCertificateModule.findMany({
       where: { certificateId: opts.certificateId, status: 'VERIFIED' },
@@ -142,9 +163,11 @@ export async function rejectSicModule(opts: {
   const now = opts.now ?? new Date()
   const cert = await prisma.sicCertificate.findUnique({
     where: { id: opts.certificateId },
-    select: { id: true, email: true },
+    select: { id: true, email: true, status: true },
   })
   if (!cert) return null
+  // Widerrufen ist endgültig — keine Aufforderung zum Nachreichen mehr.
+  if (cert.status === 'REVOKED') return null
 
   const wasVerified =
     (await prisma.sicCertificateModule.count({
@@ -155,7 +178,8 @@ export async function rejectSicModule(opts: {
     where: { certificateId: opts.certificateId, moduleKind: opts.moduleKind as SicModuleKind },
     data: {
       status: 'REJECTED',
-      // Eine abgelehnte Angabe darf keine früher freigegebenen Werte mehr tragen.
+      // Eine abgelehnte Angabe darf keine früher freigegebenen Werte mehr tragen — auch keine
+      // aus einer frühzeitigen Verlängerung mitgetragenen: der neue Nachweis kann sie widerlegen.
       verifiedFacts: Prisma.DbNull,
       reviewedAt: now,
       reviewedByUserId: opts.reviewerId,

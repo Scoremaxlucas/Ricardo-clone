@@ -634,6 +634,36 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         </div>
       : null}
 
+      {dossier.renewal.pending ?
+        <div className="mt-6 border border-sic-hairline bg-sic-paper p-5">
+          <h2 className="text-sm font-bold text-sic-navy">Verlängerung bezahlt</h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
+            Lade {dossier.couple ? 'die neuen Auszüge' : 'den neuen Auszug'} vom Betreibungsamt hoch — danach prüfen wir
+            {' '}{SIC_REVIEW_SLA}, und die drei Monate beginnen ab {dossier.couple ? 'dem älteren Auszugsdatum' : 'dem Auszugsdatum'} neu.
+            {!dossier.expired && dossier.expiresAt ?
+              ' Bis dahin gilt dein Zertifikat unverändert.'
+            : ''}
+          </p>
+        </div>
+      : null}
+
+      {dossier.status === 'REVOKED' && dossier.canStartOver ?
+        <div id="sic-neu" className="mt-6 scroll-mt-24 border border-sic-hairline bg-sic-paper p-5">
+          <h2 className="text-sm font-bold text-sic-navy">Neues Zertifikat anlegen</h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
+            Dieses Zertifikat gilt nicht mehr. Unter derselben E-Mail legst du ein neues an — mit neuem Code und
+            frischer Prüfung aller Angaben.
+          </p>
+          <a
+            href={`${sicPaths.landing}#anlegen`}
+            className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-sic-action-deep sm:w-auto"
+          >
+            Neu anlegen
+            <ArrowRight className="h-4 w-4" />
+          </a>
+        </div>
+      : null}
+
       <ModuleProgressStrip dossier={dossier} />
 
       {/* Certificate summary */}

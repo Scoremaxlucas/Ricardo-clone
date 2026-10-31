@@ -36,9 +36,10 @@ function encodeBody(fields: Record<string, string>): string {
   return params.toString()
 }
 
-async function payrexxFetch(path: string, body?: string): Promise<unknown> {
-  const signature = payrexxSignature(body ?? '')
-  const url = `${API}${path}?instance=${encodeURIComponent(instance())}`
+async function payrexxFetch(path: string, body?: string, query?: string): Promise<unknown> {
+  // GET signiert die Filter im Query-String, POST den Body — wie das offizielle SDK.
+  const signature = payrexxSignature(body ?? query ?? '')
+  const url = `${API}${path}?instance=${encodeURIComponent(instance())}${query ? `&${query}` : ''}`
   const res = await fetch(body ? url : `${url}&ApiSignature=${encodeURIComponent(signature)}`, {
     method: body ? 'POST' : 'GET',
     headers: body ? { 'Content-Type': 'application/x-www-form-urlencoded' } : undefined,
@@ -122,4 +123,87 @@ export function readPayrexxWebhook(payload: unknown): {
     gatewayId: Number.isFinite(gatewayId) && gatewayId > 0 ? gatewayId : null,
     status: typeof tx?.status === 'string' ? tx.status : null,
   }
+}
+
+type TransactionRow = {
+  id?: number
+  status?: string
+  referenceId?: string
+  amount?: number
+  invoice?: {
+    referenceId?: string
+    amount?: number
+    totalAmount?: number
+    originalAmount?: number
+    refundedAmount?: number
+  }
+}
+
+function payrexxUtc(d: Date): string {
+  return d.toISOString().slice(0, 19).replace('T', ' ')
+}
+
+/**
+ * Bestätigte Transaktion zu unserer referenceId. Das Gateway kennt sie nicht
+ * direkt, deshalb suchen wir im Zeitfenster um den Zahlungszeitpunkt.
+ */
+export async function payrexxConfirmedTransaction(
+  referenceId: string,
+  around: Date
+): Promise<{ id: number; amountCents: number; refundedCents: number } | null> {
+  const day = 24 * 60 * 60 * 1000
+  const query = encodeBody({
+    filterDatetimeUtcGreaterThan: payrexxUtc(new Date(around.getTime() - 2 * day)),
+    filterDatetimeUtcLessThan: payrexxUtc(new Date(around.getTime() + 2 * day)),
+    limit: '500',
+  })
+  const json = (await payrexxFetch('/Transaction/', undefined, query)) as { data?: TransactionRow[] }
+  const row = (json.data ?? []).find(
+    t =>
+      (t.referenceId === referenceId || t.invoice?.referenceId === referenceId) &&
+      t.id &&
+      (t.status === 'confirmed' || t.status === 'partially-refunded')
+  )
+  if (!row?.id) return null
+  const total = Number(
+    row.invoice?.totalAmount ?? row.invoice?.originalAmount ?? row.invoice?.amount ?? row.amount ?? 0
+  )
+  // Ohne bekannten Betrag lieber gar nicht erstatten als «erfolgreich» nichts.
+  if (!Number.isFinite(total) || total <= 0) return null
+  return { id: row.id, amountCents: total, refundedCents: Number(row.invoice?.refundedAmount ?? 0) }
+}
+
+/** Erstattung einer Payrexx-Transaktion, Betrag in Rappen. */
+export async function refundPayrexxTransaction(transactionId: number, amountCents: number): Promise<void> {
+  await payrexxFetch(`/Transaction/${transactionId}/refund/`, encodeBody({ amount: String(amountCents) }))
+}
+
+/**
+ * Payrexx sendet Webhooks je nach Einstellung als JSON oder als Formular
+ * (`transaction[invoice][referenceId]=…`). Beides auf dieselbe Struktur bringen.
+ */
+export function parsePayrexxWebhookBody(raw: string, contentType: string | null): unknown {
+  if (!raw) return null
+  if (!contentType?.includes('application/x-www-form-urlencoded')) {
+    try {
+      return JSON.parse(raw)
+    } catch {
+      if (!raw.includes('=')) return null
+    }
+  }
+  const root: Record<string, unknown> = {}
+  new URLSearchParams(raw).forEach((value, key) => {
+    const parts = key.split(/\[|\]\[|\]/).filter(Boolean)
+    let node = root
+    parts.forEach((part, i) => {
+      if (i === parts.length - 1) {
+        node[part] = value
+      } else {
+        const next = node[part]
+        node[part] = next && typeof next === 'object' ? next : {}
+        node = node[part] as Record<string, unknown>
+      }
+    })
+  })
+  return root
 }

@@ -1,7 +1,9 @@
 import { prisma } from '@/lib/prisma'
 import { sicLog } from '@/lib/sic/log'
 import { isFullStripeRefund } from '@/lib/sic/refund-gate'
-import { del } from '@vercel/blob'
+import { deleteSicBlob } from '@/lib/sic/blob-delete'
+import { sendSicRefundEmail, sendSicRevokedEmail } from '@/lib/sic/email'
+import { recordSicEvent } from '@/lib/sic/events'
 import type { SicModuleKind } from '@prisma/client'
 
 /**
@@ -77,11 +79,7 @@ export async function revokeSicAfterStripeRefund(input: {
 
   const docsToDelete = cert.documents.filter(d => kinds.includes(d.moduleKind as SicModuleKind))
   for (const doc of docsToDelete) {
-    try {
-      await del(doc.blobUrl)
-    } catch {
-      // Alt-URL oder schon weg
-    }
+    await deleteSicBlob(doc.blobUrl)
   }
   if (docsToDelete.length > 0) {
     await prisma.sicDocument.deleteMany({
@@ -96,18 +94,44 @@ export async function revokeSicAfterStripeRefund(input: {
   }
 
   const remaining = await prisma.sicCertificateModule.count({ where: { certificateId } })
-  if (remaining === 0 && payment.includeBaseFee) {
+  const revoked = remaining === 0 && payment.includeBaseFee
+  if (revoked) {
     await prisma.sicCertificate.update({
       where: { id: certificateId },
       data: { status: 'REVOKED' },
     })
+    await recordSicEvent({
+      kind: 'CERTIFICATE_REVOKED',
+      certificateId,
+      email: cert.email,
+      meta: { reason: input.forceFull ? 'dispute' : 'refund', paymentId: payment.id },
+    })
+  }
+
+  // Eine Rückbuchung (Dispute) ist keine Erstattung von uns — dann nur der Widerruf.
+  try {
+    if (!input.forceFull) {
+      await sendSicRefundEmail({
+        email: cert.email,
+        amountChf: input.chargeAmountRefunded != null ? input.chargeAmountRefunded / 100 : Number(payment.amountChf),
+      })
+    }
+    if (revoked) {
+      await sendSicRevokedEmail({
+        email: cert.email,
+        certificateCode: cert.certificateCode,
+        afterRefund: !input.forceFull,
+      })
+    }
+  } catch (err) {
+    console.error('[sic/refund] notification email', err)
   }
 
   sicLog('sic.refund.revoked', {
     paymentId: payment.id,
     certificateId,
     modulesRemoved: kinds.length,
-    revokedCert: remaining === 0 && payment.includeBaseFee,
+    revokedCert: revoked,
   })
 
   return { ok: true }

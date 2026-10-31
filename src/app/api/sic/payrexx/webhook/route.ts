@@ -1,13 +1,19 @@
 import { prisma } from '@/lib/prisma'
 import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
-import { payrexxGateway, payrexxGatewayConfirmed, readPayrexxWebhook } from '@/lib/sic/payrexx'
+import {
+  parsePayrexxWebhookBody,
+  payrexxGateway,
+  payrexxGatewayConfirmed,
+  readPayrexxWebhook,
+} from '@/lib/sic/payrexx'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
 /** Payrexx meldet den Transaktionsstatus. Freigeschaltet wird nur nach Gegencheck bei Payrexx. */
 export async function POST(req: NextRequest) {
-  const payload = await req.json().catch(() => null)
+  const raw = await req.text().catch(() => '')
+  const payload = parsePayrexxWebhookBody(raw, req.headers.get('content-type'))
   const hook = readPayrexxWebhook(payload)
   if (hook.status !== 'confirmed' || !hook.referenceId || !hook.gatewayId) {
     return NextResponse.json({ ok: true })

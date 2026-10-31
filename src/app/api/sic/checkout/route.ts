@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { sicPaths, sicUrl, SIC_BRAND_NAME, SIC_STRIPE_STATEMENT_SUFFIX } from '@/lib/sic/config'
+import { sicPaths, sicUrl, SIC_BRAND_NAME, SIC_STRIPE_STATEMENT_SUFFIX, SIC_SUPPORT_EMAIL } from '@/lib/sic/config'
 import { encodePaymentHolderName } from '@/lib/sic/dossier'
 import { sendSicMagicLinkEmail } from '@/lib/sic/email'
 import { fulfillSicPaidCheckout } from '@/lib/sic/fulfillment'
@@ -8,6 +8,8 @@ import { parseSicHouseholdKind } from '@/lib/sic/household'
 import { normalizeSicModuleIds, resolveSicCheckoutModuleIds, type SicModuleId } from '@/lib/sic/modules'
 import { createPayrexxTwintGateway, payrexxConfigured, payrexxSessionId } from '@/lib/sic/payrexx'
 import { quoteSicOrder } from '@/lib/sic/pricing'
+import { loadSicRenewalPending } from '@/lib/sic/renewal'
+import { sicRevokedCanStartOver } from '@/lib/sic/revoke'
 import {
   SIC_CHECKOUT_PAYMENT_METHODS,
   sicCheckoutMethodsWithout,
@@ -223,9 +225,8 @@ export async function POST(req: NextRequest) {
 
   const existing = await prisma.sicCertificate.findUnique({
     where: { email },
-    select: { certifiedAt: true, status: true, modules: { select: { moduleKind: true } } },
+    select: { id: true, certifiedAt: true, status: true, modules: { select: { moduleKind: true } } },
   })
-
   // Ohne Anmeldung darf eine fremde E-Mail nichts am bestehenden Zertifikat auslösen:
   // keine offenen Sessions der Inhaberin abbrechen, keine Angaben an ihr Dossier hängen.
   // Stattdessen bekommt die Inhaberin einen Anmeldelink und verlängert aus dem Dossier.
@@ -243,8 +244,20 @@ export async function POST(req: NextRequest) {
         'Zu dieser E-Mail besteht bereits ein Zertifikat. Wir haben dir einen Anmeldelink geschickt — verlängern oder ergänzen kannst du direkt in deinem Dossier.',
     })
   }
-  const includeBaseFee = !existing
-  const alreadyPaid = (existing?.modules ?? []).map(m => m.moduleKind)
+  // Widerrufen nach voller Erstattung: dieselbe E-Mail darf neu anlegen (Komplettpaket).
+  const startOver =
+    existing?.status === 'REVOKED' && !wantsRenewal ? await sicRevokedCanStartOver(existing.id) : false
+  if (existing?.status === 'REVOKED' && !wantsRenewal && !startOver) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: `Dieses Zertifikat wurde widerrufen. Bei Fragen erreichst du uns unter ${SIC_SUPPORT_EMAIL}.`,
+      },
+      { status: 403 }
+    )
+  }
+  const includeBaseFee = !existing || startOver
+  const alreadyPaid = startOver ? [] : (existing?.modules ?? []).map(m => m.moduleKind)
   const candidate = resolveSicCheckoutModuleIds({
     includeBaseFee,
     isRenewal: wantsRenewal && !!existing,
@@ -257,6 +270,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { ok: false, message: 'Verlängern kannst du erst, wenn ein Zertifikat ausgestellt wurde.' },
       { status: 400 }
+    )
+  }
+  if (isRenewal && existing && (await loadSicRenewalPending(prisma, existing.id))) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: 'Die Verlängerung ist bereits bezahlt. Lade den neuen Betreibungsauszug in deinem Dossier hoch.',
+      },
+      { status: 409 }
     )
   }
 

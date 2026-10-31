@@ -37,12 +37,19 @@ export async function allocateUniqueSicCertificateCode(): Promise<string> {
 
 export async function findSicRetiredCertificateCode(
   code: string
-): Promise<{ certificateCode: string; replacedAt: Date } | null> {
+): Promise<{ certificateCode: string; replacedAt: Date; revoked: boolean } | null> {
   const row = await prisma.sicRetiredCertificateCode.findUnique({
     where: { certificateCode: code },
-    select: { certificateCode: true, replacedAt: true },
+    select: { certificateCode: true, replacedAt: true, certificateId: true },
   })
-  return row
+  if (!row) return null
+  // Abgelöst durch einen Neuanfang nach Widerruf: der alte Code war widerrufen, nicht ersetzt.
+  const revoked =
+    !!row.certificateId &&
+    (await prisma.sicEvent.count({
+      where: { certificateId: row.certificateId, kind: 'CERTIFICATE_REVOKED', createdAt: { lte: row.replacedAt } },
+    })) > 0
+  return { certificateCode: row.certificateCode, replacedAt: row.replacedAt, revoked }
 }
 
 /**

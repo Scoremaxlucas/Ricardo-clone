@@ -36,7 +36,8 @@ const dossier: SicDossierView = {
     inReviewCount: 0,
     rejectedCount: 0,
   },
-  renewal: { available: false, recommended: false, priceChf: 0, refreshes: [] },
+  canStartOver: false,
+  renewal: { available: false, recommended: false, pending: false, priceChf: 0, refreshes: [] },
   purchasedModules: [
     {
       moduleKind: 'BONITAET',

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { deleteSicBlob } from '@/lib/sic/blob-delete'
 import { checkRateLimit } from '@/lib/rate-limit'
 import {
   encryptSicDocument,
@@ -180,8 +181,7 @@ export async function POST(req: NextRequest) {
     // DB-Update fehlgeschlagen — Blob wieder wegräumen, sonst hinterlassen wir
     // verwaiste Ciphertext-Dateien für die niemand mehr eine DB-Zeile kennt.
     try {
-      const { del } = await import('@vercel/blob')
-      await del(blobUrl)
+      if (!(await deleteSicBlob(blobUrl))) throw new Error('delete failed')
     } catch (delErr) {
       sicLog('sic.upload.orphan_cleanup_failed', {
         certificateId: cert.id,
@@ -265,12 +265,7 @@ export async function DELETE(req: NextRequest) {
     )
   }
 
-  try {
-    const { del } = await import('@vercel/blob')
-    await del(doc.blobUrl)
-  } catch {
-    // Blob evtl. schon weg
-  }
+  await deleteSicBlob(doc.blobUrl)
 
   await prisma.sicDocument.delete({ where: { id: doc.id } })
 

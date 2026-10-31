@@ -32,7 +32,8 @@ function base(over: Partial<SicDossierView> = {}): SicDossierView {
       inReviewCount: 0,
       rejectedCount: 0,
     },
-    renewal: { available: false, recommended: false, priceChf: 0, refreshes: [] },
+    canStartOver: false,
+    renewal: { available: false, recommended: false, pending: false, priceChf: 0, refreshes: [] },
     purchasedModules: [
       {
         moduleKind: 'BONITAET',
@@ -150,5 +151,18 @@ describe('sicNextStep', () => {
     expect(step?.title).toMatch(/bereit/)
     expect(step?.detail).toMatch(/Siegel/)
     expect(step?.anchor).toBe('#sic-pdf')
+  })
+})
+
+describe('sicNextStep nach Widerruf', () => {
+  it('bietet nach voller Erstattung einen Neuanfang an', () => {
+    const step = sicNextStep(base({ status: 'REVOKED', canStartOver: true }))
+    expect(step?.anchor).toBe('#sic-neu')
+    expect(step?.kind).toBe('action')
+  })
+
+  it('bietet nach Missbrauchs-Widerruf keinen Neuanfang an', () => {
+    const step = sicNextStep(base({ status: 'REVOKED', canStartOver: false }))
+    expect(step?.anchor).toBeNull()
   })
 })

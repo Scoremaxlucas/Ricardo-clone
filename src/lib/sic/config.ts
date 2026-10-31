@@ -191,7 +191,7 @@ export const sicPaths = {
   /** Seite mit Knopf — die neue E-Mail wird erst per POST übernommen. */
   emailConfirm: `${SIC_BASE_PATH}/email-bestaetigen`,
   emailConfirmApi: '/api/sic/email/confirm',
-  /** Kunden-Abmelden — GET für harte Navigation (kein steckenbleibendes Dossier). */
+  /** Kunden-Abmelden — nur POST (Formular), damit kein Link-Prefetch abmeldet. */
   logout: '/api/sic/logout',
 } as const
 

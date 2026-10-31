@@ -1,4 +1,5 @@
 import { getSicModule, type SicModuleId } from '@/lib/sic/modules'
+import { parseSicCalendarDate, sicValidityExpiresAt } from '@/lib/sic/validity'
 
 /**
  * Geprüfte Werte je Modul — die Substanz des Zertifikats.
@@ -355,7 +356,9 @@ export function normalizeSicFacts(
       invalid.push(field.label)
       continue
     }
-    if (field.kind === 'date' && Number.isNaN(new Date(value).getTime())) {
+    // Streng YYYY-MM-DD: daraus rechnet die Gültigkeit. Ein lose geparstes Datum
+    // fiele dort still auf «Freigabetag + 3 Monate» zurück.
+    if (field.kind === 'date' && !parseSicCalendarDate(value)) {
       invalid.push(field.label)
       continue
     }
@@ -364,6 +367,42 @@ export function normalizeSicFacts(
 
   if (missing.length > 0 || invalid.length > 0) return { ok: false, missing, invalid }
   return { ok: true, facts }
+}
+
+/** Werte, die eine Ablehnung verlangen statt einer Freigabe (Regel 1 oben). */
+const SIC_NEGATIVE_VALUES: Record<string, string> = {
+  proceedings: 'open',
+  proceedings2: 'open',
+  noticeGiven: 'yes',
+  noticeGiven2: 'yes',
+}
+
+/**
+ * Gründe, warum diese Werte nicht freigegeben werden dürfen. Leer = freigabefähig.
+ *
+ * - Negativer Inhalt (offene Betreibungen, Kündigung) wird abgelehnt, nie gedruckt.
+ * - Der Betreibungsauszug darf nicht in der Zukunft liegen und nicht so alt sein,
+ *   dass die drei Monate bei der Freigabe schon vorbei wären.
+ */
+export function sicApprovalBlockers(moduleId: SicModuleId, facts: SicFacts, now = new Date()): string[] {
+  const blockers: string[] = []
+  for (const [key, bad] of Object.entries(SIC_NEGATIVE_VALUES)) {
+    if (facts[key] !== bad) continue
+    const field = fieldFor(moduleId, key)
+    if (field) blockers.push(`${optionLabel(field, bad)} — bitte ablehnen statt freigeben`)
+  }
+  if (moduleId === 'BONITAET') {
+    const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    for (const key of ['extractDate', 'extractDate2']) {
+      const d = parseSicCalendarDate(facts[key])
+      if (!d) continue
+      if (d.getTime() > today) blockers.push('Das Datum des Auszugs liegt in der Zukunft')
+      else if (sicValidityExpiresAt(d).getTime() <= now.getTime()) {
+        blockers.push('Der Auszug ist älter als drei Monate — bitte ablehnen und einen aktuellen anfordern')
+      }
+    }
+  }
+  return Array.from(new Set(blockers))
 }
 
 /** Aus Json-Spalte gelesene Werte auf bekannte String-Felder reduzieren. */

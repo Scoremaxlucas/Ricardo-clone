@@ -25,10 +25,12 @@ export async function isEventProcessed(
       where: { stripeEventId: eventId },
     })
 
-    if (existingEvent) {
+    // Fehlgeschlagene Verarbeitung zählt nicht: Stripe soll nach einem 500 erneut zustellen dürfen.
+    if (existingEvent?.success) {
       console.log(`[idempotency] Event ${eventId} bereits verarbeitet (WebhookEvent table)`)
       return true
     }
+    if (existingEvent) return false
 
     // Fallback: Legacy-Prüfung in PaymentRecord (für Migration)
     const existingRecord = await prisma.paymentRecord.findFirst({

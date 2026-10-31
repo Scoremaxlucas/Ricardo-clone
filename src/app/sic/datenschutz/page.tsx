@@ -44,13 +44,15 @@ export default function SicDatenschutzPage() {
               Lohns.
             </li>
             <li>
-              Zahlungsdaten bei Stripe. Kreditkartendaten erreichen unsere Server nicht; wir speichern nur
-              Betrag, Status und die Stripe-Referenz.
+              Zahlungsdaten beim Zahlungsanbieter (Stripe für Karte und Link, Payrexx für TWINT). Karten- und
+              Kontodaten erreichen unsere Server nicht; wir speichern nur Betrag, Status und die Referenz des
+              Anbieters.
             </li>
             <li>
               Technische Protokolle: Aufrufe der QR-Prüfseite werden gezählt. Dabei speichern wir keine
               IP-Adresse, sondern nur einen kurzlebigen, nicht zurückrechenbaren Prüfwert, um Mehrfachzählungen
-              am selben Tag zu vermeiden.
+              am selben Tag zu vermeiden. Zum Schutz vor Missbrauch (zu viele Anmelde- oder Zahlungsversuche)
+              speichern wir bei Anmeldung, Checkout und Upload die IP-Adresse für höchstens zwei Tage.
             </li>
           </ul>
         </section>
@@ -76,13 +78,34 @@ export default function SicDatenschutzPage() {
         </section>
 
         <section>
+          <h2 className="font-semibold text-sic-navy">Dienstleister</h2>
+          <p className="mt-1.5">
+            Für den Betrieb setzen wir Auftragsbearbeiter ein, die Daten nur für uns und nach unseren Weisungen
+            bearbeiten:
+          </p>
+          <ul className="mt-1.5 list-disc space-y-1 pl-5">
+            <li>Vercel Inc. (Hosting und verschlüsselte Dateiablage; USA)</li>
+            <li>Neon Inc. (Datenbank; USA)</li>
+            <li>Resend Inc. (Versand von E-Mails; USA)</li>
+            <li>Stripe Payments Europe Ltd. (Irland) und Payrexx AG (Schweiz) für die Zahlungsabwicklung</li>
+            <li>Anthropic PBC (KI-Vorauswertung, siehe unten; USA)</li>
+          </ul>
+          <p className="mt-1.5">
+            Bei einer Übermittlung in Länder ohne angemessenes Datenschutzniveau sorgen wir mit vertraglichen
+            Garantien der Anbieter für den nötigen Schutz.
+          </p>
+        </section>
+
+        <section>
           <h2 className="font-semibold text-sic-navy">Automatische Vorauswertung durch KI</h2>
           <p className="mt-1.5">
             Zur Vorbereitung der Prüfung lassen wir hochgeladene Unterlagen durch einen KI-Dienst (Anthropic,
             Verarbeitung in Rechenzentren in den USA) auslesen, um Felder wie Ausstellungsdatum oder
             Einkommensband vorzuschlagen. Diese Vorschläge sind nicht bindend: Die Freigabe erfolgt immer durch
-            einen Menschen. Es findet keine automatisierte Einzelentscheidung im Sinne des revDSG statt. Wenn du
-            das nicht möchtest, schreib uns vor dem Hochladen — wir prüfen dann ohne diesen Schritt.
+            einen Menschen. Es findet keine automatisierte Einzelentscheidung im Sinne des revDSG statt. Die
+            Vorauswertung läuft nicht automatisch, sondern nur, wenn die prüfende Person sie für ein einzelnes
+            Dokument auslöst. Wenn du das nicht möchtest, schreib uns an {SIC_SUPPORT_EMAIL} — wir prüfen dann
+            ohne diesen Schritt.
           </p>
         </section>
 

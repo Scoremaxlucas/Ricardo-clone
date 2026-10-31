@@ -1,6 +1,14 @@
 import { sendEmail } from '@/lib/email/sender'
 import { SIC_COLORS } from '@/lib/sic/brand'
-import { SIC_BRAND_NAME, SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL, sicFromAddress, sicPaths, sicUrl } from '@/lib/sic/config'
+import {
+  SIC_BRAND_NAME,
+  SIC_OPERATOR,
+  SIC_REVIEW_SLA,
+  SIC_SUPPORT_EMAIL,
+  sicFromAddress,
+  sicPaths,
+  sicUrl,
+} from '@/lib/sic/config'
 import {
   sicCertificateReadyCopy,
   sicEmailChangeConfirmCopy,
@@ -9,7 +17,7 @@ import {
   sicUploadReminderCopy,
   type SicMagicLinkMailSource,
 } from '@/lib/sic/email-copy'
-import { getSicModule, type SicModuleId } from '@/lib/sic/modules'
+import { getSicModule, SIC_RENEWAL_FEE_CHF, type SicModuleId } from '@/lib/sic/modules'
 
 const ACTION = SIC_COLORS.action
 const NAVY = SIC_COLORS.navy
@@ -119,7 +127,7 @@ export async function sendSicCertificateReadyEmail(opts: {
   moduleKind: SicModuleId
   certificateCode: string
   verifiedCount: number
-  expiresAt: Date
+  expiresAt: Date | null
   firstVerification: boolean
   /** Ohne Namen auf dem Zertifikat gibt es noch kein PDF. */
   pdfReady: boolean
@@ -128,11 +136,7 @@ export async function sendSicCertificateReadyEmail(opts: {
   magicLinkUrl?: string
 }) {
   const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
-  const validUntil = opts.expiresAt.toLocaleDateString('de-CH', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+  const validUntil = opts.expiresAt ? fmtSicDate(opts.expiresAt) : null
   const copy = sicCertificateReadyCopy({
     moduleKind: opts.moduleKind,
     verifiedCount: opts.verifiedCount,
@@ -352,6 +356,114 @@ export async function sendSicEmailChangeNoticeEmail(oldEmail: string, newEmail: 
     subject: copy.subject,
     html,
     text: `${copy.heading}\n\n${copy.paragraphs.join('\n\n')}\n\n${copy.footnote}`,
+  })
+}
+
+function fmtSicDate(d: Date): string {
+  return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+function fmtSicChf(amount: number): string {
+  return `CHF ${amount.toFixed(2)}`
+}
+
+const OPERATOR_LINE = `${SIC_OPERATOR.legalName}, ${SIC_OPERATOR.street}, ${SIC_OPERATOR.zip} ${SIC_OPERATOR.city}, UID ${SIC_OPERATOR.uid}`
+
+/** Quittung nach der Zahlung: Betrag, Leistung, Datum, Anbieterin. Der Zugangslink kommt separat. */
+export async function sendSicPaymentReceiptEmail(opts: {
+  email: string
+  amountChf: number
+  isRenewal: boolean
+  paidAt: Date
+  paymentId: string
+}) {
+  const item = opts.isRenewal ? 'Verlängerung Mieter-Zertifikat' : 'Mieter-Zertifikat, Komplettpaket'
+  const dateStr = fmtSicDate(opts.paidAt)
+  const amount = fmtSicChf(opts.amountChf)
+  return sicMail({
+    to: opts.email,
+    subject: `${SIC_BRAND_NAME}: Zahlungsbestätigung ${amount}`,
+    html: sicEmailShell({
+      preheader: `Zahlung über ${amount} erhalten`,
+      heading: 'Zahlung erhalten',
+      bodyHtml: `<p style="margin:0 0 12px;">Danke, wir haben deine Zahlung erhalten.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:14px;margin:0 0 12px;">
+          <tr><td style="padding:4px 0;color:${MUTED};">Leistung</td><td style="padding:4px 0;text-align:right;">${item}</td></tr>
+          <tr><td style="padding:4px 0;color:${MUTED};">Datum</td><td style="padding:4px 0;text-align:right;">${dateStr}</td></tr>
+          <tr><td style="padding:4px 0;color:${MUTED};">Referenz</td><td style="padding:4px 0;text-align:right;">${escapeHtml(opts.paymentId)}</td></tr>
+          <tr><td style="padding:8px 0 0;font-weight:700;border-top:1px solid ${HAIRLINE};">Total</td><td style="padding:8px 0 0;text-align:right;font-weight:700;border-top:1px solid ${HAIRLINE};">${amount}</td></tr>
+        </table>
+        <p style="margin:0;">Den Link zu deinem Dossier schicken wir dir in einer separaten E-Mail.</p>`,
+      footnoteHtml: escapeHtml(OPERATOR_LINE),
+    }),
+    text: `Zahlung erhalten\n\n${item}\nDatum: ${dateStr}\nReferenz: ${opts.paymentId}\nTotal: ${amount}\n\n${OPERATOR_LINE}`,
+  })
+}
+
+export async function sendSicExpiredEmail(opts: { email: string; expiredAt: Date }) {
+  const dateStr = fmtSicDate(opts.expiredAt)
+  const buttonUrl = sicUrl(sicPaths.renew)
+  return sicMail({
+    to: opts.email,
+    subject: `${SIC_BRAND_NAME}: Zertifikat abgelaufen`,
+    html: sicEmailShell({
+      preheader: `Abgelaufen am ${dateStr}`,
+      heading: 'Dein Zertifikat ist abgelaufen',
+      bodyHtml: `<p style="margin:0 0 12px;">Die Gültigkeit deines Zertifikats endete am <strong>${dateStr}</strong>. Vermieter sehen auf der Prüfseite jetzt «abgelaufen».</p>
+        <p style="margin:0;">Mit einem frischen Auszug vom Betreibungsamt verlängerst du für CHF ${SIC_RENEWAL_FEE_CHF}.–. Die übrigen geprüften Angaben bleiben, soweit sie nicht veraltet sind.</p>`,
+      buttonText: 'Verlängern',
+      buttonUrl,
+    }),
+    text: `Dein Zertifikat ist am ${dateStr} abgelaufen. Verlängern: ${buttonUrl}`,
+  })
+}
+
+export async function sendSicRefundEmail(opts: {
+  email: string
+  amountChf: number | null
+  moduleKinds?: SicModuleId[]
+}) {
+  const what =
+    opts.moduleKinds && opts.moduleKinds.length > 0 ?
+      `für «${opts.moduleKinds.map(id => getSicModule(id).title).join('», «')}»`
+    : 'deiner Zahlung'
+  const amount = opts.amountChf != null ? ` über <strong>${fmtSicChf(opts.amountChf)}</strong>` : ''
+  const amountText = opts.amountChf != null ? ` über ${fmtSicChf(opts.amountChf)}` : ''
+  return sicMail({
+    to: opts.email,
+    subject: `${SIC_BRAND_NAME}: Rückerstattung veranlasst`,
+    html: sicEmailShell({
+      preheader: 'Rückerstattung veranlasst',
+      heading: 'Rückerstattung veranlasst',
+      bodyHtml: `<p style="margin:0 0 12px;">Wir haben eine Rückerstattung ${what}${amount} veranlasst.</p>
+        <p style="margin:0;">Je nach Zahlungsmittel erscheint der Betrag innert 5 bis 10 Arbeitstagen wieder auf deinem Konto.</p>`,
+      footnoteHtml: escapeHtml(OPERATOR_LINE),
+    }),
+    text: `Wir haben eine Rückerstattung ${what.replace(/[«»]/g, '"')}${amountText} veranlasst. Gutschrift je nach Zahlungsmittel innert 5 bis 10 Arbeitstagen.`,
+  })
+}
+
+/**
+ * Widerruf. Nach einer vollen Rückerstattung kann man unter derselben Adresse neu
+ * anlegen. Bei einem Widerruf wegen Missbrauchs (AGB §8) gibt es diesen Weg nicht.
+ */
+export async function sendSicRevokedEmail(opts: { email: string; certificateCode: string; afterRefund?: boolean }) {
+  const next =
+    opts.afterRefund ?
+      'Nach der vollständigen Rückerstattung ist das Zertifikat nicht mehr gültig. Ein neues kannst du jederzeit unter derselben E-Mail-Adresse anlegen.'
+    : `Bei Fragen dazu erreichst du uns unter ${SIC_SUPPORT_EMAIL}.`
+  const buttonUrl = sicUrl(sicPaths.certificateWorkspace)
+  return sicMail({
+    to: opts.email,
+    subject: `${SIC_BRAND_NAME}: Zertifikat widerrufen`,
+    html: sicEmailShell({
+      preheader: 'Dein Zertifikat wurde widerrufen',
+      heading: 'Zertifikat widerrufen',
+      bodyHtml: `<p style="margin:0 0 12px;">Dein Zertifikat <strong>${escapeHtml(opts.certificateCode)}</strong> wurde widerrufen. Vermieter sehen auf der Prüfseite jetzt «widerrufen», das PDF ist nicht mehr abrufbar.</p>
+        <p style="margin:0;">${escapeHtml(next)}</p>`,
+      ...(opts.afterRefund ? { buttonText: 'Neues Zertifikat anlegen', buttonUrl } : {}),
+    }),
+    text: `Dein Zertifikat ${opts.certificateCode} wurde widerrufen. ${next}${opts.afterRefund ? `\n\n${buttonUrl}` : ''}`,
   })
 }
 

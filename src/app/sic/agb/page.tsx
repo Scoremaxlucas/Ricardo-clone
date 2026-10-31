@@ -6,12 +6,12 @@ import {
   SIC_VALIDITY_MONTHS,
 } from '@/lib/sic/modules'
 import { SIC_REVIEW_SLA, SIC_SUPPORT_EMAIL, sicPaths } from '@/lib/sic/config'
-
-/** Datum der letzten inhaltlichen Änderung — bewusst fix, nicht das aktuelle Jahr. */
-const SIC_AGB_STAND = '16. Oktober 2026'
 import { SIC_DOCS_RETENTION_DAYS, SIC_UNFINISHED_DOCS_RETENTION_MONTHS } from '@/lib/sic/validity'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+
+/** Datum der letzten inhaltlichen Änderung — bewusst fix, nicht das aktuelle Jahr. */
+const SIC_AGB_STAND = '31. Oktober 2026'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,7 +55,7 @@ export default function SicAgbPage() {
           <h2 className="font-semibold text-sic-navy">2. Preise &amp; Zahlung</h2>
           <p className="mt-1.5">
             Das Zertifikat kostet einmalig {formatSicChf(SIC_BUNDLE_ALL_MODULES_CHF)} und umfasst alle{' '}
-            {SIC_MODULES.length} Angaben. Die Zahlung erfolgt vorab über Stripe (Karte oder Link). Der angezeigte
+            {SIC_MODULES.length} Angaben. Die Zahlung erfolgt vorab über Stripe (Karte oder Link) oder Payrexx (TWINT). Der angezeigte
             Betrag entspricht immer dem belasteten Betrag. Alle Preise verstehen sich in Schweizer Franken,
             inklusive allfälliger Mehrwertsteuer.
           </p>
@@ -126,7 +126,9 @@ export default function SicAgbPage() {
             Anteil am bezahlten Betrag: ein Viertel des Zertifikatspreises je Angabe, bei der Verlängerung gibt
             es keine anteilige Rückerstattung. Keine Rückerstattung erfolgt, wenn du die nötigen Unterlagen nicht
             einreichst, wenn eine Angabe wegen ihres Inhalts nicht freigegeben werden kann oder wenn ein
-            Vermieter dich trotz Zertifikat nicht berücksichtigt. Anfragen an {SIC_SUPPORT_EMAIL}.
+            Vermieter dich trotz Zertifikat nicht berücksichtigt. Erstattungen gehen auf das ursprüngliche
+            Zahlungsmittel zurück. Eine versehentliche Doppelzahlung erstatten wir vollständig. Anfragen an{' '}
+            {SIC_SUPPORT_EMAIL}.
           </p>
         </section>
 

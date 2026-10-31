@@ -1,11 +1,13 @@
 import { prisma } from '@/lib/prisma'
-import { stripe } from '@/lib/stripe-server'
+import { deleteSicBlob } from '@/lib/sic/blob-delete'
 import { allocateUniqueSicCertificateCode } from '@/lib/sic/codes'
-import { sendSicMagicLinkEmail } from '@/lib/sic/email'
+import { sendSicMagicLinkEmail, sendSicPaymentReceiptEmail, sendSicRefundEmail } from '@/lib/sic/email'
 import { recordSicEvent } from '@/lib/sic/events'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
-import { modulesResetByRenewal } from '@/lib/sic/renewal'
+import { loadSicRenewalPending, modulesResetByRenewal, sicRenewalCarriesFacts } from '@/lib/sic/renewal'
+import { refundSicPayment } from '@/lib/sic/payment-refund'
+import { sicRevokedCanStartOver } from '@/lib/sic/revoke'
 import { decodePaymentHolderName } from '@/lib/sic/dossier'
 import type { SicModuleId } from '@/lib/sic/modules'
 import { Prisma, type SicModuleKind } from '@prisma/client'
@@ -25,17 +27,6 @@ async function ensureUniqueCode(): Promise<string> {
   return allocateUniqueSicCertificateCode()
 }
 
-async function refundPaymentIntent(paymentIntentId: string | null | undefined): Promise<boolean> {
-  if (!paymentIntentId) return false
-  try {
-    await stripe.refunds.create({ payment_intent: paymentIntentId })
-    return true
-  } catch (err) {
-    console.error('[sic/fulfillment] refund failed', err)
-    return false
-  }
-}
-
 /**
  * Verlängerung innerhalb einer bestehenden Prisma-Transaction anwenden. Alternde
  * Angaben werden auf «Unterlagen fehlen» zurückgesetzt und ihre Dokumente aus
@@ -49,8 +40,18 @@ async function refundPaymentIntent(paymentIntentId: string | null | undefined): 
  */
 async function applyRenewalInTx(
   tx: Prisma.TransactionClient,
-  certificateId: string
+  certificateId: string,
+  now: Date
 ): Promise<{ resetModules: SicModuleId[]; staleBlobUrls: string[] }> {
+  const cert = await tx.sicCertificate.findUniqueOrThrow({
+    where: { id: certificateId },
+    select: { status: true, expiresAt: true },
+  })
+  // Frühzeitig verlängert: das laufende Zertifikat bleibt, wie es ist, bis der neue
+  // Auszug geprüft ist. Abgelaufen: die alte Frist ist gegenstandslos, die neue
+  // beginnt erst mit der Freigabe des neuen Auszugs.
+  const stillValid = cert.status === 'ACTIVE' && !!cert.expiresAt && cert.expiresAt.getTime() > now.getTime()
+
   const modules = await tx.sicCertificateModule.findMany({
     where: { certificateId },
     select: { moduleKind: true, status: true, reviewedAt: true, verifiedFacts: true },
@@ -64,31 +65,53 @@ async function applyRenewalInTx(
       verifiedFacts: m.verifiedFacts,
     }))
   )
-  if (toReset.length === 0) return { resetModules: [], staleBlobUrls: [] }
+  const certificateUpdate: Prisma.SicCertificateUpdateInput =
+    stillValid ?
+      { status: 'ACTIVE', docsPurgeWarningSentAt: null }
+    : {
+        status: 'ACTIVE',
+        expiresAt: null,
+        expiryReminder14dSentAt: null,
+        expiryReminder3dSentAt: null,
+        docsPurgeWarningSentAt: null,
+      }
+  if (toReset.length === 0) {
+    await tx.sicCertificate.update({ where: { id: certificateId }, data: certificateUpdate })
+    return { resetModules: [], staleBlobUrls: [] }
+  }
 
   const staleDocs = await tx.sicDocument.findMany({
     where: { certificateId, moduleKind: { in: toReset as SicModuleKind[] } },
     select: { id: true, blobUrl: true },
   })
 
-  await tx.sicCertificateModule.updateMany({
-    where: { certificateId, moduleKind: { in: toReset as SicModuleKind[] } },
-    data: {
-      status: 'PENDING_DOCS',
-      verifiedFacts: Prisma.DbNull,
-      reviewedAt: null,
-      reviewedByUserId: null,
-      reviewNote: null,
-      uploadReminderSentAt: null,
-    },
-  })
+  const resetData = {
+    status: 'PENDING_DOCS' as const,
+    reviewedAt: null,
+    reviewedByUserId: null,
+    reviewNote: null,
+    uploadReminderSentAt: null,
+  }
+  // Solange das Zertifikat gilt, bleiben die geprüften Werte stehen (PDF, Prüfseite),
+  // bis der neue Nachweis freigegeben ist. Ein abgelaufener Ausweis gehört nicht dazu.
+  const carry = stillValid ? toReset.filter(sicRenewalCarriesFacts) : []
+  const clear = toReset.filter(id => !carry.includes(id))
+  if (carry.length > 0) {
+    await tx.sicCertificateModule.updateMany({
+      where: { certificateId, moduleKind: { in: carry as SicModuleKind[] } },
+      data: resetData,
+    })
+  }
+  if (clear.length > 0) {
+    await tx.sicCertificateModule.updateMany({
+      where: { certificateId, moduleKind: { in: clear as SicModuleKind[] } },
+      data: { ...resetData, verifiedFacts: Prisma.DbNull },
+    })
+  }
   if (staleDocs.length > 0) {
     await tx.sicDocument.deleteMany({ where: { id: { in: staleDocs.map(d => d.id) } } })
   }
-  await tx.sicCertificate.update({
-    where: { id: certificateId },
-    data: { status: 'ACTIVE', docsPurgeWarningSentAt: null },
-  })
+  await tx.sicCertificate.update({ where: { id: certificateId }, data: certificateUpdate })
 
   return { resetModules: toReset, staleBlobUrls: staleDocs.map(d => d.blobUrl) }
 }
@@ -99,12 +122,7 @@ async function applyRenewalInTx(
  */
 async function deleteStaleBlobs(blobUrls: string[]): Promise<void> {
   if (blobUrls.length === 0) return
-  try {
-    const { del } = await import('@vercel/blob')
-    await Promise.all(blobUrls.map(u => del(u).catch(() => undefined)))
-  } catch {
-    // Blobs evtl. schon weg — DB-Zustand ist bereits korrekt.
-  }
+  await Promise.all(blobUrls.map(u => deleteSicBlob(u)))
 }
 
 /**
@@ -197,26 +215,50 @@ export async function fulfillSicPaidCheckout(
     where: { email },
     include: { modules: { select: { moduleKind: true } } },
   })
-  const alreadyOwned = new Set((existing?.modules ?? []).map(m => m.moduleKind))
+  // Neu anlegen nach Widerruf: nur nach voller Erstattung (keine PAID-Zahlung mehr).
+  // Ein Widerruf wegen Missbrauchs lässt sich mit einer alten, offenen Zahlung nicht umgehen.
+  const revoked = existing?.status === 'REVOKED'
+  const startOver =
+    !!existing && revoked && payment.includeBaseFee && !isRenewal && (await sicRevokedCanStartOver(existing.id))
+  const alreadyOwned = new Set(startOver ? [] : (existing?.modules ?? []).map(m => m.moduleKind))
   const newKinds = moduleKinds.filter(k => !alreadyOwned.has(k))
 
-  // Doppelzahlung: nichts Neues zu erfüllen → Stripe full refund (nur REFUNDED wenn Refund OK)
-  if (existing && newKinds.length === 0 && !isRenewal) {
-    const refunded = await refundPaymentIntent(pi)
+  // Doppelzahlung: nichts Neues zu erfüllen → volle Erstattung (nur REFUNDED, wenn sie klappt).
+  // Bei einer Verlängerung heisst das: eine frühere ist bezahlt und noch nicht abgeschlossen.
+  // Auf ein widerrufenes Zertifikat (ohne Neuanfang) wird nichts gebucht — auch keine Verlängerung.
+  const duplicate =
+    !!existing &&
+    ((revoked && !startOver) ||
+      (isRenewal ?
+        await loadSicRenewalPending(prisma, existing.id, { excludePaymentId: payment.id })
+      : newKinds.length === 0))
+  if (existing && duplicate) {
+    // Zuerst beanspruchen: ein paralleler Lauf (Webhook + Bestätigungsseite) sieht dann
+    // PAID und erstattet nicht ein zweites Mal oder überschreibt REFUNDED.
+    const claimed = await prisma.sicPayment.updateMany({
+      where: { id: payment.id, status: { in: ['PENDING', 'CANCELLED'] } },
+      data: { status: 'PAID', paidAt: now, certificateId: existing.id, stripePaymentIntentId: pi },
+    })
+    if (claimed.count === 0) {
+      if (attempt >= SIC_FULFILL_MAX_ATTEMPTS) return { ok: false, reason: 'PAYMENT_CLAIMED_ELSEWHERE' }
+      return fulfillSicPaidCheckout(input, attempt + 1)
+    }
+    const refunded = await refundSicPayment(
+      { ...payment, stripePaymentIntentId: pi ?? null },
+      { idempotencyKey: `sic-duplicate-refund:${payment.id}` }
+    )
     if (refunded) {
       await prisma.sicPayment.update({
         where: { id: payment.id },
-        data: {
-          status: 'REFUNDED',
-          paidAt: now,
-          certificateId: existing.id,
-          stripePaymentIntentId: pi,
-        },
+        data: { status: 'REFUNDED' },
       })
       sicLog('sic.fulfillment.duplicate_refunded', {
         paymentId: payment.id,
         certificateId: existing.id,
       })
+      await sendSicRefundEmail({ email, amountChf: Number(payment.amountChf) }).catch(err =>
+        console.error('[sic/fulfillment] duplicate refund email', err)
+      )
       return {
         ok: true,
         certificateId: existing.id,
@@ -226,16 +268,7 @@ export async function fulfillSicPaidCheckout(
         refundedDuplicate: true,
       }
     }
-    // Refund fehlgeschlagen: als PAID verknüpfen ohne zweite Module; Ops sieht Log
-    await prisma.sicPayment.update({
-      where: { id: payment.id },
-      data: {
-        status: 'PAID',
-        paidAt: now,
-        certificateId: existing.id,
-        stripePaymentIntentId: pi,
-      },
-    })
+    // Refund fehlgeschlagen: bleibt PAID (oben beansprucht) ohne zweite Module; Ops sieht Log
     sicLog('sic.fulfillment.refund_failed', {
       paymentId: payment.id,
       certificateId: existing.id,
@@ -256,7 +289,7 @@ export async function fulfillSicPaidCheckout(
     return { ok: false, reason: 'RENEWAL_WITHOUT_CERTIFICATE' }
   }
 
-  const code = existing ? existing.certificateCode : await ensureUniqueCode()
+  const code = existing && !startOver ? existing.certificateCode : await ensureUniqueCode()
   const decoded = decodePaymentHolderName(payment.holderName)
   const prefillName =
     decoded?.firstName && decoded.lastName ?
@@ -268,9 +301,10 @@ export async function fulfillSicPaidCheckout(
         couple: !!(decoded.firstName2 && decoded.lastName2),
       }
     : null
-  const isFirstCertificate = !existing
+  const isFirstCertificate = !existing || startOver
 
   let cert
+  let startOverBlobUrls: string[] = []
   let renewalResult: { resetModules: SicModuleId[]; staleBlobUrls: string[] } = {
     resetModules: [],
     staleBlobUrls: [],
@@ -300,8 +334,45 @@ export async function fulfillSicPaidCheckout(
             : {}),
           }
         : {}
+      if (startOver && existing) {
+        const oldDocs = await tx.sicDocument.findMany({
+          where: { certificateId: existing.id },
+          select: { blobUrl: true },
+        })
+        startOverBlobUrls = oldDocs.map(d => d.blobUrl)
+        await tx.sicDocument.deleteMany({ where: { certificateId: existing.id } })
+        await tx.sicCertificateModule.deleteMany({ where: { certificateId: existing.id } })
+        // Der alte Code zeigt auf der Prüfseite weiter «ersetzt», nie das neue Dossier.
+        await tx.sicRetiredCertificateCode.create({
+          data: { certificateId: existing.id, certificateCode: existing.certificateCode },
+        })
+        await tx.sicCertificate.update({
+          where: { id: existing.id },
+          data: {
+            certificateCode: code,
+            status: 'ACTIVE',
+            issuedAt: now,
+            certifiedAt: null,
+            expiresAt: null,
+            expiryReminder14dSentAt: null,
+            expiryReminder3dSentAt: null,
+            docsPurgeWarningSentAt: null,
+            ...(prefillName ?
+              {
+                holderFirstName: null,
+                holderLastName: null,
+                holder2FirstName: null,
+                holder2LastName: null,
+                householdKind: 'SINGLE',
+              }
+            : {}),
+          },
+        })
+      }
       const c =
-        existing ?
+        startOver && existing ?
+          await tx.sicCertificate.update({ where: { id: existing.id }, data: nameData })
+        : existing ?
           await tx.sicCertificate.update({
             where: { id: existing!.id },
             data: {
@@ -334,7 +405,7 @@ export async function fulfillSicPaidCheckout(
         staleBlobUrls: [],
       }
       if (isRenewal) {
-        renewal = await applyRenewalInTx(tx, c.id)
+        renewal = await applyRenewalInTx(tx, c.id, now)
       }
 
       await tx.sicPayment.update({
@@ -366,7 +437,7 @@ export async function fulfillSicPaidCheckout(
   }
 
   // NACH-Commit: Nebeneffekte, die nicht in die Transaction gehören.
-  await deleteStaleBlobs(renewalResult.staleBlobUrls)
+  await deleteStaleBlobs([...renewalResult.staleBlobUrls, ...startOverBlobUrls])
 
   if (isRenewal) {
     await recordSicEvent({
@@ -384,6 +455,16 @@ export async function fulfillSicPaidCheckout(
       email,
       meta: { modules: newKinds },
     })
+  }
+
+  if (Number(payment.amountChf) > 0) {
+    await sendSicPaymentReceiptEmail({
+      email,
+      amountChf: Number(payment.amountChf),
+      isRenewal,
+      paidAt: now,
+      paymentId: payment.id,
+    }).catch(err => console.error('[sic/fulfillment] receipt email', err))
   }
 
   await sendPostCheckoutMagicLinkWithRetry(email)

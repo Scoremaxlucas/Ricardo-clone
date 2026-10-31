@@ -750,7 +750,7 @@ export function SicAdminReview() {
 
                       {m.documents.length > 0 ?
                         <ul className="mt-2 space-y-1">
-                          {m.documents.map((d, idx) => (
+                          {m.documents.map(d => (
                             <li key={d.id} className="flex flex-wrap items-center gap-2">
                               <a
                                 href={`/api/sic/admin/document/${d.id}`}
@@ -761,26 +761,24 @@ export function SicAdminReview() {
                                 <ExternalLink className="h-3.5 w-3.5" /> {d.fileName}
                               </a>
                               {actionable && moduleId ?
-                                <button
-                                  type="button"
-                                  disabled={busy === `${key}:prefill`}
-                                  onClick={() =>
-                                    void prefill(
-                                      item.id,
-                                      m.moduleKind,
-                                      d.id,
-                                      item.householdKind === 'COUPLE' && sicModuleHasCouplePersonFacts(m.moduleKind as SicModuleId) ?
-                                        (idx === 0 ? 1 : 2) :
-                                        undefined
-                                    )
-                                  }
-                                  className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-white disabled:opacity-50"
-                                >
-                                  {busy === `${key}:prefill` ?
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  : <Sparkles className="h-3 w-3" />}
-                                  Werte auslesen
-                                </button>
+                                // Paar: Reihenfolge der Uploads sagt nichts über die Person — der Prüfer wählt.
+                                (item.householdKind === 'COUPLE' && sicModuleHasCouplePersonFacts(m.moduleKind as SicModuleId) ?
+                                  ([1, 2] as const)
+                                : ([undefined] as const)
+                                ).map(person => (
+                                  <button
+                                    key={person ?? 'single'}
+                                    type="button"
+                                    disabled={busy === `${key}:prefill`}
+                                    onClick={() => void prefill(item.id, m.moduleKind, d.id, person)}
+                                    className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-white disabled:opacity-50"
+                                  >
+                                    {busy === `${key}:prefill` ?
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    : <Sparkles className="h-3 w-3" />}
+                                    {person ? `Person ${person} auslesen` : 'Werte auslesen'}
+                                  </button>
+                                ))
                               : null}
                             </li>
                           ))}

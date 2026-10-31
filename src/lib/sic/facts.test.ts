@@ -1,5 +1,6 @@
 import {
   normalizeSicFacts,
+  sicApprovalBlockers,
   readSicFacts,
   sicCatalogPreviewRows,
   sicFactFields,
@@ -247,5 +248,46 @@ describe('couple prefill mapping', () => {
     expect(sicModuleHasCouplePersonFacts('BONITAET')).toBe(true)
     expect(sicModuleHasCouplePersonFacts('ARBEIT_EINKOMMEN')).toBe(true)
     expect(sicModuleHasCouplePersonFacts('AUFENTHALT')).toBe(true)
+  })
+})
+
+describe('sicApprovalBlockers', () => {
+  const NOW = new Date(Date.UTC(2026, 9, 31, 12))
+
+  it('lässt negative Inhalte nicht freigeben', () => {
+    const open = sicApprovalBlockers(
+      'BONITAET',
+      { extractDate: '2026-10-20', office: 'Betreibungsamt Zürich', proceedings: 'open' },
+      NOW
+    )
+    expect(open.join(' ')).toContain('Offene Betreibungen vermerkt')
+    const notice = sicApprovalBlockers(
+      'ARBEIT_EINKOMMEN',
+      { incomeBand: '80_100k', employmentType: 'unbefristet', employedSince: '2020-03-01', noticeGiven: 'yes' },
+      NOW
+    )
+    expect(notice.join(' ')).toContain('Kündigung ausgesprochen')
+  })
+
+  it('weist alte und künftige Auszüge zurück', () => {
+    const old = sicApprovalBlockers('BONITAET', { extractDate: '2026-07-01', proceedings: 'none' }, NOW)
+    expect(old.join(' ')).toMatch(/älter als drei Monate/)
+    const future = sicApprovalBlockers('BONITAET', { extractDate: '2026-11-05', proceedings: 'none' }, NOW)
+    expect(future.join(' ')).toMatch(/Zukunft/)
+  })
+
+  it('gibt einen aktuellen, sauberen Auszug frei', () => {
+    expect(
+      sicApprovalBlockers('BONITAET', { extractDate: '2026-10-31', office: 'Betreibungsamt Zürich', proceedings: 'none' }, NOW)
+    ).toEqual([])
+  })
+
+  it('verlangt Datumsfelder als YYYY-MM-DD', () => {
+    const res = normalizeSicFacts('BONITAET', {
+      extractDate: '12.06.2026',
+      office: 'Betreibungsamt Zürich',
+      proceedings: 'none',
+    })
+    expect(res.ok).toBe(false)
   })
 })

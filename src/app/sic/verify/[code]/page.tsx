@@ -5,9 +5,16 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { isValidSicCertificateCode, normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
 import { findSicRetiredCertificateCode } from '@/lib/sic/codes'
 import { SIC_BRAND_NAME } from '@/lib/sic/config'
-import { isSicLandlordPdfReady, joinHouseholdHolderName, sicFactLineOptsFromHolders, sicVerifiedRowCount, verifiedModuleLineItems } from '@/lib/sic/dossier'
+import {
+  isSicLandlordPdfReady,
+  joinHouseholdHolderName,
+  sicFactLineOptsFromHolders,
+  sicPresentedModules,
+  sicVerifiedRowCount,
+  verifiedModuleLineItems,
+} from '@/lib/sic/dossier'
 import { isSicCouple } from '@/lib/sic/household'
-import { recordSicVerifyScan } from '@/lib/sic/events'
+import { recordSicVerifyScan, sicIpKey } from '@/lib/sic/events'
 import { isSicCertificateSealReady, sicCompletenessLabel } from '@/lib/sic/modules'
 import { getSicSession } from '@/lib/sic/session-cookie'
 import { isSicExpired } from '@/lib/sic/validity'
@@ -43,7 +50,8 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
   const code = normalizeSicCertificateCode(raw)
   const ip = clientIp()
 
-  const rl = await checkRateLimit({ identifier: `sic-verify:${ip}`, limit: 60, window: 3600 })
+  // Nur gesalzener Tageswert, nie die IP selbst — so steht es in der Datenschutzerklärung.
+  const rl = await checkRateLimit({ identifier: `sic-verify:${sicIpKey(ip)}`, limit: 60, window: 3600 })
   if (!rl.allowed) {
     return (
       <VerifyShell>
@@ -77,12 +85,12 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
       holderName,
       status: cert.status,
       expiresAt: cert.expiresAt,
-      modules: cert.modules,
+      modules: sicPresentedModules(cert.modules, cert),
     })
   const verifiedModules =
     cert && landlordReady ?
       verifiedModuleLineItems(
-        cert.modules,
+        sicPresentedModules(cert.modules, cert),
         sicFactLineOptsFromHolders({
           couple: isSicCouple(cert.householdKind),
           firstName: cert.holderFirstName,
@@ -107,7 +115,9 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
   return (
     <VerifyShell>
       {!cert ?
-        retired ?
+        retired?.revoked ?
+          <SicVerifyDocument state="revoked" code={retired.certificateCode} />
+        : retired ?
           <SicVerifyDocument
             state="replaced"
             code={retired.certificateCode}
