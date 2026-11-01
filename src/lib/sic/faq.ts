@@ -14,7 +14,7 @@ import { SIC_DOCS_RETENTION_DAYS, SIC_UNFINISHED_DOCS_RETENTION_MONTHS } from '@
 const PREVIEW_BONITAET = sicFactLines('BONITAET', SIC_CERT_PREVIEW_FACTS.BONITAET)
 const PREVIEW_INCOME = sicFactLines('ARBEIT_EINKOMMEN', SIC_CERT_PREVIEW_FACTS.ARBEIT_EINKOMMEN)
 const PREVIEW_INCOME_BAND = PREVIEW_INCOME.find(l => l.startsWith('Bruttojahreslohn')) ?? ''
-const PREVIEW_CEILING = PREVIEW_INCOME.find(l => l.startsWith('Tragbar')) ?? ''
+const PREVIEW_CEILING = PREVIEW_INCOME.find(l => l.startsWith('Richtwert')) ?? ''
 
 const PRICE_ANSWER =
   sicIsFree() ?
@@ -48,6 +48,10 @@ export const SIC_FAQ: { q: string; a: string }[] = [
     a: 'Den Auszug vom Betreibungsamt, deinen Ausweis und deine Lohnabrechnung hast du selbst. Für Arbeitgeber und bisherigen Vermieter gibt es bei uns ein kurzes Formular. Ohne bisherigen Vermieter wählst du «Keine Referenz» — dann gilt die Angabe nicht als fehlend.',
   },
   {
+    q: 'Ich bin selbständig, in Ausbildung oder pensioniert. Geht das?',
+    a: `Ja, mit einer Einschränkung: Lohn und Arbeitsstelle prüfen wir derzeit für Angestellte. Du vermerkst «nicht angestellt», dann steht das so auf dem Zertifikat und gilt nicht als fehlend. Betreibungsauszug, Ausweis und Referenz werden normal geprüft — das Mieter-Zertifikat bekommst du mit ${sicSealRequirementLabel()}. Sobald wir einen passenden Einkommensnachweis prüfen, melden wir uns.`,
+  },
+  {
     q: 'Wie lange dauert es insgesamt?',
     a: `Deine Unterlagen prüfen wir ${SIC_REVIEW_SLA}. Bis die unterschriebenen Formulare von Arbeitgeber und Vermieter zurück sind, gehen oft einige Tage bis mehrere Wochen ins Land — dieser Teil liegt nicht bei uns. Deshalb kannst du das PDF schon nutzen, wenn nur ein Teil geprüft ist.`,
   },
@@ -61,7 +65,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was, wenn eine Angabe nicht passt?',
-    a: 'Dann sagen wir dir per E-Mail, was fehlt, und du reichst neue Unterlagen nach — ohne Zusatzkosten. Ist der Inhalt selbst negativ, etwa offene Betreibungen, erscheint die Angabe gar nicht auf dem Zertifikat. Ein Negativurteil über dich schreiben wir nirgends hin.',
+    a: 'Dann sagen wir dir per E-Mail, was fehlt, und du reichst neue Unterlagen nach — ohne Zusatzkosten. Ist der Inhalt selbst negativ, etwa offene Betreibungen oder Verlustscheine, erscheint die Angabe gar nicht auf dem Zertifikat. Früher bezahlte Betreibungen sind kein Hindernis. Ein Negativurteil über dich schreiben wir nirgends hin.',
   },
   {
     q: 'Wer sieht meine Unterlagen?',

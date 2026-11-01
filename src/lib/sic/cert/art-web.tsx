@@ -97,3 +97,51 @@ export function DocumentRule({ width = 200 }: { width?: number }) {
   )
 }
 
+
+/**
+ * Siegel wie im PDF (`art.tsx`): zwei Goldringe, Hausmarke, «GEPRÜFT».
+ * Inline-Styles: Tailwind scannt `src/lib` nicht.
+ */
+export function CertSeal({ size = 74, year }: { size?: number; year: string }) {
+  const r = size / 2
+  const k = size / 74
+  const line = (fontSize: number, color: string, letterSpacing: number, bold = true) => ({
+    display: 'block',
+    marginTop: 2 * k,
+    fontSize: fontSize * k,
+    lineHeight: 1,
+    fontWeight: bold ? 700 : 400,
+    letterSpacing: letterSpacing * k,
+    color,
+    whiteSpace: 'nowrap' as const,
+  })
+  return (
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        aria-hidden="true"
+        style={{ position: 'absolute', inset: 0 }}
+      >
+        <circle cx={r} cy={r} r={r - 1} fill={C.ivorySoft} stroke={C.gold} strokeWidth={1.4} />
+        <circle cx={r} cy={r} r={r - 5} fill="none" stroke={C.gold} strokeWidth={0.5} />
+      </svg>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <HouseMark size={Math.round(size * 0.24)} onDark={false} />
+        <span style={line(8.5, C.navy, 1.5)}>GEPRÜFT</span>
+        <span style={line(4.6, C.goldText, 0.35)}>MIETER-ZERTIFIKAT</span>
+        <span style={line(5.5, C.muted, 0.6, false)}>{year}</span>
+      </div>
+    </div>
+  )
+}

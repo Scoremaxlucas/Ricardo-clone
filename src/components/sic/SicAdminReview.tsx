@@ -735,7 +735,9 @@ export function SicAdminReview() {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="text-sm font-semibold text-slate-800">{m.title}</span>
                         <span className="text-xs font-medium text-slate-500">
-                          {STATUS_LABEL[m.status] ?? m.status}
+                          {m.status === 'NOT_APPLICABLE' && m.moduleKind === 'ARBEIT_EINKOMMEN' ?
+                            'Nicht angestellt'
+                          : (STATUS_LABEL[m.status] ?? m.status)}
                           {waiting && actionable ? ` · ${waiting}` : ''}
                           {slaText ? ` · ${slaText}` : ''}
                         </span>

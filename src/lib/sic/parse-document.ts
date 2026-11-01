@@ -27,9 +27,13 @@ Dokument: Auszug aus dem Betreibungsregister.
 {
   "extractDate": "YYYY-MM-DD",
   "office": "Name des ausstellenden Betreibungsamts",
-  "hasOpenProceedings": true/false
+  "hasOpenProceedings": true/false,
+  "hasLossCertificates": true/false,
+  "hasAnyEntries": true/false
 }
-hasOpenProceedings: true, wenn offene Betreibungen, Zahlungsbefehle oder Pfändungen aufgeführt sind.`
+hasOpenProceedings: true, wenn offene Betreibungen, Zahlungsbefehle oder Pfändungen aufgeführt sind.
+hasLossCertificates: true, wenn Verlustscheine aufgeführt sind — auch alte.
+hasAnyEntries: true, wenn irgendein Eintrag aufgeführt ist, auch bezahlte, erledigte oder zurückgezogene.`
   }
 
   if (moduleId === 'ARBEIT_EINKOMMEN') {
@@ -40,12 +44,14 @@ Dokument: Arbeitgeberbestätigung und/oder Lohnabrechnung.
   "incomeBand": "einer der folgenden Werte",
   "employmentType": "unbefristet" | "befristet" | "probezeit",
   "employedSince": "YYYY-MM-DD",
+  "employedUntil": "YYYY-MM-DD",
   "employerName": "Firmenname",
   "noticeGiven": true/false
 }
 incomeBand bezieht sich auf den Bruttojahreslohn: ${bands}.
 Rechne einen Monatslohn mit 12 hoch; einen 13. Monatslohn zählst du mit, wenn er ausgewiesen ist.
-noticeGiven: true, wenn eine Kündigung ausgesprochen wurde.`
+noticeGiven: true, wenn eine Kündigung ausgesprochen wurde.
+employedUntil nur bei befristeter Anstellung: das vereinbarte Enddatum.`
   }
 
   if (moduleId === 'ZUVERLAESSIGKEIT') {
@@ -55,11 +61,13 @@ Dokument: Referenz des bisherigen Vermieters.
   "tenancyFrom": "YYYY-MM-DD",
   "tenancyTo": "YYYY-MM-DD",
   "paymentBehaviour": "always_on_time" | "mostly_on_time",
+  "referenceDate": "YYYY-MM-DD",
   "rentOnTime": true/false,
   "damages": true/false,
   "wouldReRent": true/false
 }
 tenancyTo weglassen, wenn das Mietverhältnis noch läuft.
+referenceDate: das Datum, an dem die Referenz ausgefüllt oder unterschrieben wurde.
 paymentBehaviour: "always_on_time" nur, wenn die Miete ausdrücklich stets fristgerecht bezahlt wurde.`
   }
 
@@ -97,6 +105,9 @@ function warningsFor(moduleId: SicModuleId, raw: Record<string, unknown>): SicPa
   if (moduleId === 'BONITAET' && raw.hasOpenProceedings === true) {
     warnings.push('Im Auszug sind offene Betreibungen erkennbar — Freigabe prüfen.')
   }
+  if (moduleId === 'BONITAET' && raw.hasLossCertificates === true) {
+    warnings.push('Im Auszug sind Verlustscheine erkennbar — Freigabe prüfen.')
+  }
   if (moduleId === 'ARBEIT_EINKOMMEN' && raw.noticeGiven === true) {
     warnings.push('Auf der Bestätigung ist eine Kündigung vermerkt — Freigabe prüfen.')
   }
@@ -127,7 +138,12 @@ function pickKnownFields(moduleId: SicModuleId, raw: Record<string, unknown>): S
   }
   // Booleans aus dem Parser als gespeicherte Fakten übernehmen (Prüfer sieht sie im Formular und kann sie korrigieren).
   if (moduleId === 'BONITAET' && typeof raw.hasOpenProceedings === 'boolean') {
-    facts.proceedings = raw.hasOpenProceedings ? 'open' : 'none'
+    // Schwerstes Merkmal gewinnt. «Keine Einträge» nur, wenn der Parser das ausdrücklich sagt.
+    facts.proceedings =
+      raw.hasLossCertificates === true ? 'loss'
+      : raw.hasOpenProceedings ? 'open'
+      : raw.hasAnyEntries === false ? 'clean'
+      : 'none'
   }
   if (moduleId === 'ARBEIT_EINKOMMEN' && typeof raw.noticeGiven === 'boolean') {
     facts.noticeGiven = raw.noticeGiven ? 'yes' : 'no'

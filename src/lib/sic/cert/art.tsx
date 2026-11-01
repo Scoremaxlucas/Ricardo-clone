@@ -2,7 +2,7 @@
  * Vektor-Bausteine für das SIC-Zertifikat-PDF.
  * Hausmarke — nicht Bundeswappen. Kein Lorbeer, kein Gummistempel.
  */
-import { Circle, Path, Rect, Svg, View } from '@react-pdf/renderer'
+import { Circle, Path, Rect, Svg, Text, View } from '@react-pdf/renderer'
 import React from 'react'
 import { SIC_HOUSE_MARK, sicLogoMarkHouseStroke } from '@/lib/sic/brand'
 import type { SicModuleId } from '@/lib/sic/modules'
@@ -124,3 +124,39 @@ export function DocumentRule({ width = 200 }: { width?: number }) {
   )
 }
 
+
+/**
+ * Siegel des Mieter-Zertifikats: zwei Goldringe, Hausmarke, «GEPRÜFT».
+ * Nur auf der Urkunde (Betreibungsauszug + Ausweis geprüft), nie auf dem Stand der Prüfung.
+ */
+export function CertSeal({ size = 74, year }: { size?: number; year: string }) {
+  const r = size / 2
+  return (
+    <View style={{ width: size, height: size, position: 'relative' }}>
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <Circle cx={r} cy={r} r={r - 1} fill={C.ivorySoft} stroke={C.gold} strokeWidth={1.4} />
+        <Circle cx={r} cy={r} r={r - 5} fill="none" stroke={C.gold} strokeWidth={0.5} />
+      </Svg>
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: size,
+          height: size,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <HouseMark size={size * 0.24} onDark={false} />
+        <Text style={{ marginTop: 3, fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: C.navy, letterSpacing: 1.4 }}>
+          GEPRÜFT
+        </Text>
+        <Text style={{ marginTop: 1.5, fontSize: 4.6, fontFamily: 'Helvetica-Bold', color: C.goldText, letterSpacing: 0.7 }}>
+          MIETER-ZERTIFIKAT
+        </Text>
+        <Text style={{ marginTop: 1.5, fontSize: 5, color: C.muted, letterSpacing: 0.6 }}>{year}</Text>
+      </View>
+    </View>
+  )
+}

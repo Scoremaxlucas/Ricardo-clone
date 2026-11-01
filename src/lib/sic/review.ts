@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { joinHouseholdHolderName } from '@/lib/sic/dossier'
 import { isSicCouple } from '@/lib/sic/household'
 import { recordSicEvent } from '@/lib/sic/events'
-import type { SicFacts } from '@/lib/sic/facts'
+import { readSicFacts, sicIdValidUntil, type SicFacts } from '@/lib/sic/facts'
 import type { SicModuleId } from '@/lib/sic/modules'
 import { sicExpiresAtAfterApproval, sicExpiryClockChanged } from '@/lib/sic/validity'
 import { Prisma, type SicModuleKind } from '@prisma/client'
@@ -55,6 +55,27 @@ export async function approveSicModule(opts: {
   // Ein widerrufenes Zertifikat darf durch eine Freigabe nicht wieder aufleben.
   if (cert.status === 'REVOKED') return null
 
+  // Laufende Mietverhältnisse gelten «Stand Referenz» — ohne Datum auf dem Formular der Tag der Freigabe.
+  const facts: SicFacts =
+    opts.moduleKind === 'ZUVERLAESSIGKEIT' && !opts.facts.tenancyTo && !opts.facts.referenceDate ?
+      { ...opts.facts, referenceDate: now.toISOString().slice(0, 10) }
+    : opts.facts
+
+  // Das Zertifikat gilt nicht länger als der geprüfte Ausweis. Wird ein neuer Ausweis
+  // freigegeben, rechnet die Frist wieder ab dem geprüften Auszug statt ab der gekürzten.
+  const otherVerified = await prisma.sicCertificateModule.findMany({
+    where: {
+      certificateId: opts.certificateId,
+      moduleKind: { in: ['AUFENTHALT', 'BONITAET'] },
+      status: 'VERIFIED',
+    },
+    select: { moduleKind: true, verifiedFacts: true },
+  })
+  const storedFacts = (kind: 'AUFENTHALT' | 'BONITAET') =>
+    readSicFacts(kind, otherVerified.find(m => m.moduleKind === kind)?.verifiedFacts)
+  const idFacts = opts.moduleKind === 'AUFENTHALT' ? facts : storedFacts('AUFENTHALT')
+  const extractFacts = opts.moduleKind === 'BONITAET' ? facts : storedFacts('BONITAET')
+
   const firstVerification = !cert.certifiedAt
   // Schon ausgestellt, aber ohne Frist (Verlängerung nach Ablauf, Auszug abgelehnt):
   // gültig wird es erst wieder mit einem geprüften Betreibungsauszug, nicht mit einer
@@ -63,11 +84,12 @@ export async function approveSicModule(opts: {
   const nextExpiresAt: Date | null =
     awaitingExtract ? null : (
       sicExpiresAtAfterApproval({
-        moduleKind: opts.moduleKind,
-        extractDate: opts.facts.extractDate,
-        extractDate2: opts.facts.extractDate2,
+        moduleKind: extractFacts?.extractDate ? 'BONITAET' : opts.moduleKind,
+        extractDate: extractFacts?.extractDate,
+        extractDate2: extractFacts?.extractDate2,
         currentExpiresAt: cert.expiresAt,
         approvedAt: now,
+        idValidUntil: sicIdValidUntil(idFacts),
       })
     )
   const clockChanged = !!nextExpiresAt && sicExpiryClockChanged(cert.expiresAt, nextExpiresAt)
@@ -77,7 +99,7 @@ export async function approveSicModule(opts: {
       where: { certificateId: opts.certificateId, moduleKind: opts.moduleKind as SicModuleKind },
       data: {
         status: 'VERIFIED',
-        verifiedFacts: opts.facts,
+        verifiedFacts: facts,
         reviewedAt: now,
         reviewedByUserId: opts.reviewerId,
         reviewNote: null,

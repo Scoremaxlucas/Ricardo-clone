@@ -54,15 +54,47 @@ const EMPLOYMENT_TYPES = [
   { value: 'probezeit', label: 'In der Probezeit' },
 ] as const
 
+/**
+ * Was der Auszug zeigt. Nur «clean» und «none» sind freigabefähig; Verlustscheine
+ * wiegen schwerer als offene Betreibungen (ein Gläubiger ist leer ausgegangen).
+ */
 const PROCEEDINGS = [
-  { value: 'none', label: 'Keine offenen Betreibungen' },
+  { value: 'clean', label: 'Keine Einträge' },
+  { value: 'none', label: 'Keine offenen Betreibungen (frühere erledigt)' },
   { value: 'open', label: 'Offene Betreibungen vermerkt' },
+  { value: 'loss', label: 'Verlustscheine vermerkt' },
 ] as const
+
+/** Zeile auf dem Zertifikat je freigabefähigem Wert — erledigte Einträge werden nicht aufgezählt. */
+const PROCEEDINGS_CERT_LINE: Record<string, string> = {
+  clean: 'Keine Einträge im Betreibungsregister',
+  none: 'Keine offenen Betreibungen',
+}
 
 const NOTICE_GIVEN = [
   { value: 'no', label: 'Ungekündigt' },
   { value: 'yes', label: 'Kündigung ausgesprochen' },
 ] as const
+
+/**
+ * Wer (noch) nicht angestellt ist. Für diese Gruppen prüfen wir das Einkommen noch nicht;
+ * die Angabe gilt dann als nicht anwendbar statt als fehlend.
+ */
+export const SIC_INCOME_GROUPS = [
+  { value: 'self_employed', label: 'Selbständig erwerbend' },
+  { value: 'in_training', label: 'In Ausbildung' },
+  { value: 'retired', label: 'Pensioniert' },
+] as const
+
+export type SicIncomeGroup = (typeof SIC_INCOME_GROUPS)[number]['value']
+
+export function isSicIncomeGroup(value: unknown): value is SicIncomeGroup {
+  return typeof value === 'string' && SIC_INCOME_GROUPS.some(g => g.value === value)
+}
+
+export function sicIncomeGroupLabel(value: unknown): string | null {
+  return SIC_INCOME_GROUPS.find(g => g.value === value)?.label ?? null
+}
 
 const PAYMENT_BEHAVIOUR = [
   { value: 'always_on_time', label: 'Stets fristgerecht' },
@@ -100,7 +132,7 @@ const FIELDS: Record<SicModuleId, SicFactField[]> = {
       kind: 'select',
       required: true,
       options: [...PROCEEDINGS],
-      hint: 'Laut Auszug — «Keine offenen Betreibungen» erscheint nur mit diesem Wert auf dem Zertifikat',
+      hint: 'Laut Auszug. Verlustscheine oder offene Betreibungen: ablehnen. Bezahlte oder zurückgezogene Einträge: «frühere erledigt».',
     },
   ],
   ARBEIT_EINKOMMEN: [
@@ -124,6 +156,13 @@ const FIELDS: Record<SicModuleId, SicFactField[]> = {
       label: 'Anstellung seit',
       kind: 'date',
       required: true,
+    },
+    {
+      key: 'employedUntil',
+      label: 'Befristet bis',
+      kind: 'date',
+      required: false,
+      hint: 'Nur bei befristeter Anstellung — dann Pflicht',
     },
     {
       key: 'noticeGiven',
@@ -162,6 +201,14 @@ const FIELDS: Record<SicModuleId, SicFactField[]> = {
       kind: 'select',
       required: true,
       options: [...PAYMENT_BEHAVIOUR],
+      hint: 'Überwiegend = einzelne Verspätungen. Mahnungen, Rückstände, Betreibung oder Kündigung wegen Zahlungsverzug: ablehnen.',
+    },
+    {
+      key: 'referenceDate',
+      label: 'Datum der Referenz',
+      kind: 'date',
+      required: false,
+      hint: 'Datum auf dem Formular. Leer = Tag der Freigabe',
     },
   ],
   AUFENTHALT: [
@@ -234,6 +281,14 @@ function extraCoupleFields(moduleId: SicModuleId): SicFactField[] {
         label: 'Person 2 — Anstellung seit',
         kind: 'date',
         required: true,
+        group: 'person2',
+      },
+      {
+        key: 'employedUntil2',
+        label: 'Person 2 — Befristet bis',
+        kind: 'date',
+        required: false,
+        hint: 'Nur bei befristeter Anstellung — dann Pflicht',
         group: 'person2',
       },
       {
@@ -370,29 +425,52 @@ export function normalizeSicFacts(
 }
 
 /** Werte, die eine Ablehnung verlangen statt einer Freigabe (Regel 1 oben). */
-const SIC_NEGATIVE_VALUES: Record<string, string> = {
-  proceedings: 'open',
-  proceedings2: 'open',
-  noticeGiven: 'yes',
-  noticeGiven2: 'yes',
+const SIC_NEGATIVE_VALUES: Record<string, readonly string[]> = {
+  proceedings: ['open', 'loss'],
+  proceedings2: ['open', 'loss'],
+  noticeGiven: ['yes'],
+  noticeGiven2: ['yes'],
+}
+
+function utcToday(now: Date): number {
+  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
 }
 
 /**
  * Gründe, warum diese Werte nicht freigegeben werden dürfen. Leer = freigabefähig.
  *
- * - Negativer Inhalt (offene Betreibungen, Kündigung) wird abgelehnt, nie gedruckt.
+ * - Negativer Inhalt (offene Betreibungen, Verlustscheine, Kündigung) wird abgelehnt, nie gedruckt.
  * - Der Betreibungsauszug darf nicht in der Zukunft liegen und nicht so alt sein,
  *   dass die drei Monate bei der Freigabe schon vorbei wären.
+ * - Ein abgelaufener Ausweis wird nicht freigegeben.
+ * - Eine befristete Anstellung braucht ihr Enddatum, und es darf nicht vorbei sein.
  */
 export function sicApprovalBlockers(moduleId: SicModuleId, facts: SicFacts, now = new Date()): string[] {
   const blockers: string[] = []
+  const today = utcToday(now)
   for (const [key, bad] of Object.entries(SIC_NEGATIVE_VALUES)) {
-    if (facts[key] !== bad) continue
+    if (!bad.includes(facts[key])) continue
     const field = fieldFor(moduleId, key)
-    if (field) blockers.push(`${optionLabel(field, bad)} — bitte ablehnen statt freigeben`)
+    if (field) blockers.push(`${optionLabel(field, facts[key])} — bitte ablehnen statt freigeben`)
+  }
+  if (moduleId === 'AUFENTHALT') {
+    for (const key of ['validUntil', 'validUntil2']) {
+      const d = parseSicCalendarDate(facts[key])
+      if (d && d.getTime() < today) blockers.push('Der Ausweis ist abgelaufen — bitte ablehnen und den gültigen anfordern')
+    }
+  }
+  if (moduleId === 'ARBEIT_EINKOMMEN') {
+    for (const [type, until] of [
+      ['employmentType', 'employedUntil'],
+      ['employmentType2', 'employedUntil2'],
+    ] as const) {
+      if (facts[type] !== 'befristet') continue
+      const d = parseSicCalendarDate(facts[until])
+      if (!d) blockers.push('Befristete Anstellung: bitte das Enddatum erfassen')
+      else if (d.getTime() < today) blockers.push('Die befristete Anstellung ist bereits beendet — bitte ablehnen')
+    }
   }
   if (moduleId === 'BONITAET') {
-    const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
     for (const key of ['extractDate', 'extractDate2']) {
       const d = parseSicCalendarDate(facts[key])
       if (!d) continue
@@ -485,161 +563,174 @@ function withPerson(label: string | null | undefined, line: string): string {
   return name ? `${name}: ${line}` : line
 }
 
+/** Zeilen einer Person — oder des Haushalts (label null). */
+export type SicFactGroup = { label: string | null; lines: string[] }
+
 function employmentLines(
   moduleId: SicModuleId,
   facts: SicFacts,
-  keys: { band: string; type: string; since: string; employer: string; notice: string },
-  personLabel?: string | null
+  keys: { band: string; type: string; since: string; until: string; employer: string; notice: string }
 ): string[] {
   const lines: string[] = []
   // Nur ein gespeicherter Wert erzeugt die Aussage — nie als Default behaupten.
   const notice = facts[keys.notice] === 'no' ? ', ungekündigt' : facts[keys.notice] === 'yes' ? ', Kündigung ausgesprochen' : ''
   const bandField = fieldFor(moduleId, keys.band)
   if (bandField && facts[keys.band]) {
-    lines.push(withPerson(personLabel, `Bruttojahreslohn ${optionLabel(bandField, facts[keys.band])}`))
+    lines.push(`Bruttojahreslohn ${optionLabel(bandField, facts[keys.band])}`)
   }
   const typeField = fieldFor(moduleId, keys.type)
   const since = fmtMonthYear(facts[keys.since])
+  const until = facts[keys.type] === 'befristet' ? fmtMonthYear(facts[keys.until]) : null
+  const employer = facts[keys.employer] ? ` bei ${facts[keys.employer]}` : ''
+  const period = [since ? ` seit ${since}` : '', until ? `, befristet bis ${until}` : ''].join('')
   if (typeField && facts[keys.type]) {
-    const typeLabel = optionLabel(typeField, facts[keys.type])
-    lines.push(
-      withPerson(
-        personLabel,
-        since ? `${typeLabel} angestellt seit ${since}${notice}` : `${typeLabel} angestellt${notice}`
-      )
-    )
-  } else if (since) {
-    lines.push(withPerson(personLabel, `Angestellt seit ${since}${notice}`))
+    // «Befristet angestellt …, befristet bis» wäre doppelt — das Enddatum trägt die Befristung.
+    const typeLabel = until ? 'Angestellt' : `${optionLabel(typeField, facts[keys.type])} angestellt`
+    lines.push(`${typeLabel}${employer}${period}${notice}`)
+  } else if (since || employer) {
+    lines.push(`Angestellt${employer}${period}${notice}`)
   }
-  if (facts[keys.employer]) lines.push(withPerson(personLabel, `Arbeitgeber: ${facts[keys.employer]}`))
   return lines
 }
 
+function bonitaetLine(facts: SicFacts, suffix: '' | '2'): string[] {
+  const lines: string[] = []
+  const proceedings = PROCEEDINGS_CERT_LINE[facts[`proceedings${suffix}`] ?? '']
+  if (proceedings) lines.push(proceedings)
+  const date = fmtDate(facts[`extractDate${suffix}`])
+  const office = facts[`office${suffix}`]
+  if (date && office) lines.push(`Auszug vom ${date}, ${office}`)
+  else if (date) lines.push(`Auszug vom ${date}`)
+  else if (office) lines.push(`Auszug vom ${office}`)
+  return lines
+}
+
+function idLine(moduleId: SicModuleId, facts: SicFacts, suffix: '' | '2'): string[] {
+  const typeField = fieldFor(moduleId, `documentType${suffix}`)
+  const type = facts[`documentType${suffix}`]
+  const until = fmtMonthYear(facts[`validUntil${suffix}`])
+  if (typeField && type) {
+    const label = optionLabel(typeField, type)
+    return [until ? `${label}, gültig bis ${until}` : label]
+  }
+  return until ? [`Amtlicher Ausweis, gültig bis ${until}`] : []
+}
+
+function tenancyLine(facts: SicFacts): string | null {
+  const from = fmtMonthYear(facts.tenancyFrom)
+  if (!from) return null
+  const to = fmtMonthYear(facts.tenancyTo)
+  if (to) {
+    const duration = tenancyDuration(facts.tenancyFrom, facts.tenancyTo)
+    return duration ? `Mietverhältnis ${from} bis ${to} (${duration})` : `Mietverhältnis ${from} bis ${to}`
+  }
+  // Laufend: «bis heute» stimmt nur am Tag der Referenz. Die Dauer wird bis dorthin gerechnet.
+  const asOf = fmtDate(facts.referenceDate)
+  if (!asOf) return `Mietverhältnis seit ${from}`
+  const duration = tenancyDuration(facts.tenancyFrom, facts.referenceDate)
+  return duration ?
+      `Mietverhältnis seit ${from} (${duration}, Stand Referenz ${asOf})`
+    : `Mietverhältnis seit ${from} (Stand Referenz ${asOf})`
+}
+
 /**
- * Baut die Zertifikatszeilen aus den geprüften Werten.
- * Leeres Ergebnis heisst: keine brauchbaren Werte erfasst — Aufrufer fällt
- * dann auf die generischen Zeilen aus `modules.ts` zurück.
+ * Baut die Zertifikatszeilen aus den geprüften Werten, gruppiert nach Person.
+ * Einzelperson: eine Gruppe ohne Label. Paar: Person 1, Person 2, danach
+ * Haushaltszeilen (Label null). Leeres Ergebnis heisst: keine brauchbaren Werte.
  */
+export function sicFactGroups(
+  moduleId: SicModuleId,
+  facts: SicFacts | null,
+  opts?: SicFactLineOpts
+): SicFactGroup[] {
+  if (!facts) return []
+  const couple = opts?.couple === true
+  const p1 = opts?.person1Label?.trim() || 'Person 1'
+  const p2 = opts?.person2Label?.trim() || 'Person 2'
+  const groups: SicFactGroup[] = []
+  const push = (label: string | null, lines: string[]) => {
+    if (lines.length > 0) groups.push({ label, lines })
+  }
+
+  if (moduleId === 'BONITAET') {
+    if (couple) {
+      push(p1, bonitaetLine(facts, ''))
+      push(p2, bonitaetLine(facts, '2'))
+    } else {
+      push(null, bonitaetLine(facts, ''))
+    }
+  }
+
+  if (moduleId === 'ARBEIT_EINKOMMEN') {
+    const k1 = { band: 'incomeBand', type: 'employmentType', since: 'employedSince', until: 'employedUntil', employer: 'employerName', notice: 'noticeGiven' }
+    if (couple) {
+      push(p1, employmentLines(moduleId, facts, k1))
+      push(
+        p2,
+        employmentLines(moduleId, facts, {
+          band: 'incomeBand2',
+          type: 'employmentType2',
+          since: 'employedSince2',
+          until: 'employedUntil2',
+          employer: 'employerName2',
+          notice: 'noticeGiven2',
+        })
+      )
+      const ceiling = sicRentCeilingFromIncomes(facts.incomeBand, facts.incomeBand2)
+      if (ceiling) push(null, [`Richtwert 3×-Regel, beide Einkommen: Miete bis ${formatSicAmountChf(ceiling)}`])
+    } else {
+      const lines = employmentLines(moduleId, facts, k1)
+      const ceiling = sicRentCeilingChf(facts.incomeBand)
+      if (ceiling) lines.push(`Richtwert 3×-Regel: Miete bis ${formatSicAmountChf(ceiling)}`)
+      push(null, lines)
+    }
+  }
+
+  if (moduleId === 'ZUVERLAESSIGKEIT') {
+    const lines: string[] = []
+    const tenancy = tenancyLine(facts)
+    if (tenancy) lines.push(tenancy)
+    const behaviourField = fieldFor(moduleId, 'paymentBehaviour')
+    if (behaviourField && facts.paymentBehaviour) {
+      lines.push(`Miete ${optionLabel(behaviourField, facts.paymentBehaviour).toLowerCase()} bezahlt`)
+    }
+    // Die Referenz selbst belegt schon das Badge — nur beim Paar sagen, für wen sie gilt.
+    if (couple && lines.length > 0) lines.push('Referenz für den gemeinsamen Haushalt')
+    push(null, lines)
+  }
+
+  if (moduleId === 'AUFENTHALT') {
+    if (couple) {
+      push(p1, idLine(moduleId, facts, ''))
+      push(p2, idLine(moduleId, facts, '2'))
+    } else {
+      push(null, idLine(moduleId, facts, ''))
+    }
+  }
+
+  return groups
+}
+
+/** Flache Zeilen (Prüfoberfläche, Dossier): beim Paar mit «Name: » davor. */
 export function sicFactLines(
   moduleId: SicModuleId,
   facts: SicFacts | null,
   opts?: SicFactLineOpts
 ): string[] {
-  if (!facts) return []
-  const lines: string[] = []
-  const couple = opts?.couple === true
-  const p1 = opts?.person1Label?.trim() || null
-  const p2 = opts?.person2Label?.trim() || null
+  return sicFactGroups(moduleId, facts, opts).flatMap(g => g.lines.map(line => withPerson(g.label, line)))
+}
 
-  if (moduleId === 'BONITAET') {
-    // Nur ein gespeicherter Wert erzeugt die Aussage — nie als Default behaupten.
-    const proceedingsField = fieldFor(moduleId, 'proceedings')
-    if (proceedingsField) {
-      if (couple) {
-        if (facts.proceedings) lines.push(withPerson(p1, optionLabel(proceedingsField, facts.proceedings)))
-        if (facts.proceedings2) lines.push(withPerson(p2, optionLabel(proceedingsField, facts.proceedings2)))
-      } else if (facts.proceedings) {
-        lines.push(optionLabel(proceedingsField, facts.proceedings))
-      }
-    }
-    const date = fmtDate(facts.extractDate)
-    const office = facts.office
-    let first = ''
-    if (date && office) first = `Auszug vom ${date}, ${office}`
-    else if (date) first = `Auszug vom ${date}`
-    else if (office) first = `Auszug vom ${office}`
-    if (first) lines.push(couple ? withPerson(p1, first) : first)
-    if (couple) {
-      const date2 = fmtDate(facts.extractDate2)
-      const office2 = facts.office2
-      let second = ''
-      if (date2 && office2) second = `Auszug vom ${date2}, ${office2}`
-      else if (date2) second = `Auszug vom ${date2}`
-      else if (office2) second = `Auszug vom ${office2}`
-      if (second) lines.push(withPerson(p2, second))
-    }
-  }
-
-  if (moduleId === 'ARBEIT_EINKOMMEN') {
-    if (couple) {
-      lines.push(
-        ...employmentLines(
-          moduleId,
-          facts,
-          { band: 'incomeBand', type: 'employmentType', since: 'employedSince', employer: 'employerName', notice: 'noticeGiven' },
-          p1
-        )
-      )
-      lines.push(
-        ...employmentLines(
-          moduleId,
-          facts,
-          { band: 'incomeBand2', type: 'employmentType2', since: 'employedSince2', employer: 'employerName2', notice: 'noticeGiven2' },
-          p2
-        )
-      )
-      const ceiling = sicRentCeilingFromIncomes(facts.incomeBand, facts.incomeBand2)
-      if (ceiling) {
-        lines.push(`Tragbar bis ${formatSicAmountChf(ceiling)} Monatsmiete (3×-Regel, beide Einkommen)`)
-      }
-    } else {
-      lines.push(
-        ...employmentLines(moduleId, facts, {
-          band: 'incomeBand',
-          type: 'employmentType',
-          since: 'employedSince',
-          employer: 'employerName',
-          notice: 'noticeGiven',
-        })
-      )
-      const ceiling = sicRentCeilingChf(facts.incomeBand)
-      if (ceiling) {
-        lines.push(`Tragbar bis ${formatSicAmountChf(ceiling)} Monatsmiete (3×-Regel)`)
-      }
-    }
-  }
-
-  if (moduleId === 'ZUVERLAESSIGKEIT') {
-    const from = fmtMonthYear(facts.tenancyFrom)
-    const to = fmtMonthYear(facts.tenancyTo)
-    const duration = tenancyDuration(facts.tenancyFrom, facts.tenancyTo)
-    if (from) {
-      const period = to ? `${from} bis ${to}` : `${from} bis heute`
-      lines.push(duration ? `Mietverhältnis ${period} (${duration})` : `Mietverhältnis ${period}`)
-    }
-    const behaviourField = fieldFor(moduleId, 'paymentBehaviour')
-    if (behaviourField && facts.paymentBehaviour) {
-      lines.push(`Miete ${optionLabel(behaviourField, facts.paymentBehaviour).toLowerCase()} bezahlt`)
-    }
-    lines.push(
-      couple ? 'Referenz des bisherigen Vermieters liegt vor (Haushalt)' : 'Referenz des bisherigen Vermieters liegt vor'
-    )
-  }
-
-  if (moduleId === 'AUFENTHALT') {
-    const typeField = fieldFor(moduleId, 'documentType')
-    const until = fmtMonthYear(facts.validUntil)
-    if (typeField && facts.documentType) {
-      const label = optionLabel(typeField, facts.documentType)
-      const line = until ? `${label}, gültig bis ${until}` : label
-      lines.push(couple ? withPerson(p1, line) : line)
-    } else if (until) {
-      lines.push(couple ? withPerson(p1, `Amtlicher Ausweis, gültig bis ${until}`) : `Amtlicher Ausweis, gültig bis ${until}`)
-    }
-    if (couple) {
-      const typeField2 = fieldFor(moduleId, 'documentType2')
-      const until2 = fmtMonthYear(facts.validUntil2)
-      if (typeField2 && facts.documentType2) {
-        const label = optionLabel(typeField2, facts.documentType2)
-        const line = until2 ? `${label}, gültig bis ${until2}` : label
-        lines.push(withPerson(p2, line))
-      } else if (until2) {
-        lines.push(withPerson(p2, `Amtlicher Ausweis, gültig bis ${until2}`))
-      }
-    }
-  }
-
-  return lines
+/**
+ * Frühestes Ablaufdatum der geprüften Ausweise. Das Zertifikat gilt nicht länger
+ * als der Ausweis, auf dem es steht.
+ */
+export function sicIdValidUntil(facts: SicFacts | null): Date | null {
+  if (!facts) return null
+  const dates = [parseSicCalendarDate(facts.validUntil), parseSicCalendarDate(facts.validUntil2)].filter(
+    (d): d is Date => !!d
+  )
+  if (dates.length === 0) return null
+  return dates.reduce((a, b) => (b.getTime() < a.getTime() ? b : a))
 }
 
 /** Ist der Ausweis abgelaufen? Steuert, ob eine Verlängerung ihn zurücksetzt. */
@@ -667,14 +758,14 @@ export function sicFactSummary(moduleId: SicModuleId, facts: SicFacts | null): s
  * Keine erfundenen Intervalle wie «90–110k».
  */
 export const SIC_CERT_PREVIEW_FACTS: Record<SicModuleId, SicFacts> = {
-  BONITAET: { extractDate: '2026-06-12', office: 'Betreibungsamt Zürich', proceedings: 'none' },
+  BONITAET: { extractDate: '2026-06-12', office: 'Betreibungsamt Zürich', proceedings: 'clean' },
   ARBEIT_EINKOMMEN: {
     incomeBand: '80_100k',
     employmentType: 'unbefristet',
     employedSince: '2020-03-01',
     noticeGiven: 'no',
   },
-  ZUVERLAESSIGKEIT: { tenancyFrom: '2021-01-01', paymentBehaviour: 'always_on_time' },
+  ZUVERLAESSIGKEIT: { tenancyFrom: '2021-01-01', paymentBehaviour: 'always_on_time', referenceDate: '2026-06-08' },
   AUFENTHALT: { documentType: 'ch_pass', validUntil: '2031-05-31' },
 }
 
@@ -683,4 +774,18 @@ export function sicCatalogPreviewRows(): { id: SicModuleId; lines: string[] }[] 
     id,
     lines: sicFactLines(id, SIC_CERT_PREVIEW_FACTS[id]),
   }))
+}
+
+/** Ab so vielen Tagen vor Ablauf darf ein neuer Ausweis eingereicht werden. */
+export const SIC_ID_RENEW_WINDOW_DAYS = 60
+
+/**
+ * Lohnt sich ein neuer Ausweis? Wenn der geprüfte das Zertifikat kürzt oder
+ * innerhalb des Fensters abläuft.
+ */
+export function sicIdReplacementDue(facts: SicFacts | null, certExpiresAt: Date | null, now = new Date()): boolean {
+  const idEnd = sicIdValidUntil(facts)
+  if (!idEnd) return false
+  if (certExpiresAt && idEnd.getTime() <= certExpiresAt.getTime()) return true
+  return idEnd.getTime() - now.getTime() <= SIC_ID_RENEW_WINDOW_DAYS * 24 * 60 * 60 * 1000
 }

@@ -43,12 +43,27 @@ export function parseSicCalendarDate(value: string | null | undefined): Date | n
  * am älteren der beiden. Andere Angaben verlängern das Siegel nicht. Fehlt die
  * Betreibung noch, läuft eine vorläufige Frist ab dem Freigabetag — bis der
  * Auszug geprüft ist. Ein später geprüfter Auszug setzt die Uhr neu, auch wenn
- * sie kürzer wird.
+ * sie kürzer wird. Läuft ein geprüfter Ausweis früher ab, endet das Zertifikat
+ * mit dem Ausweis.
  */
 export function sicExpiresAtAfterApproval(opts: {
   moduleKind: SicModuleId
   extractDate?: string | null
   /** Zweiter Auszug auf einem Paar-Zertifikat — die Uhr hängt am älteren Datum. */
+  extractDate2?: string | null
+  currentExpiresAt: Date | null
+  approvedAt?: Date
+  /** Frühestes Ablaufdatum der geprüften Ausweise. */
+  idValidUntil?: Date | null
+}): Date {
+  const base = expiresAtBeforeIdCap(opts)
+  const cap = opts.idValidUntil
+  return cap && cap.getTime() < base.getTime() ? cap : base
+}
+
+function expiresAtBeforeIdCap(opts: {
+  moduleKind: SicModuleId
+  extractDate?: string | null
   extractDate2?: string | null
   currentExpiresAt: Date | null
   approvedAt?: Date

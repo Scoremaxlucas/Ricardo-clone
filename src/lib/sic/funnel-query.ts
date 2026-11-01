@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { SIC_INCOME_GROUPS } from '@/lib/sic/facts'
 import { aggregateSicFunnel, type SicFunnelDays, type SicFunnelView } from '@/lib/sic/funnel'
 
 export async function loadSicFunnel(days: SicFunnelDays): Promise<SicFunnelView> {
@@ -46,4 +47,22 @@ export async function loadSicFunnel(days: SicFunnelDays): Promise<SicFunnelView>
       .map(c => ({ certificateId: c.certificateId, createdAt: c.createdAt })),
     followUp,
   })
+}
+
+/**
+ * Wer «nicht angestellt» vermerkt hat, über alle Zertifikate. Zeigt, für welche Gruppe
+ * sich ein eigener Einkommensnachweis lohnt. Widerrufene zählen nicht.
+ */
+export async function loadSicIncomeGroupCounts(): Promise<{ group: string; label: string; count: number }[]> {
+  const rows = await prisma.sicCertificateModule.findMany({
+    where: { moduleKind: 'ARBEIT_EINKOMMEN', status: 'NOT_APPLICABLE', certificate: { status: { not: 'REVOKED' } } },
+    select: { verifiedFacts: true },
+  })
+  const counts = new Map<string, number>()
+  for (const row of rows) {
+    const facts = row.verifiedFacts as Record<string, unknown> | null
+    const group = typeof facts?.incomeGroup === 'string' ? facts.incomeGroup : ''
+    counts.set(group, (counts.get(group) ?? 0) + 1)
+  }
+  return SIC_INCOME_GROUPS.map(g => ({ group: g.value, label: g.label, count: counts.get(g.value) ?? 0 }))
 }

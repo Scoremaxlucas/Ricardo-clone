@@ -4,6 +4,7 @@ import { SicTemplateForm } from '@/components/sic/SicTemplateForm'
 import { SIC_DEBT_EXTRACT_ORDER_URL, SIC_REVIEW_SLA, sicPaths, sicVerifyUrl } from '@/lib/sic/config'
 import type { SicDossierView, SicUploadedDocMeta } from '@/lib/sic/dossier'
 import { templatePrefillNamesForModule } from '@/lib/sic/dossier'
+import { SIC_INCOME_GROUPS, sicIncomeGroupLabel, type SicIncomeGroup } from '@/lib/sic/facts'
 import { formatSicChf, isSicModuleId, SIC_MODULES, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
 import { sicNextStep } from '@/lib/sic/next-step'
 import { quoteSicOrder } from '@/lib/sic/pricing'
@@ -40,6 +41,21 @@ const STATUS_META: Record<ModuleStatus, { label: string; className: string; Icon
   VERIFIED: { label: 'Geprüft', className: 'bg-sic-verified-bg text-sic-verified-text', Icon: CheckCircle2 },
   REJECTED: { label: 'Bitte nachreichen', className: 'bg-sic-danger-bg text-sic-danger-text', Icon: AlertCircle },
   NOT_APPLICABLE: { label: 'Keine Referenz', className: 'bg-sic-paper-soft text-sic-navy', Icon: CheckCircle2 },
+}
+
+/** «Nicht anwendbar» heisst je Angabe etwas anderes. */
+function statusMetaFor(status: ModuleStatus, moduleKind: SicModuleId) {
+  const meta = STATUS_META[status]
+  if (status === 'NOT_APPLICABLE' && moduleKind === 'ARBEIT_EINKOMMEN') return { ...meta, label: 'Nicht angestellt' }
+  return meta
+}
+
+function incomeGroupLabel(group: SicIncomeGroup | null | undefined): string {
+  return sicIncomeGroupLabel(group) ?? 'Nicht angestellt'
+}
+
+function fmtShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
 }
 
 const PROGRESS_SHORT: Record<SicModuleId, string> = {
@@ -82,7 +98,7 @@ function ModuleProgressStrip({ dossier }: { dossier: SicDossierView }) {
         {SIC_MODULES.map((mod, index) => {
           const purchased = byKind.get(mod.id)
           const status = purchased?.status
-          const meta = status ? STATUS_META[status] : null
+          const meta = status ? statusMetaFor(status, mod.id) : null
           const short = PROGRESS_SHORT[mod.id]
           const href = purchased ? `#modul-${mod.id}` : dossier.availableModules.some(a => a.moduleKind === mod.id) ? '#erganzen' : undefined
           const inner = (
@@ -213,6 +229,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
   const router = useRouter()
   const [uploading, setUploading] = useState<SicModuleId | null>(null)
   const [declaringReference, setDeclaringReference] = useState(false)
+  const [declaringIncome, setDeclaringIncome] = useState(false)
+  const [renewingId, setRenewingId] = useState(false)
   const [removingId, setRemovingId] = useState<string | null>(null)
   const inputs = useRef<Record<string, HTMLInputElement | null>>({})
   const [firstName, setFirstName] = useState(dossier.holderFirstName ?? '')
@@ -453,6 +471,47 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       else toast.error('Kopieren fehlgeschlagen')
     } catch {
       toast.error('Kopieren fehlgeschlagen')
+    }
+  }
+
+  async function setIncomeGroup(group: SicIncomeGroup | null) {
+    setDeclaringIncome(true)
+    try {
+      const res = await fetch('/api/sic/income-group', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ group }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data?.message || 'Das hat nicht geklappt.')
+        return
+      }
+      toast.success(group ? 'Vermerkt — die Angabe gilt nicht als fehlend.' : 'Du kannst Lohn und Arbeitsstelle jetzt einreichen.')
+      router.refresh()
+    } catch {
+      toast.error('Netzwerkfehler.')
+    } finally {
+      setDeclaringIncome(false)
+    }
+  }
+
+  async function startIdRenewal() {
+    setRenewingId(true)
+    try {
+      const res = await fetch('/api/sic/id-renew', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data?.message || 'Das hat nicht geklappt.')
+        return
+      }
+      toast.success('Lade jetzt den neuen Ausweis hoch.')
+      setOpenModule('AUFENTHALT')
+      router.refresh()
+    } catch {
+      toast.error('Netzwerkfehler.')
+    } finally {
+      setRenewingId(false)
     }
   }
 
@@ -897,11 +956,16 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
       : null}
       <ul className="mt-4 divide-y divide-sic-hairline border-y border-sic-hairline">
         {dossier.purchasedModules.map(m => {
-          const meta = STATUS_META[m.status]
+          const meta = statusMetaFor(m.status, m.moduleKind)
           const canUpload =
             m.status !== 'VERIFIED' && m.status !== 'NOT_APPLICABLE' && dossier.status !== 'REVOKED'
           const canDeclareNoReference =
             m.moduleKind === 'ZUVERLAESSIGKEIT' &&
+            (m.status === 'PENDING_DOCS' || m.status === 'REJECTED') &&
+            m.documentCount === 0 &&
+            dossier.status !== 'REVOKED'
+          const canDeclareIncomeGroup =
+            m.moduleKind === 'ARBEIT_EINKOMMEN' &&
             (m.status === 'PENDING_DOCS' || m.status === 'REJECTED') &&
             m.documentCount === 0 &&
             dossier.status !== 'REVOKED'
@@ -940,7 +1004,65 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                     </p>
                   : null}
 
-                  {m.status === 'NOT_APPLICABLE' ?
+                  {m.status === 'NOT_APPLICABLE' && m.moduleKind === 'ARBEIT_EINKOMMEN' ?
+                    <div className="mt-3">
+                      <p className="text-sm leading-relaxed text-slate-600">
+                        Vermerkt als «{incomeGroupLabel(m.incomeGroup)}». Das Einkommen ist nicht Teil der Prüfung und
+                        gilt nicht als fehlend. Sobald wir einen passenden Nachweis prüfen, melden wir uns per E-Mail.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={declaringIncome || dossier.status === 'REVOKED'}
+                        onClick={() => void setIncomeGroup(null)}
+                        className="mt-3 text-sm font-semibold text-sic-navy underline-offset-2 hover:underline disabled:opacity-60"
+                      >
+                        Doch angestellt — Lohn einreichen
+                      </button>
+                    </div>
+                  : null}
+
+                  {canDeclareIncomeGroup ?
+                    <div className="mt-3 rounded-xl border border-sic-hairline bg-sic-paper-soft px-3 py-3">
+                      <p className="text-sm leading-relaxed text-slate-700">
+                        Lohn und Arbeitsstelle prüfen wir derzeit für Angestellte. Bist du nicht angestellt? Dann
+                        vermerkst du das hier — die Angabe gilt nicht als fehlend, und das Zertifikat bekommst du
+                        trotzdem.
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                        {SIC_INCOME_GROUPS.map(g => (
+                          <button
+                            key={g.value}
+                            type="button"
+                            disabled={declaringIncome}
+                            onClick={() => void setIncomeGroup(g.value)}
+                            className="text-sm font-semibold text-sic-navy underline-offset-2 hover:underline disabled:opacity-60"
+                          >
+                            {g.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  : null}
+
+                  {m.idRenewal ?
+                    <div className="mt-3 rounded-xl border border-sic-hairline bg-sic-paper-soft px-3 py-3">
+                      <p className="text-sm leading-relaxed text-slate-700">
+                        Dein Ausweis ist gültig bis {fmtShortDate(m.idRenewal.validUntil)}. Länger gilt auch das
+                        Zertifikat nicht. Reich den neuen Ausweis ein, sobald du ihn hast — kostenlos. Bis zur Prüfung
+                        bleibt der bisherige auf dem Zertifikat.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={renewingId}
+                        onClick={() => void startIdRenewal()}
+                        className="mt-2 text-sm font-semibold text-sic-navy underline-offset-2 hover:underline disabled:opacity-60"
+                      >
+                        {renewingId ? 'Wird vorbereitet …' : 'Neuen Ausweis einreichen'}
+                      </button>
+                    </div>
+                  : null}
+
+                  {m.status === 'NOT_APPLICABLE' && m.moduleKind === 'ZUVERLAESSIGKEIT' ?
                     <div className="mt-3">
                       <p className="text-sm leading-relaxed text-slate-600">
                         Keine bisherige Vermieter-Referenz. Das steht so auf dem Zertifikat und gilt nicht als fehlend.

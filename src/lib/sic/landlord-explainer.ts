@@ -49,11 +49,11 @@ export function sicLandlordExplainerCopy(opts: {
       {
         title: '3×-Regel',
         body:
-          'Steht ein Einkommensband da, ist die tragbare Monatsmiete aus dem unteren Bandrand gerechnet. Bei zwei Personen zählt die Summe. Der exakte Lohn steht nie da.',
+          'Steht ein Einkommensband da, ist der Richtwert für die Monatsmiete aus dem unteren Bandrand gerechnet: ein Drittel des Monatslohns. Bei zwei Personen zählt die Summe. Der exakte Lohn steht nie da. Ein Richtwert, keine Empfehlung.',
       },
       {
         title: 'Gültigkeit',
-        body: `«Gültig bis» hängt am Datum des Betreibungsauszugs — ${SIC_VALIDITY_MONTHS} Monate. Andere Angaben verlängern die Frist nicht. Bei zwei Personen gilt der ältere der beiden Auszüge.`,
+        body: `«Gültig bis» hängt am Datum des Betreibungsauszugs — ${SIC_VALIDITY_MONTHS} Monate. Andere Angaben verlängern die Frist nicht. Bei zwei Personen gilt der ältere der beiden Auszüge. Läuft ein Ausweis früher ab, endet das Zertifikat mit dem Ausweis. Ohne geprüften Auszug steht «Stand vom» statt «Gültig bis».`,
       },
     ],
     kiNote:

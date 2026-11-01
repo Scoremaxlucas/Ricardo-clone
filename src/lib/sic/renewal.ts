@@ -26,6 +26,8 @@ export function modulesResetByRenewal(modules: RenewalModuleInput[], now = new D
   const reset: SicModuleId[] = []
 
   for (const m of modules) {
+    // «Keine Referenz» oder «nicht angestellt» ist eine Angabe, kein Nachweis — nichts zu erneuern.
+    if (m.status === 'NOT_APPLICABLE') continue
     if (m.moduleKind === 'BONITAET') {
       reset.push(m.moduleKind)
       continue

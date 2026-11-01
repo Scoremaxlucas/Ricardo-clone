@@ -11,7 +11,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 /** Datum der letzten inhaltlichen Änderung — bewusst fix, nicht das aktuelle Jahr. */
-const SIC_AGB_STAND = '31. Oktober 2026'
+const SIC_AGB_STAND = '1. November 2026'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,6 +74,11 @@ export default function SicAgbPage() {
             Bezahlte Angaben verfallen nicht. Du kannst die zugehörigen Unterlagen auch Wochen später nachreichen,
             ohne erneut zu bezahlen.
           </p>
+          <p className="mt-1.5">
+            Lohn und Arbeitsstelle prüfen wir derzeit für Angestellte. Bist du selbständig erwerbend, in Ausbildung
+            oder pensioniert, vermerkst du das; die Angabe steht dann als solche auf dem Dokument und wird nicht
+            geprüft. Die übrigen Angaben und das Mieter-Zertifikat sind davon nicht betroffen.
+          </p>
         </section>
 
         <section>
@@ -83,7 +88,9 @@ export default function SicAgbPage() {
             beginnt mit dessen Ausstellungsdatum, nicht mit der Zahlung und nicht mit späteren Freigaben
             anderer Angaben. Fehlt der Auszug noch, läuft eine vorläufige Frist von{' '}
             {SIC_VALIDITY_MONTHS} Monaten ab der ersten Freigabe; sobald der Auszug geprüft ist, gilt dessen
-            Datum. Eine bereits laufende Gültigkeit wird durch andere Angaben nie verlängert.
+            Datum. Eine bereits laufende Gültigkeit wird durch andere Angaben nie verlängert. Läuft ein geprüfter
+            Ausweis früher ab, endet die Gültigkeit mit dem Ausweis; einen neuen Ausweis kannst du kostenlos
+            nachreichen.
           </p>
           <p className="mt-1.5">
             Nach Ablauf kannst du für {formatSicChf(SIC_RENEWAL_FEE_CHF)} verlängern. Dafür ist ein frischer
@@ -97,7 +104,7 @@ export default function SicAgbPage() {
           <h2 className="font-semibold text-sic-navy">5. Wenn eine Angabe nicht bestätigt werden kann</h2>
           <p className="mt-1.5">
             Sind die Unterlagen unleserlich, unvollständig, veraltet oder inhaltlich negativ (zum Beispiel offene
-            Betreibungen), geben wir die Angabe nicht frei. Du erhältst eine Begründung per E-Mail und kannst
+            Betreibungen, Verlustscheine oder ein abgelaufener Ausweis), geben wir die Angabe nicht frei. Du erhältst eine Begründung per E-Mail und kannst
             neue Unterlagen nachreichen — ohne zusätzliche Kosten. Eine nicht freigegebene Angabe erscheint nicht
             auf dem Zertifikat; ein negativer Inhalt wird dort nicht ausgewiesen.
           </p>

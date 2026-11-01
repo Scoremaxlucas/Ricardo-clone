@@ -98,7 +98,8 @@ describe('sicFactLines', () => {
       office: 'Betreibungsamt Zürich',
       proceedings: 'open',
     })
-    expect(open[0]).toBe('Offene Betreibungen vermerkt')
+    // Negativer Inhalt wird abgelehnt, nie gedruckt.
+    expect(open.join(' ')).not.toMatch(/Offene Betreibungen|Keine offenen/)
     const income = sicFactLines('ARBEIT_EINKOMMEN', {
       incomeBand: '80_100k',
       employmentType: 'unbefristet',
@@ -124,7 +125,8 @@ describe('sicFactLines', () => {
       noticeGiven: 'no',
     })
     expect(lines.join(' | ')).toContain('CHF 80’000 – 100’000')
-    expect(lines.join(' | ')).toContain('Tragbar bis CHF 2’200 Monatsmiete')
+    expect(lines.join(' | ')).toContain('Richtwert 3×-Regel: Miete bis CHF 2’200')
+    expect(lines.join(' | ')).toContain('bei Muster AG')
     expect(lines.join(' | ')).toContain('ungekündigt')
   })
 
@@ -198,7 +200,7 @@ describe('couple fact lines', () => {
       { couple: true, person1Label: 'Anna Muster', person2Label: 'Luca Bianchi' }
     )
     expect(bonitaet[0]).toBe('Anna Muster: Keine offenen Betreibungen')
-    expect(bonitaet[1]).toBe('Luca Bianchi: Keine offenen Betreibungen')
+    expect(bonitaet[2]).toBe('Luca Bianchi: Keine offenen Betreibungen')
     expect(bonitaet.join(' ')).toMatch(/Anna Muster/)
     expect(bonitaet.join(' ')).toMatch(/Luca Bianchi/)
 

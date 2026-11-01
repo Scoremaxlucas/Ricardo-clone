@@ -1,7 +1,7 @@
 import { checkRateLimit } from '@/lib/rate-limit'
 import { requireSicAdmin } from '@/lib/sic/admin'
 import { parseSicFunnelDays } from '@/lib/sic/funnel'
-import { loadSicFunnel } from '@/lib/sic/funnel-query'
+import { loadSicFunnel, loadSicIncomeGroupCounts } from '@/lib/sic/funnel-query'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -26,6 +26,6 @@ export async function GET(req: NextRequest) {
   }
 
   const days = parseSicFunnelDays(req.nextUrl.searchParams.get('days'))
-  const funnel = await loadSicFunnel(days)
-  return NextResponse.json({ ok: true, funnel })
+  const [funnel, incomeGroups] = await Promise.all([loadSicFunnel(days), loadSicIncomeGroupCounts()])
+  return NextResponse.json({ ok: true, funnel, incomeGroups })
 }

@@ -1,12 +1,23 @@
 import { prisma } from '@/lib/prisma'
 import { canChangeSicEmail, sicPendingEmailChangeStatus } from '@/lib/sic/email-change'
-import { readSicFacts, sicFactLines, type SicFactLineOpts, type SicFacts } from '@/lib/sic/facts'
+import {
+  readSicFacts,
+  sicFactGroups,
+  sicIdReplacementDue,
+  sicIdValidUntil,
+  sicIncomeGroupLabel,
+  type SicFactGroup,
+  type SicFactLineOpts,
+  type SicFacts,
+  type SicIncomeGroup,
+} from '@/lib/sic/facts'
 import { isSicCouple, type SicHouseholdKind } from '@/lib/sic/household'
 import {
   getSicModule,
   isSicCertificateSealReady,
   SIC_DECLARED_BADGE,
   SIC_MODULES,
+  SIC_INCOME_NOT_CHECKED_LINE,
   SIC_NO_PRIOR_REFERENCE_LINE,
   SIC_RENEWAL_FEE_CHF,
   SIC_VALIDITY_MONTHS,
@@ -48,6 +59,10 @@ export type SicDossierModuleView = {
   reviewNote: string | null
   /** Die geprüften Zeilen, wie sie auf dem Zertifikat stehen (nur bei VERIFIED). */
   certificateLines: string[]
+  /** Lohn & Arbeitsstelle als «nicht angestellt» vermerkt. */
+  incomeGroup?: SicIncomeGroup | null
+  /** Ausweis: geprüfter läuft bald ab oder kürzt das Zertifikat — neuer kann eingereicht werden. */
+  idRenewal?: { validUntil: string } | null
 }
 
 export type SicDossierView = {
@@ -108,7 +123,15 @@ export type SicDossierView = {
   }[]
 }
 
-export type SicVerifiedModuleView = { id: SicModuleId; title: string; lines: string[]; badge?: string }
+export type SicVerifiedModuleView = {
+  id: SicModuleId
+  title: string
+  /** Flach, beim Paar mit «Name: » davor. */
+  lines: string[]
+  /** Nach Person gruppiert — für Dokument und Prüfseite. */
+  groups?: SicFactGroup[]
+  badge?: string
+}
 
 /** Zählt nur tatsächlich geprüfte Angaben; die selbst deklarierte Referenz (badge) zählt nicht als «geprüft». */
 export function sicVerifiedRowCount(rows: SicVerifiedModuleView[]): number {
@@ -148,27 +171,41 @@ export function verifiedModuleLineItems(
   const verified = new Map(
     modules.filter(m => m.status === 'VERIFIED').map(m => [m.moduleKind, m.verifiedFacts])
   )
-  const rows = SIC_MODULES.filter(def => verified.has(def.id)).map(def => {
+  const rows: SicVerifiedModuleView[] = SIC_MODULES.filter(def => verified.has(def.id)).map(def => {
     const facts = readSicFacts(def.id, verified.get(def.id))
-    const lines = sicFactLines(def.id, facts, lineOpts)
+    const groups = sicFactGroups(def.id, facts, lineOpts)
+    if (groups.length === 0) return { id: def.id, title: def.title, lines: def.lineItems }
     return {
       id: def.id,
       title: def.title,
-      lines: lines.length > 0 ? lines : def.lineItems,
+      lines: groups.flatMap(g => g.lines.map(line => (g.label ? `${g.label}: ${line}` : line))),
+      groups,
     }
   })
-  const waived = modules.some(m => m.moduleKind === 'ZUVERLAESSIGKEIT' && m.status === 'NOT_APPLICABLE')
-  if (!waived || verified.has('ZUVERLAESSIGKEIT')) return rows
-  const def = getSicModule('ZUVERLAESSIGKEIT')
-  return [
-    ...rows,
-    {
-      id: def.id,
-      title: def.title,
-      lines: [SIC_NO_PRIOR_REFERENCE_LINE],
-      badge: SIC_DECLARED_BADGE,
-    },
-  ]
+
+  // Selbstangaben ohne Nachweis: stehen da, zählen aber nicht als «geprüft».
+  for (const def of SIC_MODULES) {
+    if (verified.has(def.id)) continue
+    const row = modules.find(m => m.moduleKind === def.id && m.status === 'NOT_APPLICABLE')
+    if (!row) continue
+    const lines =
+      def.id === 'ZUVERLAESSIGKEIT' ? [SIC_NO_PRIOR_REFERENCE_LINE]
+      : def.id === 'ARBEIT_EINKOMMEN' ? sicIncomeGroupLines(row.verifiedFacts)
+      : null
+    if (lines) rows.push({ id: def.id, title: def.title, lines, badge: SIC_DECLARED_BADGE })
+  }
+  // Selbstangaben am Schluss: erst was geprüft ist, dann was nur vermerkt ist.
+  return rows
+}
+
+function readIncomeGroup(stored: unknown): SicIncomeGroup | null {
+  const value = stored && typeof stored === 'object' ? (stored as Record<string, unknown>).incomeGroup : null
+  return sicIncomeGroupLabel(value) ? (value as SicIncomeGroup) : null
+}
+
+function sicIncomeGroupLines(stored: unknown): string[] | null {
+  const label = sicIncomeGroupLabel(readIncomeGroup(stored))
+  return label ? [label, SIC_INCOME_NOT_CHECKED_LINE] : null
 }
 
 /**
@@ -370,6 +407,19 @@ function buildChecklist(moduleKind: SicModuleId, requiredDocuments: string[]): S
   return items
 }
 
+function idRenewalFor(
+  moduleKind: SicModuleId,
+  row: { status: SicModuleStatus; verifiedFacts: unknown },
+  cert: { status: string; expiresAt: Date | null }
+): { validUntil: string } | null {
+  if (moduleKind !== 'AUFENTHALT' || row.status !== 'VERIFIED') return null
+  if (cert.status !== 'ACTIVE' || isSicExpired(cert.expiresAt)) return null
+  const facts = readSicFacts('AUFENTHALT', row.verifiedFacts)
+  if (!sicIdReplacementDue(facts, cert.expiresAt)) return null
+  const until = sicIdValidUntil(facts)
+  return until ? { validUntil: until.toISOString() } : null
+}
+
 export async function getSicDossierView(emailRaw: string): Promise<SicDossierView | null> {
   const email = normalizeEmail(emailRaw)
   const cert = await prisma.sicCertificate.findUnique({
@@ -439,6 +489,9 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
       documents,
       reviewNote: row.reviewNote,
       certificateLines: certificateLinesByKind.get(def.id) ?? [],
+      incomeGroup:
+        def.id === 'ARBEIT_EINKOMMEN' && row.status === 'NOT_APPLICABLE' ? readIncomeGroup(row.verifiedFacts) : null,
+      idRenewal: idRenewalFor(def.id, row, cert),
     }
   })
 

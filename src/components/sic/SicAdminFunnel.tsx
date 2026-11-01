@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from 'react'
 export function SicAdminFunnel() {
   const [days, setDays] = useState<SicFunnelDays>(30)
   const [funnel, setFunnel] = useState<SicFunnelView | null>(null)
+  const [incomeGroups, setIncomeGroups] = useState<{ group: string; label: string; count: number }[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async (next: SicFunnelDays) => {
@@ -20,6 +21,7 @@ export function SicAdminFunnel() {
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data?.ok) throw new Error(data?.message || 'Funnel nicht geladen.')
       setFunnel(data.funnel as SicFunnelView)
+      setIncomeGroups(Array.isArray(data.incomeGroups) ? data.incomeGroups : [])
     } catch (err) {
       setFunnel(null)
       setError(err instanceof Error ? err.message : 'Funnel nicht geladen.')
@@ -97,6 +99,17 @@ export function SicAdminFunnel() {
               </div>
             : null}
           </dl>
+          {incomeGroups.length > 0 ?
+            <p className="mt-2 text-[11px] text-slate-500">
+              Nicht angestellt, Einkommen noch nicht prüfbar (alle Zertifikate):{' '}
+              {incomeGroups.map((g, i) => (
+                <span key={g.group}>
+                  {i > 0 ? ' · ' : ''}
+                  {g.label} <span className="font-semibold text-sic-navy">{g.count}</span>
+                </span>
+              ))}
+            </p>
+          : null}
         </>
       }
     </section>

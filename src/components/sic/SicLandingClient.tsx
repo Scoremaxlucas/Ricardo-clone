@@ -755,6 +755,11 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 {declaredModules.has('ZUVERLAESSIGKEIT') ?
                   <p className="mt-4 text-sm leading-relaxed text-slate-600">{SIC_NO_PRIOR_REFERENCE_LINE}</p>
                 : null}
+                {declaredModules.has('ARBEIT_EINKOMMEN') ?
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    Lohn &amp; Arbeitsstelle: als «nicht angestellt» vermerkt.
+                  </p>
+                : null}
 
                 {SIC_MODULES.filter(m => owned.has(m.id) && !verifiedModules.has(m.id) && !declaredModules.has(m.id)).length > 0 ? (
                   <>

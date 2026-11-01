@@ -86,7 +86,7 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     title: 'Betreibungsauszug',
     summary: 'Der Auszug vom Betreibungsamt zeigt, ob offene Betreibungen bestehen.',
     landlordQuestion: 'Hast du offene Betreibungen?',
-    landlordSees: 'Dass keine offenen Betreibungen bestehen — mit Datum und Amt.',
+    landlordSees: 'Dass weder offene Betreibungen noch Verlustscheine bestehen — mit Datum und Amt.',
     youUpload: 'Auszug vom Betreibungsamt, max. 3 Monate alt',
     scopeItems: ['Betreibungsauszug'],
     lineItems: ['Betreibungsauszug eingereicht und geprüft'],
@@ -112,9 +112,10 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     order: 3,
     selfObtainable: false,
     title: 'Lohn & Arbeitsstelle',
-    summary: 'Lohnabrechnung und Arbeitgeberbestätigung zeigen, was du verdienst und wo du arbeitest.',
+    summary:
+      'Lohnabrechnung und Arbeitgeberbestätigung zeigen, was du verdienst und wo du arbeitest. Derzeit für Angestellte.',
     landlordQuestion: 'Was verdienst du, und wo arbeitest du?',
-    landlordSees: 'Einkommensband, Anstellungsart und die tragbare Monatsmiete.',
+    landlordSees: 'Einkommensband, Anstellungsart und einen Richtwert für die Monatsmiete.',
     youUpload: 'Lohnabrechnung und ein kurzes Formular für den Arbeitgeber',
     scopeItems: [
       'Einkommensnachweis',
@@ -255,6 +256,8 @@ export const SIC_MODULE_BADGE = 'GEPRÜFT'
 /** Selbstangabe ohne bisherigen Vermieter — kein «GEPRÜFT», kein «fehlend». */
 export const SIC_DECLARED_BADGE = 'ANGABE'
 export const SIC_NO_PRIOR_REFERENCE_LINE = 'Keine bisherige Vermieter-Referenz.'
+/** Nicht angestellt: das Einkommen prüfen wir für diese Gruppen noch nicht. */
+export const SIC_INCOME_NOT_CHECKED_LINE = 'Einkommen nicht Teil dieser Prüfung'
 
 /** Nachweise je Angabe — beim Paar-Zertifikat zwei Auszüge, zwei Ausweise, zwei Löhne; eine Referenz. */
 export function sicRequiredDocuments(id: SicModuleId, couple: boolean): string[] {

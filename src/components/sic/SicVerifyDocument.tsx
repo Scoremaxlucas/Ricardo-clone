@@ -1,10 +1,11 @@
-import { DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/art-web'
+import { CertSeal, DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/art-web'
 import { SIC_CERT_TAGLINE, SIC_COLORS } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
 import type { SicVerifiedModuleView } from '@/lib/sic/dossier'
 import {
   isSicCertificateSealReady,
   SIC_CERT_DOCUMENT_TITLE,
+  SIC_DECLARED_BADGE,
   SIC_MODULE_BADGE,
   SIC_PLAUSIBILITY_FOOTER,
   SIC_SCOPE_NOTE,
@@ -36,6 +37,8 @@ export type SicVerifyDocumentProps =
       completenessLabel: string
       modules: SicVerifiedModuleView[]
       presentation?: SicDocumentPresentation
+      /** «Stand vom», solange kein geprüfter Auszug die Gültigkeit trägt. Default: jetzt. */
+      asOf?: Date
     }
 
 function Frame({ children }: { children: ReactNode }) {
@@ -106,6 +109,19 @@ function NavyBand({
   )
 }
 
+function ModuleLines({ lines, className = '' }: { lines: string[]; className?: string }) {
+  return (
+    <ul className={`space-y-0.5 ${className}`}>
+      {lines.map(line => (
+        <li key={line} className="flex items-start gap-2 text-[13px] leading-snug text-slate-600">
+          <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-navy" />
+          {line}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 function QuietBody({
   title,
   children,
@@ -131,6 +147,8 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
     (isSicCertificateSealReady(modules.map(m => m.id)) ? 'certificate' : 'working')
   const isCertificate = presentation === 'certificate'
   const scopeNote = isCertificate ? SIC_SCOPE_NOTE : SIC_WORKING_SCOPE_NOTE
+  const extractChecked = modules.some(m => m.id === 'BONITAET' && !m.badge)
+  const asOf = props.asOf ?? new Date()
 
   return (
     <>
@@ -161,27 +179,41 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
         </div>
 
         <ul className="mt-5 divide-y divide-sic-hairline">
-          {modules.map(m => (
-            <li key={m.title} className="flex items-start gap-3 py-3.5">
-              <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-sic-navy bg-sic-paper-soft">
-                <ModuleGlyph moduleId={m.id} size={16} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-sic-navy">{m.title}</p>
-                <ul className="mt-1 space-y-0.5">
-                  {m.lines.map(line => (
-                    <li key={line} className="flex items-start gap-2 text-[13px] leading-snug text-slate-600">
-                      <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-sic-navy" />
-                      {line}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <span className="mt-0.5 hidden flex-shrink-0 text-[9px] font-bold tracking-[0.12em] text-sic-navy min-[400px]:inline">
-                {m.badge ?? SIC_MODULE_BADGE}
-              </span>
-            </li>
-          ))}
+          {modules.map(m => {
+            const badge = m.badge ?? SIC_MODULE_BADGE
+            const people = (m.groups ?? []).filter(g => g.label)
+            const shared = (m.groups ?? []).filter(g => !g.label).flatMap(g => g.lines)
+            return (
+              <li key={m.title} className="flex items-start gap-3 py-3.5">
+                <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-sic-navy bg-sic-paper-soft">
+                  <ModuleGlyph moduleId={m.id} size={16} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-sic-navy">{m.title}</p>
+                  {people.length > 0 ?
+                    <>
+                      <div className="mt-1 grid gap-x-4 gap-y-2 sm:grid-cols-2">
+                        {people.map(g => (
+                          <div key={g.label} className="min-w-0">
+                            <p className="text-[11px] font-semibold text-slate-500">{g.label}</p>
+                            <ModuleLines lines={g.lines} />
+                          </div>
+                        ))}
+                      </div>
+                      {shared.length > 0 ? <ModuleLines lines={shared} className="mt-2" /> : null}
+                    </>
+                  : <ModuleLines lines={m.lines} className="mt-1" />}
+                </div>
+                <span
+                  className={`mt-0.5 hidden flex-shrink-0 rounded-sm border px-1.5 py-0.5 text-[9px] font-bold tracking-[0.12em] min-[400px]:inline ${
+                    badge === SIC_DECLARED_BADGE ? 'border-dashed border-slate-400 text-slate-500' : 'border-sic-navy text-sic-navy'
+                  }`}
+                >
+                  {badge}
+                </span>
+              </li>
+            )
+          })}
         </ul>
 
         <div className="mt-5 flex flex-wrap justify-between gap-4 border-t border-sic-hairline pt-4">
@@ -191,15 +223,24 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
             </p>
             <p className="text-sm font-semibold text-sic-navy">{fmt(issuedAt)}</p>
           </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Gültig bis</p>
-            <p className="text-sm font-semibold text-sic-navy">{fmt(expiresAt)}</p>
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">
+              {extractChecked ? 'Gültig bis' : 'Stand vom'}
+            </p>
+            <p className="text-sm font-semibold text-sic-navy">{fmt(extractChecked ? expiresAt : asOf)}</p>
           </div>
         </div>
 
-        <div className="mt-5">
-          <p className="text-[11px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
-          <p className="mt-0.5 text-[10px] text-slate-500">{fmt(issuedAt)}</p>
+        <div className="mt-5 flex items-center gap-4">
+          {isCertificate ? <CertSeal size={74} year={String(issuedAt.getFullYear())} /> : null}
+          <div>
+            <p className="text-[11px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
+            <p className="mt-0.5 text-[10px] leading-snug text-slate-500">
+              {extractChecked ?
+                'Gültig, solange diese Seite das Zertifikat als gültig ausweist.'
+              : 'Ohne geprüften Betreibungsauszug ohne feste Gültigkeit.'}
+            </p>
+          </div>
         </div>
 
         <p className="mt-6 text-[11px] leading-relaxed text-slate-500">
