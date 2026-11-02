@@ -114,7 +114,7 @@ export function SicDossierLogin({
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sic-navy/55">
                 Swiss Immo Cert
               </p>
-              <p className="truncate text-xs text-slate-500">{SIC_TAGLINE}</p>
+              <p className="text-xs leading-snug text-slate-500">{SIC_TAGLINE}</p>
             </div>
           </div>
         : null}

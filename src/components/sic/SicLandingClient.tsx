@@ -145,7 +145,11 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
       const nearBottom = window.innerHeight + y >= document.documentElement.scrollHeight - 200
       const vv = window.visualViewport
       const keyboardOpen = Boolean(vv && window.innerHeight - vv.height > 80)
-      setShowSticky(y > 640 && !nearBottom && !keyboardOpen)
+      // Erst wenn das Formular oben samt Knopf weggescrollt ist — sonst stünde der Knopf doppelt da
+      // (kleine Handys wie das iPhone SE erreichen 640 px schon mitten im Formular).
+      const hero = document.getElementById('anlegen')
+      const heroGone = hero ? hero.getBoundingClientRect().bottom < 0 : y > 640
+      setShowSticky(heroGone && !nearBottom && !keyboardOpen)
     }
     update()
     window.addEventListener('scroll', update, { passive: true })
