@@ -63,6 +63,15 @@ export async function sendEmail({
     text = sanitizeEmailTextLinks(text)
   }
 
+  // Nur für lokale End-to-End-Tests: Mails als Datei ablegen statt versenden. Auf Vercel (VERCEL=1) nie aktiv.
+  if (process.env.EMAIL_SINK_DIR && process.env.VERCEL !== '1') {
+    const { mkdirSync, writeFileSync } = await import('fs')
+    mkdirSync(process.env.EMAIL_SINK_DIR, { recursive: true })
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    writeFileSync(`${process.env.EMAIL_SINK_DIR}/${id}.json`, JSON.stringify({ to, subject, html, text }))
+    return { success: true, messageId: id }
+  }
+
   console.log('\n📧 ===== E-MAIL-VERSAND START =====')
   console.log(`[sendEmail] Empfänger: ${to}`)
   console.log(`[sendEmail] Betreff: ${subject}`)

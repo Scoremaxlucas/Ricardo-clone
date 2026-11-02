@@ -1,4 +1,5 @@
 import { sicBlobWriteToken } from '@/lib/sic/blob-put'
+import { isSicLocalBlobUrl, readSicLocalBlob, sicLocalBlobDir } from '@/lib/sic/blob-local'
 import { sicLog } from '@/lib/sic/log'
 import { get } from '@vercel/blob'
 
@@ -7,6 +8,8 @@ import { get } from '@vercel/blob'
  * Token nachgefragt, damit Dateien aus der Zeit vor der Umstellung lesbar bleiben.
  */
 export async function readSicBlobBytes(blobUrl: string): Promise<Buffer | null> {
+  const localDir = sicLocalBlobDir()
+  if (localDir && isSicLocalBlobUrl(blobUrl)) return readSicLocalBlob(localDir, blobUrl)
   const token = sicBlobWriteToken()
   try {
     const result = await get(blobUrl, {

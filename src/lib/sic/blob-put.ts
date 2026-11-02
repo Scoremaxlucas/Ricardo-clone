@@ -1,4 +1,5 @@
 import { put } from '@vercel/blob'
+import { putSicLocalBlob, sicLocalBlobDir } from '@/lib/sic/blob-local'
 import { sicLog } from '@/lib/sic/log'
 
 /** Dedizierter SIC-Store (privat) hat Vorrang vor dem Helvenda-Store. */
@@ -21,6 +22,8 @@ export function sicBlobAllowPublicFallback(): boolean {
  * der Upload fehl (kein stiller Public-Fallback mehr).
  */
 export async function putSicDocumentBytes(pathname: string, ciphertext: Buffer): Promise<string> {
+  const localDir = sicLocalBlobDir()
+  if (localDir) return putSicLocalBlob(localDir, pathname, ciphertext)
   const token = sicBlobWriteToken()
   const options = {
     addRandomSuffix: true,

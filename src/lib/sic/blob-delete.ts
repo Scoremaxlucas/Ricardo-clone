@@ -1,4 +1,5 @@
 import { sicBlobWriteToken } from '@/lib/sic/blob-put'
+import { deleteSicLocalBlob, isSicLocalBlobUrl, sicLocalBlobDir } from '@/lib/sic/blob-local'
 import { sicLog } from '@/lib/sic/log'
 import { del } from '@vercel/blob'
 
@@ -11,6 +12,8 @@ import { del } from '@vercel/blob'
  * bereits geschriebenen DB-Zustand kippt. Fehler landen im Log.
  */
 export async function deleteSicBlob(blobUrl: string): Promise<boolean> {
+  const localDir = sicLocalBlobDir()
+  if (localDir && isSicLocalBlobUrl(blobUrl)) return deleteSicLocalBlob(localDir, blobUrl)
   // Dateien aus der Zeit vor dem eigenen SIC-Store liegen im Helvenda-Store.
   const tokens = Array.from(
     new Set([sicBlobWriteToken(), process.env.BLOB_READ_WRITE_TOKEN?.trim() || undefined])
