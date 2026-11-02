@@ -1,7 +1,7 @@
 'use client'
 
 import { SicVerifyDocument } from '@/components/sic/SicVerifyDocument'
-import { previewSicVerifiedModules } from '@/lib/sic/dossier'
+import { previewSicVerifiedModules } from '@/lib/sic/dossier-core'
 import { normalizeSicFacts, type SicFacts } from '@/lib/sic/facts'
 import { sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
 import { sicExpiresAtAfterApproval } from '@/lib/sic/validity'

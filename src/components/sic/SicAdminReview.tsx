@@ -11,7 +11,7 @@ import {
   type SicFacts,
 } from '@/lib/sic/facts'
 import { isSicModuleId, sicMinDocsForReview, type SicModuleId } from '@/lib/sic/modules'
-import { SIC_REJECTION_REASONS } from '@/lib/sic/review'
+import { SIC_REJECTION_REASONS } from '@/lib/sic/rejection-reasons'
 import { SIC_REVOKE_REASONS } from '@/lib/sic/revoke-reasons'
 import { sicReviewSlaLabel, sicReviewSlaState } from '@/lib/sic/review-sla'
 import { AlertTriangle, Banknote, Check, ExternalLink, Loader2, Mail, Search, Sparkles, X } from 'lucide-react'
@@ -327,7 +327,10 @@ export function SicAdminReview() {
       for (const item of rows) {
         for (const m of item.modules) {
           const key = `${item.id}:${m.moduleKind}`
-          if (!next[key]) next[key] = m.verifiedFacts ?? {}
+          // Ein neu eingereichter Ausweis wird frisch erfasst — die alten Werte (altes Ablaufdatum)
+          // vorzubefüllen hiesse, die Kappung mit einem Klick zu wiederholen.
+          const replacingId = m.moduleKind === 'AUFENTHALT' && m.status !== 'VERIFIED'
+          if (!next[key]) next[key] = replacingId ? {} : (m.verifiedFacts ?? {})
         }
       }
       return next

@@ -28,7 +28,7 @@ import {
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import type { SicLandingAccount } from '@/lib/sic/landing-account'
 import { sicPaths, SIC_ISSUER_LINE, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
-import { DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/art-web'
+import { CertSeal, DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/art-web'
 import {
   ArrowRight,
   Briefcase,
@@ -1139,7 +1139,7 @@ function CertUrkundeCard() {
                     ))}
                   </ul>
                 </div>
-                <span className="mt-0.5 hidden flex-shrink-0 text-[8px] font-bold tracking-[0.1em] text-sic-navy min-[380px]:inline">
+                <span className="mt-0.5 hidden flex-shrink-0 rounded-sm border border-sic-navy px-1 py-px text-[8px] font-bold tracking-[0.1em] text-sic-navy min-[380px]:inline">
                   {SIC_MODULE_BADGE}
                 </span>
               </li>
@@ -1158,9 +1158,9 @@ function CertUrkundeCard() {
               </div>
             </div>
             <div className="flex items-end justify-between gap-2">
-              <div>
+              <div className="flex min-w-0 items-center gap-2.5">
+                <CertSeal size={56} year="2026" />
                 <p className="text-[10px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
-                <p className="mt-0.5 text-[9px] text-slate-500">12.06.2026</p>
               </div>
               <div className="flex flex-col items-center">
                 <img
@@ -1170,9 +1170,7 @@ function CertUrkundeCard() {
                   height={52}
                   className="h-[52px] w-[52px] bg-sic-paper"
                 />
-                <p className="mt-1 max-w-[4.75rem] text-center text-[7px] leading-tight text-slate-500">
-                  Prüfseite: QR-Code scannen
-                </p>
+                <p className="mt-1 text-center text-[7px] leading-tight text-slate-500">QR-Code scannen</p>
               </div>
             </div>
           </div>

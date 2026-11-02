@@ -1,5 +1,5 @@
 import type { prisma } from '@/lib/prisma'
-import { isSicIdDocumentExpired, readSicFacts } from '@/lib/sic/facts'
+import { isSicIdDocumentExpired, readSicFacts, sicFactsLapsed } from '@/lib/sic/facts'
 import { addCalendarMonths } from '@/lib/sic/validity'
 import type { SicModuleId } from '@/lib/sic/modules'
 
@@ -34,7 +34,9 @@ export function modulesResetByRenewal(modules: RenewalModuleInput[], now = new D
     }
     if (m.moduleKind === 'ARBEIT_EINKOMMEN') {
       const staleFrom = m.reviewedAt ? addCalendarMonths(m.reviewedAt, SIC_EMPLOYMENT_RECHECK_MONTHS) : null
-      if (!staleFrom || staleFrom.getTime() <= now.getTime()) reset.push(m.moduleKind)
+      // Auch ein beendeter befristeter Vertrag muss neu belegt werden.
+      const lapsed = sicFactsLapsed('ARBEIT_EINKOMMEN', readSicFacts('ARBEIT_EINKOMMEN', m.verifiedFacts), now)
+      if (!staleFrom || staleFrom.getTime() <= now.getTime() || lapsed) reset.push(m.moduleKind)
       continue
     }
     if (m.moduleKind === 'AUFENTHALT') {

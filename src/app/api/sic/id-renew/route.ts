@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { deleteSicBlob } from '@/lib/sic/blob-delete'
-import { readSicFacts, sicIdReplacementDue } from '@/lib/sic/facts'
+import { readSicFacts, sicIdCapsExpiry, sicIdReplacementDue } from '@/lib/sic/facts'
 import { getSicSession } from '@/lib/sic/session-cookie'
 import { NextResponse } from 'next/server'
 
@@ -24,32 +24,40 @@ export async function POST() {
       status: true,
       expiresAt: true,
       modules: {
-        where: { moduleKind: 'AUFENTHALT' },
-        select: { id: true, status: true, verifiedFacts: true },
+        where: { moduleKind: { in: ['AUFENTHALT', 'BONITAET'] } },
+        select: { id: true, moduleKind: true, status: true, verifiedFacts: true },
       },
     },
   })
-  const row = cert?.modules[0]
+  const row = cert?.modules.find(m => m.moduleKind === 'AUFENTHALT')
   if (!cert || !row) {
     return NextResponse.json(
       { ok: false, message: 'Keine Ausweis-Angabe auf diesem Zertifikat.' },
       { status: 404 }
     )
   }
-  const active =
-    cert.status === 'ACTIVE' && !!cert.expiresAt && cert.expiresAt.getTime() > now.getTime()
-  if (!active || row.status !== 'VERIFIED') {
+  if (cert.status === 'REVOKED' || row.status !== 'VERIFIED') {
     return NextResponse.json(
-      {
-        ok: false,
-        message: 'Ein neuer Ausweis geht nur bei einem gültigen Zertifikat mit geprüftem Ausweis.',
-      },
+      { ok: false, message: 'Ein neuer Ausweis geht nur mit einem geprüften Ausweis.' },
       { status: 409 }
     )
   }
-  if (!sicIdReplacementDue(readSicFacts('AUFENTHALT', row.verifiedFacts), cert.expiresAt, now)) {
+  const idFacts = readSicFacts('AUFENTHALT', row.verifiedFacts)
+  const extract = cert.modules.find(m => m.moduleKind === 'BONITAET' && m.status === 'VERIFIED')
+  const active =
+    cert.status === 'ACTIVE' && !!cert.expiresAt && cert.expiresAt.getTime() > now.getTime()
+  // Läuft das Zertifikat: wenn der Ausweis es kürzt oder bald abläuft. Abgelaufen: nur
+  // wenn der Ausweis der Grund war und der Auszug noch trägt — sonst ist es eine Verlängerung.
+  const open =
+    active ?
+      sicIdReplacementDue(idFacts, cert.expiresAt, now)
+    : sicIdCapsExpiry(idFacts, extract ? readSicFacts('BONITAET', extract.verifiedFacts) : null, now)
+  if (!open) {
     return NextResponse.json(
-      { ok: false, message: 'Dein Ausweis ist noch länger gültig.' },
+      {
+        ok: false,
+        message: active ? 'Dein Ausweis ist noch länger gültig.' : 'Dafür braucht es eine Verlängerung mit neuem Auszug.',
+      },
       { status: 409 }
     )
   }

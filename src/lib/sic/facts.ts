@@ -1,4 +1,4 @@
-import { getSicModule, type SicModuleId } from '@/lib/sic/modules'
+import { getSicModule, SIC_MODULES, type SicModuleId } from '@/lib/sic/modules'
 import { parseSicCalendarDate, sicValidityExpiresAt } from '@/lib/sic/validity'
 
 /**
@@ -456,7 +456,8 @@ export function sicApprovalBlockers(moduleId: SicModuleId, facts: SicFacts, now 
   if (moduleId === 'AUFENTHALT') {
     for (const key of ['validUntil', 'validUntil2']) {
       const d = parseSicCalendarDate(facts[key])
-      if (d && d.getTime() < today) blockers.push('Der Ausweis ist abgelaufen — bitte ablehnen und den gültigen anfordern')
+      // «Gültig bis» auf dem Zertifikat endet um 00:00 dieses Tages — ein Ausweis, der heute endet, trägt nichts mehr.
+      if (d && d.getTime() <= today) blockers.push('Der Ausweis ist abgelaufen — bitte ablehnen und den gültigen anfordern')
     }
   }
   if (moduleId === 'ARBEIT_EINKOMMEN') {
@@ -524,18 +525,24 @@ export function sicRentCeilingFromIncomes(
   return Math.floor(monthly / 50) * 50
 }
 
+/**
+ * Feste Formate statt `toLocaleDateString`: Browser formatieren de-CH Monat/Jahr
+ * teils als «01/2021», Node als «01.2021». PDF, Prüfseite und Dossier sollen gleich lesen.
+ */
 function fmtDate(value: string | undefined): string | null {
-  if (!value) return null
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return null
-  return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const d = parseSicCalendarDate(value)
+  if (!d) return null
+  return `${pad2(d.getUTCDate())}.${pad2(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`
 }
 
 function fmtMonthYear(value: string | undefined): string | null {
-  if (!value) return null
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return null
-  return d.toLocaleDateString('de-CH', { month: '2-digit', year: 'numeric' })
+  const d = parseSicCalendarDate(value)
+  if (!d) return null
+  return `${pad2(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
 }
 
 function tenancyDuration(from: string | undefined, to: string | undefined): string | null {
@@ -547,11 +554,12 @@ function tenancyDuration(from: string | undefined, to: string | undefined): stri
     0,
     (end.getUTCFullYear() - start.getUTCFullYear()) * 12 + (end.getUTCMonth() - start.getUTCMonth())
   )
-  if (months < 12) return `${months} Monate`
+  const monthPart = (n: number) => (n === 1 ? '1 Monat' : `${n} Monate`)
+  if (months < 12) return monthPart(months)
   const years = Math.floor(months / 12)
   const rest = months % 12
   const yearPart = years === 1 ? '1 Jahr' : `${years} Jahre`
-  return rest === 0 ? yearPart : `${yearPart} ${rest} Monate`
+  return rest === 0 ? yearPart : `${yearPart} ${monthPart(rest)}`
 }
 
 function fieldFor(moduleId: SicModuleId, key: string): SicFactField | undefined {
@@ -770,7 +778,7 @@ export const SIC_CERT_PREVIEW_FACTS: Record<SicModuleId, SicFacts> = {
 }
 
 export function sicCatalogPreviewRows(): { id: SicModuleId; lines: string[] }[] {
-  return (['BONITAET', 'ARBEIT_EINKOMMEN', 'ZUVERLAESSIGKEIT', 'AUFENTHALT'] as const).map(id => ({
+  return SIC_MODULES.map(m => m.id).map(id => ({
     id,
     lines: sicFactLines(id, SIC_CERT_PREVIEW_FACTS[id]),
   }))
@@ -788,4 +796,50 @@ export function sicIdReplacementDue(facts: SicFacts | null, certExpiresAt: Date 
   if (!idEnd) return false
   if (certExpiresAt && idEnd.getTime() <= certExpiresAt.getTime()) return true
   return idEnd.getTime() - now.getTime() <= SIC_ID_RENEW_WINDOW_DAYS * 24 * 60 * 60 * 1000
+}
+
+/**
+ * Geprüfte Werte, die inzwischen nicht mehr stimmen: ein befristeter Vertrag ist
+ * beendet, ein Ausweis abgelaufen. Solche Angaben stehen nicht mehr auf dem Dokument.
+ */
+export function sicFactsLapsed(moduleId: SicModuleId, facts: SicFacts | null, now = new Date()): boolean {
+  if (!facts) return false
+  if (moduleId === 'AUFENTHALT') {
+    const end = sicIdValidUntil(facts)
+    return !!end && end.getTime() <= now.getTime()
+  }
+  if (moduleId === 'ARBEIT_EINKOMMEN') {
+    const today = utcToday(now)
+    return (
+      [
+        ['employmentType', 'employedUntil'],
+        ['employmentType2', 'employedUntil2'],
+      ] as const
+    ).some(([type, until]) => {
+      if (facts[type] !== 'befristet') return false
+      const d = parseSicCalendarDate(facts[until])
+      return !!d && d.getTime() < today
+    })
+  }
+  return false
+}
+
+/** Ende laut geprüftem Betreibungsauszug (bei zwei Auszügen der ältere), ohne Ausweis-Kappung. */
+export function sicExtractValidityEnd(extractFacts: SicFacts | null): Date | null {
+  if (!extractFacts) return null
+  const dates = [parseSicCalendarDate(extractFacts.extractDate), parseSicCalendarDate(extractFacts.extractDate2)].filter(
+    (d): d is Date => !!d
+  )
+  if (dates.length === 0) return null
+  return sicValidityExpiresAt(dates.reduce((a, b) => (b.getTime() < a.getTime() ? b : a)))
+}
+
+/**
+ * Endet (oder endete) das Zertifikat wegen des Ausweises, während der Auszug noch trägt?
+ * Dann hilft ein neuer Ausweis (kostenlos), keine Verlängerung.
+ */
+export function sicIdCapsExpiry(idFacts: SicFacts | null, extractFacts: SicFacts | null, now = new Date()): boolean {
+  const idEnd = sicIdValidUntil(idFacts)
+  const extractEnd = sicExtractValidityEnd(extractFacts)
+  return !!idEnd && !!extractEnd && idEnd.getTime() < extractEnd.getTime() && extractEnd.getTime() > now.getTime()
 }

@@ -3,7 +3,7 @@
 import { SicTemplateForm } from '@/components/sic/SicTemplateForm'
 import { SIC_DEBT_EXTRACT_ORDER_URL, SIC_REVIEW_SLA, sicPaths, sicVerifyUrl } from '@/lib/sic/config'
 import type { SicDossierView, SicUploadedDocMeta } from '@/lib/sic/dossier'
-import { templatePrefillNamesForModule } from '@/lib/sic/dossier'
+import { templatePrefillNamesForModule } from '@/lib/sic/dossier-core'
 import { SIC_INCOME_GROUPS, sicIncomeGroupLabel, type SicIncomeGroup } from '@/lib/sic/facts'
 import { formatSicChf, isSicModuleId, SIC_MODULES, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
 import { sicNextStep } from '@/lib/sic/next-step'
@@ -1028,14 +1028,14 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                         vermerkst du das hier — die Angabe gilt nicht als fehlend, und das Zertifikat bekommst du
                         trotzdem.
                       </p>
-                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                      <div className="mt-3 flex flex-wrap gap-2">
                         {SIC_INCOME_GROUPS.map(g => (
                           <button
                             key={g.value}
                             type="button"
                             disabled={declaringIncome}
                             onClick={() => void setIncomeGroup(g.value)}
-                            className="text-sm font-semibold text-sic-navy underline-offset-2 hover:underline disabled:opacity-60"
+                            className="min-h-11 rounded-xl border border-sic-hairline bg-sic-paper px-3.5 text-sm font-semibold text-sic-navy hover:border-sic-navy/40 disabled:opacity-60"
                           >
                             {g.label}
                           </button>

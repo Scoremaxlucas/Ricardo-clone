@@ -76,10 +76,13 @@ export function sicNextStep(dossier: SicDossierView): SicNextStep | null {
   const pendingSeal = pickModule(dossier.purchasedModules, 'PENDING_DOCS', true)
   if (pendingSeal) {
     const forSeal = (SIC_SEAL_MODULE_IDS as readonly SicModuleId[]).includes(pendingSeal.moduleKind)
+    // Neuer Nachweis, während der bisherige noch auf dem Zertifikat steht (neuer Ausweis, frühe Verlängerung).
+    const replacing = pendingSeal.certificateLines.length > 0
     return {
-      title: `«${pendingSeal.title}» hochladen`,
-      detail: forSeal
-        ? 'Für das Mieter-Zertifikat mit Siegel brauchst du diese Angabe.'
+      title: replacing ? `Neuen Nachweis für «${pendingSeal.title}» hochladen` : `«${pendingSeal.title}» hochladen`,
+      detail:
+        replacing ? 'Bis zur Prüfung bleibt der bisherige auf dem Zertifikat.'
+        : forSeal ? 'Für das Mieter-Zertifikat mit Siegel brauchst du diese Angabe.'
         : 'Lade die Unterlagen hoch — danach prüfen wir sie.',
       anchor: `#modul-${pendingSeal.moduleKind}`,
       kind: 'action',

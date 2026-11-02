@@ -63,16 +63,17 @@ export async function approveSicModule(opts: {
 
   // Das Zertifikat gilt nicht länger als der geprüfte Ausweis. Wird ein neuer Ausweis
   // freigegeben, rechnet die Frist wieder ab dem geprüften Auszug statt ab der gekürzten.
-  const otherVerified = await prisma.sicCertificateModule.findMany({
-    where: {
-      certificateId: opts.certificateId,
-      moduleKind: { in: ['AUFENTHALT', 'BONITAET'] },
-      status: 'VERIFIED',
-    },
-    select: { moduleKind: true, verifiedFacts: true },
+  // Der Ausweis zählt auch, solange ein neuer eingereicht ist: die mitgetragenen Werte
+  // stehen weiter auf dem Dokument, also gilt auch ihre Kappung.
+  const stored = await prisma.sicCertificateModule.findMany({
+    where: { certificateId: opts.certificateId, moduleKind: { in: ['AUFENTHALT', 'BONITAET'] } },
+    select: { moduleKind: true, status: true, verifiedFacts: true },
   })
-  const storedFacts = (kind: 'AUFENTHALT' | 'BONITAET') =>
-    readSicFacts(kind, otherVerified.find(m => m.moduleKind === kind)?.verifiedFacts)
+  const storedFacts = (kind: 'AUFENTHALT' | 'BONITAET') => {
+    const row = stored.find(m => m.moduleKind === kind)
+    if (!row || (kind === 'BONITAET' && row.status !== 'VERIFIED')) return null
+    return readSicFacts(kind, row.verifiedFacts)
+  }
   const idFacts = opts.moduleKind === 'AUFENTHALT' ? facts : storedFacts('AUFENTHALT')
   const extractFacts = opts.moduleKind === 'BONITAET' ? facts : storedFacts('BONITAET')
 
@@ -123,10 +124,12 @@ export async function approveSicModule(opts: {
 
     // Neuer Auszug geprüft = neue Frist. Werte, die aus der Zeit vor einer frühzeitigen
     // Verlängerung mitgetragen wurden, gelten ab hier nicht mehr.
+    // Der Ausweis ist davon ausgenommen: seine Werte trägt ein noch gültiger alter Ausweis.
     if (opts.moduleKind === 'BONITAET') {
       await tx.sicCertificateModule.updateMany({
         where: {
           certificateId: opts.certificateId,
+          moduleKind: { not: 'AUFENTHALT' },
           status: { in: ['PENDING_DOCS', 'IN_REVIEW', 'REJECTED'] },
           NOT: { verifiedFacts: { equals: Prisma.DbNull } },
         },
@@ -196,13 +199,16 @@ export async function rejectSicModule(opts: {
       where: { certificateId: opts.certificateId, moduleKind: opts.moduleKind as SicModuleKind, status: 'VERIFIED' },
     })) > 0
 
+  // Ausnahme Ausweis: wird der *neue* Ausweis abgelehnt, bleibt der alte, noch gültige stehen —
+  // ein unleserlicher Scan widerlegt ihn nicht. Abgelaufene Werte blendet sicPresentedModules aus.
+  const keepOldId = opts.moduleKind === 'AUFENTHALT' && !wasVerified
   const updated = await prisma.sicCertificateModule.updateMany({
     where: { certificateId: opts.certificateId, moduleKind: opts.moduleKind as SicModuleKind },
     data: {
       status: 'REJECTED',
       // Eine abgelehnte Angabe darf keine früher freigegebenen Werte mehr tragen — auch keine
       // aus einer frühzeitigen Verlängerung mitgetragenen: der neue Nachweis kann sie widerlegen.
-      verifiedFacts: Prisma.DbNull,
+      ...(keepOldId ? {} : { verifiedFacts: Prisma.DbNull }),
       reviewedAt: now,
       reviewedByUserId: opts.reviewerId,
       reviewNote: opts.note,
@@ -230,12 +236,4 @@ export async function rejectSicModule(opts: {
   return { email: cert.email }
 }
 
-/** Vorformulierte Ablehnungsgründe für die Prüfoberfläche. */
-export const SIC_REJECTION_REASONS: readonly string[] = [
-  'Der Auszug vom Betreibungsamt ist älter als drei Monate. Bitte einen aktuellen Auszug nachreichen.',
-  'Das Dokument ist unvollständig — es fehlen Seiten oder Angaben.',
-  'Das Dokument ist nicht lesbar. Bitte einen klaren Scan oder ein scharfes Foto hochladen.',
-  'Auf dem Formular fehlt die Unterschrift.',
-  'Der Name auf dem Nachweis stimmt nicht mit dem Namen auf dem Zertifikat überein.',
-  'Der Inhalt des Nachweises erfüllt die Voraussetzungen für eine Freigabe nicht.',
-] as const
+export { SIC_REJECTION_REASONS } from '@/lib/sic/rejection-reasons'

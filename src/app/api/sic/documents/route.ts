@@ -94,6 +94,12 @@ export async function POST(req: NextRequest) {
       { status: 403 }
     )
   }
+  if (moduleRow.status === 'NOT_APPLICABLE') {
+    return NextResponse.json(
+      { ok: false, message: 'Diese Angabe ist als nicht zutreffend vermerkt. Nimm den Vermerk zuerst zurück.' },
+      { status: 409 }
+    )
+  }
   if (moduleRow.status === 'IN_REVIEW') {
     // Weitere Dateien ok — Status bleibt IN_REVIEW
   }

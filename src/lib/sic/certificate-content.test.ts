@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { verifiedModuleLineItems } from '@/lib/sic/dossier'
+import { sicPresentedModules, verifiedModuleLineItems } from '@/lib/sic/dossier'
 import {
   sicApprovalBlockers,
   sicFactGroups,
   sicFactLines,
+  sicFactsLapsed,
+  sicIdCapsExpiry,
   sicIdReplacementDue,
   sicIdValidUntil,
 } from '@/lib/sic/facts'
+import { nextModuleStatusAfterUpload } from '@/lib/sic/module-status'
 import { SIC_DECLARED_BADGE, SIC_INCOME_NOT_CHECKED_LINE } from '@/lib/sic/modules'
 import { modulesResetByRenewal } from '@/lib/sic/renewal'
 import { sicExpiresAtAfterApproval } from '@/lib/sic/validity'
@@ -110,8 +113,12 @@ describe('Ausweis', () => {
         NOW
       ).join(' ')
     ).toMatch(/abgelaufen/)
+    // Ein Ausweis, der heute endet, trägt nichts mehr — das Zertifikat endete um 00:00.
     expect(
       sicApprovalBlockers('AUFENTHALT', { documentType: 'permit_b', validUntil: '2026-11-01' }, NOW)
+    ).toHaveLength(1)
+    expect(
+      sicApprovalBlockers('AUFENTHALT', { documentType: 'permit_b', validUntil: '2026-11-02' }, NOW)
     ).toEqual([])
   })
 
@@ -178,5 +185,91 @@ describe('Paar-Gruppierung', () => {
       { couple: true, person1Label: 'Anna Muster', person2Label: 'Luca Bianchi' }
     )
     expect(lines[0]).toBe('Anna Muster: Unbefristet angestellt bei Muster AG')
+  })
+})
+
+describe('Randfälle aus dem Review', () => {
+  const ACTIVE = { status: 'ACTIVE', expiresAt: new Date(Date.UTC(2027, 0, 20)) }
+
+  it('macht aus «nicht angestellt» nie eine geprüfte Angabe', () => {
+    expect(nextModuleStatusAfterUpload('NOT_APPLICABLE')).toBeNull()
+    const presented = sicPresentedModules(
+      [
+        {
+          moduleKind: 'ARBEIT_EINKOMMEN',
+          status: 'IN_REVIEW' as const,
+          verifiedFacts: { incomeGroup: 'retired' },
+        },
+      ],
+      ACTIVE,
+      NOW
+    )
+    expect(presented[0].status).toBe('IN_REVIEW')
+  })
+
+  it('trägt den alten Ausweis mit, solange er gilt — einen abgelaufenen nicht', () => {
+    const carried = sicPresentedModules(
+      [
+        {
+          moduleKind: 'AUFENTHALT',
+          status: 'PENDING_DOCS' as const,
+          verifiedFacts: { documentType: 'permit_b', validUntil: '2027-01-10' },
+        },
+      ],
+      ACTIVE,
+      NOW
+    )
+    expect(carried[0].status).toBe('VERIFIED')
+    const lapsed = sicPresentedModules(
+      [
+        {
+          moduleKind: 'AUFENTHALT',
+          status: 'PENDING_DOCS' as const,
+          verifiedFacts: { documentType: 'permit_b', validUntil: '2026-10-30' },
+        },
+      ],
+      ACTIVE,
+      NOW
+    )
+    expect(lapsed[0].status).toBe('PENDING_DOCS')
+  })
+
+  it('druckt eine beendete befristete Anstellung nicht mehr', () => {
+    const facts = {
+      incomeBand: '60_80k',
+      employmentType: 'befristet',
+      employedSince: '2025-01-01',
+      employedUntil: '2026-10-31',
+    }
+    expect(sicFactsLapsed('ARBEIT_EINKOMMEN', facts, NOW)).toBe(true)
+    const rows = verifiedModuleLineItems(
+      [{ moduleKind: 'ARBEIT_EINKOMMEN', status: 'VERIFIED', verifiedFacts: facts }],
+      undefined,
+      NOW
+    )
+    expect(rows).toEqual([])
+    expect(
+      modulesResetByRenewal(
+        [
+          {
+            moduleKind: 'ARBEIT_EINKOMMEN',
+            status: 'VERIFIED',
+            reviewedAt: NOW,
+            verifiedFacts: facts,
+          },
+        ],
+        NOW
+      )
+    ).toEqual(['ARBEIT_EINKOMMEN'])
+  })
+
+  it('erkennt, wenn nur der Ausweis das Zertifikat beendet', () => {
+    const extract = { extractDate: '2026-10-20' }
+    expect(sicIdCapsExpiry({ validUntil: '2026-12-10' }, extract, NOW)).toBe(true)
+    expect(sicIdCapsExpiry({ validUntil: '2030-01-01' }, extract, NOW)).toBe(false)
+    // Auszug selbst schon abgelaufen: dann braucht es die Verlängerung.
+    expect(sicIdCapsExpiry({ validUntil: '2026-08-01' }, { extractDate: '2026-06-01' }, NOW)).toBe(
+      false
+    )
   })
 })

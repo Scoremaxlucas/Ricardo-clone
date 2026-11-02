@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
     where: { email: session.email },
     select: {
       id: true,
+      status: true,
       modules: { where: { moduleKind: 'ZUVERLAESSIGKEIT' }, select: { id: true, status: true } },
       documents: { where: { moduleKind: 'ZUVERLAESSIGKEIT' }, select: { id: true } },
     },
@@ -31,6 +32,9 @@ export async function POST(req: NextRequest) {
   const row = cert?.modules[0]
   if (!cert || !row) {
     return NextResponse.json({ ok: false, message: 'Keine Referenz-Angabe auf diesem Zertifikat.' }, { status: 404 })
+  }
+  if (cert.status === 'REVOKED') {
+    return NextResponse.json({ ok: false, message: 'Dieses Zertifikat ist widerrufen.' }, { status: 403 })
   }
 
   if (body.none) {

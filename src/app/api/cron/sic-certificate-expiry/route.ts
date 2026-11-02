@@ -19,6 +19,18 @@ import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
 import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
 import { loadSicRenewalPending } from '@/lib/sic/renewal'
+import { readSicFacts, sicIdCapsExpiry } from '@/lib/sic/facts'
+
+/** Endet das Zertifikat nur wegen des Ausweises? Dann zeigt die Mail auf den kostenlosen neuen Ausweis. */
+async function sicExpiryCausedById(certificateId: string): Promise<boolean> {
+  const rows = await prisma.sicCertificateModule.findMany({
+    where: { certificateId, moduleKind: { in: ['AUFENTHALT', 'BONITAET'] }, status: 'VERIFIED' },
+    select: { moduleKind: true, verifiedFacts: true },
+  })
+  const facts = (kind: 'AUFENTHALT' | 'BONITAET') =>
+    readSicFacts(kind, rows.find(r => r.moduleKind === kind)?.verifiedFacts)
+  return sicIdCapsExpiry(facts('AUFENTHALT'), facts('BONITAET'))
+}
 import { cronBudgetState } from '@/lib/sic/refund-gate'
 import {
   sicUploadNudgeRepeatAfter,
@@ -120,7 +132,12 @@ export async function GET(request: NextRequest) {
           const daysLeft = Math.max(1, Math.ceil((expiresAt.getTime() - now.getTime()) / DAY_MS))
           try {
             if (!(await loadSicRenewalPending(prisma, c.id))) {
-              await sendSicExpiryReminderEmail({ email: c.email, daysLeft, expiresAt })
+              await sendSicExpiryReminderEmail({
+                email: c.email,
+                daysLeft,
+                expiresAt,
+                causedById: await sicExpiryCausedById(c.id),
+              })
               stats[reminder.stat]++
             }
             await prisma.sicCertificate.update({
@@ -155,7 +172,11 @@ export async function GET(request: NextRequest) {
         handled++
         try {
           if (c.expiresAt && !(await loadSicRenewalPending(prisma, c.id))) {
-            await sendSicExpiredEmail({ email: c.email, expiredAt: c.expiresAt })
+            await sendSicExpiredEmail({
+              email: c.email,
+              expiredAt: c.expiresAt,
+              causedById: await sicExpiryCausedById(c.id),
+            })
           }
         } catch (e) {
           console.error('[sic-certificate-expiry] expired mail', c.id, e)

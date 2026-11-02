@@ -250,12 +250,30 @@ export async function sendSicExpiryReminderEmail(opts: {
   email: string
   daysLeft: number
   expiresAt: Date
+  /** Grund ist der Ausweis, nicht der Auszug: neuer Ausweis statt Verlängerung. */
+  causedById?: boolean
 }) {
   const dateStr = opts.expiresAt.toLocaleDateString('de-CH', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   })
+  if (opts.causedById) {
+    const idUrl = sicUrl(sicPaths.certificateWorkspace)
+    return sicMail({
+      to: opts.email,
+      subject: `${SIC_BRAND_NAME}: Dein Ausweis läuft in ${opts.daysLeft} Tagen ab`,
+      html: sicEmailShell({
+        preheader: `Neuen Ausweis einreichen — kostenlos`,
+        heading: `Dein Ausweis läuft in ${opts.daysLeft} Tagen ab`,
+        bodyHtml: `<p style="margin:0 0 12px;">Dein Zertifikat gilt bis <strong>${dateStr}</strong>, weil dann der geprüfte Ausweis abläuft. Dein Betreibungsauszug trägt länger.</p>
+      <p style="margin:0;">Reich den neuen Ausweis ein, sobald du ihn hast — kostenlos, keine Verlängerung nötig. Nach der Prüfung gilt das Zertifikat wieder bis zum Ende des Auszugs.</p>`,
+        buttonText: 'Neuen Ausweis einreichen',
+        buttonUrl: idUrl,
+      }),
+      text: `Dein Zertifikat gilt bis ${dateStr}, weil dann dein Ausweis abläuft. Neuen Ausweis kostenlos einreichen: ${idUrl}`,
+    })
+  }
   const buttonUrl = sicUrl(sicPaths.renew)
   const html = sicEmailShell({
     preheader: `Dein Zertifikat läuft in ${opts.daysLeft} Tagen ab`,
@@ -400,8 +418,24 @@ export async function sendSicPaymentReceiptEmail(opts: {
   })
 }
 
-export async function sendSicExpiredEmail(opts: { email: string; expiredAt: Date }) {
+export async function sendSicExpiredEmail(opts: { email: string; expiredAt: Date; causedById?: boolean }) {
   const dateStr = fmtSicDate(opts.expiredAt)
+  if (opts.causedById) {
+    const idUrl = sicUrl(sicPaths.certificateWorkspace)
+    return sicMail({
+      to: opts.email,
+      subject: `${SIC_BRAND_NAME}: Zertifikat abgelaufen — neuer Ausweis genügt`,
+      html: sicEmailShell({
+        preheader: `Abgelaufen am ${dateStr}, weil der Ausweis abgelaufen ist`,
+        heading: 'Dein Ausweis ist abgelaufen',
+        bodyHtml: `<p style="margin:0 0 12px;">Dein Zertifikat endete am <strong>${dateStr}</strong>, weil der geprüfte Ausweis abgelaufen ist. Dein Betreibungsauszug ist noch aktuell.</p>
+        <p style="margin:0;">Reich den neuen Ausweis ein — kostenlos. Nach der Prüfung gilt das Zertifikat wieder.</p>`,
+        buttonText: 'Neuen Ausweis einreichen',
+        buttonUrl: idUrl,
+      }),
+      text: `Dein Zertifikat ist am ${dateStr} abgelaufen, weil dein Ausweis abgelaufen ist. Neuen Ausweis kostenlos einreichen: ${idUrl}`,
+    })
+  }
   const buttonUrl = sicUrl(sicPaths.renew)
   return sicMail({
     to: opts.email,
