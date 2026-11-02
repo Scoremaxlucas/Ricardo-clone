@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { canChangeSicEmail, sicPendingEmailChangeStatus } from '@/lib/sic/email-change'
 import {
   readSicFacts,
+  sicDebtDisclosureConsent,
   sicIdCapsExpiry,
   sicIdReplacementDue,
   sicIdValidUntil,
@@ -179,6 +180,13 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
       certificateLines: certificateLinesByKind.get(def.id) ?? [],
       incomeGroup:
         def.id === 'ARBEIT_EINKOMMEN' && row.status === 'NOT_APPLICABLE' ? readIncomeGroup(row.verifiedFacts) : null,
+      debtDisclosure:
+        def.id === 'BONITAET' ?
+          {
+            consent: sicDebtDisclosureConsent(row.verifiedFacts),
+            printed: (certificateLinesByKind.get(def.id) ?? []).some(l => /offene Betreibung/.test(l)),
+          }
+        : null,
       idRenewal: idRenewalFor(def.id, row, cert, verifiedFactsOf(cert.modules, 'BONITAET'), {
         couple,
         person1: lineOpts.person1Label ?? null,

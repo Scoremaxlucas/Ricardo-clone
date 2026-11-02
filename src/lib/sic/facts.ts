@@ -65,6 +65,81 @@ const PROCEEDINGS = [
   { value: 'loss', label: 'Verlustscheine vermerkt' },
 ] as const
 
+/**
+ * Ausnahme für kleine offene Betreibungen: höchstens so viele, zusammen unter diesem
+ * Betrag, keine Verlustscheine — und nur, wenn der Kunde zugestimmt hat, dass sie offen
+ * auf dem Zertifikat stehen. Ohne Zustimmung bleibt es bei der Ablehnung.
+ */
+export const SIC_SMALL_DEBT_MAX_COUNT = 2
+export const SIC_SMALL_DEBT_MAX_CHF = 1000
+/** Zustimmung des Kunden, gespeichert neben den Prüfwerten (kein Prüffeld). */
+export const SIC_DEBT_CONSENT_KEY = 'debtDisclosureConsent'
+
+export function sicDebtDisclosureConsent(stored: unknown): boolean {
+  return !!stored && typeof stored === 'object' && (stored as Record<string, unknown>)[SIC_DEBT_CONSENT_KEY] === 'yes'
+}
+
+const OPEN_COUNT = [
+  { value: '1', label: '1' },
+  { value: '2', label: '2' },
+  { value: '3+', label: '3 oder mehr' },
+] as const
+
+const OBJECTED = [
+  { value: 'no', label: 'Nein' },
+  { value: 'yes', label: 'Ja, Rechtsvorschlag erhoben' },
+] as const
+
+function openDebtFields(suffix: '' | '2', prefix: string, group?: 'person2'): SicFactField[] {
+  return [
+    {
+      key: `openCount${suffix}`,
+      label: `${prefix}Anzahl offener Betreibungen`,
+      kind: 'select',
+      required: false,
+      options: [...OPEN_COUNT],
+      hint: 'Nur bei offenen Betreibungen. Mit Rechtsvorschlag gilt eine Betreibung als offen.',
+      ...(group ? { group } : {}),
+    },
+    {
+      key: `openAmountChf${suffix}`,
+      label: `${prefix}Gesamtbetrag offen (CHF)`,
+      kind: 'text',
+      required: false,
+      placeholder: '320',
+      hint: 'Summe der offenen Forderungen laut Auszug. Auf dem Zertifikat steht nur eine Stufe.',
+      ...(group ? { group } : {}),
+    },
+    {
+      key: `objected${suffix}`,
+      label: `${prefix}Rechtsvorschlag erhoben`,
+      kind: 'select',
+      required: false,
+      options: [...OBJECTED],
+      ...(group ? { group } : {}),
+    },
+  ]
+}
+
+function parseChf(value: string | undefined): number | null {
+  const t = (value ?? '').replace(/[’'\s]/g, '').replace(',', '.')
+  if (!/^\d+(\.\d{1,2})?$/.test(t)) return null
+  return Number(t)
+}
+
+/** Fällt eine offene Betreibung (einer Person) unter die Ausnahme? */
+export function sicSmallDebtEligible(facts: SicFacts, suffix: '' | '2' = ''): boolean {
+  if (facts[`proceedings${suffix}`] !== 'open') return false
+  const count = facts[`openCount${suffix}`]
+  const amount = parseChf(facts[`openAmountChf${suffix}`])
+  return (count === '1' || count === '2') && amount !== null && amount < SIC_SMALL_DEBT_MAX_CHF
+}
+
+/** Stufe statt Betrag: der Vermieter erfährt die Grössenordnung, nicht die Forderung. */
+function debtBand(amount: number): number {
+  return amount < 200 ? 200 : amount < 500 ? 500 : SIC_SMALL_DEBT_MAX_CHF
+}
+
 /** Zeile auf dem Zertifikat je freigabefähigem Wert — erledigte Einträge werden nicht aufgezählt. */
 const PROCEEDINGS_CERT_LINE: Record<string, string> = {
   clean: 'Keine Einträge im Betreibungsregister',
@@ -132,8 +207,9 @@ const FIELDS: Record<SicModuleId, SicFactField[]> = {
       kind: 'select',
       required: true,
       options: [...PROCEEDINGS],
-      hint: 'Laut Auszug. Verlustscheine oder offene Betreibungen: ablehnen. Bezahlte oder zurückgezogene Einträge: «frühere erledigt».',
+      hint: 'Laut Auszug. Verlustscheine: ablehnen. Offen: nur höchstens 2, unter CHF 1’000 und mit Zustimmung des Kunden. Bezahlte oder zurückgezogene Einträge: «frühere erledigt».',
     },
+    ...openDebtFields('', ''),
   ],
   ARBEIT_EINKOMMEN: [
     {
@@ -256,6 +332,7 @@ function extraCoupleFields(moduleId: SicModuleId): SicFactField[] {
         options: [...PROCEEDINGS],
         group: 'person2',
       },
+      ...openDebtFields('2', 'Person 2 — ', 'person2'),
     ]
   }
   if (moduleId === 'ARBEIT_EINKOMMEN') {
@@ -469,8 +546,9 @@ export function normalizeSicFacts(
 
 /** Werte, die eine Ablehnung verlangen statt einer Freigabe (Regel 1 oben). */
 const SIC_NEGATIVE_VALUES: Record<string, readonly string[]> = {
-  proceedings: ['open', 'loss'],
-  proceedings2: ['open', 'loss'],
+  // «open» ist eine Ausnahme mit Bedingungen — siehe sicApprovalBlockers.
+  proceedings: ['loss'],
+  proceedings2: ['loss'],
   noticeGiven: ['yes'],
   noticeGiven2: ['yes'],
 }
@@ -488,9 +566,31 @@ function utcToday(now: Date): number {
  * - Ein abgelaufener Ausweis wird nicht freigegeben.
  * - Eine befristete Anstellung braucht ihr Enddatum, und es darf nicht vorbei sein.
  */
-export function sicApprovalBlockers(moduleId: SicModuleId, facts: SicFacts, now = new Date()): string[] {
+export function sicApprovalBlockers(
+  moduleId: SicModuleId,
+  facts: SicFacts,
+  now = new Date(),
+  opts?: { debtDisclosureConsent?: boolean }
+): string[] {
   const blockers: string[] = []
   const today = utcToday(now)
+  if (moduleId === 'BONITAET') {
+    for (const suffix of ['', '2'] as const) {
+      if (facts[`proceedings${suffix}`] !== 'open') continue
+      const who = suffix ? 'Person 2: ' : ''
+      if (!facts[`openCount${suffix}`] || parseChf(facts[`openAmountChf${suffix}`]) === null) {
+        blockers.push(`${who}Offene Betreibungen — Anzahl und Gesamtbetrag erfassen`)
+      } else if (!sicSmallDebtEligible(facts, suffix)) {
+        blockers.push(
+          `${who}Offene Betreibungen über der Ausnahme (höchstens ${SIC_SMALL_DEBT_MAX_COUNT}, unter CHF 1’000) — bitte ablehnen`
+        )
+      } else if (!opts?.debtDisclosureConsent) {
+        blockers.push(
+          `${who}Kleine offene Betreibungen — freigeben nur mit Zustimmung des Kunden im Dossier, sonst ablehnen`
+        )
+      }
+    }
+  }
   for (const [key, bad] of Object.entries(SIC_NEGATIVE_VALUES)) {
     if (!bad.includes(facts[key])) continue
     const field = fieldFor(moduleId, key)
@@ -651,6 +751,15 @@ function bonitaetLine(facts: SicFacts, suffix: '' | '2'): string[] {
   const lines: string[] = []
   const proceedings = PROCEEDINGS_CERT_LINE[facts[`proceedings${suffix}`] ?? '']
   if (proceedings) lines.push(proceedings)
+  // Nur die Ausnahme mit Zustimmung wird je gedruckt — in Stufen, nie der Betrag.
+  if (sicSmallDebtEligible(facts, suffix)) {
+    const count = facts[`openCount${suffix}`] === '2' ? 2 : 1
+    const band = debtBand(parseChf(facts[`openAmountChf${suffix}`])!)
+    const objected = facts[`objected${suffix}`] === 'yes' ? ' (Rechtsvorschlag erhoben)' : ''
+    lines.push(
+      `${count} offene Betreibung${count > 1 ? 'en' : ''}, zusammen unter ${formatSicAmountChf(band)}${objected}`
+    )
+  }
   const date = fmtDate(facts[`extractDate${suffix}`])
   const office = facts[`office${suffix}`]
   if (date && office) lines.push(`Auszug vom ${date}, ${office}`)

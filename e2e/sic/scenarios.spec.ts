@@ -774,3 +774,109 @@ test.describe.serial('4 · Zwei Verlängerungen gleichzeitig bezahlt', () => {
     expect(charge.amount_refunded).toBe(charge.amount)
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+test.describe.serial('5 · Kleine offene Betreibung: nur mit Zustimmung, zurückziehbar', () => {
+  const email = uniqueEmail('smalldebt')
+  let page: Page
+  let certId = ''
+  let code = ''
+  const smallDebt = {
+    ...CLEAN_EXTRACT,
+    proceedings: 'open',
+    openCount: '1',
+    openAmountChf: '320',
+    objected: 'yes',
+  }
+
+  test.beforeAll(async ({ browser }) => {
+    page = await (await newSicContext(browser)).newPage()
+  })
+  test.afterAll(async () => page.context().close())
+
+  test('Ohne Zustimmung gesperrt, Ablehnung erklärt den Weg', async ({ browser }) => {
+    const cert = await buyCertificate(page, { email, first: 'Klein', last: 'Betrag' })
+    certId = cert.id
+    code = cert.certificateCode
+    expect((await uploadApi(page.request, 'BONITAET')).status).toBe(200)
+    const ctx = await newSicContext(browser)
+    await adminContext(ctx)
+    const blocked = await review(ctx.request, {
+      certificateId: certId,
+      moduleKind: 'BONITAET',
+      action: 'approve',
+      facts: smallDebt,
+    })
+    expect(blocked.status).toBeGreaterThanOrEqual(400)
+    expect(blocked.body.message).toMatch(/Zustimmung/)
+    const rej = await review(ctx.request, {
+      certificateId: certId,
+      moduleKind: 'BONITAET',
+      action: 'reject',
+      note: 'Im Auszug sind offene Betreibungen vermerkt.',
+    })
+    expect(rej.status).toBe(200)
+    await ctx.close()
+  })
+
+  test('Kunde stimmt im Dossier zu: erneute Prüfung ohne neuen Upload, Freigabe mit Stufe', async ({
+    browser,
+  }) => {
+    await page.goto('/sic/zertifikat')
+    const mod = page.locator('#modul-BONITAET')
+    if ((await mod.locator('> button').getAttribute('aria-expanded')) === 'false')
+      await mod.locator('> button').click()
+    await mod.getByRole('button', { name: 'Ja, kleine Betreibungen offen ausweisen' }).click()
+    await expect.poll(() => moduleStatus(email, 'BONITAET')).toBe('IN_REVIEW')
+
+    const ctx = await newSicContext(browser)
+    await adminContext(ctx)
+    // Über der Grenze bleibt gesperrt, auch mit Zustimmung.
+    const tooBig = await review(ctx.request, {
+      certificateId: certId,
+      moduleKind: 'BONITAET',
+      action: 'approve',
+      facts: { ...smallDebt, openAmountChf: '1500' },
+    })
+    expect(tooBig.status).toBeGreaterThanOrEqual(400)
+    const ok = await review(ctx.request, {
+      certificateId: certId,
+      moduleKind: 'BONITAET',
+      action: 'approve',
+      facts: smallDebt,
+    })
+    expect(ok.status, ok.body.message).toBe(200)
+    expect((await uploadApi(page.request, 'AUFENTHALT', FILES.png())).status).toBe(200)
+    expect(
+      (
+        await review(ctx.request, {
+          certificateId: certId,
+          moduleKind: 'AUFENTHALT',
+          action: 'approve',
+          facts: VALID_ID,
+        })
+      ).status
+    ).toBe(200)
+    await ctx.close()
+
+    const text = await verifyPage(page, code)
+    expect(text).toContain('1 offene Betreibung, zusammen unter CHF 500 (Rechtsvorschlag erhoben)')
+    expect(text).not.toContain('320')
+    expect(text).toMatch(/MIETER-ZERTIFIKAT/)
+  })
+
+  test('Zustimmung zurückziehen: Betreibungsauszug fällt weg, kein gültiges Dokument mehr', async () => {
+    await page.goto('/sic/zertifikat')
+    const mod = page.locator('#modul-BONITAET')
+    if ((await mod.locator('> button').getAttribute('aria-expanded')) === 'false')
+      await mod.locator('> button').click()
+    page.once('dialog', d => void d.accept())
+    await mod.getByRole('button', { name: 'Zustimmung zurückziehen' }).click()
+    await expect.poll(() => moduleStatus(email, 'BONITAET')).toBe('REJECTED')
+    const cert = (await certByEmail(email))!
+    expect(cert.expiresAt).toBeNull()
+    const text = await verifyPage(page, code)
+    expect(text).not.toContain('offene Betreibung')
+    expect((await page.request.get(`/api/sic/certificate/${code}/pdf`)).status()).toBe(403)
+  })
+})

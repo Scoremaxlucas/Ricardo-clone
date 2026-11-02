@@ -324,3 +324,63 @@ describe('Paar, nur eine Person angestellt', () => {
     ).toBe(1)
   })
 })
+
+describe('Kleine offene Betreibungen (Ausnahme mit Zustimmung)', () => {
+  const base = { extractDate: '2026-10-25', office: 'Betreibungsamt Zürich', proceedings: 'open' }
+
+  it('höchstens 2, unter CHF 1’000, mit Zustimmung: freigabefähig, gedruckt als Stufe', () => {
+    const facts = { ...base, openCount: '1', openAmountChf: '320', objected: 'yes' }
+    expect(sicApprovalBlockers('BONITAET', facts, NOW).join(' ')).toMatch(/Zustimmung/)
+    expect(sicApprovalBlockers('BONITAET', facts, NOW, { debtDisclosureConsent: true })).toEqual([])
+    expect(sicFactLines('BONITAET', facts)).toContain(
+      '1 offene Betreibung, zusammen unter CHF 500 (Rechtsvorschlag erhoben)'
+    )
+  })
+
+  it('über der Grenze oder Verlustscheine: auch mit Zustimmung gesperrt', () => {
+    const consent = { debtDisclosureConsent: true }
+    expect(
+      sicApprovalBlockers(
+        'BONITAET',
+        { ...base, openCount: '3+', openAmountChf: '200' },
+        NOW,
+        consent
+      )
+    ).toHaveLength(1)
+    expect(
+      sicApprovalBlockers(
+        'BONITAET',
+        { ...base, openCount: '2', openAmountChf: '1000' },
+        NOW,
+        consent
+      )
+    ).toHaveLength(1)
+    expect(
+      sicApprovalBlockers('BONITAET', { ...base, proceedings: 'loss' }, NOW, consent)
+    ).toHaveLength(1)
+  })
+
+  it('zeigt nie den Betrag, nur die Stufe', () => {
+    const lines = sicFactLines('BONITAET', { ...base, openCount: '2', openAmountChf: '850' }).join(
+      ' '
+    )
+    expect(lines).toContain('2 offene Betreibungen, zusammen unter CHF 1’000')
+    expect(lines).not.toContain('850')
+  })
+
+  it('Paar: Grenzen gelten je Person', () => {
+    const facts = {
+      ...base,
+      proceedings: 'clean',
+      extractDate2: '2026-10-25',
+      office2: 'Betreibungsamt Bern',
+      proceedings2: 'open',
+      openCount2: '1',
+      openAmountChf2: '150',
+    }
+    expect(sicApprovalBlockers('BONITAET', facts, NOW, { debtDisclosureConsent: true })).toEqual([])
+    expect(
+      sicFactLines('BONITAET', facts, { couple: true, person1Label: 'A', person2Label: 'B' })
+    ).toContain('B: 1 offene Betreibung, zusammen unter CHF 200')
+  })
+})

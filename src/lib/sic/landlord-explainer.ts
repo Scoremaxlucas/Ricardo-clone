@@ -47,6 +47,10 @@ export function sicLandlordExplainerCopy(opts: {
           'Nur die aufgeführten Angaben sind geprüft. Nicht aufgeführte Angaben wurden nicht geprüft — das ist kein Negativbefund.',
       },
       {
+        title: 'Betreibungen',
+        body: '«Keine Einträge» heisst: der Auszug ist leer. «Keine offenen Betreibungen» heisst: frühere Einträge sind erledigt. Steht eine offene Betreibung da, hat die Person der Ausweisung zugestimmt — höchstens zwei, zusammen unter CHF 1’000, als Betragsstufe. Verlustscheine werden nie freigegeben.',
+      },
+      {
         title: '3×-Regel',
         body:
           'Steht ein Einkommensband da, ist der Richtwert für die Monatsmiete aus dem unteren Bandrand gerechnet: ein Drittel des Monatslohns. Bei zwei Personen zählt die Summe. Der exakte Lohn steht nie da. Ein Richtwert, keine Empfehlung.',

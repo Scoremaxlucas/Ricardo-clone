@@ -2,7 +2,13 @@ import { prisma } from '@/lib/prisma'
 import { joinHouseholdHolderName } from '@/lib/sic/dossier'
 import { isSicCouple } from '@/lib/sic/household'
 import { recordSicEvent } from '@/lib/sic/events'
-import { readSicFacts, sicIdValidUntil, type SicFacts } from '@/lib/sic/facts'
+import {
+  readSicFacts,
+  SIC_DEBT_CONSENT_KEY,
+  sicDebtDisclosureConsent,
+  sicIdValidUntil,
+  type SicFacts,
+} from '@/lib/sic/facts'
 import type { SicModuleId } from '@/lib/sic/modules'
 import { sicExpiresAtAfterApproval, sicExpiryClockChanged, sicSwissIsoDay } from '@/lib/sic/validity'
 import { Prisma, type SicModuleKind } from '@prisma/client'
@@ -56,7 +62,7 @@ export async function approveSicModule(opts: {
   if (cert.status === 'REVOKED') return null
 
   // Laufende Mietverhältnisse gelten «Stand Referenz» — ohne Datum auf dem Formular der Tag der Freigabe.
-  const facts: SicFacts =
+  let facts: SicFacts =
     opts.moduleKind === 'ZUVERLAESSIGKEIT' && !opts.facts.tenancyTo && !opts.facts.referenceDate ?
       { ...opts.facts, referenceDate: sicSwissIsoDay(now) }
     : opts.facts
@@ -73,6 +79,12 @@ export async function approveSicModule(opts: {
     const row = stored.find(m => m.moduleKind === kind)
     if (!row || (kind === 'BONITAET' && row.status !== 'VERIFIED')) return null
     return readSicFacts(kind, row.verifiedFacts)
+  }
+  // Die Zustimmung des Kunden (kleine Betreibungen offen ausweisen) bleibt bei den Werten —
+  // sonst wäre sie nach der Freigabe nicht mehr zurückzuziehen.
+  if (opts.moduleKind === 'BONITAET') {
+    const bonitaetRow = stored.find(m => m.moduleKind === 'BONITAET')
+    if (sicDebtDisclosureConsent(bonitaetRow?.verifiedFacts)) facts = { ...facts, [SIC_DEBT_CONSENT_KEY]: 'yes' }
   }
   const idFacts = opts.moduleKind === 'AUFENTHALT' ? facts : storedFacts('AUFENTHALT')
   const extractFacts = opts.moduleKind === 'BONITAET' ? facts : storedFacts('BONITAET')
@@ -202,13 +214,24 @@ export async function rejectSicModule(opts: {
   // Ausnahme Ausweis: wird der *neue* Ausweis abgelehnt, bleibt der alte, noch gültige stehen —
   // ein unleserlicher Scan widerlegt ihn nicht. Abgelaufene Werte blendet sicPresentedModules aus.
   const keepOldId = opts.moduleKind === 'AUFENTHALT' && !wasVerified
+  // Betreibungsauszug: die Zustimmung des Kunden überdauert eine Ablehnung (etwa wegen Unleserlichkeit).
+  const consentRow =
+    opts.moduleKind === 'BONITAET' ?
+      await prisma.sicCertificateModule.findUnique({
+        where: { certificateId_moduleKind: { certificateId: opts.certificateId, moduleKind: 'BONITAET' } },
+        select: { verifiedFacts: true },
+      })
+    : null
+  const keepConsent = sicDebtDisclosureConsent(consentRow?.verifiedFacts)
   const updated = await prisma.sicCertificateModule.updateMany({
     where: { certificateId: opts.certificateId, moduleKind: opts.moduleKind as SicModuleKind },
     data: {
       status: 'REJECTED',
       // Eine abgelehnte Angabe darf keine früher freigegebenen Werte mehr tragen — auch keine
       // aus einer frühzeitigen Verlängerung mitgetragenen: der neue Nachweis kann sie widerlegen.
-      ...(keepOldId ? {} : { verifiedFacts: Prisma.DbNull }),
+      ...(keepOldId ? {}
+      : keepConsent ? { verifiedFacts: { [SIC_DEBT_CONSENT_KEY]: 'yes' } }
+      : { verifiedFacts: Prisma.DbNull }),
       reviewedAt: now,
       reviewedByUserId: opts.reviewerId,
       reviewNote: opts.note,

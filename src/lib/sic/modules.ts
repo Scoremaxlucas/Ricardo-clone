@@ -86,7 +86,7 @@ export const SIC_MODULES: readonly SicModuleDefinition[] = [
     title: 'Betreibungsauszug',
     summary: 'Der Auszug vom Betreibungsamt zeigt, ob offene Betreibungen bestehen.',
     landlordQuestion: 'Hast du offene Betreibungen?',
-    landlordSees: 'Dass weder offene Betreibungen noch Verlustscheine bestehen — mit Datum und Amt.',
+    landlordSees: 'Dass keine Verlustscheine und keine offenen Betreibungen bestehen — oder höchstens kleine, offen ausgewiesene. Mit Datum und Amt.',
     youUpload: 'Auszug vom Betreibungsamt, max. 3 Monate alt',
     scopeItems: ['Betreibungsauszug'],
     lineItems: ['Betreibungsauszug eingereicht und geprüft'],

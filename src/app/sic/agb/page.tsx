@@ -106,7 +106,10 @@ export default function SicAgbPage() {
             Sind die Unterlagen unleserlich, unvollständig, veraltet oder inhaltlich negativ (zum Beispiel offene
             Betreibungen, Verlustscheine oder ein abgelaufener Ausweis), geben wir die Angabe nicht frei. Du erhältst eine Begründung per E-Mail und kannst
             neue Unterlagen nachreichen — ohne zusätzliche Kosten. Eine nicht freigegebene Angabe erscheint nicht
-            auf dem Zertifikat; ein negativer Inhalt wird dort nicht ausgewiesen.
+            auf dem Zertifikat; ein negativer Inhalt wird dort nicht ausgewiesen. Ausnahme auf deinen Wunsch:
+            Höchstens zwei offene Betreibungen, zusammen unter CHF 1’000 und ohne Verlustscheine, kannst du offen
+            ausweisen lassen — als Anzahl und Betragsstufe, nicht mit dem genauen Betrag. Die Zustimmung kannst
+            du jederzeit zurückziehen; der Betreibungsauszug steht dann nicht mehr auf dem Zertifikat.
           </p>
         </section>
 

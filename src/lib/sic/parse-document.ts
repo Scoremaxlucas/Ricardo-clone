@@ -29,11 +29,16 @@ Dokument: Auszug aus dem Betreibungsregister.
   "office": "Name des ausstellenden Betreibungsamts",
   "hasOpenProceedings": true/false,
   "hasLossCertificates": true/false,
-  "hasAnyEntries": true/false
+  "hasAnyEntries": true/false,
+  "openProceedingsCount": Zahl,
+  "openProceedingsTotalChf": Zahl,
+  "objected": true/false
 }
 hasOpenProceedings: true, wenn offene Betreibungen, Zahlungsbefehle oder Pfändungen aufgeführt sind.
 hasLossCertificates: true, wenn Verlustscheine aufgeführt sind — auch alte.
-hasAnyEntries: true, wenn irgendein Eintrag aufgeführt ist, auch bezahlte, erledigte oder zurückgezogene.`
+hasAnyEntries: true, wenn irgendein Eintrag aufgeführt ist, auch bezahlte, erledigte oder zurückgezogene.
+openProceedingsCount und openProceedingsTotalChf nur bei offenen Betreibungen: Anzahl und Summe der offenen Forderungen in Franken.
+objected: true, wenn gegen eine offene Betreibung Rechtsvorschlag erhoben wurde.`
   }
 
   if (moduleId === 'ARBEIT_EINKOMMEN') {
@@ -144,6 +149,14 @@ function pickKnownFields(moduleId: SicModuleId, raw: Record<string, unknown>): S
       : raw.hasOpenProceedings ? 'open'
       : raw.hasAnyEntries === false ? 'clean'
       : 'none'
+    if (facts.proceedings === 'open') {
+      const count = typeof raw.openProceedingsCount === 'number' ? raw.openProceedingsCount : null
+      if (count !== null && count >= 1) facts.openCount = count >= 3 ? '3+' : String(Math.round(count))
+      if (typeof raw.openProceedingsTotalChf === 'number' && raw.openProceedingsTotalChf >= 0) {
+        facts.openAmountChf = String(Math.round(raw.openProceedingsTotalChf))
+      }
+      if (typeof raw.objected === 'boolean') facts.objected = raw.objected ? 'yes' : 'no'
+    }
   }
   if (moduleId === 'ARBEIT_EINKOMMEN' && typeof raw.noticeGiven === 'boolean') {
     facts.noticeGiven = raw.noticeGiven ? 'yes' : 'no'

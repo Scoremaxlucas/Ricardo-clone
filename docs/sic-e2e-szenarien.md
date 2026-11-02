@@ -2,7 +2,7 @@
 
 `e2e/sic/scenarios.spec.ts` spielt die Plattform von Kauf bis Widerruf durch — mit echtem Stripe-Checkout
 (Testmodus, Karte 4242), echten Uploads, Prüfer-Freigaben, PDF, Prüfseite, Cron-Läufen und Webhooks.
-26 Szenarien, je auf Desktop und Handy.
+29 Szenarien, je auf Desktop und Handy.
 
 ## Was abgedeckt ist
 
@@ -15,6 +15,8 @@
    Ablauf wegen Ausweis und kostenloser neuer Ausweis; frühe Verlängerung (CHF 30) mit mitgetragenen Werten.
 2. **Paar:** Kauf für zwei; erst zwei Auszüge gehen in Prüfung; Verlustscheine bei Person 2 blockieren;
    Gültigkeit am älteren Auszug; volle Erstattung im Stripe-Dashboard widerruft per Webhook; Neuanfang.
+4. **Kleine offene Betreibung:** ohne Zustimmung gesperrt; Zustimmung im Dossier löst erneute Prüfung aus;
+   über der Grenze gesperrt; gedruckt nur als Stufe; Zurückziehen nimmt den Auszug vom Zertifikat.
 3. **Zahlung:** Abbruch legt nichts an; zwei gleichzeitig bezahlte Verlängerungen → eine gilt, die zweite wird erstattet; gefälschte Webhook-Signatur abgelehnt; echtes Event idempotent;
    Anmeldelink nur einmal verwendbar.
 

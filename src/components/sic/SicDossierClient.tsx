@@ -4,7 +4,7 @@ import { SicTemplateForm } from '@/components/sic/SicTemplateForm'
 import { SIC_DEBT_EXTRACT_ORDER_URL, SIC_REVIEW_SLA, sicPaths, sicVerifyUrl } from '@/lib/sic/config'
 import type { SicDossierView, SicUploadedDocMeta } from '@/lib/sic/dossier'
 import { templatePrefillNamesForModule } from '@/lib/sic/dossier-core'
-import { SIC_INCOME_GROUPS, sicIncomeGroupLabel, type SicIncomeGroup } from '@/lib/sic/facts'
+import { SIC_INCOME_GROUPS, SIC_SMALL_DEBT_MAX_COUNT, sicIncomeGroupLabel, type SicIncomeGroup } from '@/lib/sic/facts'
 import { formatSicChf, isSicModuleId, SIC_MODULES, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
 import { sicNextStep } from '@/lib/sic/next-step'
 import { quoteSicOrder } from '@/lib/sic/pricing'
@@ -49,6 +49,127 @@ function statusMetaFor(status: ModuleStatus, moduleKind: SicModuleId) {
   const meta = STATUS_META[status]
   if (status === 'NOT_APPLICABLE' && moduleKind === 'ARBEIT_EINKOMMEN') return { ...meta, label: 'Nicht angestellt' }
   return meta
+}
+
+/**
+ * Offene Betreibung auf dem Auszug: zuerst der Weg zur Erledigung, dann — nur auf
+ * Wunsch — die offene Ausweisung kleiner Betreibungen. Ohne Zustimmung wird nie eine gedruckt.
+ */
+function DebtDisclosureBox({
+  consent,
+  printed,
+  verified,
+  rejected,
+  onChanged,
+}: {
+  consent: boolean
+  printed: boolean
+  verified: boolean
+  rejected: boolean
+  onChanged: () => void
+}) {
+  const [open, setOpen] = useState(rejected || consent)
+  const [busy, setBusy] = useState(false)
+  // Sauberer Auszug geprüft: nichts zu erklären.
+  if (verified && !printed) return null
+
+  async function setConsent(next: boolean) {
+    if (!next && printed && !window.confirm('Dann fällt der Betreibungsauszug vom Zertifikat — und mit ihm das Siegel. Zurückziehen?')) return
+    setBusy(true)
+    try {
+      const res = await fetch('/api/sic/debt-disclosure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ consent: next }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data?.message || 'Das hat nicht geklappt.')
+        return
+      }
+      toast.success(
+        next ?
+          data?.reReview ? 'Zugestimmt — wir prüfen deinen Auszug erneut.' : 'Zugestimmt.'
+        : 'Zustimmung zurückgezogen.'
+      )
+      onChanged()
+    } catch {
+      toast.error('Netzwerkfehler.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (printed) {
+    return (
+      <div className="mt-3 rounded-xl border border-sic-hairline bg-sic-paper-soft px-3 py-3 text-sm leading-relaxed text-slate-700">
+        Auf deinem Zertifikat steht eine kleine offene Betreibung, weil du zugestimmt hast. Sobald sie erledigt
+        ist, reichst du einen neuen Auszug kostenlos nach.
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void setConsent(false)}
+          className="mt-2 block text-sm font-semibold text-sic-navy underline-offset-2 hover:underline disabled:opacity-60"
+        >
+          Zustimmung zurückziehen
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-3 rounded-xl border border-sic-hairline bg-sic-paper-soft px-3 py-3">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+        className="text-sm font-semibold text-sic-navy underline-offset-2 hover:underline"
+      >
+        Offene Betreibung auf dem Auszug?
+      </button>
+      {open ?
+        <div className="mt-2 space-y-2 text-sm leading-relaxed text-slate-700">
+          <p>
+            <strong className="font-semibold">Berechtigte Forderung:</strong> bezahlen und beim Betreibungsamt als
+            bezahlt vermerken lassen. Ein neuer Auszug zeigt sie dann als erledigt — auf dem Zertifikat steht
+            «Keine offenen Betreibungen». Den neuen Auszug lädst du kostenlos hoch.
+          </p>
+          <p>
+            <strong className="font-semibold">Unberechtigte Forderung:</strong> Rechtsvorschlag erheben. Unternimmt
+            der Gläubiger danach nichts, kannst du beim Betreibungsamt beantragen, dass sie nicht mehr im Auszug
+            erscheint (Art. 8a Abs. 3 SchKG).
+          </p>
+          <p>
+            <strong className="font-semibold">Kleine Betreibung offen ausweisen:</strong> Höchstens{' '}
+            {SIC_SMALL_DEBT_MAX_COUNT} offene Betreibungen, zusammen unter CHF 1’000, keine Verlustscheine — dann
+            kann sie auf Wunsch auf dem Zertifikat stehen, etwa «1 offene Betreibung, zusammen unter CHF 500». Den
+            genauen Betrag sieht der Vermieter nicht. Ohne deine Zustimmung erscheint nie eine Betreibung.
+          </p>
+          {consent ?
+            <p className="text-sic-navy">
+              Du hast zugestimmt.{' '}
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void setConsent(false)}
+                className="font-semibold underline-offset-2 hover:underline disabled:opacity-60"
+              >
+                Zurückziehen
+              </button>
+            </p>
+          : <button
+              type="button"
+              disabled={busy}
+              onClick={() => void setConsent(true)}
+              className="min-h-11 rounded-xl border border-sic-hairline bg-sic-paper px-3.5 text-sm font-semibold text-sic-navy hover:border-sic-navy/40 disabled:opacity-60"
+            >
+              {busy ? 'Wird gespeichert …' : 'Ja, kleine Betreibungen offen ausweisen'}
+            </button>
+          }
+        </div>
+      : null}
+    </div>
+  )
 }
 
 function incomeGroupLabel(group: SicIncomeGroup | null | undefined): string {
@@ -1003,6 +1124,16 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                     <p className="mt-1 border-l-2 border-sic-danger-text bg-sic-danger-bg px-3 py-2 text-sm text-sic-danger-text">
                       {m.reviewNote}
                     </p>
+                  : null}
+
+                  {m.moduleKind === 'BONITAET' && m.debtDisclosure && dossier.status !== 'REVOKED' ?
+                    <DebtDisclosureBox
+                      consent={m.debtDisclosure.consent}
+                      printed={m.debtDisclosure.printed}
+                      verified={m.status === 'VERIFIED'}
+                      rejected={m.status === 'REJECTED'}
+                      onChanged={() => router.refresh()}
+                    />
                   : null}
 
                   {m.status === 'NOT_APPLICABLE' && m.moduleKind === 'ARBEIT_EINKOMMEN' ?

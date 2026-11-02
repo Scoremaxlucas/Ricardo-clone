@@ -56,6 +56,8 @@ export type SicDossierModuleView = {
   incomeGroup?: SicIncomeGroup | null
   /** Ausweis: geprüfter läuft bald ab oder kürzt das Zertifikat — neuer kann eingereicht werden. */
   idRenewal?: { validUntil: string; person: string | null } | null
+  /** Betreibungsauszug: Zustimmung zur offenen Ausweisung kleiner Betreibungen; ob eine draufsteht. */
+  debtDisclosure?: { consent: boolean; printed: boolean } | null
 }
 
 export type SicDossierView = {

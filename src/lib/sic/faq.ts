@@ -65,7 +65,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was, wenn eine Angabe nicht passt?',
-    a: 'Dann sagen wir dir per E-Mail, was fehlt, und du reichst neue Unterlagen nach — ohne Zusatzkosten. Ist der Inhalt selbst negativ, etwa offene Betreibungen oder Verlustscheine, erscheint die Angabe gar nicht auf dem Zertifikat. Früher bezahlte Betreibungen sind kein Hindernis. Ein Negativurteil über dich schreiben wir nirgends hin.',
+    a: 'Dann sagen wir dir per E-Mail, was fehlt, und du reichst neue Unterlagen nach — ohne Zusatzkosten. Ist der Inhalt selbst negativ, etwa offene Betreibungen oder Verlustscheine, erscheint die Angabe gar nicht auf dem Zertifikat. Früher bezahlte Betreibungen sind kein Hindernis. Bei höchstens 2 kleinen offenen Betreibungen (zusammen unter CHF 1’000, keine Verlustscheine) kannst du zustimmen, dass sie offen ausgewiesen werden — nur als Stufe, nie mit Betrag. Ein Negativurteil über dich schreiben wir nirgends hin.',
   },
   {
     q: 'Wer sieht meine Unterlagen?',

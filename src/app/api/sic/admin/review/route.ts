@@ -13,7 +13,7 @@ import {
 import { normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
 import { sendSicCertificateReadyEmail, sendSicModuleRejectedEmail } from '@/lib/sic/email'
 import { joinHouseholdHolderName } from '@/lib/sic/dossier'
-import { normalizeSicFacts, readSicFacts, sicApprovalBlockers } from '@/lib/sic/facts'
+import { normalizeSicFacts, readSicFacts, sicApprovalBlockers, sicDebtDisclosureConsent } from '@/lib/sic/facts'
 import { isSicCouple } from '@/lib/sic/household'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
@@ -65,6 +65,7 @@ function mapCertToReviewItem(c: CertWithReview) {
         paidAt: m.paidAt.toISOString(),
         firstUploadAt: docs[0]?.uploadedAt.toISOString() ?? null,
         verifiedFacts: isSicModuleId(m.moduleKind) ? readSicFacts(m.moduleKind, m.verifiedFacts) : null,
+        debtDisclosureConsent: m.moduleKind === 'BONITAET' && sicDebtDisclosureConsent(m.verifiedFacts),
         documents: docs.map(d => ({
           id: d.id,
           fileName: d.fileName,
@@ -313,7 +314,18 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const blockers = sicApprovalBlockers(moduleKind, parsed.facts)
+  // Zustimmung zur offenen Ausweisung kleiner Betreibungen gibt der Kunde im Dossier —
+  // sie wird hier aus der Datenbank gelesen, nie aus der Anfrage des Prüfers übernommen.
+  const consentRow =
+    moduleKind === 'BONITAET' ?
+      await prisma.sicCertificateModule.findUnique({
+        where: { certificateId_moduleKind: { certificateId, moduleKind: 'BONITAET' } },
+        select: { verifiedFacts: true },
+      })
+    : null
+  const blockers = sicApprovalBlockers(moduleKind, parsed.facts, new Date(), {
+    debtDisclosureConsent: sicDebtDisclosureConsent(consentRow?.verifiedFacts),
+  })
   if (blockers.length > 0) {
     return NextResponse.json(
       { ok: false, message: `Freigabe nicht möglich — ${blockers.join('; ')}.` },

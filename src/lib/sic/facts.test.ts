@@ -262,7 +262,8 @@ describe('sicApprovalBlockers', () => {
       { extractDate: '2026-10-20', office: 'Betreibungsamt Zürich', proceedings: 'open' },
       NOW
     )
-    expect(open.join(' ')).toContain('Offene Betreibungen vermerkt')
+    // Offen ohne Anzahl/Betrag und ohne Zustimmung: gesperrt.
+    expect(open.length).toBeGreaterThan(0)
     const notice = sicApprovalBlockers(
       'ARBEIT_EINKOMMEN',
       { incomeBand: '80_100k', employmentType: 'unbefristet', employedSince: '2020-03-01', noticeGiven: 'yes' },

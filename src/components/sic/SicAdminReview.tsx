@@ -30,6 +30,8 @@ type Module = {
   paidAt: string
   firstUploadAt: string | null
   verifiedFacts: SicFacts | null
+  /** Betreibungsauszug: Kunde erlaubt die offene Ausweisung kleiner Betreibungen. */
+  debtDisclosureConsent?: boolean
   documents: Doc[]
 }
 type Item = {
@@ -760,6 +762,14 @@ export function SicAdminReview() {
                           {slaText ? ` · ${slaText}` : ''}
                         </span>
                       </div>
+
+                      {m.moduleKind === 'BONITAET' ?
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          {m.debtDisclosureConsent ?
+                            'Kunde stimmt zu: kleine offene Betreibungen (höchstens 2, unter CHF 1’000) dürfen ausgewiesen werden.'
+                          : 'Keine Zustimmung zur Ausweisung offener Betreibungen — offene bitte ablehnen.'}
+                        </p>
+                      : null}
 
                       {m.status === 'VERIFIED' && m.reviewedAt ?
                         <p className="mt-1 text-[11px] text-slate-500">
