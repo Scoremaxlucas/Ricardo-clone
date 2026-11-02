@@ -110,8 +110,8 @@ export function sicNextStep(dossier: SicDossierView): SicNextStep | null {
 
   if (dossier.landlordPdfReady && !dossier.certificateSealReady) {
     return {
-      title: 'Stand der Prüfung als PDF nutzen',
-      detail: 'Das Siegel folgt, sobald Betreibungsauszug und Ausweis geprüft sind. Bis dahin kannst du den Stand schon beilegen.',
+      title: 'Dein Mieter-Zertifikat ist bereit',
+      detail: 'Gültig mit allen geprüften Angaben — leg das PDF der Bewerbung bei. Mit Betreibungsauszug und Ausweis kommt das Siegel dazu.',
       anchor: '#sic-pdf',
       kind: 'done',
     }

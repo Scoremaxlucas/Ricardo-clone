@@ -11,7 +11,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 /** Datum der letzten inhaltlichen Änderung — bewusst fix, nicht das aktuelle Jahr. */
-const SIC_AGB_STAND = '1. November 2026'
+const SIC_AGB_STAND = '2. November 2026'
 
 export const dynamic = 'force-dynamic'
 
@@ -114,13 +114,13 @@ export default function SicAgbPage() {
         </section>
 
         <section>
-          <h2 className="font-semibold text-sic-navy">6. Stand der Prüfung und Zertifikat</h2>
+          <h2 className="font-semibold text-sic-navy">6. Zertifikat und Siegel</h2>
           <p className="mt-1.5">
-            Sobald mindestens eine Angabe freigegeben ist und dein Name erfasst wurde, kannst du ein PDF
-            herunterladen. Es ist ein Mieter-Zertifikat, sobald Betreibungsauszug und Ausweis geprüft sind;
-            vorher weist es den Stand der Prüfung aus — ohne Siegel, mit offenem Umfang («x von{' '}
-            {SIC_MODULES.length} Angaben geprüft»). Nicht aufgeführte Angaben gelten als nicht geprüft und nicht
-            als negativ.
+            Sobald mindestens eine Angabe freigegeben ist und dein Name erfasst wurde, kannst du dein
+            Mieter-Zertifikat als PDF herunterladen. Es ist gültig und weist die geprüften Angaben aus, mit dem
+            Umfang («x von {SIC_MODULES.length} Angaben geprüft»). Angaben, die nicht geprüft sind, stehen
+            neutral als «Nicht Teil dieses Zertifikats» da — das ist kein negativer Befund. Sind
+            Betreibungsauszug und Ausweis geprüft, trägt das Zertifikat zusätzlich das Siegel.
           </p>
           <p className="mt-1.5">
             Ein Zertifikat für zwei Personen nennt beide Erwachsenen. Jede Person braucht einen eigenen

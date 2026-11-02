@@ -372,7 +372,7 @@ export function decodePaymentHolderName(raw?: string | null): SicPaymentHolderNa
 /**
  * Abrufbares PDF: mindestens eine geprüfte Angabe, Name gesetzt,
  * nicht widerrufen und nicht abgelaufen. Unter dem Siegel-Minimum ist das
- * ein Stand der Prüfung, kein Mieter-Zertifikat.
+ * ein Zertifikat ohne Siegel — gültig für die geprüften Angaben.
  */
 export function isSicLandlordPdfReady(opts: {
   holderName: string | null

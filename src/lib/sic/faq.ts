@@ -73,7 +73,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Wann bekomme ich das PDF?',
-    a: `Ein PDF mit dem Stand der Prüfung, sobald die erste Angabe geprüft ist und dein Name erfasst ist. Das Mieter-Zertifikat — mit Siegel — gibt es, sobald ${sicSealRequirementLabel()} geprüft sind.`,
+    a: `Dein Mieter-Zertifikat als PDF, sobald die erste Angabe geprüft ist und dein Name erfasst ist — gültig für alles, was geprüft ist. Das Siegel kommt dazu, sobald ${sicSealRequirementLabel()} geprüft sind.`,
   },
   {
     q: 'Wie lange ist das Zertifikat gültig?',

@@ -132,7 +132,7 @@ export async function sendSicCertificateReadyEmail(opts: {
   firstVerification: boolean
   /** Ohne Namen auf dem Zertifikat gibt es noch kein PDF. */
   pdfReady: boolean
-  /** Betreibung + Ausweis geprüft — sonst ist das PDF der Stand der Prüfung. */
+  /** Betreibung + Ausweis geprüft — dann trägt das Zertifikat das Siegel. */
   sealReady?: boolean
   magicLinkUrl?: string
 }) {

@@ -126,10 +126,10 @@ export function DocumentRule({ width = 200 }: { width?: number }) {
 
 
 /**
- * Siegel des Mieter-Zertifikats: zwei Goldringe, Hausmarke, «GEPRÜFT».
- * Nur auf der Urkunde (Betreibungsauszug + Ausweis geprüft), nie auf dem Stand der Prüfung.
+ * Siegel: zwei Goldringe, Hausmarke, «GEPRÜFT · BETREIBUNG · AUSWEIS».
+ * Auszeichnung auf dem Zertifikat, wenn Betreibungsauszug und Ausweis geprüft sind.
  */
-export function CertSeal({ size = 74, year }: { size?: number; year: string }) {
+export function CertSeal({ size = 82, year }: { size?: number; year: string }) {
   const r = size / 2
   return (
     <View style={{ width: size, height: size, position: 'relative' }}>
@@ -152,8 +152,8 @@ export function CertSeal({ size = 74, year }: { size?: number; year: string }) {
         <Text style={{ marginTop: 3, fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: C.navy, letterSpacing: 1.4 }}>
           GEPRÜFT
         </Text>
-        <Text style={{ marginTop: 1.5, fontSize: 4.6, fontFamily: 'Helvetica-Bold', color: C.goldText, letterSpacing: 0.7 }}>
-          MIETER-ZERTIFIKAT
+        <Text style={{ marginTop: 1.5, fontSize: 4.3, fontFamily: 'Helvetica-Bold', color: C.goldText, letterSpacing: 0.2 }}>
+          BETREIBUNG · AUSWEIS
         </Text>
         <Text style={{ marginTop: 1.5, fontSize: 5, color: C.muted, letterSpacing: 0.6 }}>{year}</Text>
       </View>

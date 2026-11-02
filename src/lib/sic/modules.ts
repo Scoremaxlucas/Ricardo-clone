@@ -201,12 +201,13 @@ export function sicCatalogListTotalChf(): number {
 }
 
 /**
- * Ohne diese Angaben ist das Dokument kein Mieter-Zertifikat — nur der Stand
- * der Prüfung. Beide sind selbst beschaffbar, damit das Siegel nicht an einer
- * fremden Unterschrift hängt.
+ * Das Siegel: Betreibungsauszug und Ausweis geprüft. Eine Auszeichnung auf dem
+ * Zertifikat, keine Bedingung dafür — jedes Dokument ist ein gültiges
+ * Mieter-Zertifikat mit den geprüften Angaben. Beide sind selbst beschaffbar.
  */
 export const SIC_SEAL_MODULE_IDS: readonly SicModuleId[] = ['BONITAET', 'AUFENTHALT']
 
+/** 'certificate' = mit Siegel, 'working' = ohne Siegel. Beides ist ein Mieter-Zertifikat. */
 export type SicDocumentPresentation = 'certificate' | 'working'
 
 export function isSicCertificateSealReady(verifiedKinds: Iterable<string>): boolean {
@@ -220,10 +221,11 @@ export function sicSealRequirementLabel(): string {
   return titles.join(', ')
 }
 
-export const SIC_WORKING_DOC_TITLE = 'STAND DER PRÜFUNG'
 export const SIC_CERT_DOCUMENT_TITLE = 'MIETER-ZERTIFIKAT'
-export const SIC_WORKING_DOC_TAGLINE = 'Noch kein Mieter-Zertifikat — nur geprüfte Angaben.'
-export const SIC_WORKING_NOTICE = `Dies ist der Stand der Prüfung, kein Mieter-Zertifikat. Das Siegel gibt es, sobald ${sicSealRequirementLabel()} geprüft sind.`
+/** Zeile für eine Angabe, die nicht geprüft ist — neutral, für alle gleich. */
+export const SIC_UNCHECKED_LINE = 'Nicht Teil dieses Zertifikats'
+/** Für den Vermieter auf der Prüfseite, wenn das Siegel fehlt. */
+export const SIC_UNSEALED_NOTE = `Ohne Siegel: ${sicSealRequirementLabel()} sind nicht beide geprüft. Gültig ist das Zertifikat trotzdem — für die Angaben, die als «GEPRÜFT» dastehen.`
 
 /**
  * Ersparnis Komplett-Paket gegenüber einzeln.
@@ -238,17 +240,11 @@ export function sicBundleSavingsChf(): number {
  * fehlende Angabe als «geprüft und negativ» missversteht.
  */
 export const SIC_SCOPE_NOTE =
-  'Dieses Zertifikat weist die aufgeführten Angaben aus. Nicht aufgeführte Angaben wurden nicht geprüft.'
-
-export const SIC_WORKING_SCOPE_NOTE =
-  'Dieses Dokument weist die aufgeführten Angaben aus. Es ist kein Mieter-Zertifikat. Nicht aufgeführte Angaben wurden nicht geprüft.'
+  'Dieses Zertifikat weist die mit «GEPRÜFT» markierten Angaben aus. Angaben ohne diese Markierung wurden nicht geprüft.'
 
 /** Footer auf PDF und Prüfseite — derselbe Satz wie AGB §1, kein Gütesiegel. */
 export const SIC_PLAUSIBILITY_FOOTER =
   'Die Prüfung ist eine Kontrolle auf Vollständigkeit und Plausibilität. Das Zertifikat ist keine Bonitätsbewertung, keine behördliche Auskunft und keine Empfehlung.'
-
-export const SIC_WORKING_PLAUSIBILITY_FOOTER =
-  'Die Prüfung ist eine Kontrolle auf Vollständigkeit und Plausibilität. Dieses Dokument ist keine Bonitätsbewertung, keine behördliche Auskunft und keine Empfehlung.'
 
 /** Badge auf Urkunde und Prüfseite — «geprüft», nicht «verifiziert» im Sinne einer Auskunftei. */
 export const SIC_MODULE_BADGE = 'GEPRÜFT'

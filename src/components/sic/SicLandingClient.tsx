@@ -77,7 +77,7 @@ const HOW_STEPS: { icon: LucideIcon; title: string; note: string }[] = [
   {
     icon: QrCode,
     title: 'Der Bewerbung beilegen',
-    note: 'Ein PDF gibt es ab der ersten geprüften Angabe. Als Mieter-Zertifikat gilt es erst mit Betreibungsauszug und Ausweis.',
+    note: 'Dein Mieter-Zertifikat gibt es ab der ersten geprüften Angabe. Mit Betreibungsauszug und Ausweis kommt das Siegel dazu.',
   },
 ]
 
@@ -634,7 +634,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                     ))}
                   </ul>
                   <p className="mt-3 text-xs leading-relaxed text-sic-navy/70">
-                    Nicht alles ist am Kauftag fertig. Das Siegel folgt mit Auszug und Ausweis.
+                    Gültig ab der ersten geprüften Angabe. Das Siegel kommt mit Auszug und Ausweis dazu.
                   </p>
                 </div>
               </div>
@@ -832,7 +832,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   </>
                 ) : null}
                 <p className="mt-4 text-xs leading-relaxed text-slate-500 sm:mt-5">
-                  Für das Mieter-Zertifikat ist das Siegel entscheidend — es gibt es, sobald {sicSealRequirementLabel()} geprüft sind.
+                  Gültig ist dein Mieter-Zertifikat ab der ersten geprüften Angabe. Das Siegel kommt dazu, sobald {sicSealRequirementLabel()} geprüft sind.
                 </p>
               </div>
             }

@@ -2,7 +2,16 @@ import { CertSeal, DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/a
 import { SIC_CERT_TAGLINE } from '@/lib/sic/brand'
 import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
 import { CERT } from '@/lib/sic/cert/tokens'
-import { SIC_DECLARED_BADGE, SIC_MODULE_BADGE, SIC_PLAUSIBILITY_FOOTER, SIC_WORKING_PLAUSIBILITY_FOOTER, SIC_WORKING_DOC_TAGLINE, SIC_WORKING_DOC_TITLE, SIC_CERT_DOCUMENT_TITLE, SIC_WORKING_NOTICE, type SicDocumentPresentation, type SicModuleId } from '@/lib/sic/modules'
+import {
+  SIC_CERT_DOCUMENT_TITLE,
+  SIC_DECLARED_BADGE,
+  SIC_MODULE_BADGE,
+  SIC_MODULES,
+  SIC_PLAUSIBILITY_FOOTER,
+  SIC_UNCHECKED_LINE,
+  type SicDocumentPresentation,
+  type SicModuleId,
+} from '@/lib/sic/modules'
 import { Document, Font, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import React from 'react'
 import { sicSwissDate } from '@/lib/sic/validity'
@@ -85,36 +94,6 @@ const s = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 0.3,
   },
-  taglineWorking: {
-    marginTop: 6,
-    fontSize: T.tagline,
-    color: 'rgba(255,255,255,0.72)',
-    textAlign: 'center',
-    letterSpacing: 0.2,
-  },
-  brandRuleWorking: { height: 0.7, width: 28, backgroundColor: 'rgba(255,255,255,0.35)' },
-  brandSubWorking: {
-    fontSize: 8,
-    color: 'rgba(255,255,255,0.82)',
-    letterSpacing: 1.6,
-    marginHorizontal: 10,
-    fontFamily: 'Helvetica-Bold',
-  },
-  notice: {
-    marginTop: 12,
-    marginBottom: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    backgroundColor: C.ivorySoft,
-    borderWidth: 0.6,
-    borderColor: C.faint,
-  },
-  noticeText: {
-    fontSize: 8,
-    color: C.ink,
-    textAlign: 'center',
-    lineHeight: 1.4,
-  },
 
   body: {
     paddingHorizontal: 28,
@@ -188,6 +167,10 @@ const s = StyleSheet.create({
   },
   lineDot: { color: C.navy, fontSize: 8, marginRight: 5, marginTop: 1 },
   lineText: { fontSize: T.moduleLine, color: '#334155', flex: 1, lineHeight: 1.35 },
+  // Nicht geprüft: zurückgenommen, aber lesbar — neutral, kein Warnton.
+  glyphWrapUnchecked: { borderColor: C.faint, borderStyle: 'dashed', opacity: 0.6 },
+  blockTitleUnchecked: { color: C.muted },
+  lineTextUnchecked: { color: C.muted },
   badge: {
     marginTop: 1,
     borderWidth: 0.7,
@@ -317,10 +300,8 @@ export function SicCertificatePdfDocument(props: {
   scopeNote: string
   verifyUrl: string
   qrDataUrl: string
-  /** Urkunde erst ab Betreibung + Ausweis; darunter Stand der Prüfung. */
+  /** 'certificate' = mit Siegel (Betreibungsauszug und Ausweis geprüft). Ein Zertifikat ist es immer. */
   presentation?: SicDocumentPresentation
-  /** Tag des Downloads — «Stand vom», solange kein Auszug die Gültigkeit trägt. */
-  asOf?: Date
 }) {
   const {
     certificateCode,
@@ -333,11 +314,12 @@ export function SicCertificatePdfDocument(props: {
     verifyUrl,
     qrDataUrl,
     presentation = 'certificate',
-    asOf = new Date(),
   } = props
   const isCertificate = presentation === 'certificate'
   // Ohne geprüften Betreibungsauszug ist «Gültig bis» nur eine vorläufige Frist — kein Datum vortäuschen.
-  const extractChecked = verifiedModules.some(m => m.id === 'BONITAET' && !m.badge)
+  // Nicht geprüfte Angaben stehen neutral da — für jeden gleich, ob nie eingereicht oder abgelehnt.
+  const shownIds = new Set(verifiedModules.map(m => m.id))
+  const unchecked = SIC_MODULES.filter(def => !shownIds.has(def.id))
   const dense = compactLayout(verifiedModules)
 
   return (
@@ -353,23 +335,14 @@ export function SicCertificatePdfDocument(props: {
               <Text style={s.brand}>Cert</Text>
             </View>
             <View style={s.brandRuleRow}>
-              <View style={isCertificate ? s.brandRule : s.brandRuleWorking} />
-              <Text style={isCertificate ? s.brandSub : s.brandSubWorking}>
-                {isCertificate ? SIC_CERT_DOCUMENT_TITLE : SIC_WORKING_DOC_TITLE}
-              </Text>
-              <View style={isCertificate ? s.brandRule : s.brandRuleWorking} />
+              <View style={s.brandRule} />
+              <Text style={s.brandSub}>{SIC_CERT_DOCUMENT_TITLE}</Text>
+              <View style={s.brandRule} />
             </View>
-            <Text style={isCertificate ? s.tagline : s.taglineWorking}>
-              {isCertificate ? SIC_CERT_TAGLINE : SIC_WORKING_DOC_TAGLINE}
-            </Text>
+            <Text style={s.tagline}>{SIC_CERT_TAGLINE}</Text>
           </View>
 
           <View style={dense ? [s.body, compact.body] : s.body}>
-            {isCertificate ? null : (
-              <View style={s.notice}>
-                <Text style={s.noticeText}>{SIC_WORKING_NOTICE}</Text>
-              </View>
-            )}
             <Text style={s.completenessText}>{completenessLabel}</Text>
 
             <View style={dense ? [s.holderWrap, compact.holderWrap] : s.holderWrap}>
@@ -435,6 +408,19 @@ export function SicCertificatePdfDocument(props: {
                   </View>
                 )
               })}
+              {unchecked.map(def => (
+                <View key={def.id} style={dense ? [s.block, compact.block] : s.block} wrap={false}>
+                  <View style={[s.glyphWrap, s.glyphWrapUnchecked]}>
+                    <ModuleGlyph moduleId={def.id} size={15} />
+                  </View>
+                  <View style={s.blockBody}>
+                    <Text style={[s.blockTitle, s.blockTitleUnchecked]}>{def.title}</Text>
+                    <View style={s.lineRow}>
+                      <Text style={[s.lineText, s.lineTextUnchecked]}>{SIC_UNCHECKED_LINE}</Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
             </View>
 
             <View style={s.spacer} />
@@ -442,12 +428,12 @@ export function SicCertificatePdfDocument(props: {
             <View wrap={false}>
               <View style={s.validityRow}>
                 <View style={s.validCol}>
-                  <Text style={s.validLabel}>{isCertificate ? 'Zertifikatsdatum' : 'Prüfdatum'}</Text>
+                  <Text style={s.validLabel}>Zertifikatsdatum</Text>
                   <Text style={s.validValue}>{fmt(issuedAt)}</Text>
                 </View>
                 <View style={[s.validCol, { alignItems: 'flex-end' }]}>
-                  <Text style={s.validLabel}>{extractChecked ? 'Gültig bis' : 'Stand vom'}</Text>
-                  <Text style={s.validValue}>{fmt(extractChecked ? expiresAt : asOf)}</Text>
+                  <Text style={s.validLabel}>Gültig bis</Text>
+                  <Text style={s.validValue}>{fmt(expiresAt)}</Text>
                 </View>
               </View>
 
@@ -456,11 +442,7 @@ export function SicCertificatePdfDocument(props: {
                   {isCertificate ? <CertSeal year={String(issuedAt.getFullYear())} /> : null}
                   <View style={isCertificate ? s.signText : undefined}>
                     <Text style={s.signIssuer}>{SIC_ISSUER_LINE}</Text>
-                    <Text style={s.signNote}>
-                      {extractChecked ?
-                        'Gültig, solange die Prüfseite das Zertifikat als gültig ausweist.'
-                      : 'Ohne geprüften Betreibungsauszug ohne feste Gültigkeit. Den aktuellen Stand zeigt die Prüfseite.'}
-                    </Text>
+                    <Text style={s.signNote}>Gültig, solange die Prüfseite das Zertifikat als gültig ausweist.</Text>
                   </View>
                 </View>
                 <View style={s.qrCol}>
@@ -471,7 +453,7 @@ export function SicCertificatePdfDocument(props: {
               </View>
 
               <Text style={s.legal}>
-                {scopeNote} {isCertificate ? SIC_PLAUSIBILITY_FOOTER : SIC_WORKING_PLAUSIBILITY_FOOTER} Online-Verifikation: {verifyUrl}
+                {scopeNote} {SIC_PLAUSIBILITY_FOOTER} Online-Verifikation: {verifyUrl}
               </Text>
             </View>
           </View>

@@ -15,7 +15,6 @@ import { recordSicEventOnce } from '@/lib/sic/events'
 import {
   isSicCertificateSealReady,
   SIC_SCOPE_NOTE,
-  SIC_WORKING_SCOPE_NOTE,
   sicCompletenessLabel,
 } from '@/lib/sic/modules'
 import { normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
@@ -97,7 +96,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
       expiresAt={cert.expiresAt}
       verifiedModules={verifiedModules}
       completenessLabel={sicCompletenessLabel(sicVerifiedRowCount(verifiedModules))}
-      scopeNote={sealReady ? SIC_SCOPE_NOTE : SIC_WORKING_SCOPE_NOTE}
+      scopeNote={SIC_SCOPE_NOTE}
       verifyUrl={verifyUrl}
       qrDataUrl={qrDataUrl}
       presentation={sealReady ? 'certificate' : 'working'}
@@ -106,7 +105,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ code: stri
 
   try {
     const buffer = await renderToBuffer(doc)
-    const filename = `${SIC_BRAND_NAME.replace(/ /g, '-')}-${cert.certificateCode}${sealReady ? '' : '-Stand'}.pdf`
+    const filename = `${SIC_BRAND_NAME.replace(/ /g, '-')}-${cert.certificateCode}.pdf`
     await recordSicEventOnce({
       kind: 'PDF_DOWNLOADED',
       certificateId: cert.id,

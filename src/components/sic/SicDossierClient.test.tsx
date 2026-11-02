@@ -107,7 +107,7 @@ describe('SicDossierClient — lean layout', () => {
   })
 
   it('shortens the intro without losing the seal requirement', () => {
-    expect(html).toContain('Sobald die erste Angabe geprüft ist, gibt es das PDF.')
+    expect(html).toContain('Sobald die erste Angabe geprüft ist, ist dein Mieter-Zertifikat da.')
     expect(html).toContain('Betreibungsauszug und Ausweis')
   })
 

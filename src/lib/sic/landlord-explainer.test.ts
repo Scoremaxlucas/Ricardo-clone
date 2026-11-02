@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { sicLandlordExplainerCopy } from '@/lib/sic/landlord-explainer'
-import { SIC_WORKING_NOTICE } from '@/lib/sic/modules'
+import { SIC_UNSEALED_NOTE } from '@/lib/sic/modules'
 
 function blob(opts: { completenessLabel: string; sealed: boolean }): string {
   const c = sicLandlordExplainerCopy(opts)
@@ -28,12 +28,12 @@ describe('sicLandlordExplainerCopy', () => {
     expect(text).not.toMatch(/Bonitätsauskunft|Auskunftei/)
   })
 
-  it('names the working document when the seal is not ready', () => {
+  it('explains the missing seal', () => {
     const open = sicLandlordExplainerCopy({
       completenessLabel: '1 von 4 Angaben geprüft',
       sealed: false,
     })
-    expect(open.workingNote).toBe(SIC_WORKING_NOTICE)
+    expect(open.workingNote).toBe(SIC_UNSEALED_NOTE)
     const sealed = sicLandlordExplainerCopy({
       completenessLabel: '2 von 4 Angaben geprüft',
       sealed: true,

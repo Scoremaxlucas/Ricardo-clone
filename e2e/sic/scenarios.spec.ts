@@ -155,17 +155,18 @@ test.describe
     expect(await moduleStatus(email, 'BONITAET')).toBe('VERIFIED')
   })
 
-  test('Nur Betreibungsauszug geprüft: «Stand der Prüfung», kein Siegel, Gültig bis = Auszug + 3 Monate', async () => {
-    await waitForMail(email, /Stand der Prüfung|geprüft/i)
+  test('Nur Betreibungsauszug geprüft: gültiges Zertifikat ohne Siegel, Gültig bis = Auszug + 3 Monate', async () => {
+    await waitForMail(email, /Mieter-Zertifikat ist bereit/)
     const pdf = await page.request.get(`/api/sic/certificate/${code}/pdf`)
     expect(pdf.status()).toBe(200)
     expect(pdf.headers()['content-type']).toContain('application/pdf')
-    expect(pdf.headers()['content-disposition']).toContain('-Stand.pdf')
+    expect(pdf.headers()['content-disposition']).toContain('.pdf')
     const text = await verifyPage(page, code)
-    expect(text).toMatch(/STAND DER PRÜFUNG/i)
+    expect(text).toMatch(/MIETER-ZERTIFIKAT/)
     expect(text).toContain('Keine Einträge im Betreibungsregister')
     expect(text).toMatch(/Gültig bis/i)
-    expect(text).not.toMatch(/MIETER-ZERTIFIKAT GEPRÜFT/)
+    expect(text).not.toContain('BETREIBUNG · AUSWEIS')
+    expect(text).toContain('Nicht Teil dieses Zertifikats')
     const cert = (await certByEmail(email))!
     expect(cert.expiresAt?.toISOString().slice(0, 10)).toBe(
       new Date(
@@ -202,10 +203,8 @@ test.describe
     expect(ok.status, ok.body.message).toBe(200)
     await ctx.close()
     const pdf = await page.request.get(`/api/sic/certificate/${code}/pdf`)
-    expect(pdf.headers()['content-disposition']).not.toContain('-Stand.pdf')
     const text = await verifyPage(page, code)
-    expect(text).toMatch(/MIETER-ZERTIFIKAT/)
-    expect(text).toMatch(/GEPRÜFT/)
+    expect(text).toContain('BETREIBUNG · AUSWEIS')
     expect(text).toContain('2 von 4 Angaben geprüft')
   })
 
@@ -408,7 +407,7 @@ test.describe
     expect((await startCheckoutApi(page.request, { email, renewal: true })).status).toBe(409)
     const text = await verifyPage(page, code)
     expect(text).toContain('Keine Einträge im Betreibungsregister')
-    expect(text).toMatch(/MIETER-ZERTIFIKAT/)
+    expect(text).toContain('BETREIBUNG · AUSWEIS')
 
     expect((await uploadApi(page.request, 'BONITAET')).status).toBe(200)
     const ctx = await newSicContext(browser)
@@ -862,7 +861,7 @@ test.describe.serial('5 · Kleine offene Betreibung: nur mit Zustimmung, zurück
     const text = await verifyPage(page, code)
     expect(text).toContain('1 offene Betreibung, zusammen unter CHF 500 (Rechtsvorschlag erhoben)')
     expect(text).not.toContain('320')
-    expect(text).toMatch(/MIETER-ZERTIFIKAT/)
+    expect(text).toContain('BETREIBUNG · AUSWEIS')
   })
 
   test('Zustimmung zurückziehen: Betreibungsauszug fällt weg, kein gültiges Dokument mehr', async () => {

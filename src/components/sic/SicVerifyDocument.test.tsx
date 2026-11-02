@@ -6,14 +6,12 @@ import {
   SIC_MODULE_BADGE,
   SIC_PLAUSIBILITY_FOOTER,
   SIC_SCOPE_NOTE,
-  SIC_WORKING_NOTICE,
-  SIC_WORKING_PLAUSIBILITY_FOOTER,
-  SIC_WORKING_SCOPE_NOTE,
+  SIC_UNCHECKED_LINE,
 } from '@/lib/sic/modules'
 import { SIC_BRAND_NAME, SIC_ISSUER_LINE } from '@/lib/sic/config'
 
 describe('SicVerifyDocument', () => {
-  it('renders a working document when only Betreibung is verified', () => {
+  it('renders a valid certificate without seal when only Betreibung is verified', () => {
     const html = renderToStaticMarkup(
       <SicVerifyDocument
         state="valid"
@@ -32,24 +30,27 @@ describe('SicVerifyDocument', () => {
       />
     )
     expect(html).toContain(SIC_BRAND_NAME)
-    expect(html).toContain('STAND DER PRÜFUNG')
-    expect(html).not.toContain('MIETER-ZERTIFIKAT')
-    expect(html).toContain(SIC_WORKING_NOTICE)
+    // Ohne Siegel ist es trotzdem das Mieter-Zertifikat, mit «Gültig bis».
+    expect(html).toContain('MIETER-ZERTIFIKAT')
+    expect(html).not.toContain('STAND DER PRÜFUNG')
+    expect(html).not.toContain('BETREIBUNG · AUSWEIS')
+    expect(html).toContain('Gültig bis')
     expect(html).toContain('Anna Muster')
     expect(html).toContain('1 von 4 Angaben geprüft')
     expect(html).toContain(SIC_MODULE_BADGE)
     expect(html).not.toContain('VERIFIZIERT')
-    expect(html).toContain(SIC_WORKING_SCOPE_NOTE)
-    expect(html).not.toContain(SIC_SCOPE_NOTE)
-    expect(html).toContain(SIC_WORKING_PLAUSIBILITY_FOOTER)
-    expect(html).not.toContain(SIC_CERT_TAGLINE)
+    expect(html).toContain(SIC_SCOPE_NOTE)
+    expect(html).toContain(SIC_PLAUSIBILITY_FOOTER)
+    expect(html).toContain(SIC_CERT_TAGLINE)
+    // Nicht geprüfte Angaben stehen neutral da.
+    expect(html).toContain('Ausweis')
+    expect(html).toContain(SIC_UNCHECKED_LINE)
     expect(html).toContain(SIC_ISSUER_LINE)
     expect(html).not.toContain('Score-Max')
     expect(html).not.toContain('Online bestätigt')
     expect(html).toContain('01.08.2026')
     expect(html).not.toContain('Vertrauenswürdig')
-    expect(html).toContain('Stand der Prüfung SIC-2026-ABCDEFGH')
-    expect(html).not.toContain('Gültiges Zertifikat')
+    expect(html).toContain('Gültiges Zertifikat SIC-2026-ABCDEFGH')
     expect(html).not.toContain('Für Vermieterinnen und Vermieter')
     expect(html).not.toContain('lucide')
   })

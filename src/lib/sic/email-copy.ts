@@ -10,7 +10,7 @@ export function sicCertificateReadyCopy(opts: {
   verifiedCount: number
   firstVerification: boolean
   pdfReady: boolean
-  /** Betreibung + Ausweis: Urkunde. Sonst Stand der Prüfung. */
+  /** Betreibung + Ausweis geprüft: Zertifikat mit Siegel. Sonst ohne Siegel — gültig ist es so oder so. */
   sealReady?: boolean
   /** Null: ausgestellt, aber ohne Frist, bis der neue Betreibungsauszug geprüft ist. */
   validUntil: string | null
@@ -28,14 +28,14 @@ export function sicCertificateReadyCopy(opts: {
   if (opts.firstVerification && opts.pdfReady) {
     const paragraphs = sealReady ?
       [
-        `Das Mieter-Zertifikat ist bereit. ${onDoc}.`,
+        `Dein Mieter-Zertifikat ist bereit — mit Siegel. ${onDoc}.`,
         `Geprüft ist «${title}». ${validity}`,
-        'Lade das PDF herunter und leg es der nächsten Bewerbung bei. Nicht geprüfte Angaben stehen nicht auf dem Dokument. Eine Zusage versprechen wir nicht.',
+        'Lade das PDF herunter und leg es der nächsten Bewerbung bei. Eine Zusage versprechen wir nicht.',
       ]
     : [
-        `Der Stand der Prüfung ist als PDF bereit. ${onDoc}.`,
+        `Dein Mieter-Zertifikat ist bereit. ${onDoc}.`,
         `Geprüft ist «${title}». ${validity}`,
-        `Das ist noch kein Mieter-Zertifikat. Dafür müssen ${sealNeed} geprüft sein. Du kannst den Stand trotzdem beilegen — der Vermieter sieht den Umfang auf dem Dokument. Eine Zusage versprechen wir nicht.`,
+        `Es ist gültig für alles, was geprüft ist — leg es der Bewerbung bei. Das Siegel kommt dazu, sobald ${sealNeed} geprüft sind. Eine Zusage versprechen wir nicht.`,
       ]
     if (moreOpen) {
       paragraphs.push(
@@ -43,8 +43,8 @@ export function sicCertificateReadyCopy(opts: {
       )
     }
     return {
-      subject: sealReady ? 'Dein Mieter-Zertifikat ist bereit' : 'Dein Stand der Prüfung ist bereit',
-      heading: sealReady ? 'Dein Mieter-Zertifikat ist bereit' : 'Der Stand der Prüfung ist bereit',
+      subject: 'Dein Mieter-Zertifikat ist bereit',
+      heading: 'Dein Mieter-Zertifikat ist bereit',
       preheader: onDoc,
       paragraphs,
     }
@@ -63,24 +63,22 @@ export function sicCertificateReadyCopy(opts: {
   }
 
   const paragraphs = [
-    sealReady ?
-      `Die Angabe «${title}» ist geprüft und steht auf deinem Zertifikat.`
-    : `Die Angabe «${title}» ist geprüft und steht auf dem Stand der Prüfung.`,
+    `Die Angabe «${title}» ist geprüft und steht auf deinem Zertifikat.`,
     `Aktueller Stand: ${onDoc}. ${validity}`,
   ]
   if (opts.pdfReady) {
     paragraphs.push(
       sealReady ?
-        'Lade das aktuelle PDF herunter und leg es der Bewerbung bei. Nicht geprüfte Angaben stehen nicht auf dem Dokument.'
-      : `Lade den Stand der Prüfung herunter. Das Mieter-Zertifikat gibt es, sobald ${sealNeed} geprüft sind.`
+        'Lade das aktuelle PDF herunter und leg es der Bewerbung bei.'
+      : `Lade das aktuelle PDF herunter und leg es der Bewerbung bei. Das Siegel kommt dazu, sobald ${sealNeed} geprüft sind.`
     )
   } else {
     paragraphs.push('Für das PDF fehlt noch dein Name auf dem Dokument — das ist in einer Minute erledigt.')
   }
 
   return {
-    subject: sealReady ? `«${title}» geprüft — Zertifikat aktualisiert` : `«${title}» geprüft — Stand aktualisiert`,
-    heading: sealReady ? 'Dein Zertifikat wurde aktualisiert' : 'Der Stand der Prüfung wurde aktualisiert',
+    subject: `«${title}» geprüft — Zertifikat aktualisiert`,
+    heading: 'Dein Zertifikat wurde aktualisiert',
     preheader: `${title} geprüft — ${onDoc}`,
     paragraphs,
   }

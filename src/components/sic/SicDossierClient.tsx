@@ -291,12 +291,12 @@ function certificateStatusMeta(dossier: SicDossierView): { label: string; classN
   if (dossier.certificateSealReady) {
     const { verifiedCount, catalogModules } = dossier.progress
     if (catalogModules > 0 && verifiedCount >= catalogModules) {
-      return { label: 'Mieter-Zertifikat · vollständig', className: 'bg-sic-verified-bg text-sic-verified-text' }
+      return { label: 'Mit Siegel · vollständig', className: 'bg-sic-verified-bg text-sic-verified-text' }
     }
-    return { label: 'Mieter-Zertifikat', className: 'bg-sic-verified-bg text-sic-verified-text' }
+    return { label: 'Mit Siegel', className: 'bg-sic-verified-bg text-sic-verified-text' }
   }
   if (dossier.progress.verifiedCount > 0) {
-    return { label: 'Stand der Prüfung · noch kein Siegel', className: 'bg-sic-action-bg text-sic-action-deep' }
+    return { label: 'Gültig · ohne Siegel', className: 'bg-sic-action-bg text-sic-action-deep' }
   }
   return { label: 'In Arbeit', className: 'bg-slate-100 text-slate-700' }
 }
@@ -722,11 +722,9 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                   'Das Mieter-Zertifikat für beide ist da — legt das PDF der nächsten Bewerbung bei.'
                 : 'Dein Mieter-Zertifikat ist da — leg das PDF der nächsten Bewerbung bei.'
               : dossier.couple ?
-                'Der Stand der Prüfung ist als PDF bereit. Zum Mieter-Zertifikat fehlen noch beide Betreibungsauszüge und beide Ausweise.'
-              : 'Der Stand der Prüfung ist als PDF bereit. Zum Mieter-Zertifikat fehlen noch Betreibungsauszug und Ausweis.'
-            : dossier.couple ?
-              'Sobald die erste Angabe geprüft ist, gibt es das PDF. Als Mieter-Zertifikat gilt es mit beiden Betreibungsauszügen und beiden Ausweisen.'
-            : 'Sobald die erste Angabe geprüft ist, gibt es das PDF. Als Mieter-Zertifikat gilt es mit Betreibungsauszug und Ausweis.'}
+                'Euer Mieter-Zertifikat ist da — mit allen geprüften Angaben. Das Siegel kommt dazu, sobald beide Betreibungsauszüge und beide Ausweise geprüft sind.'
+              : 'Dein Mieter-Zertifikat ist da — mit allen geprüften Angaben. Das Siegel kommt dazu, sobald Betreibungsauszug und Ausweis geprüft sind.'
+            : 'Sobald die erste Angabe geprüft ist, ist dein Mieter-Zertifikat da. Mit Betreibungsauszug und Ausweis bekommt es zusätzlich das Siegel.'}
           </p>
         </div>
         <form
@@ -852,7 +850,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-              {sealReady ? 'Mieter-Zertifikat' : 'Stand der Prüfung'}
+              {sealReady ? 'Mieter-Zertifikat · mit Siegel' : 'Mieter-Zertifikat'}
             </p>
             <div className="mt-1 flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 flex-shrink-0 text-sic-navy" />
@@ -986,7 +984,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
               href={`/api/sic/certificate/${encodeURIComponent(dossier.certificateCode)}/pdf`}
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3.5 text-sm font-semibold text-white hover:bg-sic-action-deep sm:w-auto sm:min-w-[14rem]"
             >
-              <Download className="h-4 w-4" /> {sealReady ? 'Zertifikat als PDF' : 'Stand als PDF'}
+              <Download className="h-4 w-4" /> Zertifikat als PDF
             </a>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
               <button
@@ -1036,12 +1034,12 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
               aria-disabled="true"
               className="inline-flex cursor-not-allowed items-center gap-2 bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500"
             >
-              <Download className="h-4 w-4" /> {sealReady ? 'Zertifikat als PDF' : 'Stand als PDF'}
+              <Download className="h-4 w-4" /> Zertifikat als PDF
             </span>
             <p className="mt-2 text-xs text-slate-500">
               {dossier.expired ?
                 'Die Gültigkeit ist abgelaufen — verlängere, um das PDF wieder abzurufen.'
-              : 'Kommt, sobald die erste Angabe geprüft ist. Als Zertifikat gilt es erst mit Betreibungsauszug und Ausweis.'}
+              : 'Kommt, sobald die erste Angabe geprüft ist. Mit Betreibungsauszug und Ausweis trägt es zusätzlich das Siegel.'}
             </p>
             {dossier.holderName && !nameLocked ?
               <button

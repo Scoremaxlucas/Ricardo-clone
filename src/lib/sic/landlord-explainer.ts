@@ -1,5 +1,5 @@
 import { sicPaths } from '@/lib/sic/config'
-import { SIC_VALIDITY_MONTHS, SIC_WORKING_NOTICE } from '@/lib/sic/modules'
+import { SIC_UNSEALED_NOTE, SIC_VALIDITY_MONTHS } from '@/lib/sic/modules'
 
 export type SicLandlordExplainerItem = {
   title: string
@@ -29,7 +29,7 @@ export function sicLandlordExplainerCopy(opts: {
     kicker: 'Für Vermieterinnen und Vermieter',
     lead:
       'Du siehst Angaben aus eingereichten Unterlagen — plausibel geprüft, standardisiert, hier nachvollziehbar. Keine behördliche Auskunft.',
-    workingNote: opts.sealed ? null : SIC_WORKING_NOTICE,
+    workingNote: opts.sealed ? null : SIC_UNSEALED_NOTE,
     items: [
       {
         title: 'Was geprüft ist',

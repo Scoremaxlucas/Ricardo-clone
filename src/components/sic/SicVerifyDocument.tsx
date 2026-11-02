@@ -8,12 +8,9 @@ import {
   SIC_DECLARED_BADGE,
   SIC_MODULE_BADGE,
   SIC_PLAUSIBILITY_FOOTER,
+  SIC_MODULES,
   SIC_SCOPE_NOTE,
-  SIC_WORKING_DOC_TAGLINE,
-  SIC_WORKING_DOC_TITLE,
-  SIC_WORKING_NOTICE,
-  SIC_WORKING_PLAUSIBILITY_FOOTER,
-  SIC_WORKING_SCOPE_NOTE,
+  SIC_UNCHECKED_LINE,
   type SicDocumentPresentation,
 } from '@/lib/sic/modules'
 import { sicReplacedCertificateCopy } from '@/lib/sic/codes'
@@ -38,8 +35,6 @@ export type SicVerifyDocumentProps =
       completenessLabel: string
       modules: SicVerifiedModuleView[]
       presentation?: SicDocumentPresentation
-      /** «Stand vom», solange kein geprüfter Auszug die Gültigkeit trägt. Default: jetzt. */
-      asOf?: Date
     }
 
 function Frame({ children }: { children: ReactNode }) {
@@ -58,16 +53,7 @@ function Wordmark({ className }: { className?: string }) {
   )
 }
 
-function NavyBand({
-  code,
-  quiet,
-  presentation = 'certificate',
-}: {
-  code?: string
-  quiet?: boolean
-  presentation?: SicDocumentPresentation
-}) {
-  const isCertificate = presentation === 'certificate'
+function NavyBand({ code, quiet }: { code?: string; quiet?: boolean }) {
   return (
     <header
       className={`relative flex flex-col items-center bg-sic-navy px-5 pb-5 pt-6 sm:px-8 ${
@@ -76,9 +62,7 @@ function NavyBand({
     >
       {code ?
         <p
-          className={`mb-2 font-mono text-[9px] font-semibold tracking-[0.08em] sm:absolute sm:right-4 sm:top-3 sm:mb-0 sm:text-[10px] sm:tracking-[0.12em] ${
-            isCertificate ? 'text-sic-gold-light/90' : 'text-white/55'
-          }`}
+          className="mb-2 font-mono text-[9px] font-semibold tracking-[0.08em] text-sic-gold-light/90 sm:absolute sm:right-4 sm:top-3 sm:mb-0 sm:text-[10px] sm:tracking-[0.12em]"
         >
           {code}
         </p>
@@ -87,24 +71,14 @@ function NavyBand({
       <span className="sr-only">{SIC_BRAND_NAME}</span>
       <Wordmark className="mt-2 text-base font-bold tracking-tight text-white sm:text-lg" />
       <div className="mt-2.5 flex items-center gap-2.5">
-        <span className={`h-px w-7 ${isCertificate ? 'bg-sic-gold' : 'bg-white/35'}`} />
-        <span
-          className={`text-[10px] font-semibold tracking-[0.24em] ${
-            isCertificate ? 'text-sic-gold-light' : 'text-white/80'
-          }`}
-        >
-          {isCertificate ? SIC_CERT_DOCUMENT_TITLE : SIC_WORKING_DOC_TITLE}
+        <span className="h-px w-7 bg-sic-gold" />
+        <span className="text-[10px] font-semibold tracking-[0.24em] text-sic-gold-light">
+          {SIC_CERT_DOCUMENT_TITLE}
         </span>
-        <span className={`h-px w-7 ${isCertificate ? 'bg-sic-gold' : 'bg-white/35'}`} />
+        <span className="h-px w-7 bg-sic-gold" />
       </div>
       {!quiet ?
-        <p
-          className={`mt-2 text-[11px] tracking-wide ${
-            isCertificate ? 'text-[#e8d5a3]' : 'text-white/70'
-          }`}
-        >
-          {isCertificate ? SIC_CERT_TAGLINE : SIC_WORKING_DOC_TAGLINE}
-        </p>
+        <p className="mt-2 text-[11px] tracking-wide text-[#e8d5a3]">{SIC_CERT_TAGLINE}</p>
       : null}
     </header>
   )
@@ -146,25 +120,18 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
   const presentation =
     props.presentation ??
     (isSicCertificateSealReady(modules.map(m => m.id)) ? 'certificate' : 'working')
-  const isCertificate = presentation === 'certificate'
-  const scopeNote = isCertificate ? SIC_SCOPE_NOTE : SIC_WORKING_SCOPE_NOTE
-  const extractChecked = modules.some(m => m.id === 'BONITAET' && !m.badge)
-  const asOf = props.asOf ?? new Date()
+  // Mit oder ohne Siegel: ein gültiges Mieter-Zertifikat. Das Siegel zeichnet Betreibung + Ausweis aus.
+  const sealed = presentation === 'certificate'
+  const shownIds = new Set(modules.map(m => m.id))
+  const unchecked = SIC_MODULES.filter(def => !shownIds.has(def.id))
 
   return (
     <>
-      <NavyBand code={certificateCode} presentation={presentation} />
+      <NavyBand code={certificateCode} />
 
-      <p className="sr-only">
-        {isCertificate ? `Gültiges Zertifikat ${certificateCode}` : `Stand der Prüfung ${certificateCode}`}
-      </p>
+      <p className="sr-only">{`Gültiges Zertifikat ${certificateCode}`}</p>
 
       <div className="px-4 pb-8 pt-5 sm:px-8">
-        {isCertificate ? null : (
-          <p className="mb-4 rounded-lg border border-sic-hairline bg-sic-paper-soft px-3 py-2.5 text-center text-[11px] leading-relaxed text-sic-navy">
-            {SIC_WORKING_NOTICE}
-          </p>
-        )}
         <p className="text-center text-[11px] font-semibold uppercase tracking-[0.08em] text-sic-navy">
           {completenessLabel}
         </p>
@@ -215,37 +182,42 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
               </li>
             )
           })}
+          {unchecked.map(def => (
+            <li key={def.id} className="flex items-start gap-3 py-3.5">
+              <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-dashed border-slate-300 opacity-60">
+                <ModuleGlyph moduleId={def.id} size={16} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-slate-500">{def.title}</p>
+                <p className="mt-1 text-[13px] leading-snug text-slate-500">{SIC_UNCHECKED_LINE}</p>
+              </div>
+            </li>
+          ))}
         </ul>
 
         <div className="mt-5 flex flex-wrap justify-between gap-4 border-t border-sic-hairline pt-4">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">
-              {isCertificate ? 'Zertifikatsdatum' : 'Prüfdatum'}
-            </p>
+            <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Zertifikatsdatum</p>
             <p className="text-sm font-semibold text-sic-navy">{fmt(issuedAt)}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">
-              {extractChecked ? 'Gültig bis' : 'Stand vom'}
-            </p>
-            <p className="text-sm font-semibold text-sic-navy">{fmt(extractChecked ? expiresAt : asOf)}</p>
+            <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Gültig bis</p>
+            <p className="text-sm font-semibold text-sic-navy">{fmt(expiresAt)}</p>
           </div>
         </div>
 
         <div className="mt-5 flex items-center gap-4">
-          {isCertificate ? <CertSeal size={74} year={String(issuedAt.getFullYear())} /> : null}
+          {sealed ? <CertSeal size={74} year={String(issuedAt.getFullYear())} /> : null}
           <div>
             <p className="text-[11px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
             <p className="mt-0.5 text-[10px] leading-snug text-slate-500">
-              {extractChecked ?
-                'Gültig, solange diese Seite das Zertifikat als gültig ausweist.'
-              : 'Ohne geprüften Betreibungsauszug ohne feste Gültigkeit.'}
+              Gültig, solange diese Seite das Zertifikat als gültig ausweist.
             </p>
           </div>
         </div>
 
         <p className="mt-6 text-[11px] leading-relaxed text-slate-500">
-          {scopeNote} {isCertificate ? SIC_PLAUSIBILITY_FOOTER : SIC_WORKING_PLAUSIBILITY_FOOTER}
+          {SIC_SCOPE_NOTE} {SIC_PLAUSIBILITY_FOOTER}
         </p>
       </div>
     </>
