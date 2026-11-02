@@ -172,6 +172,13 @@ class SicPaymentAlreadyClaimedError extends Error {
   }
 }
 
+/** Eine andere Verlängerung hat sich während dieses Laufs dasselbe Zertifikat genommen. */
+class SicRenewalTakenError extends Error {
+  constructor() {
+    super('SIC renewal already applied by a concurrent fulfillment')
+  }
+}
+
 const SIC_FULFILL_MAX_ATTEMPTS = 3
 
 export async function fulfillSicPaidCheckout(
@@ -311,6 +318,16 @@ export async function fulfillSicPaidCheckout(
   }
   try {
     const txResult = await prisma.$transaction(async tx => {
+      // Zwei Verlängerungen gleichzeitig (zwei Tabs, Webhook + Bestätigungsseite je Zahlung):
+      // die Duplikat-Prüfung oben lief ohne Sperre. Zertifikatszeile sperren und neu prüfen —
+      // die zweite wartet hier, sieht danach die erste und wird beim nächsten Versuch erstattet.
+      if (isRenewal && existing && !startOver) {
+        await tx.$queryRaw`SELECT id FROM "sic_certificates" WHERE id = ${existing.id} FOR UPDATE`
+        if (await loadSicRenewalPending(tx, existing.id, { excludePaymentId: payment.id })) {
+          throw new SicRenewalTakenError()
+        }
+      }
+
       // Zuerst die Zahlung beanspruchen: nur PENDING/CANCELLED → PAID. Ein zweiter Worker wartet auf
       // die Zeilensperre, sieht danach PAID und bricht hier ab — so gibt es Zertifikat, Reset und
       // Magic-Link-Mail genau einmal, auch bei Verlängerung und Nachkauf ohne Unique-Constraint.
@@ -423,7 +440,7 @@ export async function fulfillSicPaidCheckout(
     //  - Unique-Race beim Erstkauf (P2002 auf email) → mit bestehendem Zertifikat fortsetzen
     // Jeder andere Fehler (DB weg, Timeout) wird weitergereicht, statt endlos zu rekursieren.
     const uniqueRace = err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
-    const claimedElsewhere = err instanceof SicPaymentAlreadyClaimedError
+    const claimedElsewhere = err instanceof SicPaymentAlreadyClaimedError || err instanceof SicRenewalTakenError
     if (!uniqueRace && !claimedElsewhere) throw err
     if (attempt >= SIC_FULFILL_MAX_ATTEMPTS) throw err
     if (uniqueRace) {

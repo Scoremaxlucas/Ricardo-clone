@@ -710,3 +710,67 @@ test.describe.serial('3 · Zahlung: Abbruch, Webhook, Missbrauch', () => {
     expect(page.url()).not.toMatch(/\/sic\/zertifikat$/)
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+test.describe.serial('4 · Zwei Verlängerungen gleichzeitig bezahlt', () => {
+  const email = uniqueEmail('race')
+  let page: Page
+  let certId = ''
+
+  test.beforeAll(async ({ browser }) => {
+    page = await (await newSicContext(browser)).newPage()
+  })
+  test.afterAll(async () => page.context().close())
+
+  test('Nur eine Verlängerung gilt, die zweite wird automatisch erstattet', async ({
+    browser,
+    request,
+  }) => {
+    const cert = await buyCertificate(page, { email, first: 'Rennen', last: 'Test' })
+    certId = cert.id
+    expect((await uploadApi(page.request, 'BONITAET')).status).toBe(200)
+    const ctx = await newSicContext(browser)
+    await adminContext(ctx)
+    expect(
+      (
+        await review(ctx.request, {
+          certificateId: certId,
+          moduleKind: 'BONITAET',
+          action: 'approve',
+          facts: CLEAN_EXTRACT,
+        })
+      ).status
+    ).toBe(200)
+    await ctx.close()
+
+    // Zwei Verlängerungen in zwei Tabs — bezahlt, aber noch nicht verarbeitet.
+    await page.route('**/api/sic/checkout/confirm**', r => r.abort())
+    const sessions: string[] = []
+    for (let i = 0; i < 2; i++) {
+      const res = await startCheckoutApi(page.request, { email, renewal: true })
+      expect(res.status, res.message).toBe(200)
+      await page.goto(res.url!)
+      await payOnStripe(page)
+      sessions.push(new URL(page.url()).searchParams.get('session_id')!)
+    }
+    // Beide Stripe-Meldungen treffen gleichzeitig ein.
+    const results = await Promise.all(
+      sessions.map(async id =>
+        deliverStripeEvent(
+          request,
+          'checkout.session.completed',
+          await stripe.checkout.sessions.retrieve(id)
+        )
+      )
+    )
+    for (const r of results) expect(r.status()).toBe(200)
+
+    const renewals = (await certByEmail(email))!.payments.filter(p => p.isRenewal)
+    expect(renewals.map(p => p.status).sort()).toEqual(['PAID', 'REFUNDED'])
+    const refunded = renewals.find(p => p.status === 'REFUNDED')!
+    const charge = (
+      await stripe.charges.list({ payment_intent: refunded.stripePaymentIntentId!, limit: 1 })
+    ).data[0]
+    expect(charge.amount_refunded).toBe(charge.amount)
+  })
+})
