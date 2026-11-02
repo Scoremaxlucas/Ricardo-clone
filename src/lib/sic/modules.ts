@@ -277,6 +277,7 @@ export function sicRequiredDocuments(id: SicModuleId, couple: boolean): string[]
       'Arbeitgeberbestätigung Person 1 — SIC-Formular',
       'Lohnabrechnung oder Lohnausweis Person 2',
       'Arbeitgeberbestätigung Person 2 — SIC-Formular',
+      'Ist eine Person nicht angestellt: statt Lohn ein Beleg — Ausbildungsbestätigung, Rentenausweis oder Handelsregisterauszug',
     ]
   }
   return getSicModule(id).requiredDocuments

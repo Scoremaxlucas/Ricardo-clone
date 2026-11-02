@@ -108,3 +108,21 @@ export const SIC_UNFINISHED_DOCS_RETENTION_MONTHS = 6
 export function sicUnfinishedDocsPurgeAt(purchasedAt: Date): Date {
   return addCalendarMonths(purchasedAt, SIC_UNFINISHED_DOCS_RETENTION_MONTHS)
 }
+
+/**
+ * Datum in Schweizer Zeit (dd.mm.yyyy). Server laufen in UTC — ohne Zeitzone zeigte
+ * ein Zeitpunkt kurz nach Mitternacht den Vortag. Fristen (00:00 UTC) bleiben derselbe Tag.
+ */
+export function sicSwissDate(d: Date | string): string {
+  return new Date(d).toLocaleDateString('de-CH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'Europe/Zurich',
+  })
+}
+
+/** Kalendertag in Schweizer Zeit als YYYY-MM-DD (für gespeicherte Fakten). */
+export function sicSwissIsoDay(d: Date): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich' }).format(d)
+}

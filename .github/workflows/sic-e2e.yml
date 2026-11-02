@@ -1,0 +1,100 @@
+name: SIC Szenarien
+
+# Spielt die Plattform von Kauf bis Widerruf durch (e2e/sic/scenarios.spec.ts) —
+# gegen den Neon-Branch «e2e-test» (keine Kundendaten) und Stripe im Testmodus.
+# Anleitung: docs/sic-e2e-szenarien.md
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'e2e/**', 'prisma/**', 'package-lock.json', '.github/workflows/sic-e2e.yml']
+  workflow_dispatch:
+
+# Ein Lauf nach dem anderen: alle teilen sich dieselbe Testdatenbank.
+concurrency:
+  group: sic-e2e
+  cancel-in-progress: false
+
+jobs:
+  # Ohne die beiden Secrets (E2E_DATABASE_URL, E2E_STRIPE_SECRET_KEY) still überspringen statt rot.
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.secrets.outputs.ready }}
+    steps:
+      - id: secrets
+        env:
+          DB: ${{ secrets.E2E_DATABASE_URL }}
+          STRIPE: ${{ secrets.E2E_STRIPE_SECRET_KEY }}
+        run: |
+          if [ -n "$DB" ] && [ -n "$STRIPE" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice::E2E-Secrets fehlen — Szenarien übersprungen (siehe docs/sic-e2e-szenarien.md)"; fi
+
+  scenarios:
+    name: Szenarien (Desktop und Handy)
+    needs: check
+    if: needs.check.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+      STRIPE_SECRET_KEY: ${{ secrets.E2E_STRIPE_SECRET_KEY }}
+      E2E_SCENARIOS: '1'
+      E2E_BASE_URL: http://localhost:3100
+      NEXTAUTH_URL: http://localhost:3100
+      NEXT_PUBLIC_SIC_URL: http://localhost:3100
+      SIC_ADMIN_EMAILS: pruefer@e2e.test
+      EMAIL_SINK_DIR: ${{ github.workspace }}/.e2e/mail
+      SIC_BLOB_LOCAL_DIR: ${{ github.workspace }}/.e2e/blobs
+      PAYREXX_CHECKOUT: '0'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Sicherung — nur Testdatenbank und Stripe-Testmodus
+        run: |
+          case "$DATABASE_URL" in *ep-old-river*) ;; *) echo "::error::E2E_DATABASE_URL ist nicht der Branch e2e-test"; exit 1;; esac
+          case "$DATABASE_URL" in *ep-muddy-king*) echo "::error::Produktionsdatenbank"; exit 1;; esac
+          case "$STRIPE_SECRET_KEY" in sk_test_*) ;; *) echo "::error::Stripe nicht im Testmodus"; exit 1;; esac
+
+      - name: Geheimnisse für diesen Lauf erzeugen
+        run: |
+          {
+            echo "NEXTAUTH_SECRET=$(openssl rand -hex 24)"
+            echo "SIC_SESSION_SECRET=$(openssl rand -hex 24)"
+            echo "CRON_SECRET=$(openssl rand -hex 16)"
+            echo "STRIPE_WEBHOOK_SECRET=whsec_$(openssl rand -hex 16)"
+            echo "SIC_DOC_ENCRYPTION_KEY=$(openssl rand -hex 32)"
+          } >> "$GITHUB_ENV"
+
+      - run: npm ci
+
+      - name: Playwright-Browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: npm run build
+
+      - name: Server starten
+        run: |
+          npx next start -p 3100 > server.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:3100/robots.txt && exit 0; sleep 2; done
+          cat server.log; exit 1
+
+      - name: Szenarien
+        run: npx playwright test e2e/sic/scenarios.spec.ts --workers=1
+
+      - name: Bericht bei Fehlern
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sic-e2e-report
+          path: |
+            test-results/
+            server.log
+          retention-days: 7

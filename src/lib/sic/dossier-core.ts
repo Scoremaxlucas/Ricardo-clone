@@ -6,6 +6,7 @@ import {
   readSicFacts,
   sicFactGroups,
   sicFactsLapsed,
+  sicHasCheckedFacts,
   sicIncomeGroupLabel,
   type SicFactGroup,
   type SicFactLineOpts,
@@ -54,7 +55,7 @@ export type SicDossierModuleView = {
   /** Lohn & Arbeitsstelle als «nicht angestellt» vermerkt. */
   incomeGroup?: SicIncomeGroup | null
   /** Ausweis: geprüfter läuft bald ab oder kürzt das Zertifikat — neuer kann eingereicht werden. */
-  idRenewal?: { validUntil: string } | null
+  idRenewal?: { validUntil: string; person: string | null } | null
 }
 
 export type SicDossierView = {
@@ -147,7 +148,7 @@ export function sicPresentedModules<
     // Nur echte, noch gültige Prüfwerte mittragen — keine Selbstangaben, kein abgelaufener Ausweis.
     if (!isSicModuleId(m.moduleKind)) return m
     const facts = readSicFacts(m.moduleKind, m.verifiedFacts)
-    if (!facts || sicFactsLapsed(m.moduleKind, facts, now)) return m
+    if (!sicHasCheckedFacts(m.moduleKind, facts) || sicFactsLapsed(m.moduleKind, facts, now)) return m
     return { ...m, status: 'VERIFIED' as const }
   })
 }

@@ -41,7 +41,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Geht das auch zu zweit?',
-    a: 'Ja. Dann stehen beide Namen auf dem Dokument. Jede Person reicht den eigenen Betreibungsauszug und Ausweis ein. Das Einkommen zählt zusammen für die 3×-Regel. Eine Vermieter-Referenz reicht in der Regel.',
+    a: 'Ja. Dann stehen beide Namen auf dem Dokument. Jede Person reicht den eigenen Betreibungsauszug und Ausweis ein. Das Einkommen zählt zusammen für die 3×-Regel. Ist nur eine Person angestellt, reicht die andere statt Lohn einen Beleg ein (etwa Ausbildungsbestätigung oder Rentenausweis); dann zählt ein Einkommen. Eine Vermieter-Referenz reicht in der Regel.',
   },
   {
     q: 'Was muss ich selbst besorgen?',

@@ -17,6 +17,7 @@ import { sicReviewSlaLabel, sicReviewSlaState } from '@/lib/sic/review-sla'
 import { AlertTriangle, Banknote, Check, ExternalLink, Loader2, Mail, Search, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import { sicSwissDate } from '@/lib/sic/validity'
 
 type Doc = { id: string; fileName: string; contentType: string; uploadedAt: string }
 type Module = {
@@ -45,6 +46,20 @@ type Item = {
 }
 type Counts = { inReview: number; pendingDocs: number; totalOpen: number; slaOverdue: number }
 type Filter = 'IN_REVIEW' | 'PENDING_DOCS' | 'all'
+
+/**
+ * Neuer Ausweis beim Paar: die Werte der Person, deren Ausweis nicht abläuft, bleiben
+ * vorbefüllt; die der ablaufenden Person (früheres Datum) erfasst der Prüfer neu.
+ */
+function keepOtherPersonId(facts: Record<string, string> | null | undefined): Record<string, string> {
+  if (!facts || !facts.documentType2) return {}
+  const d1 = facts.validUntil || '9999-12-31'
+  const d2 = facts.validUntil2 || '9999-12-31'
+  if (d1 === d2) return {}
+  return d1 < d2 ?
+      { documentType2: facts.documentType2, ...(facts.validUntil2 ? { validUntil2: facts.validUntil2 } : {}) }
+    : { documentType: facts.documentType, ...(facts.validUntil ? { validUntil: facts.validUntil } : {}) }
+}
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING_DOCS: 'Nachweise ausstehend',
@@ -330,7 +345,7 @@ export function SicAdminReview() {
           // Ein neu eingereichter Ausweis wird frisch erfasst — die alten Werte (altes Ablaufdatum)
           // vorzubefüllen hiesse, die Kappung mit einem Klick zu wiederholen.
           const replacingId = m.moduleKind === 'AUFENTHALT' && m.status !== 'VERIFIED'
-          if (!next[key]) next[key] = replacingId ? {} : (m.verifiedFacts ?? {})
+          if (!next[key]) next[key] = replacingId ? keepOtherPersonId(m.verifiedFacts) : (m.verifiedFacts ?? {})
         }
       }
       return next
@@ -748,7 +763,7 @@ export function SicAdminReview() {
 
                       {m.status === 'VERIFIED' && m.reviewedAt ?
                         <p className="mt-1 text-[11px] text-slate-500">
-                          Freigegeben am {new Date(m.reviewedAt).toLocaleDateString('de-CH')}
+                          Freigegeben am {sicSwissDate(m.reviewedAt)}
                           {m.reviewedByUserId ? ` durch ${m.reviewedByUserId}` : ''}
                         </p>
                       : null}

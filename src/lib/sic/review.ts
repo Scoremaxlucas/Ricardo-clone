@@ -4,7 +4,7 @@ import { isSicCouple } from '@/lib/sic/household'
 import { recordSicEvent } from '@/lib/sic/events'
 import { readSicFacts, sicIdValidUntil, type SicFacts } from '@/lib/sic/facts'
 import type { SicModuleId } from '@/lib/sic/modules'
-import { sicExpiresAtAfterApproval, sicExpiryClockChanged } from '@/lib/sic/validity'
+import { sicExpiresAtAfterApproval, sicExpiryClockChanged, sicSwissIsoDay } from '@/lib/sic/validity'
 import { Prisma, type SicModuleKind } from '@prisma/client'
 
 export type ApproveResult = {
@@ -58,7 +58,7 @@ export async function approveSicModule(opts: {
   // Laufende Mietverhältnisse gelten «Stand Referenz» — ohne Datum auf dem Formular der Tag der Freigabe.
   const facts: SicFacts =
     opts.moduleKind === 'ZUVERLAESSIGKEIT' && !opts.facts.tenancyTo && !opts.facts.referenceDate ?
-      { ...opts.facts, referenceDate: now.toISOString().slice(0, 10) }
+      { ...opts.facts, referenceDate: sicSwissIsoDay(now) }
     : opts.facts
 
   // Das Zertifikat gilt nicht länger als der geprüfte Ausweis. Wird ein neuer Ausweis

@@ -329,6 +329,8 @@ test.describe
     await expect(page.getByRole('button', { name: /Anmeldelink senden/ })).toBeVisible()
     await loginWithMagicLink(page, email)
     await expect(page.getByRole('heading', { name: 'Mein Zertifikat' })).toBeVisible()
+    // Angemeldet: kein «Zertifikat anlegen» mehr in der Kopfzeile.
+    await expect(page.locator('header').getByText(/Zertifikat anlegen|^Anlegen$/)).toHaveCount(0)
   })
 
   // ── Zeitabläufe: Daten in der Testdatenbank vordatieren, dann den Cron laufen lassen ──
@@ -496,6 +498,87 @@ test.describe
     expect(text).toContain('Beat Beispiel')
     expect(text).toContain('Keine Einträge im Betreibungsregister')
     expect(text).toContain('Keine offenen Betreibungen')
+  })
+
+  test('Ausweis: läuft einer bald ab, reicht das Paar nur diesen einen neu ein', async ({
+    browser,
+  }) => {
+    expect((await uploadApi(page.request, 'AUFENTHALT', FILES.png())).status).toBe(200)
+    expect((await uploadApi(page.request, 'AUFENTHALT', FILES.png())).status).toBe(200)
+    const ctx = await newSicContext(browser)
+    await adminContext(ctx)
+    const soon = isoDay(20)
+    const first = await review(ctx.request, {
+      certificateId: certId,
+      moduleKind: 'AUFENTHALT',
+      action: 'approve',
+      facts: {
+        documentType: 'permit_b',
+        validUntil: soon,
+        documentType2: 'ch_pass',
+        validUntil2: isoDay(2000),
+      },
+    })
+    expect(first.status, first.body.message).toBe(200)
+    expect((await certByEmail(email))!.expiresAt!.toISOString().slice(0, 10)).toBe(soon)
+
+    await page.goto('/sic/zertifikat')
+    const mod = page.locator('#modul-AUFENTHALT')
+    if ((await mod.locator('> button').getAttribute('aria-expanded')) === 'false')
+      await mod.locator('> button').click()
+    await expect(mod.getByText('Der Ausweis von Anna Muster')).toBeVisible()
+    await mod.getByRole('button', { name: 'Neuen Ausweis einreichen' }).click()
+    await expect.poll(() => moduleStatus(email, 'AUFENTHALT')).toBe('PENDING_DOCS')
+    // Beide bisherigen Dateien bleiben — ein neuer Upload genügt für die Prüfung.
+    expect(
+      (await certByEmail(email))!.documents.filter(d => d.moduleKind === 'AUFENTHALT')
+    ).toHaveLength(2)
+    expect((await uploadApi(page.request, 'AUFENTHALT', FILES.png())).status).toBe(200)
+    expect(await moduleStatus(email, 'AUFENTHALT')).toBe('IN_REVIEW')
+    // Bis zur Prüfung steht der bisherige Ausweis weiter drauf.
+    expect(await verifyPage(page, code)).toContain('Aufenthaltsbewilligung B')
+    const renewed = await review(ctx.request, {
+      certificateId: certId,
+      moduleKind: 'AUFENTHALT',
+      action: 'approve',
+      facts: {
+        documentType: 'permit_c',
+        validUntil: isoDay(1500),
+        documentType2: 'ch_pass',
+        validUntil2: isoDay(2000),
+      },
+    })
+    expect(renewed.status, renewed.body.message).toBe(200)
+    await ctx.close()
+    const cert = (await certByEmail(email))!
+    expect(cert.expiresAt!.getTime()).toBeGreaterThan(new Date(`${soon}T00:00:00Z`).getTime())
+    expect(await verifyPage(page, code)).toContain('Aufenthaltsbewilligung C')
+  })
+
+  test('Lohn: nur Person 1 angestellt, Person 2 pensioniert — Richtwert aus einem Einkommen', async ({
+    browser,
+  }) => {
+    expect((await uploadApi(page.request, 'ARBEIT_EINKOMMEN')).status).toBe(200)
+    expect((await uploadApi(page.request, 'ARBEIT_EINKOMMEN')).status).toBe(200)
+    const ctx = await newSicContext(browser)
+    await adminContext(ctx)
+    const ok = await review(ctx.request, {
+      certificateId: certId,
+      moduleKind: 'ARBEIT_EINKOMMEN',
+      action: 'approve',
+      facts: {
+        incomeBand: '80_100k',
+        employmentType: 'unbefristet',
+        employedSince: '2020-01-01',
+        noticeGiven: 'no',
+        incomeGroup2: 'retired',
+      },
+    })
+    expect(ok.status, ok.body.message).toBe(200)
+    await ctx.close()
+    const text = await verifyPage(page, code)
+    expect(text).toContain('Pensioniert')
+    expect(text).toContain('Richtwert 3×-Regel, Einkommen Anna Muster: Miete bis CHF 2’200')
   })
 
   test('Volle Erstattung im Stripe-Dashboard: Webhook widerruft das Zertifikat, Mail', async ({

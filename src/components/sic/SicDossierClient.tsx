@@ -32,6 +32,7 @@ import {
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { sicSwissDate } from '@/lib/sic/validity'
 
 type ModuleStatus = SicDossierView['purchasedModules'][number]['status']
 
@@ -72,7 +73,7 @@ const INPUT_CLASS =
   'min-h-11 w-full rounded-xl border border-sic-hairline bg-sic-paper px-3 py-2 text-base outline-none ring-sic-action/20 focus:border-sic-action focus:ring-2'
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return sicSwissDate(iso)
 }
 
 function formatBytes(n: number): string {
@@ -1024,9 +1025,9 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                   {canDeclareIncomeGroup ?
                     <div className="mt-3 rounded-xl border border-sic-hairline bg-sic-paper-soft px-3 py-3">
                       <p className="text-sm leading-relaxed text-slate-700">
-                        Lohn und Arbeitsstelle prüfen wir derzeit für Angestellte. Bist du nicht angestellt? Dann
-                        vermerkst du das hier — die Angabe gilt nicht als fehlend, und das Zertifikat bekommst du
-                        trotzdem.
+                        {dossier.couple ?
+                          'Lohn und Arbeitsstelle prüfen wir derzeit für Angestellte. Ist nur eine von euch angestellt? Dann lädst du für die andere Person statt Lohn einen Beleg hoch (Ausbildungsbestätigung, Rentenausweis oder Handelsregisterauszug) — geprüft wird das Einkommen der angestellten Person. Seid ihr beide nicht angestellt, vermerkst du das hier:'
+                        : 'Lohn und Arbeitsstelle prüfen wir derzeit für Angestellte. Bist du nicht angestellt? Dann vermerkst du das hier — die Angabe gilt nicht als fehlend, und das Zertifikat bekommst du trotzdem.'}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {SIC_INCOME_GROUPS.map(g => (
@@ -1047,9 +1048,11 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                   {m.idRenewal ?
                     <div className="mt-3 rounded-xl border border-sic-hairline bg-sic-paper-soft px-3 py-3">
                       <p className="text-sm leading-relaxed text-slate-700">
-                        Dein Ausweis ist gültig bis {fmtShortDate(m.idRenewal.validUntil)}. Länger gilt auch das
-                        Zertifikat nicht. Reich den neuen Ausweis ein, sobald du ihn hast — kostenlos. Bis zur Prüfung
-                        bleibt der bisherige auf dem Zertifikat.
+                        {m.idRenewal.person ? `Der Ausweis von ${m.idRenewal.person}` : 'Dein Ausweis'} ist gültig bis{' '}
+                        {fmtShortDate(m.idRenewal.validUntil)}. Länger gilt auch das Zertifikat nicht. Reich den neuen
+                        Ausweis ein, sobald du ihn hast — kostenlos. Bis zur Prüfung bleibt der bisherige auf dem
+                        Zertifikat.
+                        {dossier.couple ? ' Der andere Ausweis bleibt, wie er ist — nur den neuen hochladen.' : null}
                       </p>
                       <button
                         type="button"

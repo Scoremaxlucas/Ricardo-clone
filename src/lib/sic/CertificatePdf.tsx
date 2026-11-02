@@ -5,6 +5,7 @@ import { CERT } from '@/lib/sic/cert/tokens'
 import { SIC_DECLARED_BADGE, SIC_MODULE_BADGE, SIC_PLAUSIBILITY_FOOTER, SIC_WORKING_PLAUSIBILITY_FOOTER, SIC_WORKING_DOC_TAGLINE, SIC_WORKING_DOC_TITLE, SIC_CERT_DOCUMENT_TITLE, SIC_WORKING_NOTICE, type SicDocumentPresentation, type SicModuleId } from '@/lib/sic/modules'
 import { Document, Font, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import React from 'react'
+import { sicSwissDate } from '@/lib/sic/validity'
 
 // Keine Silbentrennung: Namen, Ämter und Arbeitgeber dürfen nicht mitten im Wort brechen.
 Font.registerHyphenationCallback(word => [word])
@@ -289,7 +290,7 @@ const compact = StyleSheet.create({
 })
 
 function fmt(d: Date): string {
-  return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return sicSwissDate(d)
 }
 
 export type SicPdfModule = {

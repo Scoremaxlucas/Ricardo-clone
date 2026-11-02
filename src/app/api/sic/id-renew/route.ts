@@ -23,6 +23,7 @@ export async function POST() {
       id: true,
       status: true,
       expiresAt: true,
+      householdKind: true,
       modules: {
         where: { moduleKind: { in: ['AUFENTHALT', 'BONITAET'] } },
         select: { id: true, moduleKind: true, status: true, verifiedFacts: true },
@@ -75,6 +76,10 @@ export async function POST() {
       },
     })
     if (claimed.count === 0) return null
+    // Paar: Dateien sind keiner Person zugeordnet. Löschten wir sie, müssten beide neu
+    // hochladen, obwohl nur ein Ausweis abläuft. Also bleiben sie, und es kommt nur der
+    // neue Ausweis dazu (die Mindestanzahl für die Prüfung ist damit erreicht).
+    if (cert.householdKind === 'COUPLE') return []
     const stale = await tx.sicDocument.findMany({
       where: { certificateId: cert.id, moduleKind: 'AUFENTHALT' },
       select: { id: true, blobUrl: true },

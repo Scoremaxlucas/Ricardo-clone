@@ -1,4 +1,4 @@
-import { getSicModule, SIC_MODULES, type SicModuleId } from '@/lib/sic/modules'
+import { getSicModule, SIC_INCOME_NOT_CHECKED_LINE, SIC_MODULES, type SicModuleId } from '@/lib/sic/modules'
 import { parseSicCalendarDate, sicValidityExpiresAt } from '@/lib/sic/validity'
 
 /**
@@ -332,9 +332,47 @@ function extraCoupleFields(moduleId: SicModuleId): SicFactField[] {
   return []
 }
 
+/**
+ * Paar, nur eine Person angestellt: Für die andere setzt der Prüfer die Gruppe
+ * (anhand eines Belegs wie Ausbildungsbestätigung oder Rentenausweis). Ihre
+ * Anstellungsfelder entfallen dann, und die 3×-Regel rechnet mit einem Einkommen.
+ */
+const COUPLE_INCOME_GROUP_FIELDS: Record<'1' | '2', SicFactField> = {
+  '1': {
+    key: 'incomeGroup',
+    label: 'Person 1 — Nicht angestellt',
+    kind: 'select',
+    required: false,
+    options: SIC_INCOME_GROUPS.map(g => ({ value: g.value, label: g.label })),
+    hint: 'Nur wenn Person 1 nicht angestellt ist — dann entfallen ihre Lohnfelder',
+    group: 'person1',
+  },
+  '2': {
+    key: 'incomeGroup2',
+    label: 'Person 2 — Nicht angestellt',
+    kind: 'select',
+    required: false,
+    options: SIC_INCOME_GROUPS.map(g => ({ value: g.value, label: g.label })),
+    hint: 'Nur wenn Person 2 nicht angestellt ist — dann entfallen ihre Lohnfelder',
+    group: 'person2',
+  },
+}
+
+const EMPLOYMENT_KEYS = ['incomeBand', 'employmentType', 'employedSince', 'employedUntil', 'noticeGiven', 'employerName']
+
+/** Anstellungsfelder einer Person, die als nicht angestellt erfasst ist. */
+function skippedEmploymentKeys(moduleId: SicModuleId, input: Record<string, unknown>, couple: boolean): Set<string> {
+  const skip = new Set<string>()
+  if (!couple || moduleId !== 'ARBEIT_EINKOMMEN') return skip
+  if (isSicIncomeGroup(input.incomeGroup)) EMPLOYMENT_KEYS.forEach(k => skip.add(k))
+  if (isSicIncomeGroup(input.incomeGroup2)) EMPLOYMENT_KEYS.forEach(k => skip.add(`${k}2`))
+  return skip
+}
+
 function knownFactFields(moduleId: SicModuleId): SicFactField[] {
   const byKey = new Map<string, SicFactField>()
-  for (const field of [...FIELDS[moduleId], ...extraCoupleFields(moduleId)]) {
+  const groupFields = moduleId === 'ARBEIT_EINKOMMEN' ? Object.values(COUPLE_INCOME_GROUP_FIELDS) : []
+  for (const field of [...FIELDS[moduleId], ...extraCoupleFields(moduleId), ...groupFields]) {
     byKey.set(field.key, field)
   }
   // Avoid spreading MapIterator in older TS build targets (downlevelIteration).
@@ -345,12 +383,15 @@ export function sicFactFields(moduleId: SicModuleId, opts?: { couple?: boolean }
   if (!opts?.couple) return FIELDS[moduleId]
   const extras = extraCoupleFields(moduleId)
   if (extras.length === 0) return FIELDS[moduleId]
+  const arbeit = moduleId === 'ARBEIT_EINKOMMEN'
   return [
+    ...(arbeit ? [COUPLE_INCOME_GROUP_FIELDS['1']] : []),
     ...FIELDS[moduleId].map(field => ({
       ...field,
       label: `Person 1 — ${field.label}`,
       group: 'person1' as const,
     })),
+    ...(arbeit ? [COUPLE_INCOME_GROUP_FIELDS['2']] : []),
     ...extras,
   ]
 }
@@ -401,7 +442,9 @@ export function normalizeSicFacts(
   const missing: string[] = []
   const invalid: string[] = []
 
+  const skipped = skippedEmploymentKeys(moduleId, input, opts?.couple === true)
   for (const field of sicFactFields(moduleId, opts)) {
+    if (skipped.has(field.key)) continue
     const value = typeof input[field.key] === 'string' ? (input[field.key] as string).trim() : ''
     if (!value) {
       if (field.required) missing.push(field.label)
@@ -459,6 +502,9 @@ export function sicApprovalBlockers(moduleId: SicModuleId, facts: SicFacts, now 
       // «Gültig bis» auf dem Zertifikat endet um 00:00 dieses Tages — ein Ausweis, der heute endet, trägt nichts mehr.
       if (d && d.getTime() <= today) blockers.push('Der Ausweis ist abgelaufen — bitte ablehnen und den gültigen anfordern')
     }
+  }
+  if (moduleId === 'ARBEIT_EINKOMMEN' && isSicIncomeGroup(facts.incomeGroup) && isSicIncomeGroup(facts.incomeGroup2)) {
+    blockers.push('Beide nicht angestellt — dann im Dossier für den Haushalt «nicht angestellt» vermerken lassen')
   }
   if (moduleId === 'ARBEIT_EINKOMMEN') {
     for (const [type, until] of [
@@ -672,20 +718,26 @@ export function sicFactGroups(
   if (moduleId === 'ARBEIT_EINKOMMEN') {
     const k1 = { band: 'incomeBand', type: 'employmentType', since: 'employedSince', until: 'employedUntil', employer: 'employerName', notice: 'noticeGiven' }
     if (couple) {
-      push(p1, employmentLines(moduleId, facts, k1))
-      push(
-        p2,
-        employmentLines(moduleId, facts, {
-          band: 'incomeBand2',
-          type: 'employmentType2',
-          since: 'employedSince2',
-          until: 'employedUntil2',
-          employer: 'employerName2',
-          notice: 'noticeGiven2',
-        })
-      )
-      const ceiling = sicRentCeilingFromIncomes(facts.incomeBand, facts.incomeBand2)
-      if (ceiling) push(null, [`Richtwert 3×-Regel, beide Einkommen: Miete bis ${formatSicAmountChf(ceiling)}`])
+      const k2 = {
+        band: 'incomeBand2',
+        type: 'employmentType2',
+        since: 'employedSince2',
+        until: 'employedUntil2',
+        employer: 'employerName2',
+        notice: 'noticeGiven2',
+      }
+      // Eine Person nicht angestellt: ihre Gruppe als Angabe, ihr Einkommen zählt nicht.
+      const group1 = sicIncomeGroupLabel(facts.incomeGroup)
+      const group2 = sicIncomeGroupLabel(facts.incomeGroup2)
+      push(p1, group1 ? [group1, SIC_INCOME_NOT_CHECKED_LINE] : employmentLines(moduleId, facts, k1))
+      push(p2, group2 ? [group2, SIC_INCOME_NOT_CHECKED_LINE] : employmentLines(moduleId, facts, k2))
+      const band1 = group1 ? undefined : facts.incomeBand
+      const band2 = group2 ? undefined : facts.incomeBand2
+      const ceiling = sicRentCeilingFromIncomes(band1, band2)
+      if (ceiling) {
+        const basis = band1 && band2 ? 'beide Einkommen' : `Einkommen ${band1 ? p1 : p2}`
+        push(null, [`Richtwert 3×-Regel, ${basis}: Miete bis ${formatSicAmountChf(ceiling)}`])
+      }
     } else {
       const lines = employmentLines(moduleId, facts, k1)
       const ceiling = sicRentCeilingChf(facts.incomeBand)
@@ -842,4 +894,13 @@ export function sicIdCapsExpiry(idFacts: SicFacts | null, extractFacts: SicFacts
   const idEnd = sicIdValidUntil(idFacts)
   const extractEnd = sicExtractValidityEnd(extractFacts)
   return !!idEnd && !!extractEnd && idEnd.getTime() < extractEnd.getTime() && extractEnd.getTime() > now.getTime()
+}
+
+/**
+ * Enthalten die Werte etwas tatsächlich Geprüftes? Eine reine Gruppen-Angabe
+ * («nicht angestellt») ist es nicht — sie darf nie als geprüfte Angabe mitgetragen werden.
+ */
+export function sicHasCheckedFacts(moduleId: SicModuleId, facts: SicFacts | null): boolean {
+  if (!facts) return false
+  return Object.keys(facts).some(key => key !== 'incomeGroup' && key !== 'incomeGroup2') || moduleId !== 'ARBEIT_EINKOMMEN'
 }

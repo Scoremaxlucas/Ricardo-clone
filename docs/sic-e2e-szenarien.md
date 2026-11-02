@@ -59,3 +59,24 @@ E2E_SCENARIOS=1 E2E_BASE_URL=http://localhost:3100 npx playwright test e2e/sic/s
 ```
 
 `EMAIL_SINK_DIR` und `SIC_BLOB_LOCAL_DIR` wirken nur lokal — auf Vercel (`VERCEL=1`) nie.
+
+## Automatisch auf GitHub
+
+`.github/workflows/sic-e2e.yml` läuft bei jedem Push auf `main` (und von Hand unter «Actions»).
+Er braucht zwei Repository-Secrets; fehlen sie, wird er still übersprungen:
+
+- `E2E_DATABASE_URL` — Verbindungsadresse des Branches `e2e-test` (pooled)
+- `E2E_STRIPE_SECRET_KEY` — Stripe-Schlüssel aus dem **Testmodus** (`sk_test_…`)
+
+Setzen unter GitHub → Repository → Settings → Secrets and variables → Actions → «New repository secret»,
+oder im Terminal:
+
+```bash
+npx neonctl connection-string e2e-test --project-id fragrant-heart-73625955 --pooled | gh secret set E2E_DATABASE_URL
+```
+
+```bash
+gh secret set E2E_STRIPE_SECRET_KEY
+```
+
+Der Workflow prüft vor dem Start, dass die Adresse zum Testbranch gehört und Stripe im Testmodus ist.

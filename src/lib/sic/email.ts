@@ -18,6 +18,7 @@ import {
   type SicMagicLinkMailSource,
 } from '@/lib/sic/email-copy'
 import { getSicModule, SIC_RENEWAL_FEE_CHF, type SicModuleId } from '@/lib/sic/modules'
+import { sicSwissDate } from '@/lib/sic/validity'
 
 const ACTION = SIC_COLORS.action
 const NAVY = SIC_COLORS.navy
@@ -224,11 +225,7 @@ export async function sendSicDocsPurgeWarningEmail(opts: {
   magicLinkUrl?: string
 }) {
   const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
-  const dateStr = opts.purgeAt.toLocaleDateString('de-CH', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+  const dateStr = sicSwissDate(opts.purgeAt)
   return sicMail({
     to: opts.email,
     subject: `${SIC_BRAND_NAME}: Unterlagen werden am ${dateStr} gelöscht`,
@@ -253,11 +250,7 @@ export async function sendSicExpiryReminderEmail(opts: {
   /** Grund ist der Ausweis, nicht der Auszug: neuer Ausweis statt Verlängerung. */
   causedById?: boolean
 }) {
-  const dateStr = opts.expiresAt.toLocaleDateString('de-CH', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+  const dateStr = sicSwissDate(opts.expiresAt)
   if (opts.causedById) {
     const idUrl = sicUrl(sicPaths.certificateWorkspace)
     return sicMail({
@@ -378,7 +371,7 @@ export async function sendSicEmailChangeNoticeEmail(oldEmail: string, newEmail: 
 }
 
 function fmtSicDate(d: Date): string {
-  return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return sicSwissDate(d)
 }
 
 function fmtSicChf(amount: number): string {

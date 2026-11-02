@@ -18,9 +18,10 @@ import {
 } from '@/lib/sic/modules'
 import { sicReplacedCertificateCopy } from '@/lib/sic/codes'
 import type { ReactNode } from 'react'
+import { sicSwissDate } from '@/lib/sic/validity'
 
 function fmt(d: Date): string {
-  return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return sicSwissDate(d)
 }
 
 type QuietState = 'rate_limited' | 'unknown' | 'not_ready' | 'revoked' | 'expired' | 'replaced'

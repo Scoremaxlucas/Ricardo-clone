@@ -21,7 +21,7 @@ import { loadSicRenewalPending, modulesResetByRenewal } from '@/lib/sic/renewal'
 import { sicRevokedCanStartOver } from '@/lib/sic/start-over'
 import { templatesForModule } from '@/lib/sic/templates'
 import { normalizeEmail } from '@/lib/sic/session'
-import { isSicExpired } from '@/lib/sic/validity'
+import { isSicExpired, parseSicCalendarDate } from '@/lib/sic/validity'
 import type { SicModuleStatus } from '@prisma/client'
 
 export * from '@/lib/sic/dossier-core'
@@ -82,8 +82,9 @@ function idRenewalFor(
   moduleKind: SicModuleId,
   row: { status: SicModuleStatus; verifiedFacts: unknown },
   cert: { status: string; expiresAt: Date | null },
-  extractFacts: SicFacts | null
-): { validUntil: string } | null {
+  extractFacts: SicFacts | null,
+  names: { person1: string | null; person2: string | null; couple: boolean }
+): { validUntil: string; person: string | null } | null {
   if (moduleKind !== 'AUFENTHALT' || row.status !== 'VERIFIED' || cert.status === 'REVOKED') return null
   const facts = readSicFacts('AUFENTHALT', row.verifiedFacts)
   const active = cert.status === 'ACTIVE' && !isSicExpired(cert.expiresAt)
@@ -91,7 +92,15 @@ function idRenewalFor(
   const open = active ? sicIdReplacementDue(facts, cert.expiresAt) : sicIdCapsExpiry(facts, extractFacts)
   if (!open) return null
   const until = sicIdValidUntil(facts)
-  return until ? { validUntil: until.toISOString() } : null
+  if (!until) return null
+  // Paar: wessen Ausweis? Der mit dem früheren Ablaufdatum.
+  let person: string | null = null
+  if (names.couple && facts) {
+    const d1 = parseSicCalendarDate(facts.validUntil)?.getTime() ?? Infinity
+    const d2 = parseSicCalendarDate(facts.validUntil2)?.getTime() ?? Infinity
+    person = d1 === d2 ? null : d1 < d2 ? names.person1 : names.person2
+  }
+  return { validUntil: until.toISOString(), person }
 }
 
 function verifiedFactsOf(modules: { moduleKind: string; status: SicModuleStatus; verifiedFacts: unknown }[], kind: SicModuleId) {
@@ -170,7 +179,11 @@ export async function getSicDossierView(emailRaw: string): Promise<SicDossierVie
       certificateLines: certificateLinesByKind.get(def.id) ?? [],
       incomeGroup:
         def.id === 'ARBEIT_EINKOMMEN' && row.status === 'NOT_APPLICABLE' ? readIncomeGroup(row.verifiedFacts) : null,
-      idRenewal: idRenewalFor(def.id, row, cert, verifiedFactsOf(cert.modules, 'BONITAET')),
+      idRenewal: idRenewalFor(def.id, row, cert, verifiedFactsOf(cert.modules, 'BONITAET'), {
+        couple,
+        person1: lineOpts.person1Label ?? null,
+        person2: lineOpts.person2Label ?? null,
+      }),
     }
   })
 

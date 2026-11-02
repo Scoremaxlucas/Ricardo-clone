@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { sicPresentedModules, verifiedModuleLineItems } from '@/lib/sic/dossier'
 import {
+  normalizeSicFacts,
   sicApprovalBlockers,
   sicFactGroups,
   sicFactLines,
@@ -271,5 +272,55 @@ describe('Randfälle aus dem Review', () => {
     expect(sicIdCapsExpiry({ validUntil: '2026-08-01' }, { extractDate: '2026-06-01' }, NOW)).toBe(
       false
     )
+  })
+})
+
+describe('Paar, nur eine Person angestellt', () => {
+  const names = { couple: true, person1Label: 'Anna Muster', person2Label: 'Beat Beispiel' }
+
+  it('Person 2 nicht angestellt: ihre Lohnfelder entfallen, die 3×-Regel rechnet mit einem Einkommen', () => {
+    const raw = {
+      incomeBand: '80_100k',
+      employmentType: 'unbefristet',
+      employedSince: '2020-01-01',
+      noticeGiven: 'no',
+      incomeGroup2: 'retired',
+    }
+    const parsed = normalizeSicFacts('ARBEIT_EINKOMMEN', raw, { couple: true })
+    expect(parsed.ok).toBe(true)
+    const facts = parsed.ok ? parsed.facts : {}
+    expect(sicApprovalBlockers('ARBEIT_EINKOMMEN', facts, NOW)).toEqual([])
+    const groups = sicFactGroups('ARBEIT_EINKOMMEN', facts, names)
+    expect(groups[1]).toEqual({
+      label: 'Beat Beispiel',
+      lines: ['Pensioniert', SIC_INCOME_NOT_CHECKED_LINE],
+    })
+    expect(groups[2].lines[0]).toBe(
+      'Richtwert 3×-Regel, Einkommen Anna Muster: Miete bis CHF 2’200'
+    )
+  })
+
+  it('ohne Gruppe bleiben die Lohnfelder beider Personen Pflicht', () => {
+    const parsed = normalizeSicFacts(
+      'ARBEIT_EINKOMMEN',
+      {
+        incomeBand: '80_100k',
+        employmentType: 'unbefristet',
+        employedSince: '2020-01-01',
+        noticeGiven: 'no',
+      },
+      { couple: true }
+    )
+    expect(parsed.ok).toBe(false)
+  })
+
+  it('beide nicht angestellt: Freigabe gesperrt (Haushalts-Vermerk ist der Weg)', () => {
+    expect(
+      sicApprovalBlockers(
+        'ARBEIT_EINKOMMEN',
+        { incomeGroup: 'in_training', incomeGroup2: 'retired' },
+        NOW
+      ).length
+    ).toBe(1)
   })
 })
