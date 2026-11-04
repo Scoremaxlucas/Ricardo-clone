@@ -1,4 +1,4 @@
-import { SIC_SITE_ORIGIN } from '@/lib/sic/config'
+import { SIC_DEBT_EXTRACT_ORDER_URL, SIC_SITE_ORIGIN } from '@/lib/sic/config'
 import { getEmailBaseUrl } from './config'
 
 const ALLOWED_EXTERNAL_EMAIL_HOSTS = new Set([
@@ -8,6 +8,8 @@ const ALLOWED_EXTERNAL_EMAIL_HOSTS = new Set([
   'www.dhl.ch',
   'ups.com',
   'www.ups.com',
+  // Offizielles Portal für den Betreibungsauszug (SIC_DEBT_EXTRACT_ORDER_URL).
+  new URL(SIC_DEBT_EXTRACT_ORDER_URL).hostname,
 ])
 
 function isAllowedHost(hostname: string): boolean {

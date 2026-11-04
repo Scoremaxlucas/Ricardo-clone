@@ -17,7 +17,9 @@ import {
 } from '@/lib/sic/email'
 import { sicLog } from '@/lib/sic/log'
 import { createSicMagicLink } from '@/lib/sic/magic-link'
-import { isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
+import { sicPresentedModules } from '@/lib/sic/dossier-core'
+import { isSicCouple } from '@/lib/sic/household'
+import { isSicCertificateSealReady, isSicModuleId, type SicModuleId } from '@/lib/sic/modules'
 import { loadSicRenewalPending } from '@/lib/sic/renewal'
 import { readSicFacts, sicIdCapsExpiry } from '@/lib/sic/facts'
 
@@ -398,9 +400,18 @@ export async function GET(request: NextRequest) {
 
         const certificate = await prisma.sicCertificate.findUnique({
           where: { id: certificateId },
-          select: { email: true },
+          select: {
+            email: true,
+            status: true,
+            expiresAt: true,
+            certifiedAt: true,
+            householdKind: true,
+            modules: { select: { moduleKind: true, status: true, verifiedFacts: true } },
+          },
         })
         if (!certificate) continue
+        const valid = certificate.status === 'ACTIVE' && !!certificate.expiresAt && certificate.expiresAt > now
+        const presented = sicPresentedModules(certificate.modules, certificate, now)
 
         try {
           const { url } = await createSicMagicLink(certificate.email)
@@ -408,6 +419,10 @@ export async function GET(request: NextRequest) {
             email: certificate.email,
             moduleKinds: missing.map(m => m.moduleKind as SicModuleId),
             magicLinkUrl: url,
+            state: valid ? 'valid' : certificate.certifiedAt ? 'other' : 'new',
+            couple: isSicCouple(certificate.householdKind),
+            sealHeld:
+              valid && isSicCertificateSealReady(presented.filter(m => m.status === 'VERIFIED').map(m => m.moduleKind)),
           })
           await prisma.sicCertificateModule.updateMany({
             where: { id: { in: missing.map(m => m.id) } },

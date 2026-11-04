@@ -2,13 +2,13 @@
 
 `e2e/sic/scenarios.spec.ts` spielt die Plattform von Kauf bis Widerruf durch — mit echtem Stripe-Checkout
 (Testmodus, Karte 4242), echten Uploads, Prüfer-Freigaben, PDF, Prüfseite, Cron-Läufen und Webhooks.
-29 Szenarien, je auf Desktop und Handy.
+30 Szenarien, je auf Desktop und Handy.
 
 ## Was abgedeckt ist
 
 1. **Einzelperson:** Kauf über das Formular der Website → Stripe → Dossier; kein PDF vor der ersten Freigabe;
    falsche Datei abgelehnt; Verlustscheine, offene Betreibungen und zu alter Auszug blockiert;
-   «Stand der Prüfung» ohne Siegel; abgelaufener Ausweis blockiert, gültiger gibt das Siegel;
+   gültiges Zertifikat ohne Siegel; abgelaufener Ausweis blockiert, gültiger gibt das Siegel;
    «Selbständig» als ANGABE, Upload danach gesperrt; befristete Stelle nur mit Enddatum;
    Referenz abgelehnt (Mail mit Grund), nachgereicht, mit «Stand Referenz» freigegeben; neuer Prüf-Code;
    fremder Zugriff gesperrt; Abmelden und Anmeldelink; Ausweis kürzt das Zertifikat (Erinnerung);
@@ -17,7 +17,7 @@
    Gültigkeit am älteren Auszug; volle Erstattung im Stripe-Dashboard widerruft per Webhook; Neuanfang.
 4. **Kleine offene Betreibung:** ohne Zustimmung gesperrt; Zustimmung im Dossier löst erneute Prüfung aus;
    über der Grenze gesperrt; gedruckt nur als Stufe; Zurückziehen nimmt den Auszug vom Zertifikat.
-3. **Zahlung:** Abbruch legt nichts an; zwei gleichzeitig bezahlte Verlängerungen → eine gilt, die zweite wird erstattet; gefälschte Webhook-Signatur abgelehnt; echtes Event idempotent;
+3. **Zahlung und Erinnerung:** Upload-Erinnerung mit Bestell-Link, einmal pro Zertifikat; Abbruch legt nichts an; zwei gleichzeitig bezahlte Verlängerungen → eine gilt, die zweite wird erstattet; gefälschte Webhook-Signatur abgelehnt; echtes Event idempotent;
    Anmeldelink nur einmal verwendbar.
 
 Nicht abgedeckt: TWINT über Payrexx (braucht ein Payrexx-Testkonto).

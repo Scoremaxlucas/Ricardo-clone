@@ -1,4 +1,10 @@
-import { getSicModule, SIC_MODULES, sicSealRequirementLabel, type SicModuleId } from '@/lib/sic/modules'
+import { SIC_DEBT_EXTRACT_ORDER_URL } from '@/lib/sic/config'
+import {
+  getSicModule,
+  SIC_MODULES,
+  sicSealRequirementLabel,
+  type SicModuleId,
+} from '@/lib/sic/modules'
 
 /** «1 von 4 steht drauf» — die Zeile, die nach der ersten Freigabe zählt. */
 export function sicStandsOnDocLine(verifiedCount: number): string {
@@ -16,9 +22,8 @@ export function sicCertificateReadyCopy(opts: {
   validUntil: string | null
 }): { subject: string; heading: string; preheader: string; paragraphs: string[] } {
   const title = getSicModule(opts.moduleKind).title
-  const validity =
-    opts.validUntil ?
-      `Gültig bis ${opts.validUntil}.`
+  const validity = opts.validUntil
+    ? `Gültig bis ${opts.validUntil}.`
     : 'Gültig wird das Zertifikat wieder mit dem geprüften neuen Betreibungsauszug.'
   const onDoc = sicStandsOnDocLine(opts.verifiedCount)
   const moreOpen = opts.verifiedCount < SIC_MODULES.length
@@ -26,17 +31,17 @@ export function sicCertificateReadyCopy(opts: {
   const sealNeed = sicSealRequirementLabel()
 
   if (opts.firstVerification && opts.pdfReady) {
-    const paragraphs = sealReady ?
-      [
-        `Dein Mieter-Zertifikat ist bereit — mit Siegel. ${onDoc}.`,
-        `Geprüft ist «${title}». ${validity}`,
-        'Lade das PDF herunter und leg es der nächsten Bewerbung bei. Eine Zusage versprechen wir nicht.',
-      ]
-    : [
-        `Dein Mieter-Zertifikat ist bereit. ${onDoc}.`,
-        `Geprüft ist «${title}». ${validity}`,
-        `Es ist gültig für alles, was geprüft ist — leg es der Bewerbung bei. Das Siegel kommt dazu, sobald ${sealNeed} geprüft sind. Eine Zusage versprechen wir nicht.`,
-      ]
+    const paragraphs = sealReady
+      ? [
+          `Dein Mieter-Zertifikat ist bereit — mit Siegel. ${onDoc}.`,
+          `Geprüft ist «${title}». ${validity}`,
+          'Lade das PDF herunter und leg es der nächsten Bewerbung bei. Eine Zusage versprechen wir nicht.',
+        ]
+      : [
+          `Dein Mieter-Zertifikat ist bereit. ${onDoc}.`,
+          `Geprüft ist «${title}». ${validity}`,
+          `Es ist gültig für alles, was geprüft ist — leg es der Bewerbung bei. Das Siegel kommt dazu, sobald ${sealNeed} geprüft sind. Eine Zusage versprechen wir nicht.`,
+        ]
     if (moreOpen) {
       paragraphs.push(
         'Angaben mit Unterschrift Dritter — etwa die Referenz vom Vermieter — dürfen länger dauern.'
@@ -68,12 +73,14 @@ export function sicCertificateReadyCopy(opts: {
   ]
   if (opts.pdfReady) {
     paragraphs.push(
-      sealReady ?
-        'Lade das aktuelle PDF herunter und leg es der Bewerbung bei.'
-      : `Lade das aktuelle PDF herunter und leg es der Bewerbung bei. Das Siegel kommt dazu, sobald ${sealNeed} geprüft sind.`
+      sealReady
+        ? 'Lade das aktuelle PDF herunter und leg es der Bewerbung bei.'
+        : `Lade das aktuelle PDF herunter und leg es der Bewerbung bei. Das Siegel kommt dazu, sobald ${sealNeed} geprüft sind.`
     )
   } else {
-    paragraphs.push('Für das PDF fehlt noch dein Name auf dem Dokument — das ist in einer Minute erledigt.')
+    paragraphs.push(
+      'Für das PDF fehlt noch dein Name auf dem Dokument — das ist in einer Minute erledigt.'
+    )
   }
 
   return {
@@ -84,60 +91,125 @@ export function sicCertificateReadyCopy(opts: {
   }
 }
 
-/**
- * Eine Erinnerung pro Zertifikat: listet alle noch fehlenden Nachweise auf.
- * Selbst beschaffbare Dokumente und Vorlagen mit Unterschrift Dritter werden getrennt benannt.
- */
-export function sicUploadReminderCopy(moduleKinds: SicModuleId | SicModuleId[]): {
-  heading: string
-  preheader: string
-  paragraphs: string[]
-  /** Fehlende Nachweise als Liste (Titel). */
-  items: string[]
-} {
-  const kinds = Array.isArray(moduleKinds) ? moduleKinds : [moduleKinds]
-  const defs = kinds.map(k => getSicModule(k))
-  const selfDefs = defs.filter(d => d.selfObtainable)
-  const thirdDefs = defs.filter(d => !d.selfObtainable)
-  const items = defs.map(d => d.title)
-  const single = defs.length === 1
+export type SicUploadReminderItem = {
+  title: string
+  before: string
+  link?: { label: string; url: string }
+  after?: string
+}
 
-  const paragraphs: string[] = []
-  if (single) {
-    const def = defs[0]
-    paragraphs.push(
-      def.selfObtainable ?
-        `Für «${def.title}» fehlt noch der Upload. Das Dokument hast du selbst — oft innerhalb eines Tages.`
-      : `Für «${def.title}» fehlt noch die unterzeichnete Vorlage. Eine Unterschrift Dritter darf ein paar Tage dauern.`
-    )
-    paragraphs.push(def.selfObtainable ? 'Lade es hoch, sobald es vorliegt.' : 'Lade sie hoch, sobald sie vorliegt.')
-  } else {
-    paragraphs.push(`Für dein Zertifikat fehlen noch ${defs.length} Nachweise:`)
-    if (selfDefs.length > 0) {
-      paragraphs.push(
-        `${joinTitles(selfDefs.map(d => d.title))}: Diese Dokumente hast du selbst — oft innerhalb eines Tages beschafft.`
-      )
+export type SicUploadReminderOpts = {
+  /** new: noch nichts geprüft. valid: Zertifikat gilt schon. other: ausgestellt, gilt gerade nicht. */
+  state?: 'new' | 'valid' | 'other'
+  couple?: boolean
+  /** Siegel steht schon (auch bei einem gerade neu eingereichten Nachweis): dann nicht damit werben. */
+  sealHeld?: boolean
+}
+
+function reminderItem(id: SicModuleId, couple: boolean): SicUploadReminderItem {
+  const title = getSicModule(id).title
+  if (id === 'AUFENTHALT') {
+    return {
+      title,
+      before: couple ? 'Foto oder Scan hochladen, für jede Person.' : 'Foto oder Scan hochladen.',
     }
-    if (thirdDefs.length > 0) {
-      paragraphs.push(
-        `${joinTitles(thirdDefs.map(d => d.title))}: Hier braucht es die unterzeichnete Vorlage. Eine Unterschrift Dritter darf ein paar Tage dauern.`
-      )
-    }
-    paragraphs.push('Lade alles hoch, sobald es vorliegt. Jeder Nachweis wird einzeln geprüft.')
   }
-
+  if (id === 'BONITAET') {
+    return {
+      title,
+      before: couple ? 'Für jede Person ' : '',
+      link: {
+        label: couple ? 'online bestellen' : 'Online bestellen',
+        url: SIC_DEBT_EXTRACT_ORDER_URL,
+      },
+      after: ' und hochladen.',
+    }
+  }
+  if (id === 'ARBEIT_EINKOMMEN') {
+    return {
+      title,
+      before: couple
+        ? 'Lohnabrechnung und Formular für den Arbeitgeber, je Person. Ist eine Person nicht angestellt, genügt für sie ein Beleg wie die Ausbildungsbestätigung. Seid ihr beide nicht angestellt, vermerkst du das mit einem Klick.'
+        : 'Lohnabrechnung und Formular für den Arbeitgeber. Nicht angestellt? Das vermerkst du mit einem Klick.',
+    }
+  }
   return {
-    heading: single ? 'Nachweis noch offen' : 'Nachweise noch offen',
-    preheader: single ? `Noch offen: ${items[0]}` : `Noch offen: ${items.join(', ')}`,
-    paragraphs,
-    items,
+    title,
+    before:
+      'Formular für deinen bisherigen Vermieter. Keinen bisherigen Vermieter? Auch das vermerkst du mit einem Klick.',
   }
 }
 
-function joinTitles(titles: string[]): string {
-  const quoted = titles.map(t => `«${t}»`)
-  if (quoted.length <= 1) return quoted.join('')
-  return `${quoted.slice(0, -1).join(', ')} und ${quoted[quoted.length - 1]}`
+/**
+ * Eine Erinnerung pro Zertifikat. Führt zum nächsten Schritt statt aufzuzählen, was fehlt:
+ * zuerst was man selbst beschaffen kann, danach was eine Unterschrift Dritter braucht.
+ */
+export function sicUploadReminderCopy(
+  moduleKinds: SicModuleId | SicModuleId[],
+  opts: SicUploadReminderOpts = {}
+): {
+  subject: string
+  heading: string
+  preheader: string
+  intro: string
+  groups: { heading: string; items: SicUploadReminderItem[] }[]
+  buttonText: string
+} {
+  const kinds = Array.isArray(moduleKinds) ? moduleKinds : [moduleKinds]
+  const couple = opts.couple === true
+  const state = opts.state ?? 'new'
+  // Katalog-Reihenfolge ist Betreibung vor Ausweis; der Ausweis geht aber am schnellsten.
+  const selfIds = (['AUFENTHALT', 'BONITAET'] as const).filter(id => kinds.includes(id))
+  const thirdIds = (['ARBEIT_EINKOMMEN', 'ZUVERLAESSIGKEIT'] as const).filter(id =>
+    kinds.includes(id)
+  )
+  const selfItems = selfIds.map(id => reminderItem(id, couple))
+  const thirdItems = thirdIds.map(id => reminderItem(id, couple))
+
+  // Das Siegel gehört zum letzten Nachweis, der dafür fehlt.
+  if (!opts.sealHeld && selfItems.length > 0) {
+    const last = selfItems[selfItems.length - 1]
+    const seal = `Mit ${sicSealRequirementLabel()} bekommt dein Zertifikat das Siegel.`
+    if (last.link) last.after = `${last.after ?? ''} ${seal}`
+    else last.before = `${last.before} ${seal}`
+  }
+
+  const both = selfItems.length > 0 && thirdItems.length > 0
+  const groups = [
+    ...(selfItems.length > 0
+      ? [{ heading: both ? 'Am schnellsten geht es so:' : 'Das fehlt noch:', items: selfItems }]
+      : []),
+    ...(thirdItems.length > 0
+      ? [{ heading: both ? 'Danach, wenn du so weit bist:' : 'Das fehlt noch:', items: thirdItems }]
+      : []),
+  ]
+
+  const copy = {
+    new: {
+      subject: 'Dein Zertifikat: der nächste Schritt',
+      heading: 'Starte mit einem Nachweis',
+      intro:
+        'Dein Mieter-Zertifikat gilt ab der ersten geprüften Angabe. Du musst also nicht warten, bis alles beisammen ist.',
+    },
+    valid: {
+      subject: 'Dein Zertifikat: das fehlt noch',
+      heading: 'Dein Zertifikat gilt bereits',
+      intro:
+        'Mit diesen Angaben wird es stärker. Jede wird einzeln geprüft, du kannst sie also nacheinander hochladen.',
+    },
+    other: {
+      subject: 'Dein Zertifikat: das fehlt noch',
+      heading: 'Noch offene Nachweise',
+      intro: 'Jeder Nachweis wird einzeln geprüft, du kannst sie also nacheinander hochladen.',
+    },
+  }[state]
+
+  return {
+    ...copy,
+    preheader: copy.intro,
+    groups,
+    buttonText: 'Nachweis hochladen',
+  }
 }
 
 export type SicMagicLinkMailSource = 'self' | 'support' | 'checkout'
@@ -230,6 +302,7 @@ export function sicEmailChangeNoticeCopy(newEmail: string): {
       `Für dein Zertifikat wurde eine neue E-Mail angegeben: ${newEmail}. Die Änderung gilt erst, wenn diese Adresse bestätigt wird.`,
       'Warst du das nicht, schreib uns. Die bisherige Adresse bleibt gültig, bis die neue bestätigt ist.',
     ],
-    footnote: 'Diese Nachricht geht an die bisherige Adresse, damit eine Änderung nicht unbemerkt bleibt.',
+    footnote:
+      'Diese Nachricht geht an die bisherige Adresse, damit eine Änderung nicht unbemerkt bleibt.',
   }
 }

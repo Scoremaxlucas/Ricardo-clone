@@ -623,6 +623,26 @@ test.describe
 
 // ─────────────────────────────────────────────────────────────────────────────
 test.describe.serial('3 · Zahlung: Abbruch, Webhook, Missbrauch', () => {
+  test('Upload-Erinnerung: führt zum nächsten Schritt, mit Bestell-Link, einmal pro Zertifikat', async ({
+    page,
+  }) => {
+    const email = uniqueEmail('nudge')
+    const cert = await buyCertificate(page, { email, first: 'Erin', last: 'Nerung' })
+    await db.sicCertificateModule.updateMany({
+      where: { certificateId: cert.id },
+      data: { paidAt: new Date(Date.now() - 4 * 86_400_000) },
+    })
+    const before = mailsTo(email).length
+    await runCron(page.request)
+    const mail = await waitForMail(email, /der nächste Schritt/, before)
+    expect(mail.html).toContain('Starte mit einem Nachweis')
+    expect(mail.html).toContain('betreibungen.easygov.swiss')
+    expect(mail.html).toContain('Nachweis hochladen')
+    expect(mail.text).toContain('Nicht angestellt?')
+    await runCron(page.request)
+    expect(mailsTo(email).filter(m => /der nächste Schritt/.test(m.subject))).toHaveLength(1)
+  })
+
   test('Abgebrochene Zahlung legt kein Zertifikat an', async ({ page }) => {
     const email = uniqueEmail('abort')
     const res = await startCheckoutApi(page.request, {

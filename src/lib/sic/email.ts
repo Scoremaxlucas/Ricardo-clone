@@ -2,6 +2,7 @@ import { sendEmail } from '@/lib/email/sender'
 import { SIC_COLORS } from '@/lib/sic/brand'
 import {
   SIC_BRAND_NAME,
+  SIC_DEBT_EXTRACT_ORDER_URL,
   SIC_OPERATOR,
   SIC_REVIEW_SLA,
   SIC_SUPPORT_EMAIL,
@@ -16,6 +17,8 @@ import {
   sicMagicLinkEmailCopy,
   sicUploadReminderCopy,
   type SicMagicLinkMailSource,
+  type SicUploadReminderItem,
+  type SicUploadReminderOpts,
 } from '@/lib/sic/email-copy'
 import { getSicModule, SIC_RENEWAL_FEE_CHF, type SicModuleId } from '@/lib/sic/modules'
 import { sicSwissDate } from '@/lib/sic/validity'
@@ -81,7 +84,7 @@ export function sicEmailShell(opts: {
             `<tr><td style="padding:0 40px 28px;font-size:13px;line-height:1.6;color:${MUTED};">${footnoteHtml}</td></tr>`
           : ''
         }
-        <tr><td style="padding:20px 40px;border-top:1px solid ${HAIRLINE};font-size:12px;line-height:1.6;color:#94a3b8;">
+        <tr><td style="padding:20px 40px;border-top:1px solid ${HAIRLINE};font-size:12px;line-height:1.6;color:${MUTED};">
           Diese Nachricht wurde automatisch von ${SIC_BRAND_NAME} versendet. Fragen: ${SIC_SUPPORT_EMAIL}
         </td></tr>
       </table>
@@ -243,6 +246,10 @@ export async function sendSicDocsPurgeWarningEmail(opts: {
   })
 }
 
+function sicDaysLabel(days: number): string {
+  return days === 1 ? '1 Tag' : `${days} Tagen`
+}
+
 export async function sendSicExpiryReminderEmail(opts: {
   email: string
   daysLeft: number
@@ -255,10 +262,10 @@ export async function sendSicExpiryReminderEmail(opts: {
     const idUrl = sicUrl(sicPaths.certificateWorkspace)
     return sicMail({
       to: opts.email,
-      subject: `${SIC_BRAND_NAME}: Dein Ausweis läuft in ${opts.daysLeft} Tagen ab`,
+      subject: `${SIC_BRAND_NAME}: Dein Ausweis läuft in ${sicDaysLabel(opts.daysLeft)} ab`,
       html: sicEmailShell({
         preheader: `Neuen Ausweis einreichen — kostenlos`,
-        heading: `Dein Ausweis läuft in ${opts.daysLeft} Tagen ab`,
+        heading: `Dein Ausweis läuft in ${sicDaysLabel(opts.daysLeft)} ab`,
         bodyHtml: `<p style="margin:0 0 12px;">Dein Zertifikat gilt bis <strong>${dateStr}</strong>, weil dann der geprüfte Ausweis abläuft. Dein Betreibungsauszug trägt länger.</p>
       <p style="margin:0;">Reich den neuen Ausweis ein, sobald du ihn hast — kostenlos, keine Verlängerung nötig. Nach der Prüfung gilt das Zertifikat wieder bis zum Ende des Auszugs.</p>`,
         buttonText: 'Neuen Ausweis einreichen',
@@ -268,67 +275,66 @@ export async function sendSicExpiryReminderEmail(opts: {
     })
   }
   const buttonUrl = sicUrl(sicPaths.renew)
+  const left = sicDaysLabel(opts.daysLeft)
   const html = sicEmailShell({
-    preheader: `Dein Zertifikat läuft in ${opts.daysLeft} Tagen ab`,
-    heading: `Gültigkeit endet in ${opts.daysLeft} Tagen`,
-    bodyHtml: `<p style="margin:0 0 12px;">Dein ${SIC_BRAND_NAME}-Zertifikat läuft am <strong>${dateStr}</strong> ab. Danach kannst du es der Bewerbung nicht mehr als gültigen Nachweis beilegen.</p>
-      <p style="margin:0 0 12px;">Für die Verlängerung brauchst du einen frischen Auszug vom Betreibungsamt. Lohn und Arbeitsstelle nur, wenn die Prüfung älter als zwölf Monate ist; den Ausweis nur, wenn er abgelaufen ist. Die Referenz des bisherigen Vermieters bleibt stehen.</p>
-      <p style="margin:0;">Bist du angemeldet, geht es mit einem Klick zur Zahlung. Sonst zuerst der Anmeldelink auf der Seite — danach dieselbe Verlängerung.</p>`,
+    preheader: `Gültig bis ${dateStr}`,
+    heading: `Dein Zertifikat gilt noch ${left}`,
+    bodyHtml: `<p style="margin:0 0 12px;">Es läuft am <strong>${dateStr}</strong> ab. Bewirbst du dich danach noch, verlängere es rechtzeitig.</p>
+      <p style="margin:0;">Dafür brauchst du einen neuen <a href="${SIC_DEBT_EXTRACT_ORDER_URL}" style="color:${NAVY};font-weight:600;">Auszug vom Betreibungsamt</a>, die Verlängerung kostet CHF ${SIC_RENEWAL_FEE_CHF}.–. Der Rest bleibt stehen, ausser er ist veraltet: Lohn und Arbeitsstelle nach zwölf Monaten, ein abgelaufener Ausweis.</p>`,
     buttonText: 'Jetzt verlängern',
     buttonUrl,
   })
   return sicMail({
     to: opts.email,
-    subject: `${SIC_BRAND_NAME}: Zertifikat läuft in ${opts.daysLeft} Tagen ab`,
+    subject: `Dein Zertifikat gilt noch ${left}`,
     html,
-    text: `Dein Zertifikat läuft am ${dateStr} ab (${opts.daysLeft} Tage). Danach kannst du es der Bewerbung nicht mehr als gültigen Nachweis beilegen.\n\nJetzt verlängern: ${buttonUrl}`,
+    text: `Dein Zertifikat läuft am ${dateStr} ab (noch ${left}). Für die Verlängerung (CHF ${SIC_RENEWAL_FEE_CHF}.–) brauchst du einen neuen Auszug vom Betreibungsamt: ${SIC_DEBT_EXTRACT_ORDER_URL}\n\nJetzt verlängern: ${buttonUrl}`,
   })
 }
 
 /**
  * Eine Erinnerung pro Zertifikat mit allen fehlenden Nachweisen — nie eine Mail pro Angabe.
  */
-export async function sendSicUploadReminderEmail(opts: {
-  email: string
-  moduleKinds: SicModuleId[]
-  magicLinkUrl?: string
-}) {
+export async function sendSicUploadReminderEmail(
+  opts: {
+    email: string
+    moduleKinds: SicModuleId[]
+    magicLinkUrl?: string
+  } & SicUploadReminderOpts
+) {
   if (opts.moduleKinds.length === 0) {
     throw new Error('sendSicUploadReminderEmail: keine Module übergeben')
   }
   const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
-  const copy = sicUploadReminderCopy(opts.moduleKinds)
-  const single = opts.moduleKinds.length === 1
-  const listHtml =
-    single ? '' : (
-      `<ul style="margin:0 0 12px;padding-left:20px;">${copy.items
-        .map(t => `<li style="margin:0 0 4px;">${escapeHtml(t)}</li>`)
-        .join('')}</ul>`
-    )
-  const paragraphsHtml = copy.paragraphs
-    .map((p, i) => {
-      const html = i === copy.paragraphs.length - 1 ? `<p style="margin:0;">${escapeHtml(p)}</p>` : `<p style="margin:0 0 12px;">${escapeHtml(p)}</p>`
-      // Checkliste direkt nach dem Einleitungssatz einfügen.
-      return i === 0 ? html + listHtml : html
-    })
-    .join('')
-  const subject =
-    single ?
-      `${SIC_BRAND_NAME}: Noch offen — «${copy.items[0]}»`
-    : `${SIC_BRAND_NAME}: ${copy.items.length} Nachweise noch offen`
-  const textList = single ? '' : `\n${copy.items.map(t => `- ${t}`).join('\n')}\n`
-  const text = [copy.paragraphs[0] + textList, ...copy.paragraphs.slice(1)].join('\n\n')
+  const copy = sicUploadReminderCopy(opts.moduleKinds, opts)
+  const itemHtml = (i: SicUploadReminderItem) => {
+    const link =
+      i.link ?
+        `<a href="${i.link.url}" style="color:${NAVY};font-weight:600;">${escapeHtml(i.link.label)}</a>`
+      : ''
+    return `<li style="margin:0 0 8px;"><strong style="color:${NAVY};">${escapeHtml(i.title)}:</strong> ${escapeHtml(i.before)}${link}${escapeHtml(i.after ?? '')}</li>`
+  }
+  const itemText = (i: SicUploadReminderItem) =>
+    `- ${i.title}: ${i.before}${i.link ? `${i.link.label} (${i.link.url})` : ''}${i.after ?? ''}`
+  const bodyHtml = [
+    `<p style="margin:0 0 16px;">${escapeHtml(copy.intro)}</p>`,
+    ...copy.groups.map(
+      g =>
+        `<p style="margin:0 0 8px;font-weight:600;color:${NAVY};">${escapeHtml(g.heading)}</p><ul style="margin:0 0 16px;padding-left:20px;">${g.items.map(itemHtml).join('')}</ul>`
+    ),
+  ].join('')
+  const text = [copy.intro, ...copy.groups.map(g => `${g.heading}\n${g.items.map(itemText).join('\n')}`)].join('\n\n')
   return sicMail({
     to: opts.email,
-    subject,
+    subject: copy.subject,
     html: sicEmailShell({
       preheader: copy.preheader,
       heading: copy.heading,
-      bodyHtml: paragraphsHtml,
-      buttonText: 'Nachweise hochladen',
+      bodyHtml,
+      buttonText: copy.buttonText,
       buttonUrl,
     }),
-    text: `${text}\n\n${buttonUrl}`,
+    text: `${copy.heading}\n\n${text}\n\n${buttonUrl}`,
   })
 }
 

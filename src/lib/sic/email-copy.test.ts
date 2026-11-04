@@ -1,4 +1,6 @@
 import { sicCertificateReadyCopy, sicEmailChangeConfirmCopy, sicEmailChangeNoticeCopy, sicMagicLinkEmailCopy, sicStandsOnDocLine, sicUploadReminderCopy } from '@/lib/sic/email-copy'
+import { SIC_DEBT_EXTRACT_ORDER_URL } from '@/lib/sic/config'
+import { sanitizeEmailUrl } from '@/lib/email/url-safety'
 import { SIC_MODULES } from '@/lib/sic/modules'
 import {
   SIC_UPLOAD_NUDGE_SELF_DAYS,
@@ -79,36 +81,59 @@ describe('first verification copy', () => {
 })
 
 describe('upload reminder copy', () => {
-  it('tells self-serve modules they already have the document', () => {
-    const copy = sicUploadReminderCopy('BONITAET')
-    expect(copy.paragraphs[0]).toMatch(/selbst/)
-    expect(copy.paragraphs.join(' ')).not.toMatch(/Unterschrift Dritter/)
+  const flat = (copy: ReturnType<typeof sicUploadReminderCopy>) =>
+    [copy.intro, ...copy.groups.flatMap(g => [g.heading, ...g.items.map(x => `${x.title} ${x.before} ${x.link?.label ?? ''} ${x.after ?? ''}`)])].join(' ')
+
+  it('leads with the next step and says the certificate counts from the first check', () => {
+    const copy = sicUploadReminderCopy(SIC_MODULES.map(m => m.id))
+    expect(copy.subject).toBe('Dein Zertifikat: der nächste Schritt')
+    expect(copy.heading).toBe('Starte mit einem Nachweis')
+    expect(copy.intro).toMatch(/ab der ersten geprüften Angabe/)
+    expect(copy.groups.map(g => g.heading)).toEqual(['Am schnellsten geht es so:', 'Danach, wenn du so weit bist:'])
+    expect(copy.groups[0].items.map(i => i.title)).toEqual(['Ausweis', 'Betreibungsauszug'])
+    expect(copy.buttonText).toBe('Nachweis hochladen')
+    expect(flat(copy)).not.toMatch(/hast du selbst|Lade alles hoch/)
   })
 
-  it('gives third-party modules time for a signature', () => {
-    const copy = sicUploadReminderCopy('ZUVERLAESSIGKEIT')
-    expect(copy.paragraphs[0]).toMatch(/Unterschrift Dritter/)
+  it('keeps the extract order link through the outbound link filter', () => {
+    expect(sanitizeEmailUrl(SIC_DEBT_EXTRACT_ORDER_URL)).toBe(SIC_DEBT_EXTRACT_ORDER_URL)
+  })
+
+  it('links the extract order and offers the opt-outs', () => {
+    const copy = sicUploadReminderCopy(SIC_MODULES.map(m => m.id))
+    const extract = copy.groups[0].items.find(i => i.title === 'Betreibungsauszug')
+    expect(extract?.link?.url).toContain('easygov')
+    expect(flat(copy)).toMatch(/Nicht angestellt\?/)
+    expect(flat(copy)).toMatch(/Keinen bisherigen Vermieter\?/)
+  })
+
+  it('mentions the seal once, and not when it is already held', () => {
+    const count = (t: string) => (t.match(/Siegel/g) ?? []).length
+    expect(count(flat(sicUploadReminderCopy(['BONITAET', 'AUFENTHALT'])))).toBe(1)
+    expect(count(flat(sicUploadReminderCopy(['AUFENTHALT'])))).toBe(1)
+    expect(count(flat(sicUploadReminderCopy(['AUFENTHALT'], { sealHeld: true, state: 'valid' })))).toBe(0)
+    expect(count(flat(sicUploadReminderCopy(['ZUVERLAESSIGKEIT'])))).toBe(0)
+  })
+
+  it('changes the opening once the certificate is valid', () => {
+    const copy = sicUploadReminderCopy(['ZUVERLAESSIGKEIT'], { state: 'valid' })
+    expect(copy.heading).toBe('Dein Zertifikat gilt bereits')
+    expect(copy.groups).toHaveLength(1)
+    expect(copy.groups[0].heading).toBe('Das fehlt noch:')
+    expect(sicUploadReminderCopy(['BONITAET'], { state: 'other' }).intro).not.toMatch(/gilt/)
+  })
+
+  it('speaks to couples per person', () => {
+    const text = flat(sicUploadReminderCopy(SIC_MODULES.map(m => m.id), { couple: true }))
+    expect(text).toMatch(/für jede Person/)
+    expect(text).toMatch(/Für jede Person\s+online bestellen/)
+    expect(text).toMatch(/Ausbildungsbestätigung/)
   })
 
   it('covers every catalog module', () => {
     for (const m of SIC_MODULES) {
-      expect(sicUploadReminderCopy(m.id).paragraphs.length).toBeGreaterThan(0)
+      expect(sicUploadReminderCopy(m.id).groups.flatMap(g => g.items).map(i => i.title)).toEqual([m.title])
     }
-  })
-
-  it('bundles several missing proofs into one message', () => {
-    const copy = sicUploadReminderCopy(['BONITAET', 'ZUVERLAESSIGKEIT'])
-    expect(copy.items).toHaveLength(2)
-    expect(copy.heading).toMatch(/Nachweise/)
-    expect(copy.paragraphs[0]).toMatch(/2 Nachweise/)
-    const all = copy.paragraphs.join(' ')
-    expect(all).toMatch(/selbst/)
-    expect(all).toMatch(/Unterschrift Dritter/)
-  })
-
-  it('lists all four modules in one preheader', () => {
-    const copy = sicUploadReminderCopy(SIC_MODULES.map(m => m.id))
-    for (const m of SIC_MODULES) expect(copy.preheader).toContain(m.title)
   })
 })
 
