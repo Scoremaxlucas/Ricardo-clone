@@ -1,7 +1,6 @@
 import {
   formatSicChf,
   SIC_BUNDLE_ALL_MODULES_CHF,
-  SIC_MODULES,
   SIC_RENEWAL_FEE_CHF,
   SIC_VALIDITY_MONTHS,
   sicIsFree,
@@ -13,7 +12,7 @@ export const SIC_PRICE_LABEL = IS_FREE ? 'Kostenlos' : formatSicChf(SIC_BUNDLE_A
 
 /** In den ersten Sekunden: was es ist, für wen, ohne Portal-Abo. */
 export const SIC_PRODUCT_LINE =
-  'Geprüftes Mieter-Zertifikat für Bewerbungen in der Schweiz — einmal anlegen, jeder Bewerbung beilegen. Kein Pflicht-Abo für Mieter.'
+  'Geprüftes Mieter-Zertifikat für Bewerbungen in der Schweiz — einmal anlegen, jeder Bewerbung beilegen. Kein Abo.'
 
 export const SIC_OFFER_TERMS =
   IS_FREE ?

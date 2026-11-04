@@ -159,7 +159,7 @@ export async function sendSicCertificateReadyEmail(opts: {
 
   return sicMail({
     to: opts.email,
-    subject: `${SIC_BRAND_NAME}: ${copy.subject}`,
+    subject: copy.subject,
     html: sicEmailShell({
       preheader: copy.preheader,
       heading: copy.heading,
@@ -183,7 +183,7 @@ export async function sendSicModuleRejectedEmail(opts: {
 
   return sicMail({
     to: opts.email,
-    subject: `${SIC_BRAND_NAME}: «${title}» — Nachweis bitte nachreichen`,
+    subject: `«${title}» — Nachweis bitte nachreichen`,
     html: sicEmailShell({
       preheader: `${title} — Nacharbeit nötig`,
       heading: `«${title}»: bitte nachreichen`,
@@ -207,7 +207,7 @@ export async function sendSicDocumentsReceivedEmail(opts: {
   const buttonUrl = opts.magicLinkUrl || sicUrl(sicPaths.certificateWorkspace)
   return sicMail({
     to: opts.email,
-    subject: `${SIC_BRAND_NAME}: Unterlagen angekommen`,
+    subject: 'Unterlagen angekommen',
     html: sicEmailShell({
       preheader: 'Wir haben deine Unterlagen erhalten',
       heading: 'Unterlagen angekommen',
@@ -231,7 +231,7 @@ export async function sendSicDocsPurgeWarningEmail(opts: {
   const dateStr = sicSwissDate(opts.purgeAt)
   return sicMail({
     to: opts.email,
-    subject: `${SIC_BRAND_NAME}: Unterlagen werden am ${dateStr} gelöscht`,
+    subject: `Unterlagen werden am ${dateStr} gelöscht`,
     html: sicEmailShell({
       preheader: `Unterlagen werden am ${dateStr} gelöscht`,
       heading: 'Deine Unterlagen werden gelöscht',
@@ -262,7 +262,7 @@ export async function sendSicExpiryReminderEmail(opts: {
     const idUrl = sicUrl(sicPaths.certificateWorkspace)
     return sicMail({
       to: opts.email,
-      subject: `${SIC_BRAND_NAME}: Dein Ausweis läuft in ${sicDaysLabel(opts.daysLeft)} ab`,
+      subject: `Dein Ausweis läuft in ${sicDaysLabel(opts.daysLeft)} ab`,
       html: sicEmailShell({
         preheader: `Neuen Ausweis einreichen — kostenlos`,
         heading: `Dein Ausweis läuft in ${sicDaysLabel(opts.daysLeft)} ab`,
@@ -399,7 +399,7 @@ export async function sendSicPaymentReceiptEmail(opts: {
   const amount = fmtSicChf(opts.amountChf)
   return sicMail({
     to: opts.email,
-    subject: `${SIC_BRAND_NAME}: Zahlungsbestätigung ${amount}`,
+    subject: `Zahlungsbestätigung ${amount}`,
     html: sicEmailShell({
       preheader: `Zahlung über ${amount} erhalten`,
       heading: 'Zahlung erhalten',
@@ -423,7 +423,7 @@ export async function sendSicExpiredEmail(opts: { email: string; expiredAt: Date
     const idUrl = sicUrl(sicPaths.certificateWorkspace)
     return sicMail({
       to: opts.email,
-      subject: `${SIC_BRAND_NAME}: Zertifikat abgelaufen — neuer Ausweis genügt`,
+      subject: 'Zertifikat abgelaufen — neuer Ausweis genügt',
       html: sicEmailShell({
         preheader: `Abgelaufen am ${dateStr}, weil der Ausweis abgelaufen ist`,
         heading: 'Dein Ausweis ist abgelaufen',
@@ -438,7 +438,7 @@ export async function sendSicExpiredEmail(opts: { email: string; expiredAt: Date
   const buttonUrl = sicUrl(sicPaths.renew)
   return sicMail({
     to: opts.email,
-    subject: `${SIC_BRAND_NAME}: Zertifikat abgelaufen`,
+    subject: 'Zertifikat abgelaufen',
     html: sicEmailShell({
       preheader: `Abgelaufen am ${dateStr}`,
       heading: 'Dein Zertifikat ist abgelaufen',
@@ -464,7 +464,7 @@ export async function sendSicRefundEmail(opts: {
   const amountText = opts.amountChf != null ? ` über ${fmtSicChf(opts.amountChf)}` : ''
   return sicMail({
     to: opts.email,
-    subject: `${SIC_BRAND_NAME}: Rückerstattung veranlasst`,
+    subject: 'Rückerstattung veranlasst',
     html: sicEmailShell({
       preheader: 'Rückerstattung veranlasst',
       heading: 'Rückerstattung veranlasst',
@@ -488,7 +488,7 @@ export async function sendSicRevokedEmail(opts: { email: string; certificateCode
   const buttonUrl = sicUrl(sicPaths.certificateWorkspace)
   return sicMail({
     to: opts.email,
-    subject: `${SIC_BRAND_NAME}: Zertifikat widerrufen`,
+    subject: 'Zertifikat widerrufen',
     html: sicEmailShell({
       preheader: 'Dein Zertifikat wurde widerrufen',
       heading: 'Zertifikat widerrufen',

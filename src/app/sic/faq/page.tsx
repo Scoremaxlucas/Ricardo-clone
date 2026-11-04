@@ -5,6 +5,8 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Häufige Fragen',
+  description:
+    'Antworten zum Mieter-Zertifikat von Swiss Immo Cert: Kosten, Ablauf, Gültigkeit, was auf dem Zertifikat steht und was «geprüft» heisst.',
   robots: { index: true, follow: true },
 }
 

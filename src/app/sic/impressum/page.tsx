@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Impressum',
+  description: 'Impressum von Swiss Immo Cert: Anbieterin, Adresse, Handelsregister und Kontakt.',
   robots: { index: true, follow: true },
 }
 
@@ -70,16 +71,6 @@ export default function SicImpressumPage() {
           Datenschutzerklärung
         </Link>
         .
-      </p>
-
-      {/*
-        Kein Header-/Hero-Link: Kunden sollen die Journey nicht sehen.
-        Impressum ist der diskrete Einstieg fürs Team; danach «Prüfung» im Header.
-      */}
-      <p className="mt-8 text-[11px] leading-relaxed text-slate-300">
-        <Link href={sicPaths.admin} className="underline-offset-2 hover:text-slate-500 hover:underline">
-          Interner Zugang
-        </Link>
       </p>
     </div>
   )

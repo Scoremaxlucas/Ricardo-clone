@@ -27,7 +27,7 @@ import {
 } from '@/lib/sic/modules'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import type { SicLandingAccount } from '@/lib/sic/landing-account'
-import { sicPaths, SIC_ISSUER_LINE, SIC_REVIEW_SLA, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
+import { sicPaths, SIC_ISSUER_LINE, SIC_REVIEW_SLA_SENTENCE } from '@/lib/sic/config'
 import { CertSeal, DocumentRule, HouseMark, ModuleGlyph } from '@/lib/sic/cert/art-web'
 import {
   ArrowRight,
@@ -386,8 +386,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   <span>{SIC_TAGLINE}</span>
                 </span>
                 <h1 className="mt-6 font-sic-serif text-[1.7rem] font-bold leading-[1.12] tracking-tight text-white sm:text-5xl">
-                  Damit der Vermieter dich ernst nimmt{' '}
-                  <span className="text-sic-gold-light">— nicht nur zur Kenntnis.</span>
+                  Damit der Vermieter dich <span className="text-sic-gold-light">ernst nimmt.</span>
                 </h1>
                 <p className="mt-4 max-w-xl text-sm font-medium leading-relaxed text-white/85 sm:text-base">
                   {SIC_PRODUCT_LINE}
@@ -644,7 +643,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 </a>
                 <span className="text-slate-400">
                   {' '}
-                  · {IS_FREE ? 'kostenlos' : PRICE_LABEL}, Prüfung {SIC_REVIEW_SLA}
+                  · {IS_FREE ? 'kostenlos' : `${PRICE_LABEL} einmalig`}, alle vier Angaben inbegriffen
                 </span>
               </p>
             </div>
@@ -657,7 +656,8 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
           <div className="mx-auto max-w-6xl px-5">
             <h2 className="text-center font-sic-serif text-3xl font-bold tracking-tight text-sic-navy">So läuft es ab</h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-              Einmal anlegen, Unterlagen nachliefern. Prüfung {SIC_REVIEW_SLA}.
+              Einmal anlegen, Unterlagen nachliefern. Jede Angabe wird einzeln geprüft und kommt aufs Zertifikat,
+              sobald sie durch ist.
             </p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_STEPS.map((step, i) => (

@@ -11,7 +11,9 @@ describe('SIC FAQ copy', () => {
   it('positions checked facts over unread-dossier copy, without promising a Zusage', () => {
     const blob = SIC_FAQ.map(i => `${i.q} ${i.a}`).join(' ')
     expect(blob).toMatch(/Selbstauskunft/)
-    expect(blob).toMatch(/Unterscheidungsmerkmal/)
+    expect(blob).toMatch(/ohne Prüfvermerk/)
+    expect(blob).toMatch(/Nicht Teil dieses Zertifikats/)
+    expect(blob).not.toMatch(/Workspace|Den Auszug vom Betreibungsamt, deinen Ausweis|erscheint die Angabe gar nicht/)
     expect(blob).toMatch(/Plausib|plausibel/)
     expect(blob).toMatch(/behördliche Auskunft/)
     expect(blob).not.toMatch(/stützen/)

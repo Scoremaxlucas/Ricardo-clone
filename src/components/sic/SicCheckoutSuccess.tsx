@@ -21,7 +21,12 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
   const done = useRef(false)
 
   const confirm = useCallback(async (): Promise<State> => {
-    if (!sessionId) return { status: 'error', message: 'Es fehlt eine Sitzungs-ID.' }
+    if (!sessionId)
+      return {
+        status: 'error',
+        message:
+          'Diese Seite gehört zu einer Zahlung und wurde ohne diese aufgerufen. Hast du bezahlt, öffne den Link aus deiner E-Mail oder «Mein Zertifikat».',
+      }
     try {
       const res = await fetch(
         `/api/sic/checkout/confirm?session_id=${encodeURIComponent(sessionId)}`,
@@ -34,7 +39,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
       if (data?.pending) return { status: 'pending' }
       return { status: 'error', message: data?.message }
     } catch {
-      return { status: 'error', message: 'Netzwerkfehler.' }
+      return { status: 'error', message: 'Keine Verbindung. Prüfe dein Netz und versuch es noch einmal.' }
     }
   }, [sessionId])
 
@@ -134,7 +139,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
 
       {state.status === 'error' && (
         <>
-          <h1 className="font-sic-serif text-xl font-bold tracking-tight text-sic-navy">Etwas ist schiefgelaufen</h1>
+          <h1 className="font-sic-serif text-xl font-bold tracking-tight text-sic-navy">Zahlung nicht gefunden</h1>
           <p className="mt-3 text-slate-600">
             {state.message || 'Bitte prüfe später «Mein Zertifikat» oder kontaktiere uns.'}
           </p>

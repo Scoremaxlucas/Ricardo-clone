@@ -13,7 +13,7 @@ describe('SIC landing offer copy', () => {
   it('names the product, the country and that tenants need no subscription', () => {
     expect(SIC_PRODUCT_LINE).toMatch(/Mieter-Zertifikat/)
     expect(SIC_PRODUCT_LINE).toMatch(/Schweiz/)
-    expect(SIC_PRODUCT_LINE).toMatch(/kein Pflicht-Abo/i)
+    expect(SIC_PRODUCT_LINE).toMatch(/kein Abo/i)
   })
 
   it('states price, one-off terms and renewal on the landing', () => {

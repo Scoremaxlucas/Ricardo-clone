@@ -1,5 +1,5 @@
 import { sicPaths } from '@/lib/sic/config'
-import { SIC_UNSEALED_NOTE, SIC_VALIDITY_MONTHS } from '@/lib/sic/modules'
+import { SIC_UNCHECKED_LINE, SIC_UNSEALED_NOTE, SIC_VALIDITY_MONTHS } from '@/lib/sic/modules'
 
 export type SicLandlordExplainerItem = {
   title: string
@@ -34,7 +34,7 @@ export function sicLandlordExplainerCopy(opts: {
       {
         title: 'Was geprüft ist',
         body:
-          'Nur die aufgeführten Angaben. Die Unterlagen werden auf Vollständigkeit, Aktualität und Plausibilität kontrolliert; die Freigabe erfolgt durch einen Menschen. Auf dem Dokument stehen Kategorien und Bestätigungen, keine Kopien der Belege.',
+          'Nur die mit «GEPRÜFT» markierten Angaben. Die Unterlagen werden auf Vollständigkeit, Aktualität und Plausibilität kontrolliert; die Freigabe erfolgt durch einen Menschen. Auf dem Dokument stehen Kategorien und Bestätigungen, keine Kopien der Belege.',
       },
       {
         title: 'Was nicht geprüft ist',
@@ -44,7 +44,7 @@ export function sicLandlordExplainerCopy(opts: {
       {
         title: `Was «${opts.completenessLabel}» bedeutet`,
         body:
-          'Nur die aufgeführten Angaben sind geprüft. Nicht aufgeführte Angaben wurden nicht geprüft — das ist kein Negativbefund.',
+          `Nur die mit «GEPRÜFT» markierten Angaben sind geprüft. Steht bei einer Angabe «${SIC_UNCHECKED_LINE}», wurde sie nicht geprüft — das ist kein Negativbefund.`,
       },
       {
         title: 'Betreibungen',

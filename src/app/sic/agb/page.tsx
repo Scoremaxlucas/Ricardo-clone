@@ -11,12 +11,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 /** Datum der letzten inhaltlichen Änderung — bewusst fix, nicht das aktuelle Jahr. */
-const SIC_AGB_STAND = '2. November 2026'
+const SIC_AGB_STAND = '4. November 2026'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'AGB',
+  description:
+    'Allgemeine Geschäftsbedingungen von Swiss Immo Cert: Leistung, Preis, Gültigkeit, Verlängerung, Rückerstattung und Datenaufbewahrung des Mieter-Zertifikats.',
   robots: { index: true, follow: true },
 }
 
@@ -40,9 +42,10 @@ export default function SicAgbPage() {
           <h2 className="font-semibold text-sic-navy">1. Leistung</h2>
           <p className="mt-1.5">
             Swiss Immo Cert prüft die von dir eingereichten Unterlagen auf Vollständigkeit und Plausibilität und
-            erstellt daraus ein standardisiertes Mieter-Zertifikat mit QR-Prüfseite. Auf dem Zertifikat erscheinen
-            ausschliesslich die Angaben, die wir aus deinen Unterlagen bestätigen konnten — als Kategorie oder
-            Bestätigung, nicht als Kopie des Dokuments.
+            erstellt daraus ein standardisiertes Mieter-Zertifikat mit QR-Prüfseite. Als «GEPRÜFT» markiert sind
+            auf dem Zertifikat ausschliesslich die Angaben, die wir aus deinen Unterlagen bestätigen konnten — als
+            Kategorie oder Bestätigung, nicht als Kopie des Dokuments. Nicht geprüfte Angaben stehen neutral als
+            «Nicht Teil dieses Zertifikats» (Ziffer 6).
           </p>
           <p className="mt-1.5">
             Wir führen keine telefonischen Rückfragen bei Arbeitgebern oder Vermietern durch und holen keine
@@ -105,11 +108,12 @@ export default function SicAgbPage() {
           <p className="mt-1.5">
             Sind die Unterlagen unleserlich, unvollständig, veraltet oder inhaltlich negativ (zum Beispiel offene
             Betreibungen, Verlustscheine oder ein abgelaufener Ausweis), geben wir die Angabe nicht frei. Du erhältst eine Begründung per E-Mail und kannst
-            neue Unterlagen nachreichen — ohne zusätzliche Kosten. Eine nicht freigegebene Angabe erscheint nicht
-            auf dem Zertifikat; ein negativer Inhalt wird dort nicht ausgewiesen. Ausnahme auf deinen Wunsch:
-            Höchstens zwei offene Betreibungen, zusammen unter CHF 1’000 und ohne Verlustscheine, kannst du offen
-            ausweisen lassen — als Anzahl und Betragsstufe, nicht mit dem genauen Betrag. Die Zustimmung kannst
-            du jederzeit zurückziehen; der Betreibungsauszug steht dann nicht mehr auf dem Zertifikat.
+            neue Unterlagen nachreichen — ohne zusätzliche Kosten. Eine nicht freigegebene Angabe steht auf dem
+            Zertifikat neutral als «Nicht Teil dieses Zertifikats»; ein negativer Inhalt wird dort nie ausgewiesen.
+            Ausnahme auf deinen Wunsch: Höchstens zwei offene Betreibungen, zusammen unter CHF 1’000 und ohne
+            Verlustscheine, kannst du offen ausweisen lassen — als Anzahl und Betragsstufe, nicht mit dem genauen
+            Betrag. Die Zustimmung kannst du jederzeit zurückziehen; der Betreibungsauszug gilt dann wieder als
+            nicht geprüft.
           </p>
         </section>
 

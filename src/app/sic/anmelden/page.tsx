@@ -19,6 +19,13 @@ export default async function SicLoginConfirmPage({
   const params = await searchParams
   const token = (params.token || '').trim()
   const next = safeSicNextPath(params.next)
+  const loginNext = next === sicPaths.certificateWorkspace ? undefined : next
+
+  // Direkter Aufruf ohne Token (Lesezeichen, getippte URL): einfach das Anmeldeformular, keine Warnung.
+  if (!token) {
+    return <SicDossierLogin nextPath={loginNext} />
+  }
+
   const status = await peekSicMagicLink(token)
 
   if (status !== 'valid') {
@@ -27,7 +34,7 @@ export default async function SicLoginConfirmPage({
         <div className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-center text-sm text-amber-900">
           Anmeldelink ungültig oder abgelaufen — fordere unten einen neuen an.
         </div>
-        <SicDossierLogin nextPath={next === sicPaths.certificateWorkspace ? undefined : next} />
+        <SicDossierLogin nextPath={loginNext} />
       </div>
     )
   }

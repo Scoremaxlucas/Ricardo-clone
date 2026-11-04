@@ -29,7 +29,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Haben das nicht alle Bewerber?',
-    a: 'Nein. Nicht jeder legt geprüfte Angaben vor. Das Zertifikat weist aus, was geprüft ist — und bleibt damit ein Unterscheidungsmerkmal.',
+    a: 'Nein. Die meisten Bewerbungen bestehen aus losen Anhängen — Auszug, Lohnabrechnung, Ausweiskopie — in unterschiedlicher Form und ohne Prüfvermerk. Das Zertifikat bündelt dieselben Angaben geprüft in einer Datei, die der Vermieter per QR nachvollziehen kann.',
   },
   {
     q: 'Was kostet es?',
@@ -37,7 +37,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: `Warum genau diese ${SIC_MODULES.length} Angaben?`,
-    a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob der Ausweis gültig ist. Sind alle vier geprüft, steht das in einheitlicher Form da. Was fehlt, ist nicht ausgewiesen.',
+    a: 'Weil Vermieter fast immer dasselbe wissen wollen: Betreibungen, Lohn und Arbeitsstelle, wie es beim letzten Vermieter lief, und ob der Ausweis gültig ist. Jede geprüfte Angabe steht in einheitlicher Form da. Was nicht geprüft ist, steht neutral als «Nicht Teil dieses Zertifikats» — kein Minuspunkt.',
   },
   {
     q: 'Geht das auch zu zweit?',
@@ -45,11 +45,11 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was muss ich selbst besorgen?',
-    a: 'Den Auszug vom Betreibungsamt, deinen Ausweis und deine Lohnabrechnung hast du selbst. Für Arbeitgeber und bisherigen Vermieter gibt es bei uns ein kurzes Formular. Ohne bisherigen Vermieter wählst du «Keine Referenz» — dann gilt die Angabe nicht als fehlend.',
+    a: 'Den Betreibungsauszug bestellst du beim Betreibungsamt deines Wohnorts oder online über easygov.swiss; er darf höchstens 3 Monate alt sein. Ausweis und Lohnabrechnung hast du selbst. Für Arbeitgeber und bisherigen Vermieter gibt es bei uns ein kurzes Formular. Ohne bisherigen Vermieter wählst du «Keine Referenz» — dann gilt die Angabe nicht als fehlend.',
   },
   {
     q: 'Ich bin selbständig, in Ausbildung oder pensioniert. Geht das?',
-    a: `Ja, mit einer Einschränkung: Lohn und Arbeitsstelle prüfen wir derzeit für Angestellte. Du vermerkst «nicht angestellt», dann steht das so auf dem Zertifikat und gilt nicht als fehlend. Betreibungsauszug, Ausweis und Referenz werden normal geprüft — das Mieter-Zertifikat bekommst du mit ${sicSealRequirementLabel()}. Sobald wir einen passenden Einkommensnachweis prüfen, melden wir uns.`,
+    a: `Ja, mit einer Einschränkung: Lohn und Arbeitsstelle prüfen wir derzeit für Angestellte. Du vermerkst «nicht angestellt», dann steht das so auf dem Zertifikat und gilt nicht als fehlend. Betreibungsauszug, Ausweis und Referenz werden normal geprüft; mit ${sicSealRequirementLabel()} trägt dein Zertifikat auch das Siegel. Sobald wir einen passenden Einkommensnachweis prüfen, melden wir uns.`,
   },
   {
     q: 'Wie lange dauert es insgesamt?',
@@ -65,7 +65,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was, wenn eine Angabe nicht passt?',
-    a: 'Dann sagen wir dir per E-Mail, was fehlt, und du reichst neue Unterlagen nach — ohne Zusatzkosten. Ist der Inhalt selbst negativ, etwa offene Betreibungen oder Verlustscheine, erscheint die Angabe gar nicht auf dem Zertifikat. Früher bezahlte Betreibungen sind kein Hindernis. Bei höchstens 2 kleinen offenen Betreibungen (zusammen unter CHF 1’000, keine Verlustscheine) kannst du zustimmen, dass sie offen ausgewiesen werden — nur als Stufe, nie mit Betrag. Ein Negativurteil über dich schreiben wir nirgends hin.',
+    a: 'Dann sagen wir dir per E-Mail, was fehlt, und du reichst neue Unterlagen nach — ohne Zusatzkosten. Ist der Inhalt selbst negativ, etwa offene Betreibungen oder Verlustscheine, steht die Angabe neutral als «Nicht Teil dieses Zertifikats» da. Früher bezahlte Betreibungen sind kein Hindernis. Bei höchstens 2 kleinen offenen Betreibungen (zusammen unter CHF 1’000, keine Verlustscheine) kannst du zustimmen, dass sie offen ausgewiesen werden — nur als Stufe, nie mit Betrag. Ein Negativurteil über dich schreiben wir nirgends hin.',
   },
   {
     q: 'Wer sieht meine Unterlagen?',
@@ -89,7 +89,7 @@ export const SIC_FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Was, wenn mein QR-Code in falsche Hände gerät?',
-    a: 'Im Workspace «Mein Zertifikat» kannst du jederzeit einen neuen Code erzeugen. Der alte Link bleibt erreichbar, zeigt aber: das Zertifikat wurde ersetzt. Angaben und der neue Code stehen dort nicht — den aktuellen Stand schickst du neu.',
+    a: 'Unter «Mein Zertifikat» kannst du jederzeit einen neuen Code erzeugen. Der alte Link bleibt erreichbar, zeigt aber: das Zertifikat wurde ersetzt. Angaben und der neue Code stehen dort nicht — den aktuellen Stand schickst du neu.',
   },
   {
     q: 'Brauche ich ein Passwort?',

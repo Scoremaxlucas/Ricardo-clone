@@ -7,6 +7,8 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Datenschutz',
+  description:
+    'Wie Swiss Immo Cert deine Unterlagen und Daten verarbeitet: Zweck, Dienstleister, KI-Vorauswertung, Verschlüsselung, Aufbewahrung und deine Rechte nach revDSG.',
   robots: { index: true, follow: true },
 }
 
