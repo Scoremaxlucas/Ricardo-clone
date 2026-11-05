@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { generateSicCertificateCode } from '@/lib/sic/certificate-code'
+import { SIC_VERIFY_STATE_TITLES } from '@/lib/sic/landlord-explainer'
 
 const ALLOCATE_ATTEMPTS = 8
 
@@ -12,7 +13,7 @@ function formatReplacedAt(d: Date): string {
 /** Copy on the verify page for a retired QR — no name, no new code. */
 export function sicReplacedCertificateCopy(replacedAt: Date): { title: string; lead: string; follow: string } {
   return {
-    title: 'Ersetzt',
+    title: SIC_VERIFY_STATE_TITLES.replaced,
     lead: `Dieses Zertifikat wurde am ${formatReplacedAt(replacedAt)} durch einen neuen Code ersetzt.`,
     follow:
       'Angaben und der neue Code stehen hier nicht. Bitte den aktuellen Stand beim Bewerber anfordern.',

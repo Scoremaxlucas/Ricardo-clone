@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isValidSicCertificateCode, normalizeSicCertificateCode } from '@/lib/sic/certificate-code'
 import { findSicRetiredCertificateCode } from '@/lib/sic/codes'
-import { SIC_BRAND_NAME } from '@/lib/sic/config'
+import { SIC_BRAND_NAME, sicPaths } from '@/lib/sic/config'
 import {
   isSicLandlordPdfReady,
   joinHouseholdHolderName,
@@ -21,6 +21,7 @@ import { isSicExpired } from '@/lib/sic/validity'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { headers } from 'next/headers'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,13 +35,25 @@ function clientIp(): string {
   return (h.get('x-forwarded-for')?.split(',')[0] || '').trim() || 'unknown'
 }
 
-function VerifyShell({ children }: { children: ReactNode }) {
+/**
+ * `guideLink`: Verweis auf die Vermieter-Seite unter dem Dokument. Beim gültigen
+ * Zertifikat steht er bereits im Erklärkasten, deshalb dort aus.
+ */
+function VerifyShell({ children, guideLink = true }: { children: ReactNode; guideLink?: boolean }) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-14">
       <p className="mb-6 text-center text-[11px] uppercase tracking-[0.22em] text-sic-navy/45">
         {SIC_BRAND_NAME} · Online-Verifikation
       </p>
       {children}
+      {guideLink ?
+        <p className="mt-6 text-center text-[12px] text-slate-500">
+          Für Vermieterinnen und Vermieter:{' '}
+          <Link href={sicPaths.landlords} className="text-sic-action underline-offset-2 hover:underline">
+            Was die Angaben auf dieser Seite bedeuten
+          </Link>
+        </p>
+      : null}
     </div>
   )
 }
@@ -112,8 +125,12 @@ export default async function SicVerifyPage({ params }: { params: Promise<{ code
     })
   }
 
+  // Das gültige Zertifikat bringt den Verweis im Erklärkasten mit.
+  const showsValid =
+    !!cert && landlordReady && cert.status !== 'REVOKED' && cert.status !== 'EXPIRED' && !isSicExpired(cert.expiresAt)
+
   return (
-    <VerifyShell>
+    <VerifyShell guideLink={!showsValid}>
       {!cert ?
         retired?.revoked ?
           <SicVerifyDocument state="revoked" code={retired.certificateCode} />

@@ -31,6 +31,12 @@ export function SicLandlordExplainer({
       </dl>
       <p className="mt-5 text-[12px] leading-relaxed text-slate-500">{copy.kiNote}</p>
       <p className="mt-3 text-[12px] text-slate-500">
+        <Link href={copy.guideHref} className="text-sic-action underline-offset-2 hover:underline">
+          {copy.guideLabel}
+        </Link>
+        <span aria-hidden className="px-2 text-slate-300">
+          ·
+        </span>
         <Link href={copy.agbHref} className="text-sic-action underline-offset-2 hover:underline">
           AGB
         </Link>

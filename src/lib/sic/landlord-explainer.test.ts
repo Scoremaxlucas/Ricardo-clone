@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { sicLandlordExplainerCopy } from '@/lib/sic/landlord-explainer'
+import {
+  SIC_VERIFY_STATE_TITLES,
+  sicLandlordExplainerCopy,
+  sicLandlordGuideCopy,
+} from '@/lib/sic/landlord-explainer'
 import { SIC_UNSEALED_NOTE } from '@/lib/sic/modules'
 
 function blob(opts: { completenessLabel: string; sealed: boolean }): string {
@@ -48,5 +52,59 @@ describe('sicLandlordExplainerCopy', () => {
     })
     expect(copy.agbHref).toBe('/sic/agb')
     expect(copy.datenschutzHref).toBe('/sic/datenschutz')
+    expect(copy.guideHref).toBe('/sic/vermieter')
+  })
+})
+
+describe('sicLandlordGuideCopy', () => {
+  const guide = sicLandlordGuideCopy()
+  const byId = (id: string) => {
+    const section = guide.sections.find(s => s.id === id)
+    if (!section) throw new Error(`Abschnitt fehlt: ${id}`)
+    return [section.title, ...section.paragraphs, ...(section.bullets ?? []), ...(section.points ?? []).flatMap(p => [p.title, p.body])].join(' ')
+  }
+
+  it('covers every topic a landlord needs, in a fixed order', () => {
+    expect(guide.sections.map(s => s.id)).toEqual([
+      'was-es-ist',
+      'was-es-nicht-ist',
+      'markierungen',
+      'siegel',
+      'betreibungen',
+      'drei-mal-regel',
+      'gueltigkeit',
+      'verifizieren',
+    ])
+  })
+
+  it('says what the certificate is not', () => {
+    const text = byId('was-es-nicht-ist')
+    expect(text).toMatch(/keine Zusage und keine Garantie/)
+    expect(text).toMatch(/keine behördliche Auskunft/)
+    expect(text).toMatch(/keine Bonitätsbewertung/)
+    expect(text).toMatch(/keine Empfehlung/)
+    expect(text).toMatch(/Ämtern/)
+  })
+
+  it('never discloses Verlustscheine and names the small-debt exception', () => {
+    const text = byId('betreibungen')
+    expect(text).toMatch(/Verlustscheine werden nie freigegeben/)
+    expect(text).toMatch(/höchstens zwei, zusammen unter CHF 1’000/)
+    expect(text).toMatch(/zugestimmt/)
+  })
+
+  it('explains the verify states with the titles the verify page shows', () => {
+    const text = byId('verifizieren')
+    expect(text).toContain(SIC_VERIFY_STATE_TITLES.replaced)
+    expect(text).toContain(SIC_VERIFY_STATE_TITLES.revoked)
+    expect(text).toContain(SIC_VERIFY_STATE_TITLES.expired)
+    expect(text).toContain(SIC_VERIFY_STATE_TITLES.unknown)
+    expect(text).toMatch(/kein Negativbefund/)
+  })
+
+  it('keeps Auskunftei-language and sales talk out', () => {
+    const all = guide.sections.map(s => byId(s.id)).join(' ')
+    expect(all).not.toMatch(/Bonitätsauskunft|Auskunftei|stützen/)
+    expect(all).not.toMatch(/CHF 79|CHF 30/)
   })
 })

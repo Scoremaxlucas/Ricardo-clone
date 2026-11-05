@@ -14,6 +14,7 @@ import {
   type SicDocumentPresentation,
 } from '@/lib/sic/modules'
 import { sicReplacedCertificateCopy } from '@/lib/sic/codes'
+import { SIC_VERIFY_STATE_TITLES } from '@/lib/sic/landlord-explainer'
 import type { ReactNode } from 'react'
 import { sicSwissDate } from '@/lib/sic/validity'
 
@@ -248,7 +249,7 @@ export function SicVerifyDocument(props: SicVerifyDocumentProps) {
     return (
       <Frame>
         <NavyBand quiet code={props.code || undefined} />
-        <QuietBody title="Kein Zertifikat gefunden">
+        <QuietBody title={SIC_VERIFY_STATE_TITLES.unknown}>
           <p>
             Der Code{' '}
             <span className="font-mono font-semibold text-sic-navy">{props.code || '—'}</span> ist
@@ -276,7 +277,7 @@ export function SicVerifyDocument(props: SicVerifyDocumentProps) {
     return (
       <Frame>
         <NavyBand quiet code={props.code || undefined} />
-        <QuietBody title="Widerrufen">
+        <QuietBody title={SIC_VERIFY_STATE_TITLES.revoked}>
           <p>
             Dieses Zertifikat wurde widerrufen. Der Code{' '}
             <span className="font-mono font-semibold text-sic-navy">{props.code || '—'}</span> ist
@@ -291,7 +292,7 @@ export function SicVerifyDocument(props: SicVerifyDocumentProps) {
     return (
       <Frame>
         <NavyBand quiet code={props.code || undefined} />
-        <QuietBody title="Abgelaufen">
+        <QuietBody title={SIC_VERIFY_STATE_TITLES.expired}>
           <p>
             Die Gültigkeit dieses Zertifikats ist abgelaufen. Der Code{' '}
             <span className="font-mono font-semibold text-sic-navy">{props.code || '—'}</span> weist

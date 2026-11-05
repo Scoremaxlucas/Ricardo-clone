@@ -180,6 +180,8 @@ export const sicPaths = {
   checkoutCancel: `${SIC_BASE_PATH}/checkout/abbruch`,
   verify: (code: string) => `${SIC_BASE_PATH}/verify/${encodeURIComponent(code)}`,
   faq: `${SIC_BASE_PATH}/faq`,
+  /** Öffentliche Erklärseite für Vermieterinnen und Vermieter — informiert, verkauft nichts. */
+  landlords: `${SIC_BASE_PATH}/vermieter`,
   agb: `${SIC_BASE_PATH}/agb`,
   datenschutz: `${SIC_BASE_PATH}/datenschutz`,
   impressum: `${SIC_BASE_PATH}/impressum`,

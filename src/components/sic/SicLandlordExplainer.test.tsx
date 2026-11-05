@@ -12,6 +12,7 @@ describe('SicLandlordExplainer', () => {
     expect(html).toContain('Was «2 von 4 Angaben geprüft» bedeutet')
     expect(html).toContain('3×-Regel')
     expect(html).toContain('Gültigkeit')
+    expect(html).toContain('/sic/vermieter')
     expect(html).toContain('/sic/agb')
     expect(html).toContain('/sic/datenschutz')
     expect(html).not.toContain(SIC_UNSEALED_NOTE)

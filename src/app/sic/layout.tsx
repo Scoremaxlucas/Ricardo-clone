@@ -85,6 +85,13 @@ export default async function SicLayout({ children }: { children: React.ReactNod
           </div>
           <nav className="flex flex-col gap-2.5 text-sm">
             <Link
+              href={sicPaths.landlords}
+              className="text-white/80 transition-colors hover:text-white"
+              style={{ color: 'rgba(255,255,255,0.8)' }}
+            >
+              Für Vermieter
+            </Link>
+            <Link
               href={sicPaths.faq}
               className="text-white/80 transition-colors hover:text-white"
               style={{ color: 'rgba(255,255,255,0.8)' }}
