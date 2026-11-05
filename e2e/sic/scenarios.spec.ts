@@ -899,3 +899,153 @@ test.describe.serial('5 · Kleine offene Betreibung: nur mit Zustimmung, zurück
     expect((await page.request.get(`/api/sic/certificate/${code}/pdf`)).status()).toBe(403)
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+const LAYOUT_WIDTHS = [320, 390, 768, 1280]
+
+/**
+ * Kein Inhalt darf über den Rand ragen. Das Layout schneidet horizontal ab
+ * (overflow-x-clip) — ein Scrollbalken allein würde ein abgeschnittenes Element nicht verraten.
+ */
+async function expectFits(page: Page, label: string) {
+  for (const width of LAYOUT_WIDTHS) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.waitForTimeout(200)
+    const out = await page.evaluate(() => {
+      const de = document.documentElement
+      const inScroller = (el: Element) => {
+        for (let a = el.parentElement; a; a = a.parentElement) {
+          const ox = getComputedStyle(a).overflowX
+          if (ox === 'auto' || ox === 'scroll') return true
+        }
+        return false
+      }
+      const bad: string[] = []
+      for (const el of Array.from(document.querySelectorAll('body *'))) {
+        const own = Array.from(el.childNodes).some(
+          n => n.nodeType === 3 && (n.textContent || '').trim().length > 0
+        )
+        if (!own && !['IMG', 'INPUT', 'BUTTON', 'SELECT', 'TEXTAREA', 'A'].includes(el.tagName)) continue
+        const cs = getComputedStyle(el)
+        if (cs.visibility === 'hidden' || cs.display === 'none' || el.closest('.sr-only')) continue
+        const r = el.getBoundingClientRect()
+        if (r.width <= 1 || r.height <= 1) continue
+        if ((r.right > de.clientWidth + 1 || r.left < -1) && !inScroller(el)) {
+          bad.push(
+            `${el.tagName.toLowerCase()} «${(el.textContent || '').trim().slice(0, 40)}» ${Math.round(r.left)}–${Math.round(r.right)}`
+          )
+          if (bad.length >= 4) break
+        }
+      }
+      return { px: de.scrollWidth - de.clientWidth, bad }
+    })
+    expect(out.bad, `${label} bei ${width}px`).toEqual([])
+    expect(out.px, `${label} bei ${width}px: horizontaler Scrollbalken`).toBeLessThanOrEqual(1)
+  }
+}
+
+test.describe.serial('6 · Darstellung: angemeldete Seiten passen auf Handy bis Desktop', () => {
+  const email = uniqueEmail('layout')
+  let page: Page
+  let certId = ''
+  let code = ''
+  const pageErrors: string[] = []
+
+  test.beforeAll(async ({ browser }) => {
+    page = await (await newSicContext(browser)).newPage()
+    page.on('pageerror', e => pageErrors.push(String(e)))
+  })
+  test.afterAll(async () => page.context().close())
+
+  /** Paare brauchen je Person eine Datei — hochladen, bis die Angabe in Prüfung ist. */
+  async function uploadUntilInReview(kind: string, file = FILES.pdf()) {
+    for (let i = 0; i < 4 && (await moduleStatus(email, kind)) !== 'IN_REVIEW'; i++) {
+      expect((await uploadApi(page.request, kind, file)).status).toBe(200)
+    }
+    expect(await moduleStatus(email, kind)).toBe('IN_REVIEW')
+  }
+
+  /** Das Dossier ist ein Akkordeon (eine Angabe offen) — jede Angabe einzeln öffnen und messen. */
+  async function expectDossierFits(label: string) {
+    await page.goto('/sic/zertifikat')
+    await expect(page.getByRole('heading', { name: 'Mein Zertifikat' })).toBeVisible()
+    await expectFits(page, label)
+    const ids = await page.locator('[id^="modul-"]').evaluateAll(els => els.map(el => el.id))
+    expect(ids.length).toBe(4)
+    for (const id of ids) {
+      const toggle = page.locator(`#${id} > button`)
+      if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click()
+      await expectFits(page, `${label}, ${id} offen`)
+    }
+  }
+
+  test('Paar mit langen Namen, frisch gekauft: Dossier mit allen offenen Angaben', async () => {
+    const cert = await buyCertificate(page, {
+      email,
+      first: 'Maximilian-Alexander',
+      last: 'von Hohenzollern-Sigmaringen',
+      first2: 'Anne-Sophie Charlotte',
+      last2: 'Müller-Lüdenscheidt',
+    })
+    certId = cert.id
+    code = cert.certificateCode
+    await expectDossierFits('Dossier (frisch gekauft)')
+  })
+
+  test('Formulare für Arbeitgeber und Vermieter kommen als PDF', async () => {
+    for (const id of ['employer_confirmation', 'landlord_reference']) {
+      const res = await page.request.post(`/api/sic/templates/${id}/pdf`, { data: { values: {} } })
+      expect(res.status(), id).toBe(200)
+      expect(res.headers()['content-type']).toContain('application/pdf')
+      expect((await res.body()).subarray(0, 5).toString()).toBe('%PDF-')
+    }
+  })
+
+  test('Gemischter Stand: geprüft, in Prüfung, abgelehnt mit langem Grund', async ({ browser }) => {
+    await uploadUntilInReview('BONITAET')
+    await uploadUntilInReview('ARBEIT_EINKOMMEN')
+    await uploadUntilInReview('AUFENTHALT', FILES.png())
+    const ctx = await newSicContext(browser)
+    await adminContext(ctx)
+    const ok = await review(ctx.request, {
+      certificateId: certId,
+      moduleKind: 'BONITAET',
+      action: 'approve',
+      facts: {
+        ...CLEAN_EXTRACT,
+        office: 'Betreibungsamt Zürich 11 (Affoltern, Oerlikon, Seebach)',
+        extractDate2: isoDay(-9),
+        office2: 'Betreibungs- und Konkursamt Bern-Mittelland, Dienststelle Mittelland',
+        proceedings2: 'none',
+      },
+    })
+    expect(ok.status, ok.body.message).toBe(200)
+    const rej = await review(ctx.request, {
+      certificateId: certId,
+      moduleKind: 'ARBEIT_EINKOMMEN',
+      action: 'reject',
+      note: 'Die Arbeitgeberbestätigung ist nicht unterschrieben und die Lohnabrechnung ist älter als drei Monate. Bitte beides neu einreichen: https://www.swissimmocert.ch/sic/zertifikat?modul=ARBEIT_EINKOMMEN&hinweis=unterschrift',
+    })
+    expect(rej.status).toBe(200)
+
+    await expectDossierFits('Dossier (gemischt)')
+    await page.goto(`/sic/verify/${code}`)
+    await expect(page.getByText('Ausgestellt für')).toBeVisible()
+    await expectFits(page, 'Prüfseite (gültig, ohne Siegel)')
+    await page.goto('/sic/verlaengern')
+    await expectFits(page, 'Verlängern')
+    await page.goto('/?subdomain=sic')
+    await expectFits(page, 'Landing (angemeldet)')
+
+    const admin = await ctx.newPage()
+    admin.on('pageerror', e => pageErrors.push(String(e)))
+    await admin.goto('/sic/admin')
+    await expect(admin.locator('h1').first()).toBeVisible()
+    await expectFits(admin, 'Prüfer-Übersicht')
+    await ctx.close()
+  })
+
+  test('Kein Skriptfehler auf einer der Seiten', async () => {
+    expect(pageErrors).toEqual([])
+  })
+})

@@ -73,7 +73,7 @@ const RENT_RULE: SicLandlordExplainerItem = {
 
 const VALIDITY: SicLandlordExplainerItem = {
   title: 'Gültigkeit',
-  body: `«Gültig bis» hängt am Datum des Betreibungsauszugs — ${SIC_VALIDITY_MONTHS} Monate. Andere Angaben verlängern die Frist nicht. Bei zwei Personen gilt der ältere der beiden Auszüge. Läuft ein Ausweis früher ab, endet das Zertifikat mit dem Ausweis. Ohne geprüften Auszug steht «Stand vom» statt «Gültig bis».`,
+  body: `«Gültig bis» hängt am Datum des Betreibungsauszugs — ${SIC_VALIDITY_MONTHS} Monate. Andere Angaben verlängern die Frist nicht. Bei zwei Personen gilt der ältere der beiden Auszüge. Läuft ein Ausweis früher ab, endet das Zertifikat mit dem Ausweis. Ist der Auszug noch nicht geprüft, gilt eine vorläufige Frist von ${SIC_VALIDITY_MONTHS} Monaten ab der ersten Freigabe.`,
 }
 
 const KI_NOTE =

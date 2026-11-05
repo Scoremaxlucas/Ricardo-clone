@@ -40,7 +40,8 @@ export function SicCertExampleCard({
       </span>
       <article className="relative overflow-hidden border border-sic-navy bg-sic-paper shadow-xl shadow-black/25">
         <header className="relative flex flex-col items-center bg-sic-navy px-4 pb-3.5 pt-5">
-          <p className="absolute right-3 top-2 hidden font-mono text-[9px] font-semibold tracking-[0.12em] text-sic-gold-light/90 sm:block">
+          {/* Links: rechts oben sitzt die «Beispiel»-Marke, sonst überdeckt sie den Code. */}
+          <p className="absolute left-3 top-2 hidden font-mono text-[9px] font-semibold tracking-[0.12em] text-sic-gold-light/90 sm:block">
             SIC-2026-BEISPIEL
           </p>
           <HouseMark size={36} onDark />

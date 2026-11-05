@@ -1,94 +1,100 @@
 'use client'
 
+import { sicConfirmOutcome } from '@/lib/sic/checkout-confirm-outcome'
 import { sicPaths } from '@/lib/sic/config'
 import { FileCheck2, Loader2, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-type State = {
-  status: 'loading' | 'ok' | 'pending' | 'error'
-  message?: string
-}
+type State =
+  | { status: 'loading' | 'ok' }
+  /** Wartet auf den Zahlungsanbieter oder überbrückt einen kurzen Aussetzer. */
+  | { status: 'pending'; exhausted: boolean; hiccup: boolean }
+  /** Seite ohne Zahlung aufgerufen. */
+  | { status: 'missing' }
+  | { status: 'error'; message?: string }
 
 const POLL_MS = 2500
 const POLL_MAX = 24 // ~60s
 
 export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
   const router = useRouter()
-  const [state, setState] = useState<State>({ status: 'loading' })
-  const polls = useRef(0)
+  const [state, setState] = useState<State>(sessionId ? { status: 'loading' } : { status: 'missing' })
+  /** Jeder Klick auf «Erneut prüfen» startet eine neue Runde mit vollem Zeitbudget. */
+  const [round, setRound] = useState(0)
   const done = useRef(false)
 
-  const confirm = useCallback(async (): Promise<State> => {
-    if (!sessionId)
-      return {
-        status: 'error',
-        message:
-          'Diese Seite gehört zu einer Zahlung und wurde ohne diese aufgerufen. Hast du bezahlt, öffne den Link aus deiner E-Mail oder «Mein Zertifikat».',
-      }
+  const confirm = useCallback(async () => {
     try {
-      const res = await fetch(
-        `/api/sic/checkout/confirm?session_id=${encodeURIComponent(sessionId)}`,
-        {
-          credentials: 'same-origin',
-        }
-      )
-      const data = await res.json().catch(() => ({}))
-      if (data?.ok) return { status: 'ok' }
-      if (data?.pending) return { status: 'pending' }
-      return { status: 'error', message: data?.message }
+      const res = await fetch(`/api/sic/checkout/confirm?session_id=${encodeURIComponent(sessionId)}`, {
+        credentials: 'same-origin',
+      })
+      return sicConfirmOutcome(res.status, await res.json().catch(() => null))
     } catch {
-      return { status: 'error', message: 'Keine Verbindung. Prüfe dein Netz und versuch es noch einmal.' }
+      return sicConfirmOutcome(null, null)
     }
   }, [sessionId])
 
-  const goToWorkspace = useCallback(() => {
-    router.replace(sicPaths.certificateWorkspace)
-  }, [router])
-
   useEffect(() => {
-    if (done.current) return
+    if (!sessionId || done.current) return
     let cancelled = false
     let timer: ReturnType<typeof setTimeout> | undefined
+    let polls = 0
 
     async function run() {
       const next = await confirm()
       if (cancelled) return
-      setState(next)
       if (next.status === 'ok') {
         done.current = true
-        goToWorkspace()
+        setState({ status: 'ok' })
+        router.replace(sicPaths.certificateWorkspace)
         return
       }
       if (next.status === 'error') {
         done.current = true
+        setState(next)
         return
       }
-      if (next.status === 'pending' && polls.current < POLL_MAX) {
-        polls.current += 1
+      // «pending» und «retry»: weiter versuchen, solange das Zeitbudget reicht.
+      const exhausted = polls >= POLL_MAX
+      setState({ status: 'pending', exhausted, hiccup: next.status === 'retry' })
+      if (!exhausted) {
+        polls += 1
         timer = setTimeout(run, POLL_MS)
       }
     }
-    run()
+    void run()
     return () => {
       cancelled = true
       if (timer) clearTimeout(timer)
     }
-  }, [confirm, goToWorkspace])
+  }, [confirm, router, round, sessionId])
 
-  async function retryConfirm() {
+  function retryConfirm() {
     done.current = false
     setState({ status: 'loading' })
-    const next = await confirm()
-    setState(next)
-    if (next.status === 'ok') {
-      done.current = true
-      goToWorkspace()
-      return
-    }
-    if (next.status === 'error') done.current = true
+    setRound(r => r + 1)
   }
+
+  const retryButton = (
+    <button
+      type="button"
+      onClick={retryConfirm}
+      className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep sm:w-auto"
+    >
+      <RefreshCw className="h-4 w-4" /> Erneut prüfen
+    </button>
+  )
+
+  const workspaceLink = (
+    <Link
+      href={sicPaths.certificateWorkspace}
+      className="mt-4 touch-target-exempt text-sm font-semibold text-sic-navy hover:underline"
+    >
+      Mein Zertifikat öffnen
+    </Link>
+  )
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-5 py-20 text-center">
@@ -118,44 +124,64 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
         </>
       )}
 
-      {state.status === 'pending' && (
+      {state.status === 'pending' && !state.exhausted && (
         <>
           <Loader2 className="h-10 w-10 animate-spin text-sic-navy" />
           <h1 className="mt-4 font-sic-serif text-xl font-bold tracking-tight text-sic-navy">Zahlung wird verarbeitet</h1>
           <p className="mt-3 text-slate-600">
             Das kann einen Moment dauern. Wir prüfen die Zahlung automatisch weiter …
           </p>
-          {polls.current >= POLL_MAX ?
-            <button
-              type="button"
-              onClick={() => void retryConfirm()}
-              className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep sm:w-auto"
-            >
-              <RefreshCw className="h-4 w-4" /> Erneut prüfen
-            </button>
-          : null}
         </>
       )}
 
-      {state.status === 'error' && (
+      {state.status === 'pending' && state.exhausted && (
         <>
-          <h1 className="font-sic-serif text-xl font-bold tracking-tight text-sic-navy">Zahlung nicht gefunden</h1>
-          <p className="mt-3 text-slate-600">
-            {state.message || 'Bitte prüfe später «Mein Zertifikat» oder kontaktiere uns.'}
+          <h1 className="font-sic-serif text-xl font-bold tracking-tight text-sic-navy">
+            Die Bestätigung dauert länger als üblich
+          </h1>
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-600">
+            {state.hiccup ?
+              'Wir erreichen unser System gerade nicht. Eine bezahlte Zahlung geht nicht verloren: sobald sie verbucht ist, bekommst du eine E-Mail mit dem Link zu deinem Zertifikat.'
+            : 'Dein Zahlungsanbieter hat die Zahlung noch nicht bestätigt. Sobald sie verbucht ist, bekommst du eine E-Mail mit dem Link zu deinem Zertifikat.'
+            }
           </p>
-          <button
-            type="button"
-            onClick={() => void retryConfirm()}
-            className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep sm:w-auto"
+          {retryButton}
+          {workspaceLink}
+        </>
+      )}
+
+      {state.status === 'missing' && (
+        <>
+          <h1 className="font-sic-serif text-xl font-bold tracking-tight text-sic-navy">Keine Zahlung zu dieser Seite</h1>
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-600">
+            Diese Seite erscheint direkt nach einer Zahlung. Hast du bezahlt, öffne den Link aus deiner E-Mail
+            oder «Mein Zertifikat».
+          </p>
+          <Link
+            href={sicPaths.certificateWorkspace}
+            className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-sic-action px-5 py-3 text-sm font-semibold text-white hover:bg-sic-action-deep sm:w-auto"
           >
-            <RefreshCw className="h-4 w-4" /> Erneut prüfen
-          </button>
+            Mein Zertifikat öffnen
+          </Link>
           <Link
             href={sicPaths.landing}
             className="mt-4 touch-target-exempt text-sm font-semibold text-sic-navy hover:underline"
           >
             Zurück zur Startseite
           </Link>
+        </>
+      )}
+
+      {state.status === 'error' && (
+        <>
+          <h1 className="font-sic-serif text-xl font-bold tracking-tight text-sic-navy">
+            Die Zahlung liess sich nicht bestätigen
+          </h1>
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-600">
+            {state.message || 'Bitte prüfe später «Mein Zertifikat» oder schreib uns.'}
+          </p>
+          {retryButton}
+          {workspaceLink}
         </>
       )}
     </div>
