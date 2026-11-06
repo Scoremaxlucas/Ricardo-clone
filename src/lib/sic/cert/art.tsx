@@ -152,7 +152,7 @@ export function CertSeal({ size = 82, year }: { size?: number; year: string }) {
         <Text style={{ marginTop: 3, fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: C.navy, letterSpacing: 1.4 }}>
           GEPRÜFT
         </Text>
-        <Text style={{ marginTop: 1.5, fontSize: 4.3, fontFamily: 'Helvetica-Bold', color: C.goldText, letterSpacing: 0.2 }}>
+        <Text style={{ marginTop: 1.5, fontSize: 4.8, fontFamily: 'Helvetica-Bold', color: C.goldText, letterSpacing: 0.15 }}>
           BETREIBUNG · AUSWEIS
         </Text>
         <Text style={{ marginTop: 1.5, fontSize: 5, color: C.muted, letterSpacing: 0.6 }}>{year}</Text>

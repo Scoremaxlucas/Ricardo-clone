@@ -304,7 +304,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
         <div className="border-b border-sic-navy/15 bg-sic-navy/[0.04] px-5 py-3.5">
           <div className="mx-auto max-w-6xl text-sm text-sic-navy">
             <span className="font-semibold">Dein Zertifikat ist {statusLabel}</span>
-            <span className="mx-1.5 text-slate-400">·</span>
+            <span className="mx-1.5 text-slate-500">·</span>
             <span className="break-all font-mono text-xs">{account.certificateCode}</span>
             {owned.size > 0 ?
               <span className="mt-0.5 block text-xs text-slate-600 sm:mt-0 sm:inline sm:before:mx-1.5 sm:before:content-['·']">
@@ -578,13 +578,13 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
               <h2 className="mt-3 text-center font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
                 Ein Dokument statt fünf loser Anhänge.
               </h2>
-              <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
+              <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-600">
                 Bei einer herkömmlichen Bewerbung muss der Vermieter den Angaben Glauben schenken. Auf dem
                 Zertifikat stehen sie in einheitlicher Form — mit Prüfvermerk und per QR nachvollziehbar.
               </p>
               <div className="mt-10 grid gap-5 md:grid-cols-2">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Heute</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Heute</p>
                   <p className="mt-1 text-sm font-semibold text-slate-700">Herkömmliche Bewerbung</p>
                   <ul className="mt-4 space-y-2">
                     {[
@@ -630,11 +630,11 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   </p>
                 </div>
               </div>
-              <p className="mx-auto mt-8 max-w-xl text-center text-sm text-slate-500">
+              <p className="mx-auto mt-8 max-w-xl text-center text-sm text-slate-600">
                 <a href="#anlegen" className="font-semibold text-sic-action hover:underline">
                   Zertifikat anlegen
                 </a>
-                <span className="text-slate-400">
+                <span className="text-slate-600">
                   {' '}
                   · {IS_FREE ? 'kostenlos' : `${PRICE_LABEL} einmalig`}, alle vier Angaben inbegriffen
                 </span>
@@ -648,7 +648,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
         <section className="bg-sic-paper-soft py-16">
           <div className="mx-auto max-w-6xl px-5">
             <h2 className="text-center font-sic-serif text-3xl font-bold tracking-tight text-sic-navy">So läuft es ab</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
+            <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-600">
               Einmal anlegen, Unterlagen nachliefern. Jede Angabe wird einzeln geprüft und kommt aufs Zertifikat,
               sobald sie durch ist.
             </p>
@@ -750,7 +750,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                 ) : null}
 
                 {declaredModules.has('ZUVERLAESSIGKEIT') ?
-                  <p className="mt-4 text-sm leading-relaxed text-slate-600">{SIC_NO_PRIOR_REFERENCE_LINE}</p>
+                  <p className="mt-4 text-sm leading-relaxed text-slate-600">{SIC_NO_PRIOR_REFERENCE_LINE}.</p>
                 : null}
                 {declaredModules.has('ARBEIT_EINKOMMEN') ?
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">
@@ -928,7 +928,7 @@ export function SicLandingClient({ account }: { account?: SicLandingAccount | nu
                   className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left min-[400px]:px-5"
                 >
                   <span className="min-w-0 text-sm font-semibold text-sic-navy">{item.q}</span>
-                  <ChevronDown className={`h-4 w-4 flex-shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-4 w-4 flex-shrink-0 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`} />
                 </button>
                 {open && <p className="px-4 pb-4 text-sm leading-relaxed text-slate-600 min-[400px]:px-5">{item.a}</p>}
               </div>
@@ -1018,7 +1018,7 @@ function TestimonialCard({ review }: { review: (typeof SIC_REVIEWS)[number] }) {
           <span className="font-semibold text-sic-navy">{review.name}</span>
           {review.role ?
             <>
-              <span className="text-slate-400"> · </span>
+              <span className="text-slate-500"> · </span>
               {review.role}
             </>
           : null}
@@ -1055,7 +1055,7 @@ function TestimonialFeatured({ review }: { review: (typeof SIC_REVIEWS)[number] 
             <span className="font-semibold text-sic-navy">{review.name}</span>
             {review.role ?
               <>
-                <span className="text-slate-400"> · </span>
+                <span className="text-slate-500"> · </span>
                 {review.role}
               </>
             : null}

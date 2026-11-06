@@ -46,7 +46,7 @@ export default async function SicLayout({ children }: { children: React.ReactNod
             {showReviewEntry ?
               <Link
                 href={sicPaths.admin}
-                className="hidden text-xs font-medium text-slate-400 transition-colors hover:text-sic-navy sm:inline"
+                className="hidden text-xs font-medium text-slate-500 transition-colors hover:text-sic-navy sm:inline"
               >
                 Prüfung
               </Link>
@@ -122,7 +122,7 @@ export default async function SicLayout({ children }: { children: React.ReactNod
           </nav>
         </div>
         <div className="border-t border-white/10">
-          <div className="mx-auto max-w-6xl px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] text-xs leading-relaxed text-white/40">
+          <div className="mx-auto max-w-6xl px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] text-xs leading-relaxed text-white/60">
             © {new Date().getFullYear()} {SIC_BRAND_NAME}
             {' · '}
             {SIC_OPERATOR.legalName}, {SIC_OPERATOR.zip} {SIC_OPERATOR.city}

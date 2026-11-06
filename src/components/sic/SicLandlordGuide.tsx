@@ -13,7 +13,7 @@ export function SicLandlordGuide() {
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-10 sm:py-16">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sic-navy/50">{copy.kicker}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sic-navy/70">{copy.kicker}</p>
       <h1 className="mt-2 font-sic-serif text-2xl font-bold tracking-tight text-sic-navy sm:text-3xl">
         {copy.title}
       </h1>
@@ -23,7 +23,7 @@ export function SicLandlordGuide() {
         <div className="mx-auto max-w-[23rem]">
           <SicCertExampleCard uncheckedIds={SIC_LANDLORD_GUIDE_EXAMPLE_UNCHECKED} showAllLines />
         </div>
-        <figcaption className="mx-auto mt-5 max-w-[26rem] text-center text-[12px] leading-relaxed text-slate-500">
+        <figcaption className="mx-auto mt-5 max-w-[26rem] text-center text-[12px] leading-relaxed text-slate-600">
           {copy.exampleCaption}
         </figcaption>
       </figure>

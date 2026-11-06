@@ -31,7 +31,7 @@ function MiniCertificatePreview() {
         </p>
         <HouseMark size={28} onDark />
         <p className="mt-1 text-xs font-bold tracking-tight text-white">
-          Swiss <span style={{ color: SIC_COLORS.red }}>Immo</span> Cert
+          Swiss <span style={{ color: SIC_COLORS.redOnDark }}>Immo</span> Cert
         </p>
         <div className="mt-2 flex items-center gap-2">
           <span className="h-px w-5 bg-sic-gold" />
@@ -111,7 +111,7 @@ export function SicDossierLogin({
           <div className="mb-5 flex items-center gap-3">
             <SicLogoMark size={36} />
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sic-navy/55">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sic-navy/70">
                 Swiss Immo Cert
               </p>
               <p className="text-xs leading-snug text-slate-500">{SIC_TAGLINE}</p>
@@ -130,7 +130,7 @@ export function SicDossierLogin({
           </p>
         : null}
         {linkHint && !sent ?
-          <p className="mt-2 text-xs leading-relaxed text-slate-400">{linkHint}</p>
+          <p className="mt-2 text-xs leading-relaxed text-slate-500">{linkHint}</p>
         : null}
 
         {sent ?
@@ -180,7 +180,7 @@ export function SicDossierLogin({
             >
               {busy ? 'Wird gesendet …' : 'Anmeldelink senden'}
             </button>
-            <p className="mt-3 text-center text-xs text-slate-400">
+            <p className="mt-3 text-center text-xs text-slate-500">
               Noch nichts angelegt?{' '}
               <a href={sicPaths.landing} className="touch-target-exempt font-semibold text-sic-navy hover:underline">
                 Zertifikat anlegen

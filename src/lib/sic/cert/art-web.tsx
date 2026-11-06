@@ -139,7 +139,7 @@ export function CertSeal({ size = 74, year }: { size?: number; year: string }) {
       >
         <HouseMark size={Math.round(size * 0.24)} onDark={false} />
         <span style={line(8.5, C.navy, 1.5)}>GEPRÜFT</span>
-        <span style={line(4.1, C.goldText, 0.15)}>BETREIBUNG · AUSWEIS</span>
+        <span style={line(4.6, C.goldText, 0.1)}>BETREIBUNG · AUSWEIS</span>
         <span style={line(5.5, C.muted, 0.6, false)}>{year}</span>
       </div>
     </div>

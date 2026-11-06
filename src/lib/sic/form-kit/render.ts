@@ -119,7 +119,16 @@ function drawHeader(ctx: Ctx) {
   const logoY = top - logoSize
   drawLogo(ctx, MARGIN.x, logoY, logoSize)
 
-  drawText(ctx, SIC_BRAND_NAME, MARGIN.x + logoSize + 8, logoY + 9.5, TYPE.brand, c(COLORS.navy), true)
+  // Wortmarke wie auf Website und Zertifikat: «Immo» in Rot.
+  let brandX = MARGIN.x + logoSize + 8
+  for (const [part, color] of [
+    ['Swiss ', COLORS.navy],
+    ['Immo ', COLORS.red],
+    ['Cert', COLORS.navy],
+  ] as const) {
+    drawText(ctx, part, brandX, logoY + 9.5, TYPE.brand, c(color), true)
+    brandX += ctx.fontBold.widthOfTextAtSize(part, TYPE.brand)
+  }
   drawText(
     ctx,
     'MIETER-ZERTIFIKAT',
@@ -139,11 +148,37 @@ function drawHeader(ctx: Ctx) {
   ctx.y = ruleY - 8
 }
 
-function drawTitle(ctx: Ctx, title: string, subtitle: string) {
+/** Fliesstext über die ganze Breite, umbrochen an Wortgrenzen. */
+function drawParagraph(ctx: Ctx, text: string, size: number, color: RGB) {
+  const lines: string[] = []
+  let line = ''
+  for (const word of text.split(' ')) {
+    const next = line ? `${line} ${word}` : word
+    if (line && ctx.font.widthOfTextAtSize(next, size) > LAYOUT.contentWidth) {
+      lines.push(line)
+      line = word
+    } else {
+      line = next
+    }
+  }
+  if (line) lines.push(line)
+  for (const l of lines) {
+    drawText(ctx, l, MARGIN.x, ctx.y - size * 0.8, size, color)
+    ctx.y -= size * 1.45
+  }
+}
+
+/**
+ * `intro` richtet sich an die Person, die ausfüllt (Arbeitgeber, Vermieter): Sie kennt
+ * Swiss Immo Cert nicht und soll in drei Sätzen wissen, worum es geht und was mit den Angaben passiert.
+ */
+function drawTitle(ctx: Ctx, title: string, subtitle: string, intro: string) {
   drawText(ctx, title, MARGIN.x, ctx.y - TYPE.docTitle * 0.85, TYPE.docTitle, c(COLORS.navy), true)
   ctx.y -= TYPE.docTitle + 2
   drawText(ctx, subtitle, MARGIN.x, ctx.y - TYPE.body * 0.8, TYPE.body, c(COLORS.muted))
-  ctx.y -= TYPE.body + 6
+  ctx.y -= TYPE.body + 7
+  drawParagraph(ctx, intro, TYPE.body, c(COLORS.ink))
+  ctx.y -= 2
 }
 
 function drawSection(ctx: Ctx, title: string) {
@@ -240,10 +275,12 @@ function drawChoiceGroup(
 ) {
   const { name, label, required, options, selected } = opts
   const labelText = `${label.toUpperCase()}${required ? ' *' : ''}`
+  // Etwas Luft davor und danach: sonst kleben Frage, Kästchen und nächste Frage aneinander.
+  ctx.y -= LAYOUT.choiceGapBefore
   const labelBaseline = ctx.y - TYPE.label * 0.85
   drawText(ctx, labelText, MARGIN.x, labelBaseline, TYPE.label, c(COLORS.muted), true)
 
-  const rowY = labelBaseline - LAYOUT.labelGap - LAYOUT.checkboxSize
+  const rowY = labelBaseline - LAYOUT.choiceLabelGap - LAYOUT.checkboxSize
   let x = MARGIN.x
   const selectedNorm = (selected ?? '').trim().toLowerCase()
 
@@ -272,7 +309,7 @@ function drawChoiceGroup(
     x = textX + textW + LAYOUT.optionGap
   }
 
-  ctx.y = rowY - LAYOUT.fieldBlockGap
+  ctx.y = rowY - LAYOUT.choiceGapAfter
 }
 
 function drawSignatureBlock(
@@ -363,7 +400,12 @@ function drawTwoCol(
 
 function drawEmployerForm(ctx: Ctx, values: SicTemplateValues) {
   drawHeader(ctx)
-  drawTitle(ctx, 'Arbeitgeberbestätigung', 'Bestätigung zu Anstellung, Pensum und Einkommen')
+  drawTitle(
+    ctx,
+    'Arbeitgeberbestätigung',
+    'Bestätigung zu Anstellung, Pensum und Einkommen',
+    'Die unten genannte Person bewirbt sich um eine Mietwohnung und bittet Sie, ihre Anstellung zu bestätigen. Bitte füllen Sie das Formular aus, unterzeichnen Sie es und geben Sie es der Person zurück. Swiss Immo Cert prüft die Angaben auf Plausibilität; auf dem Mieter-Zertifikat steht nur eine Einkommensstufe, nie der genaue Lohn. Wir rufen Sie nicht an.'
+  )
 
   drawSection(ctx, 'Angaben der mietsuchenden Person')
   {
@@ -531,7 +573,12 @@ function drawEmployerForm(ctx: Ctx, values: SicTemplateValues) {
 
 function drawLandlordForm(ctx: Ctx, values: SicTemplateValues) {
   drawHeader(ctx)
-  drawTitle(ctx, 'Vermieter-Referenz', 'Referenz zum Mietverhältnis und zur Zahlungsmoral')
+  drawTitle(
+    ctx,
+    'Vermieter-Referenz',
+    'Referenz zum Mietverhältnis und zur Zahlungsmoral',
+    'Die unten genannte Person bewirbt sich um eine neue Mietwohnung und bittet Sie um eine kurze Referenz. Bitte füllen Sie das Formular aus, unterzeichnen Sie es und geben Sie es der Person zurück. Swiss Immo Cert prüft die Angaben auf Plausibilität; das Formular selbst geben wir nicht weiter. Wir rufen Sie nicht an.'
+  )
 
   drawSection(ctx, 'Angaben der mietsuchenden Person')
   {
@@ -695,8 +742,9 @@ export async function renderSicTemplatePdf(
   else if (templateId === 'landlord_reference') drawLandlordForm(ctx, values)
   else throw new Error(`Unbekanntes Formular: ${templateId}`)
 
-  if (ctx.y < MARGIN.bottom + 20) {
-    console.warn(`[sic/form-kit] Content may be tight: y=${ctx.y.toFixed(1)} for ${templateId}`)
+  // Die Fusszeile steht fest bei MARGIN.bottom + 14 — der Inhalt muss sichtbar darüber enden.
+  if (ctx.y < MARGIN.bottom + 24) {
+    console.warn(`[sic/form-kit] Inhalt reicht in die Fusszeile: y=${ctx.y.toFixed(1)} für ${templateId}`)
   }
 
   enableNeedAppearances(ctx.form)

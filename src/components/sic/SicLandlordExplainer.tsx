@@ -12,7 +12,7 @@ export function SicLandlordExplainer({
 
   return (
     <aside className="mx-auto mt-10 w-full max-w-[42rem] border border-sic-hairline bg-sic-paper-soft px-5 py-6 sm:px-7">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sic-navy/50">{copy.kicker}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sic-navy/70">{copy.kicker}</p>
       <p className="mt-2 font-sic-serif text-[1.05rem] font-semibold leading-snug text-sic-navy sm:text-lg">
         {copy.lead}
       </p>
@@ -29,8 +29,8 @@ export function SicLandlordExplainer({
           </div>
         ))}
       </dl>
-      <p className="mt-5 text-[12px] leading-relaxed text-slate-500">{copy.kiNote}</p>
-      <p className="mt-3 text-[12px] text-slate-500">
+      <p className="mt-5 text-[12px] leading-relaxed text-slate-600">{copy.kiNote}</p>
+      <p className="mt-3 text-[12px] text-slate-600">
         <Link href={copy.guideHref} className="text-sic-action underline-offset-2 hover:underline">
           {copy.guideLabel}
         </Link>

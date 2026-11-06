@@ -104,7 +104,9 @@ export function linksIn(mail: SinkMail): string[] {
 
 /** Zahlt eine Stripe-Checkout-Seite (Testmodus) mit der Testkarte 4242. */
 export async function payOnStripe(page: Page, opts: { name?: string } = {}) {
-  await page.waitForURL(/checkout\.stripe\.com/, { timeout: 45_000 })
+  // Nicht auf das «load»-Ereignis warten: Stripe lädt Nebensachen nach, das Formular ist vorher da.
+  await page.waitForURL(/checkout\.stripe\.com/, { timeout: 45_000, waitUntil: 'domcontentloaded' })
+  await page.locator('#cardNumber').waitFor({ state: 'attached', timeout: 45_000 }).catch(() => {})
   // Stripe zeigt Karte je nach Konto als Akkordeon oder direkt.
   const cardTab = page.locator(
     '[data-testid="card-accordion-item-button"], button:has-text("Karte"), button:has-text("Card")'

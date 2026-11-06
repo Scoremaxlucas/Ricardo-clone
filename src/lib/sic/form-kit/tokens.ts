@@ -19,17 +19,21 @@ export const GRID = 6 * MM
 export const LAYOUT = {
   contentWidth: A4.width - MARGIN.x * 2,
   colGutter: 3.5 * MM,
-  fieldHeight: 8 * MM,
+  fieldHeight: 7.6 * MM,
   labelGap: 1 * MM,
   labelHeight: 2.8 * MM,
   fieldBlockGap: 2.4 * MM,
+  /** Auswahlfelder (Ja/Nein, Anstellungsart): Abstand davor, zwischen Frage und Kästchen, danach. */
+  choiceGapBefore: 1.2 * MM,
+  choiceLabelGap: 2 * MM,
+  choiceGapAfter: 3.4 * MM,
   sectionGapBefore: 3.5 * MM,
   sectionGapAfter: 2.2 * MM,
   checkboxSize: 3.5 * MM,
   checkboxTextGap: 2.5 * MM,
   optionGap: 4.5 * MM,
-  signaturePadHeight: 16 * MM,
-  textareaHeight: 14 * MM,
+  signaturePadHeight: 14 * MM,
+  textareaHeight: 11 * MM,
   borderRadius: 2,
 } as const
 

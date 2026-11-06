@@ -47,7 +47,7 @@ export default async function SicLoginConfirmPage({
         Öffnen der Seite.
       </p>
       <SicMagicLoginButton token={token} next={next} />
-      <p className="mt-4 text-center text-xs text-slate-400">
+      <p className="mt-4 text-center text-xs text-slate-500">
         Der Link ist 30 Minuten gültig und nur einmal verwendbar.
       </p>
     </div>

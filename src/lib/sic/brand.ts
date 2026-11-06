@@ -26,6 +26,11 @@ export const SIC_COLORS = {
   actionBg: '#e7f4f1',
   /** Nur Wortmarke und Schweizerkreuz. */
   red: '#c8102e',
+  /**
+   * Dasselbe Rot für Schrift auf Navy: das Markenrot erreicht dort nur 2.3:1 und
+   * wirkt stumpf. Dieser Ton bleibt klar rot und kommt auf 3.8:1 (Navy) bzw. 4.5:1 (Navy tief).
+   */
+  redOnDark: '#f04a5f',
   /** Nur Zertifikat: Rahmen, Siegel. */
   gold: '#b8912f',
   /** Gold für Text — der helle Ton erreicht auf Elfenbein den Kontrast nicht. */

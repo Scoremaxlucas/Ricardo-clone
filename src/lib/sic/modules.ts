@@ -251,7 +251,7 @@ export const SIC_MODULE_BADGE = 'GEPRÜFT'
 
 /** Selbstangabe ohne bisherigen Vermieter — kein «GEPRÜFT», kein «fehlend». */
 export const SIC_DECLARED_BADGE = 'ANGABE'
-export const SIC_NO_PRIOR_REFERENCE_LINE = 'Keine bisherige Vermieter-Referenz.'
+export const SIC_NO_PRIOR_REFERENCE_LINE = 'Keine bisherige Vermieter-Referenz'
 /** Nicht angestellt: das Einkommen prüfen wir für diese Gruppen noch nicht. */
 export const SIC_INCOME_NOT_CHECKED_LINE = 'Einkommen nicht Teil dieser Prüfung'
 

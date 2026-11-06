@@ -75,7 +75,7 @@ export default async function SicEmailConfirmPage({
           Bestätigen
         </button>
       </form>
-      <p className="mt-4 text-center text-xs text-slate-400">
+      <p className="mt-4 text-center text-xs text-slate-500">
         Der Link ist 30 Minuten gültig und nur einmal verwendbar.
       </p>
     </div>

@@ -6,9 +6,9 @@ import {
   type SicModuleId,
 } from '@/lib/sic/modules'
 
-/** «1 von 4 steht drauf» — die Zeile, die nach der ersten Freigabe zählt. */
+/** «1 von 4 Angaben geprüft» — derselbe Wortlaut wie oben auf dem Zertifikat. */
 export function sicStandsOnDocLine(verifiedCount: number): string {
-  return `${verifiedCount} von ${SIC_MODULES.length} steht drauf`
+  return `${verifiedCount} von ${SIC_MODULES.length} Angaben geprüft`
 }
 
 export function sicCertificateReadyCopy(opts: {
@@ -31,15 +31,15 @@ export function sicCertificateReadyCopy(opts: {
   const sealNeed = sicSealRequirementLabel()
 
   if (opts.firstVerification && opts.pdfReady) {
+    // Die Überschrift sagt schon «ist bereit» — der Text beginnt mit dem Stand, nicht mit der Wiederholung.
+    const state = `${onDoc}${opts.verifiedCount === 1 ? ':' : ', zuletzt'} «${title}». ${validity}`
     const paragraphs = sealReady
       ? [
-          `Dein Mieter-Zertifikat ist bereit — mit Siegel. ${onDoc}.`,
-          `Geprüft ist «${title}». ${validity}`,
-          'Lade das PDF herunter und leg es der nächsten Bewerbung bei. Eine Zusage versprechen wir nicht.',
+          state,
+          'Dein Zertifikat trägt das Siegel. Lade das PDF herunter und leg es der nächsten Bewerbung bei. Eine Zusage versprechen wir nicht.',
         ]
       : [
-          `Dein Mieter-Zertifikat ist bereit. ${onDoc}.`,
-          `Geprüft ist «${title}». ${validity}`,
+          state,
           `Es ist gültig für alles, was geprüft ist — leg es der Bewerbung bei. Das Siegel kommt dazu, sobald ${sealNeed} geprüft sind. Eine Zusage versprechen wir nicht.`,
         ]
     if (moreOpen) {

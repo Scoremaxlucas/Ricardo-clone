@@ -100,7 +100,7 @@ export function SicTemplateForm({
           <p className="flex items-center gap-2 text-sm font-semibold text-sic-navy">
             <FileText className="h-4 w-4 flex-shrink-0" /> {template.title}
           </p>
-          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
             Herunterladen, vom {template.thirdPartyLabel} unterschreiben lassen, dann hier hochladen.
           </p>
           <button
@@ -111,7 +111,7 @@ export function SicTemplateForm({
             {guide ? 'Anleitung schliessen' : 'So geht’s'}
           </button>
           {guide ?
-            <ol className="mt-2 list-decimal space-y-0.5 pl-4 text-[11px] text-slate-500">
+            <ol className="mt-2 list-decimal space-y-0.5 pl-4 text-[11px] text-slate-600">
               {template.howTo.map(step => (
                 <li key={step}>{step}</li>
               ))}
@@ -143,7 +143,7 @@ export function SicTemplateForm({
 
       {open ?
         <div className="mt-4 space-y-3 border-t border-sic-navy/10 pt-4">
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] text-slate-600">
             Optional: Deinen Namen vorausfüllen, dann Vorlage herunterladen. Die Felder für den{' '}
             {template.thirdPartyLabel} bleiben in der Vorlage leer zum Ausfüllen — digital oder ausgedruckt.
           </p>

@@ -5,7 +5,14 @@ import { SIC_DEBT_EXTRACT_ORDER_URL, SIC_REVIEW_SLA, sicPaths, sicVerifyUrl } fr
 import type { SicDossierView, SicUploadedDocMeta } from '@/lib/sic/dossier'
 import { templatePrefillNamesForModule } from '@/lib/sic/dossier-core'
 import { SIC_INCOME_GROUPS, SIC_SMALL_DEBT_MAX_COUNT, sicIncomeGroupLabel, type SicIncomeGroup } from '@/lib/sic/facts'
-import { formatSicChf, isSicModuleId, SIC_MODULES, sicCompletenessLabel, type SicModuleId } from '@/lib/sic/modules'
+import {
+  formatSicChf,
+  isSicModuleId,
+  SIC_MODULES,
+  SIC_UNCHECKED_LINE,
+  sicCompletenessLabel,
+  type SicModuleId,
+} from '@/lib/sic/modules'
 import { sicNextStep } from '@/lib/sic/next-step'
 import { quoteSicOrder } from '@/lib/sic/pricing'
 import { sicVerifyMailtoHref, sicVerifyWhatsAppHref } from '@/lib/sic/share'
@@ -237,7 +244,7 @@ function ModuleProgressStrip({ dossier }: { dossier: SicDossierView }) {
                     ? 'bg-sic-navy text-white'
                   : status === 'NOT_APPLICABLE'
                     ? 'bg-sic-navy text-white'
-                  : 'bg-sic-paper-soft text-slate-400 ring-1 ring-sic-hairline'
+                  : 'bg-sic-paper-soft text-slate-500 ring-1 ring-sic-hairline'
                 }`}
               >
                 {status === 'VERIFIED' ?
@@ -338,7 +345,7 @@ function DocumentChip({
           disabled={removing}
           title="Entfernen"
           aria-label={`Datei «${doc.fileName}» entfernen`}
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-sic-danger-bg hover:text-sic-danger-text disabled:opacity-50"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-sic-danger-bg hover:text-sic-danger-text disabled:opacity-50"
         >
           <X className="h-4 w-4" />
         </button>
@@ -771,7 +778,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
               </div>
             </div>
           : <>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
                 {nextStep.kind === 'wait' ? 'In Prüfung' : 'Nächster Schritt'}
               </p>
               <p className="mt-1 font-semibold text-sic-navy">{nextStep.title}</p>
@@ -883,8 +890,8 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
 
         {verifiedCount > 0 ?
           <p className="mt-3 text-xs text-slate-500">
-            Auf dem Dokument steht «{sicCompletenessLabel(verifiedCount)}». Nicht geprüfte Angaben sind
-            nicht aufgeführt.
+            Auf dem Dokument steht «{sicCompletenessLabel(verifiedCount)}». Nicht geprüfte Angaben stehen
+            neutral als «{SIC_UNCHECKED_LINE}» da.
           </p>
         : null}
 
@@ -1013,13 +1020,13 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
               type="button"
               onClick={regenerateCode}
               disabled={recoding}
-              className="mt-3 inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 disabled:opacity-60"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-600 disabled:opacity-60"
             >
               <KeyRound className="h-3.5 w-3.5" />
               {recoding ? 'Code wird erzeugt …' : 'Neuen Code erzeugen (alter Link wird ersetzt)'}
             </button>
             {nameLocked ?
-              <p className="mt-3 text-xs text-slate-400">Name und Haushalt sind fixiert, sobald eine Angabe geprüft wird.</p>
+              <p className="mt-3 text-xs text-slate-500">Name und Haushalt sind fixiert, sobald eine Angabe geprüft wird.</p>
             : <button
                 type="button"
                 onClick={() => setEditingName(true)}
@@ -1112,7 +1119,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                   >
                     <meta.Icon className="h-3.5 w-3.5" /> {meta.label}
                   </span>
-                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`} />
                 </span>
               </button>
 
@@ -1394,7 +1401,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                     )}
                   </span>
                 </>
-              : <span className="text-slate-400">Keine Angabe gewählt</span>}
+              : <span className="text-slate-500">Keine Angabe gewählt</span>}
             </p>
             <button
               type="button"
@@ -1455,7 +1462,7 @@ export function SicDossierClient({ dossier }: { dossier: SicDossierView }) {
                 </form>
               : null}
               {emailOpen ?
-                <p className="mt-2 max-w-xl text-xs leading-relaxed text-slate-400">
+                <p className="mt-2 max-w-xl text-xs leading-relaxed text-slate-500">
                   Einmalig änderbar. Wir schreiben an die neue Adresse — dort tippst du auf «Bestätigen».
                   An die bisherige Adresse geht eine Mitteilung.
                 </p>

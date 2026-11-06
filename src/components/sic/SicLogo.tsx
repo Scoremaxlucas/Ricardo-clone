@@ -59,7 +59,7 @@ export function SicLogo({
           className="whitespace-nowrap text-[15px] font-bold tracking-tight sm:text-[19px]"
           style={{ color: primary }}
         >
-          Swiss <span style={{ color: SIC_COLORS.red }}>Immo</span> Cert
+          Swiss <span style={{ color: onDark ? SIC_COLORS.redOnDark : SIC_COLORS.red }}>Immo</span> Cert
         </span>
         {showTagline && (
           <span

@@ -49,7 +49,7 @@ function Frame({ children }: { children: ReactNode }) {
 function Wordmark({ className }: { className?: string }) {
   return (
     <p className={className}>
-      Swiss <span style={{ color: SIC_COLORS.red }}>Immo</span> Cert
+      Swiss <span style={{ color: SIC_COLORS.redOnDark }}>Immo</span> Cert
     </p>
   )
 }
@@ -208,7 +208,7 @@ function ValidBody(props: Extract<SicVerifyDocumentProps, { state: 'valid' }>) {
         </div>
 
         <div className="mt-5 flex items-center gap-4">
-          {sealed ? <CertSeal size={74} year={String(issuedAt.getFullYear())} /> : null}
+          {sealed ? <CertSeal size={108} year={String(issuedAt.getFullYear())} /> : null}
           <div>
             <p className="text-[11px] font-semibold text-sic-navy">{SIC_ISSUER_LINE}</p>
             <p className="mt-0.5 text-[10px] leading-snug text-slate-500">

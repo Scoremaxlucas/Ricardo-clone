@@ -68,12 +68,12 @@ export function sicEmailShell(opts: {
     <tr><td align="center">
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:16px;border:1px solid ${HAIRLINE};overflow:hidden;">
         <tr><td style="padding:32px 40px 8px;">
-          <div style="font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:${NAVY};font-weight:700;">${SIC_BRAND_NAME}</div>
+          <div style="font-size:17px;letter-spacing:-0.01em;color:${NAVY};font-weight:700;">Swiss <span style="color:${SIC_COLORS.red};">Immo</span> Cert</div>
         </td></tr>
-        <tr><td style="padding:8px 40px 0;">
-          <h1 style="margin:0;font-size:22px;font-weight:700;color:${NAVY};">${heading}</h1>
+        <tr><td style="padding:14px 40px 0;">
+          <h1 style="margin:0;font-size:22px;line-height:1.3;font-weight:700;color:${NAVY};">${heading}</h1>
         </td></tr>
-        <tr><td style="padding:16px 40px 8px;font-size:15px;line-height:1.65;color:#334155;">
+        <tr><td style="padding:16px 40px 8px;font-size:15px;line-height:1.65;color:#334155;word-break:break-word;overflow-wrap:anywhere;">
           ${bodyHtml}
         </td></tr>
         <tr><td style="padding:8px 40px 24px;">
@@ -407,13 +407,13 @@ export async function sendSicPaymentReceiptEmail(opts: {
         <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:14px;margin:0 0 12px;">
           <tr><td style="padding:4px 0;color:${MUTED};">Leistung</td><td style="padding:4px 0;text-align:right;">${item}</td></tr>
           <tr><td style="padding:4px 0;color:${MUTED};">Datum</td><td style="padding:4px 0;text-align:right;">${dateStr}</td></tr>
-          <tr><td style="padding:4px 0;color:${MUTED};">Referenz</td><td style="padding:4px 0;text-align:right;">${escapeHtml(opts.paymentId)}</td></tr>
+          <tr><td style="padding:4px 0;color:${MUTED};">Beleg-Nr.</td><td style="padding:4px 0;text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;">${escapeHtml(opts.paymentId)}</td></tr>
           <tr><td style="padding:8px 0 0;font-weight:700;border-top:1px solid ${HAIRLINE};">Total</td><td style="padding:8px 0 0;text-align:right;font-weight:700;border-top:1px solid ${HAIRLINE};">${amount}</td></tr>
         </table>
-        <p style="margin:0;">Den Link zu deinem Dossier schicken wir dir in einer separaten E-Mail.</p>`,
+        <p style="margin:0;">Den Link zu deinem Zertifikat schicken wir dir in einer separaten E-Mail.</p>`,
       footnoteHtml: escapeHtml(OPERATOR_LINE),
     }),
-    text: `Zahlung erhalten\n\n${item}\nDatum: ${dateStr}\nReferenz: ${opts.paymentId}\nTotal: ${amount}\n\n${OPERATOR_LINE}`,
+    text: `Zahlung erhalten\n\n${item}\nDatum: ${dateStr}\nBeleg-Nr.: ${opts.paymentId}\nTotal: ${amount}\n\n${OPERATOR_LINE}`,
   })
 }
 

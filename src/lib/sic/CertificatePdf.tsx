@@ -71,7 +71,7 @@ const s = StyleSheet.create({
     letterSpacing: 0.4,
   },
   brandImmo: {
-    color: C.red,
+    color: C.redOnDark,
   },
   brandRuleRow: {
     flexDirection: 'row',
@@ -164,6 +164,8 @@ const s = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     color: C.muted,
     letterSpacing: 0.4,
+    // Lange Namen brechen um — ohne Zeilenhöhe kleben die zwei Zeilen aneinander.
+    lineHeight: 1.3,
   },
   lineDot: { color: C.navy, fontSize: 8, marginRight: 5, marginTop: 1 },
   lineText: { fontSize: T.moduleLine, color: '#334155', flex: 1, lineHeight: 1.35 },
@@ -222,7 +224,7 @@ const s = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     color: C.navy,
   },
-  signNote: { marginTop: 3, fontSize: 7.5, color: C.muted, maxWidth: 180, lineHeight: 1.35 },
+  signNote: { marginTop: 3, fontSize: 7.5, color: C.muted, maxWidth: 240, lineHeight: 1.35 },
   qrCol: { alignItems: 'center' },
   qr: { width: 62, height: 62 },
   qrText: { fontSize: 6.5, color: C.muted, marginTop: 3, textAlign: 'center' },

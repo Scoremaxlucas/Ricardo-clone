@@ -117,7 +117,7 @@ export function SicCheckoutSuccess({ sessionId }: { sessionId: string }) {
           >
             <FileCheck2 className="h-4 w-4" /> Unterlagen hochladen
           </Link>
-          <p className="mt-4 max-w-sm text-xs leading-relaxed text-slate-400">
+          <p className="mt-4 max-w-sm text-xs leading-relaxed text-slate-500">
             Auf diesem Gerät bleibst du sieben Tage angemeldet. Per Mail kommt ein Link, der dein Zertifikat
             öffnet. Stimmt die Adresse nicht, kannst du sie unter «Mein Zertifikat» einmal ändern.
           </p>

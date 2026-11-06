@@ -28,6 +28,8 @@ export const CERT = {
     muted: '#64748b',
     faint: '#e7ddc4',
     red: '#c8102e',
+    /** Wortmarke auf dem Navy-Kopf: das Markenrot ist dort zu dunkel. */
+    redOnDark: '#f04a5f',
     white: '#ffffff',
   },
   type: {

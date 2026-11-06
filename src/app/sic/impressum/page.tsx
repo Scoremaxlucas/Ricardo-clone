@@ -60,7 +60,7 @@ export default function SicImpressumPage() {
         </div>
       </dl>
 
-      <p className="mt-10 text-xs leading-relaxed text-slate-400">
+      <p className="mt-10 text-xs leading-relaxed text-slate-500">
         Swiss Immo Cert ist ein Angebot der {SIC_OPERATOR.legalName} und keine amtliche Stelle. Für die Nutzung
         gelten die{' '}
         <Link href={sicPaths.agb} className="underline-offset-2 hover:underline">

@@ -42,8 +42,10 @@ describe('first verification copy', () => {
       validUntil: '28.11.2026',
     })
     expect(copy.heading).toBe('Dein Mieter-Zertifikat ist bereit')
-    expect(copy.paragraphs[0]).toBe(`Dein Mieter-Zertifikat ist bereit. ${sicStandsOnDocLine(1)}.`)
-    expect(copy.paragraphs[0]).toContain('1 von 4 steht drauf')
+    // Die Überschrift trägt «ist bereit»; der Text wiederholt sie nicht und nennt den Stand wie das Zertifikat.
+    expect(copy.paragraphs[0]).toBe(`${sicStandsOnDocLine(1)}: «Betreibungsauszug». Gültig bis 28.11.2026.`)
+    expect(copy.paragraphs[0]).toContain('1 von 4 Angaben geprüft')
+    expect(copy.paragraphs.join(' ')).not.toMatch(/steht drauf/)
     expect(copy.paragraphs.join(' ')).toMatch(/Siegel kommt dazu/)
     expect(copy.paragraphs.join(' ')).not.toMatch(/kein Mieter-Zertifikat/i)
     expect(copy.paragraphs.join(' ')).toMatch(/Zusage/)

@@ -183,7 +183,7 @@ export function sicLandlordGuideCopy(): SicLandlordGuideCopy {
         paragraphs: [
           SCOPE_BODY,
           `Oben auf dem Zertifikat steht der Umfang, zum Beispiel «${exampleLabel}». Jedes Dokument mit mindestens einer geprüften Angabe ist ein gültiges Mieter-Zertifikat — für genau diese Angaben.`,
-          `Steht «${SIC_DECLARED_BADGE}» statt «${SIC_MODULE_BADGE}», ist es eine Selbstangabe der Person, zum Beispiel «${SIC_NO_PRIOR_REFERENCE_LINE}» Sie ist vermerkt, nicht geprüft.`,
+          `Steht «${SIC_DECLARED_BADGE}» statt «${SIC_MODULE_BADGE}», ist es eine Selbstangabe der Person, zum Beispiel «${SIC_NO_PRIOR_REFERENCE_LINE}». Sie ist vermerkt, nicht geprüft.`,
         ],
       },
       {

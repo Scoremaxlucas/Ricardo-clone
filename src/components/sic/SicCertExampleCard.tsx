@@ -46,7 +46,7 @@ export function SicCertExampleCard({
           </p>
           <HouseMark size={36} onDark />
           <p className="mt-1.5 text-sm font-bold tracking-tight text-white">
-            Swiss <span style={{ color: SIC_COLORS.red }}>Immo</span> Cert
+            Swiss <span style={{ color: SIC_COLORS.redOnDark }}>Immo</span> Cert
           </p>
           <div className="mt-2 flex items-center gap-2">
             <span className="h-px w-6 bg-sic-gold" />
