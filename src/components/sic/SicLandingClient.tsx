@@ -29,7 +29,6 @@ import {
   ArrowRight,
   Briefcase,
   ChevronDown,
-  Globe,
   ListChecks,
   Mail,
   QrCode,
@@ -38,7 +37,7 @@ import {
   UserCheck,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ComponentType } from 'react'
 import toast from 'react-hot-toast'
 
 const IS_FREE = sicIsFree()
@@ -47,11 +46,37 @@ const PRICE_LABEL = SIC_PRICE_LABEL
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const MODULE_ICON: Record<SicModuleId, LucideIcon> = {
+/**
+ * Ausweis: dieselbe Karte mit Foto und Zeilen wie auf dem Zertifikat (dort `ModuleGlyph`),
+ * gezeichnet im Strich der übrigen Symbole. Ein Globus stand für «Aufenthalt» — auf dem
+ * Zertifikat heisst die Angabe «Ausweis».
+ */
+function IdCardIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <rect x={2} y={5} width={20} height={14} rx={2} />
+      <circle cx={8} cy={11} r={2} />
+      <path d="M5 16c.5-1.3 1.6-2 3-2s2.5.7 3 2" />
+      <path d="M14.5 10h4" />
+      <path d="M14.5 14h3" />
+    </svg>
+  )
+}
+
+const MODULE_ICON: Record<SicModuleId, LucideIcon | ComponentType<{ className?: string }>> = {
   BONITAET: ShieldCheck,
   ARBEIT_EINKOMMEN: Briefcase,
   ZUVERLAESSIGKEIT: UserCheck,
-  AUFENTHALT: Globe,
+  AUFENTHALT: IdCardIcon,
 }
 
 const HOW_STEPS: { icon: LucideIcon; title: string; note: string }[] = [
