@@ -22,9 +22,10 @@ export default function HelpPage() {
   const wohnen = useWohnenUiBrand()
   const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState('')
-
-  if (wohnen) return <WohnenHelpPage />
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+
+  // Erst nach allen Hooks verzweigen (Regeln für Hooks).
+  if (wohnen) return <WohnenHelpPage />
 
   // Load help categories from translations
   const helpCategories = [

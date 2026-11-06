@@ -58,8 +58,7 @@ export function useRealtimeBids({
   const [bids, setBids] = useState<Bid[]>(initialBids)
   const [isConnected, setIsConnected] = useState(false)
   const [isUsingRealtime, setIsUsingRealtime] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const channelRef = useRef<any>(null)
+  const channelRef = useRef<unknown>(null)
 
   // Calculate highest bid
   const highestBid = bids.length > 0 ? Math.max(...bids.map((b) => b.amount)) : null
@@ -133,7 +132,7 @@ export function useRealtimeBids({
             setIsUsingRealtime(status === 'SUBSCRIBED')
           })
 
-        channelRef.current = channel as any
+        channelRef.current = channel
 
         // Initial fetch
         refreshBids()

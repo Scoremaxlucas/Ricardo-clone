@@ -443,15 +443,6 @@ export function BidComponent({
     )
   }
 
-  // Determine if we should show sticky CTA on mobile
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
-
   return (
     <div className="space-y-4">
       {/* Startgebot Box - Wie Ricardo: Weiss, schwarzer Preis */}
